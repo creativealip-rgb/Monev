@@ -1,0 +1,173 @@
+import { getDb } from "./index";
+import { categories, transactions, budgets, goals } from "./schema";
+import type { Category } from "./schema";
+
+export async function seedDatabase() {
+    const db = getDb();
+    
+    // Check if already has February 2026 data
+    const existingTrans = db.select().from(transactions).all();
+    const hasFebruaryData = existingTrans.some((t: { date: Date }) => {
+        const date = new Date(t.date);
+        return date.getMonth() === 1 && date.getFullYear() === 2026; // February = month 1
+    });
+    
+    if (hasFebruaryData) {
+        console.log("Database already has February 2026 data");
+        return;
+    }
+
+    console.log("Seeding database...");
+    
+    // Check if we need to do initial seed
+    const existingCategories = db.select().from(categories).all();
+    if (existingCategories.length === 0) {
+        // Do full seed (initial setup)
+        await doFullSeed(db);
+    } else {
+        // Just add February 2026 data
+        await addFebruaryData(db);
+    }
+}
+
+async function doFullSeed(db: any) {
+
+    // Insert Categories
+    await db.insert(categories).values([
+        { name: "Makan & Minuman", color: "#f97316", icon: "Utensils", type: "expense" },
+        { name: "Transportasi", color: "#3b82f6", icon: "Car", type: "expense" },
+        { name: "Hiburan", color: "#a855f7", icon: "Gamepad2", type: "expense" },
+        { name: "Belanja", color: "#ec4899", icon: "ShoppingBag", type: "expense" },
+        { name: "Kesehatan", color: "#22c55e", icon: "Heart", type: "expense" },
+        { name: "Pendidikan", color: "#14b8a6", icon: "BookOpen", type: "expense" },
+        { name: "Tagihan", color: "#ef4444", icon: "Receipt", type: "expense" },
+        { name: "Investasi", color: "#10b981", icon: "TrendingUp", type: "expense" },
+        { name: "Gaji", color: "#3b82f6", icon: "Banknote", type: "income" },
+        { name: "Freelance", color: "#8b5cf6", icon: "Briefcase", type: "income" },
+        { name: "Lainnya", color: "#64748b", icon: "MoreHorizontal", type: "expense" },
+    ]);
+
+    // Get category IDs
+    const cats = db.select().from(categories).all();
+    const getCatId = (name: string) => cats.find((c: Category) => c.name === name)?.id || 1;
+
+    // Insert Transactions (Indonesian context)
+    await db.insert(transactions).values([
+        // November 2025
+        { amount: 25000, description: "Es Kopi Susu", merchantName: "Kopi Kenangan", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-11-28"), isVerified: true },
+        { amount: 32000, description: "Nasi Goreng Seafood", merchantName: "Warung Nasi 99", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-11-27"), isVerified: true },
+        { amount: 150000, description: "Netflix Premium", merchantName: "Netflix", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "transfer", date: new Date("2025-11-25"), isVerified: true, isRecurring: true },
+        { amount: 45000, description: "Grab Ride ke Kantor", merchantName: "Grab", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-11-24"), isVerified: true },
+        { amount: 5000000, description: "Gaji Bulan November", merchantName: "PT Digital Indonesia", categoryId: getCatId("Gaji"), type: "income" as const, paymentMethod: "transfer", date: new Date("2025-11-01"), isVerified: true },
+        { amount: 185000, description: "Spotify Family", merchantName: "Spotify", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-11-05"), isVerified: true, isRecurring: true },
+        { amount: 275000, description: "Belanja Bulanan", merchantName: "Indomaret", categoryId: getCatId("Belanja"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-11-10"), isVerified: true },
+        { amount: 120000, description: "Bensin Pertamax", merchantName: "Pertamina", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-11-08"), isVerified: true },
+        { amount: 75000, description: "Parkir Kantor", merchantName: "Parkir Gedung", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-11-15"), isVerified: true },
+        { amount: 2500000, description: "Project Website", merchantName: "Client A", categoryId: getCatId("Freelance"), type: "income" as const, paymentMethod: "transfer", date: new Date("2025-11-20"), isVerified: true },
+        
+        // December 2025
+        { amount: 28000, description: "Ayam Geprek + Es Teh", merchantName: "Ayam Geprek Pak Kumis", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-05"), isVerified: true },
+        { amount: 52000, description: "Gojek Food - Sushi", merchantName: "Gojek", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-08"), isVerified: true },
+        { amount: 150000, description: "Netflix Premium", merchantName: "Netflix", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "transfer", date: new Date("2025-12-25"), isVerified: true, isRecurring: true },
+        { amount: 5000000, description: "Gaji Bulan Desember", merchantName: "PT Digital Indonesia", categoryId: getCatId("Gaji"), type: "income" as const, paymentMethod: "transfer", date: new Date("2025-12-01"), isVerified: true },
+        { amount: 450000, description: "Keyboard Mechanical", merchantName: "Tokopedia", categoryId: getCatId("Belanja"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-12"), isVerified: true },
+        { amount: 35000, description: "Parkir Mall", merchantName: "Parkir Grand Indonesia", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-12-14"), isVerified: true },
+        { amount: 125000, description: "Nonton Bioskop", merchantName: "XXI", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-20"), isVerified: true },
+        
+        // January 2026
+        { amount: 22000, description: "Kopi Susu Gula Aren", merchantName: "Kopi Janji Jiwa", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-01-05"), isVerified: true },
+        { amount: 48000, description: "Nasi Campur Komplit", merchantName: "Nasi Campur Bali", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-01-08"), isVerified: true },
+        { amount: 150000, description: "Netflix Premium", merchantName: "Netflix", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "transfer", date: new Date("2026-01-25"), isVerified: true, isRecurring: true },
+        { amount: 5000000, description: "Gaji Bulan Januari", merchantName: "PT Digital Indonesia", categoryId: getCatId("Gaji"), type: "income" as const, paymentMethod: "transfer", date: new Date("2026-01-01"), isVerified: true },
+        { amount: 180000, description: "Voucher Google Play", merchantName: "Alfamart", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-01-10"), isVerified: true },
+        { amount: 95000, description: "Pijat Refleksi", merchantName: "Spa & Massage", categoryId: getCatId("Kesehatan"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-01-15"), isVerified: true },
+        { amount: 135000, description: "Bensin Full Tank", merchantName: "Shell", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-01-18"), isVerified: true },
+        { amount: 650000, description: "Belanja Online Shopee", merchantName: "Shopee", categoryId: getCatId("Belanja"), type: "expense" as const, paymentMethod: "transfer", date: new Date("2026-01-22"), isVerified: true },
+        
+        // February 2026 (current month)
+        { amount: 28000, description: "Kopi Susu", merchantName: "Kopi Kenangan", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-05"), isVerified: true },
+        { amount: 35000, description: "Nasi Goreng", merchantName: "Warung Nasi", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-02-06"), isVerified: true },
+        { amount: 5000000, description: "Gaji Bulan Februari", merchantName: "PT Digital Indonesia", categoryId: getCatId("Gaji"), type: "income" as const, paymentMethod: "transfer", date: new Date("2026-02-01"), isVerified: true },
+        { amount: 150000, description: "Spotify Premium", merchantName: "Spotify", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-05"), isVerified: true, isRecurring: true },
+        { amount: 45000, description: "Grab Ride", merchantName: "Grab", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-08"), isVerified: true },
+        { amount: 120000, description: "Bensin Pertamax", merchantName: "Pertamina", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-02-10"), isVerified: true },
+    ]);
+
+    // Insert Budgets (for January 2026 and February 2026)
+    await db.insert(budgets).values([
+        // January 2026
+        { categoryId: getCatId("Makan & Minuman"), amount: 2500000, month: 1, year: 2026 },
+        { categoryId: getCatId("Transportasi"), amount: 1000000, month: 1, year: 2026 },
+        { categoryId: getCatId("Hiburan"), amount: 800000, month: 1, year: 2026 },
+        { categoryId: getCatId("Belanja"), amount: 1500000, month: 1, year: 2026 },
+        { categoryId: getCatId("Kesehatan"), amount: 500000, month: 1, year: 2026 },
+        { categoryId: getCatId("Tagihan"), amount: 500000, month: 1, year: 2026 },
+        // February 2026 (current month)
+        { categoryId: getCatId("Makan & Minuman"), amount: 2500000, month: 2, year: 2026 },
+        { categoryId: getCatId("Transportasi"), amount: 1000000, month: 2, year: 2026 },
+        { categoryId: getCatId("Hiburan"), amount: 800000, month: 2, year: 2026 },
+        { categoryId: getCatId("Belanja"), amount: 1500000, month: 2, year: 2026 },
+        { categoryId: getCatId("Kesehatan"), amount: 500000, month: 2, year: 2026 },
+        { categoryId: getCatId("Tagihan"), amount: 500000, month: 2, year: 2026 },
+    ]);
+
+    // Insert Goals
+    await db.insert(goals).values([
+        { 
+            name: "MacBook Air M3", 
+            targetAmount: 20000000, 
+            currentAmount: 8500000, 
+            deadline: new Date("2026-06-01"), 
+            icon: "Laptop", 
+            color: "#3b82f6" 
+        },
+        { 
+            name: "Emergency Fund", 
+            targetAmount: 30000000, 
+            currentAmount: 12500000, 
+            deadline: new Date("2026-12-31"), 
+            icon: "Shield", 
+            color: "#22c55e" 
+        },
+        { 
+            name: "Liburan Jepang", 
+            targetAmount: 35000000, 
+            currentAmount: 5200000, 
+            deadline: new Date("2026-08-01"), 
+            icon: "Plane", 
+            color: "#f97316" 
+        },
+    ]);
+
+    console.log("Database seeded successfully!");
+}
+
+async function addFebruaryData(db: any) {
+    console.log("Adding February 2026 data...");
+    
+    // Get existing categories
+    const cats = db.select().from(categories).all();
+    const getCatId = (name: string) => cats.find((c: Category) => c.name === name)?.id || 1;
+    
+    // Add February 2026 transactions
+    await db.insert(transactions).values([
+        { amount: 28000, description: "Kopi Susu", merchantName: "Kopi Kenangan", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-05"), isVerified: true },
+        { amount: 35000, description: "Nasi Goreng", merchantName: "Warung Nasi", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-02-06"), isVerified: true },
+        { amount: 5000000, description: "Gaji Bulan Februari", merchantName: "PT Digital Indonesia", categoryId: getCatId("Gaji"), type: "income" as const, paymentMethod: "transfer", date: new Date("2026-02-01"), isVerified: true },
+        { amount: 150000, description: "Spotify Premium", merchantName: "Spotify", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-05"), isVerified: true, isRecurring: true },
+        { amount: 45000, description: "Grab Ride", merchantName: "Grab", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-08"), isVerified: true },
+        { amount: 120000, description: "Bensin Pertamax", merchantName: "Pertamina", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-02-10"), isVerified: true },
+    ]);
+    
+    // Add February 2026 budgets
+    await db.insert(budgets).values([
+        { categoryId: getCatId("Makan & Minuman"), amount: 2500000, month: 2, year: 2026 },
+        { categoryId: getCatId("Transportasi"), amount: 1000000, month: 2, year: 2026 },
+        { categoryId: getCatId("Hiburan"), amount: 800000, month: 2, year: 2026 },
+        { categoryId: getCatId("Belanja"), amount: 1500000, month: 2, year: 2026 },
+        { categoryId: getCatId("Kesehatan"), amount: 500000, month: 2, year: 2026 },
+        { categoryId: getCatId("Tagihan"), amount: 500000, month: 2, year: 2026 },
+    ]);
+    
+    console.log("February 2026 data added successfully!");
+}

@@ -1,13 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
-
-// Init Clients
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
@@ -25,7 +16,6 @@ export async function POST(req: NextRequest) {
     try {
         if (photo) {
             // Handle Image (Vision Agent)
-            // await handleReceiptImage(chatId, photo);
             await sendTelegramMessage(chatId, "Received photo! Logic not implemented yet.");
         } else if (text) {
             // Handle Text/Command
@@ -35,11 +25,6 @@ export async function POST(req: NextRequest) {
             if (match) {
                 const item = match[1].trim();
                 const amount = parseInt(match[2]);
-
-                // TODO: Save to Supabase
-                // await supabase.from('transactions').insert({ 
-                //   user_id: ..., amount, description: item, type: 'expense' 
-                // });
 
                 await sendTelegramMessage(chatId, `✅ Catat: ${item} seharga Rp ${amount}`);
             } else if (text.toLowerCase() === 'test') {

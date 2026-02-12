@@ -1,103 +1,313 @@
-import { ActionFab } from "@/components/ActionFab";
-import { Plus, ShieldAlert, TrendingUp, Wallet } from "lucide-react";
+"use client";
 
-const budgets = [
-    { category: "Makanan & Minuman", limit: 3000000, spent: 2150000, color: "bg-orange-500" },
-    { category: "Transportasi", limit: 1500000, spent: 800000, color: "bg-blue-500" },
-    { category: "Hiburan", limit: 1000000, spent: 950000, color: "bg-purple-500" },
-];
+import { useState, useEffect } from "react";
+import { Plus, ShieldAlert, TrendingUp, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { cn } from "@/frontend/lib/utils";
+import { formatCurrency } from "@/frontend/lib/utils";
 
-const goals = [
-    { name: "Macbook Air M3", target: 20000000, saved: 8500000, icon: <Wallet size={20} className="text-emerald-600" /> },
-    { name: "Liburan Jepang", target: 35000000, saved: 5000000, icon: <TrendingUp size={20} className="text-blue-600" /> },
-];
-
-function formatRp(amount: number) {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
+interface Budget {
+    id: number;
+    category: string;
+    categoryId: number;
+    limit: number;
+    spent: number;
+    color: string;
+    percentage: number;
 }
 
+interface Goal {
+    id: number;
+    name: string;
+    target: number;
+    saved: number;
+    percentage: number;
+    icon: string;
+    color: string;
+}
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+};
+
+const categoryIcons: Record<string, string> = {
+    "Makan & Minuman": "🍽️",
+    "Transportasi": "🚗",
+    "Hiburan": "🎮",
+    "Belanja": "🛍️",
+    "Kesehatan": "💚",
+    "Pendidikan": "📚",
+    "Tagihan": "📄",
+    "Investasi": "📈",
+    "Gaji": "💰",
+    "Freelance": "💼",
+    "Lainnya": "📦",
+};
+
 export default function BudgetsPage() {
+    const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [goals, setGoals] = useState<Goal[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    async function loadData() {
+        try {
+            setLoading(true);
+            
+            // Fetch budgets
+            const currentMonth = new Date().getMonth() + 1;
+            const currentYear = new Date().getFullYear();
+            const budgetsResponse = await fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`);
+            const budgetsResult = await budgetsResponse.json();
+            
+            if (budgetsResult.success) {
+                setBudgets(budgetsResult.data);
+            }
+            
+            // Fetch goals
+            const goalsResponse = await fetch("/api/goals");
+            const goalsResult = await goalsResponse.json();
+            
+            if (goalsResult.success) {
+                setGoals(goalsResult.data);
+            }
+        } catch (error) {
+            console.error("Error loading data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const getCategoryIcon = (category: string) => {
+        return categoryIcons[category] || "📦";
+    };
+
+    const totalBudget = budgets.reduce((sum, b) => sum + b.limit, 0);
+    const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
+    const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
+
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-24">
+        <div className="relative min-h-screen bg-slate-50 pb-28">
             {/* Header */}
-            <header className="px-6 pt-12 pb-6 bg-white border-b border-slate-100">
+            <motion.header 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="px-6 pt-12 pb-6 bg-white border-b border-slate-100"
+            >
                 <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Budget & Goals</h1>
-                    <button className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors">
-                        <Plus size={24} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <Link 
+                            href="/" 
+                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                        >
+                            <ChevronLeft size={20} strokeWidth={2.5} />
+                        </Link>
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Budget & Goals</h1>
+                    </div>
+                    <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-all"
+                    >
+                        <Plus size={22} />
+                    </motion.button>
                 </div>
-                <p className="text-sm text-slate-500">Kelola pengeluaran dan impianmu.</p>
-            </header>
+                <p className="text-sm text-slate-500 ml-13">Kelola pengeluaran dan impianmu.</p>
+            </motion.header>
 
-            <div className="p-6 space-y-8">
+            {/* Summary Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mx-6 mt-6 p-5 bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl text-white"
+            >
+                <p className="text-slate-300 text-xs mb-2">Budget Bulan Ini</p>
+                <div className="flex items-end justify-between mb-4">
+                    <div>
+                        <p className="text-3xl font-bold">{formatCurrency(totalSpent)}</p>
+                        <p className="text-slate-400 text-xs">dari {formatCurrency(totalBudget)}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-2xl font-bold">{Math.round(totalPercentage)}%</p>
+                        <p className="text-slate-400 text-xs">terpakai</p>
+                    </div>
+                </div>
+                <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${totalPercentage}%` }}
+                        transition={{ duration: 1 }}
+                        className={cn(
+                            "h-full rounded-full",
+                            totalPercentage > 90 ? "bg-rose-400" : 
+                            totalPercentage > 75 ? "bg-amber-400" : "bg-emerald-400"
+                        )}
+                    />
+                </div>
+            </motion.div>
+
+            <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="p-6 space-y-8"
+            >
                 {/* Monthly Budgets */}
-                <section>
-                    <div className="flex items-center gap-2 mb-4">
-                        <ShieldAlert size={18} className="text-slate-400" />
-                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Budget Bulanan</h2>
+                <motion.section variants={itemVariants}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
+                                <ShieldAlert size={16} className="text-orange-500" />
+                            </div>
+                            <h2 className="text-sm font-bold text-slate-900">Budget Bulanan</h2>
+                        </div>
+                        <span className="text-xs text-slate-500">{budgets.length} Kategori</span>
                     </div>
 
-                    <div className="space-y-4">
-                        {budgets.map((b, i) => {
-                            const percentage = Math.min((b.spent / b.limit) * 100, 100);
-                            const isDanger = percentage > 90;
+                    {loading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+                            <p className="text-slate-500 text-sm mt-2">Memuat data...</p>
+                        </div>
+                    ) : budgets.length === 0 ? (
+                        <div className="text-center py-8 bg-white rounded-2xl border border-slate-100">
+                            <p className="text-slate-500">Belum ada budget</p>
+                            <p className="text-xs text-slate-400 mt-1">Tambah budget untuk mulai tracking</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {budgets.map((b, i) => {
+                                const isDanger = b.percentage > 90;
+                                const isWarning = b.percentage > 75;
 
-                            return (
-                                <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-semibold text-slate-700 text-sm">{b.category}</span>
-                                        <span className="font-bold text-slate-900 text-sm">{formatRp(b.spent)}</span>
-                                    </div>
+                                return (
+                                    <motion.div 
+                                        key={b.id}
+                                        whileHover={{ scale: 1.02 }}
+                                        className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"
+                                    >
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div 
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                                                style={{ backgroundColor: b.color + "20" }}
+                                            >
+                                                {getCategoryIcon(b.category)}
+                                            </div>
+                                            <div className="flex-1">
+                                                <span className="font-semibold text-slate-800 text-sm">{b.category}</span>
+                                                <p className="text-xs text-slate-400">Limit: {formatCurrency(b.limit)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={cn(
+                                                    "font-bold text-sm block",
+                                                    isDanger ? "text-rose-600" : "text-slate-900"
+                                                )}>
+                                                    {formatCurrency(b.spent)}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">
+                                                    {Math.round(b.percentage)}%
+                                                </span>
+                                            </div>
+                                        </div>
 
-                                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
-                                        <div
-                                            className={`h-full rounded-full ${isDanger ? 'bg-rose-500' : b.color}`}
-                                            style={{ width: `${percentage}%` }}
-                                        />
-                                    </div>
+                                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${b.percentage}%` }}
+                                                transition={{ duration: 1, delay: i * 0.1 }}
+                                                className={cn(
+                                                    "h-full rounded-full",
+                                                    isDanger ? "bg-rose-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
+                                                )}
+                                            />
+                                        </div>
 
-                                    <div className="flex justify-between text-xs text-slate-400">
-                                        <span>Limit: {formatRp(b.limit)}</span>
-                                        <span className={isDanger ? "text-rose-500 font-bold" : ""}>{Math.round(percentage)}%</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
+                                        {isDanger && (
+                                            <p className="text-[10px] font-semibold text-rose-500 mt-2 flex items-center gap-1">
+                                                ⚠️ Hampir habis
+                                            </p>
+                                        )}
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </motion.section>
 
                 {/* Savings Goals */}
-                <section>
-                    <div className="flex items-center gap-2 mb-4">
-                        <TrendingUp size={18} className="text-slate-400" />
-                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Tabungan Impian</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                        {goals.map((g, i) => (
-                            <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
-                                    {g.icon}
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-slate-900 text-sm">{g.name}</h3>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-xs font-semibold text-blue-600">{formatRp(g.saved)}</span>
-                                        <span className="text-[10px] text-slate-400">/ {formatRp(g.target)}</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2">
-                                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(g.saved / g.target) * 100}%` }} />
-                                    </div>
-                                </div>
+                <motion.section variants={itemVariants}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                <TrendingUp size={16} className="text-emerald-500" />
                             </div>
-                        ))}
+                            <h2 className="text-sm font-bold text-slate-900">Tabungan Impian</h2>
+                        </div>
+                        <span className="text-xs text-slate-500">{goals.length} Goals</span>
                     </div>
-                </section>
-            </div>
 
-            <ActionFab />
-
+                    {loading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto"></div>
+                        </div>
+                    ) : goals.length === 0 ? (
+                        <div className="text-center py-8 bg-white rounded-2xl border border-slate-100">
+                            <p className="text-slate-500">Belum ada goals</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                            {goals.map((g, i) => (
+                                <motion.div 
+                                    key={g.id}
+                                    whileHover={{ scale: 1.02 }}
+                                    className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div 
+                                            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                                            style={{ backgroundColor: g.color + "20" }}
+                                        >
+                                            {g.icon}
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-slate-900 text-sm mb-1">{g.name}</h3>
+                                            <div className="flex items-baseline gap-1 mb-2">
+                                                <span className="text-sm font-bold text-emerald-600">{formatCurrency(g.saved)}</span>
+                                                <span className="text-xs text-slate-400">/ {formatCurrency(g.target)}</span>
+                                            </div>
+                                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${g.percentage}%` }}
+                                                    transition={{ duration: 1, delay: 0.3 + i * 0.1 }}
+                                                    className="h-full rounded-full"
+                                                    style={{ backgroundColor: g.color }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="text-center min-w-[50px]">
+                                            <span className="text-lg font-bold text-slate-900">{Math.round(g.percentage)}%</span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+                </motion.section>
+            </motion.div>
         </div>
     );
 }
