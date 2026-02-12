@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getBudgets } from "@/backend/db/operations";
+import { getBudgets, createBudget } from "@/backend/db/operations";
 
 export async function GET(request: Request) {
     try {
@@ -25,6 +25,27 @@ export async function GET(request: Request) {
         console.error("Error fetching budgets:", error);
         return NextResponse.json(
             { success: false, error: "Failed to fetch budgets" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        
+        const budget = await createBudget({
+            categoryId: body.categoryId,
+            amount: body.amount,
+            month: body.month,
+            year: body.year,
+        });
+
+        return NextResponse.json({ success: true, data: budget });
+    } catch (error) {
+        console.error("Error creating budget:", error);
+        return NextResponse.json(
+            { success: false, error: "Failed to create budget" },
             { status: 500 }
         );
     }

@@ -1,9 +1,66 @@
 import { format } from "date-fns";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp } from "lucide-react";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase } from "lucide-react";
 import { Transaction } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 
 const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, gradient: string }> = {
+    // Indonesian category names from database
+    "Makan & Minuman": { 
+        icon: Utensils, 
+        color: "bg-orange-100 text-orange-600",
+        gradient: "from-orange-500 to-amber-500"
+    },
+    "Transportasi": { 
+        icon: Car, 
+        color: "bg-blue-100 text-blue-600",
+        gradient: "from-blue-500 to-indigo-500"
+    },
+    "Hiburan": { 
+        icon: Gamepad2, 
+        color: "bg-purple-100 text-purple-600",
+        gradient: "from-purple-500 to-pink-500"
+    },
+    "Belanja": { 
+        icon: ShoppingBag, 
+        color: "bg-pink-100 text-pink-600",
+        gradient: "from-pink-500 to-rose-500"
+    },
+    "Kesehatan": { 
+        icon: Heart, 
+        color: "bg-green-100 text-green-600",
+        gradient: "from-green-500 to-emerald-500"
+    },
+    "Pendidikan": { 
+        icon: BookOpen, 
+        color: "bg-teal-100 text-teal-600",
+        gradient: "from-teal-500 to-cyan-500"
+    },
+    "Tagihan": { 
+        icon: Receipt, 
+        color: "bg-red-100 text-red-600",
+        gradient: "from-red-500 to-rose-500"
+    },
+    "Investasi": { 
+        icon: TrendingUp, 
+        color: "bg-emerald-100 text-emerald-600",
+        gradient: "from-emerald-500 to-teal-500"
+    },
+    "Gaji": { 
+        icon: Briefcase, 
+        color: "bg-emerald-100 text-emerald-600",
+        gradient: "from-emerald-500 to-green-500"
+    },
+    "Freelance": { 
+        icon: Briefcase, 
+        color: "bg-violet-100 text-violet-600",
+        gradient: "from-violet-500 to-purple-500"
+    },
+    "Lainnya": { 
+        icon: CreditCard, 
+        color: "bg-slate-100 text-slate-600",
+        gradient: "from-slate-500 to-slate-400"
+    },
+    // Fallback for English names
     Food: { 
         icon: Coffee, 
         color: "bg-orange-100 text-orange-600",

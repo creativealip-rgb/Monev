@@ -194,7 +194,32 @@ export async function getBudgets(month: number, year: number): Promise<Array<Bud
     return result;
 }
 
-// Goals
+// Budgets - Additional CRUD operations
+export async function createBudget(data: {
+    categoryId: number;
+    amount: number;
+    month: number;
+    year: number;
+}): Promise<Budget> {
+    const db = getDb();
+    return db.insert(budgets).values(data).returning().get();
+}
+
+export async function updateBudget(id: number, data: Partial<Budget>): Promise<Budget | undefined> {
+    const db = getDb();
+    return db.update(budgets)
+        .set(data)
+        .where(eq(budgets.id, id))
+        .returning()
+        .get();
+}
+
+export async function deleteBudget(id: number): Promise<void> {
+    const db = getDb();
+    await db.delete(budgets).where(eq(budgets.id, id));
+}
+
+// Goals - Full CRUD operations
 export async function getGoals(): Promise<Goal[]> {
     const db = getDb();
     return db.select().from(goals).all();
@@ -203,6 +228,32 @@ export async function getGoals(): Promise<Goal[]> {
 export async function getGoalById(id: number): Promise<Goal | undefined> {
     const db = getDb();
     return db.select().from(goals).where(eq(goals.id, id)).get();
+}
+
+export async function createGoal(data: {
+    name: string;
+    targetAmount: number;
+    currentAmount?: number;
+    deadline?: Date;
+    icon?: string;
+    color?: string;
+}): Promise<Goal> {
+    const db = getDb();
+    return db.insert(goals).values({
+        ...data,
+        currentAmount: data.currentAmount || 0,
+        icon: data.icon || "Target",
+        color: data.color || "#3b82f6",
+    }).returning().get();
+}
+
+export async function updateGoal(id: number, data: Partial<Goal>): Promise<Goal | undefined> {
+    const db = getDb();
+    return db.update(goals)
+        .set(data)
+        .where(eq(goals.id, id))
+        .returning()
+        .get();
 }
 
 export async function updateGoalProgress(id: number, amount: number): Promise<Goal | undefined> {
@@ -217,4 +268,9 @@ export async function updateGoalProgress(id: number, amount: number): Promise<Go
         .where(eq(goals.id, id))
         .returning()
         .get();
+}
+
+export async function deleteGoal(id: number): Promise<void> {
+    const db = getDb();
+    await db.delete(goals).where(eq(goals.id, id));
 }

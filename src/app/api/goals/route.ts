@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getGoals } from "@/backend/db/operations";
+import { getGoals, createGoal } from "@/backend/db/operations";
 
 export async function GET() {
     try {
@@ -21,6 +21,29 @@ export async function GET() {
         console.error("Error fetching goals:", error);
         return NextResponse.json(
             { success: false, error: "Failed to fetch goals" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        
+        const goal = await createGoal({
+            name: body.name,
+            targetAmount: body.targetAmount,
+            currentAmount: body.currentAmount || 0,
+            deadline: body.deadline ? new Date(body.deadline) : undefined,
+            icon: body.icon || "Target",
+            color: body.color || "#3b82f6",
+        });
+
+        return NextResponse.json({ success: true, data: goal });
+    } catch (error) {
+        console.error("Error creating goal:", error);
+        return NextResponse.json(
+            { success: false, error: "Failed to create goal" },
             { status: 500 }
         );
     }

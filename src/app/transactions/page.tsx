@@ -6,7 +6,6 @@ import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { Filter, Search, ChevronLeft, Trash2, Edit2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatCurrency } from "@/frontend/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -29,12 +28,6 @@ interface Category {
     type: "expense" | "income";
 }
 
-interface MonthlyStats {
-    income: number;
-    expense: number;
-    balance: number;
-}
-
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -50,7 +43,6 @@ const itemVariants = {
 
 export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState<MonthlyStats>({ income: 0, expense: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -72,12 +64,6 @@ export default function TransactionsPage() {
             // Fetch categories for mapping
             const catsResponse = await fetch("/api/categories");
             const catsResult = await catsResponse.json();
-            
-            // Fetch monthly stats
-            const currentMonth = new Date().getMonth() + 1;
-            const currentYear = new Date().getFullYear();
-            const statsResponse = await fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
-            const statsResult = await statsResponse.json();
             
             if (transResult.success && catsResult.success) {
                 const categories: Category[] = catsResult.data;
@@ -103,10 +89,6 @@ export default function TransactionsPage() {
                 }));
                 
                 setTransactions(mappedTransactions);
-            }
-            
-            if (statsResult.success) {
-                setStats(statsResult.data);
             }
         } catch (error) {
             console.error("Error loading data:", error);
@@ -203,32 +185,6 @@ export default function TransactionsPage() {
                     />
                 </div>
             </motion.header>
-
-            {/* Stats Cards */}
-            <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 py-4 grid grid-cols-3 gap-3"
-            >
-                <div className="bg-white p-4 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Pemasukan</p>
-                    <p className="text-sm font-bold text-emerald-600 mt-1">
-                        {formatCurrency(stats.income).replace("Rp", "")}
-                    </p>
-                </div>
-                <div className="bg-white p-4 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Pengeluaran</p>
-                    <p className="text-sm font-bold text-rose-600 mt-1">
-                        {formatCurrency(stats.expense).replace("Rp", "")}
-                    </p>
-                </div>
-                <div className="bg-white p-4 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Balance</p>
-                    <p className="text-sm font-bold text-slate-900 mt-1">
-                        {formatCurrency(stats.balance).replace("Rp", "")}
-                    </p>
-                </div>
-            </motion.div>
 
             {/* Content */}
             <div className="px-6">
