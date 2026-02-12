@@ -1,36 +1,32 @@
-"use client";
-
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/frontend/components/BottomNav";
-import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
-import { useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+    title: "Monev - Personal Finance Tracker",
+    description: "Track your income, expenses, budgets, and financial goals with AI assistance",
+};
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    themeColor: "#10b981",
+};
 
 export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
-
     return (
-        <html lang="en">
+        <html lang="id">
             <body className={inter.className}>
-                <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-100">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-200/30 via-transparent to-transparent" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-200/30 via-transparent to-transparent" />
-                </div>
-                <main className="min-h-screen max-w-[500px] mx-auto bg-slate-50/40 backdrop-blur-xl shadow-2xl shadow-blue-900/10 pb-24 relative">
-                    {children}
-                </main>
-                <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />
-                <AddTransactionSheet 
-                    isOpen={isAddSheetOpen} 
-                    onClose={() => setIsAddSheetOpen(false)} 
-                    onSuccess={() => window.location.reload()}
-                />
+                {children}
+                <BottomNav />
             </body>
         </html>
     );

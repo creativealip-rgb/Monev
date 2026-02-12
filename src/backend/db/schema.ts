@@ -1,6 +1,10 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
+// ============================================
+// FINANCE APP TABLES (Monev)
+// ============================================
+
 export const categories = sqliteTable("categories", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
@@ -52,14 +56,16 @@ export const merchantMappings = sqliteTable("merchant_mappings", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
-// Types
+// ============================================
+// Types Exports
+// ============================================
+
 export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type MerchantMapping = typeof merchantMappings.$inferSelect;
 
-// Insert types
 export type InsertCategory = typeof categories.$inferInsert;
 export type InsertTransaction = typeof transactions.$inferInsert;
 export type InsertBudget = typeof budgets.$inferInsert;
@@ -75,3 +81,5 @@ export const insertBudgetSchema = createInsertSchema(budgets);
 export const selectBudgetSchema = createSelectSchema(budgets);
 export const insertGoalSchema = createInsertSchema(goals);
 export const selectGoalSchema = createSelectSchema(goals);
+export const insertMerchantMappingSchema = createInsertSchema(merchantMappings);
+export const selectMerchantMappingSchema = createSelectSchema(merchantMappings);

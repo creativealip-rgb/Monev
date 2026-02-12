@@ -1,272 +1,164 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { FeatureItem } from "@/frontend/components/FeatureItem";
-import { TransactionItem } from "@/frontend/components/TransactionItem";
-import {
-    Sparkles,
-    PieChart,
-    PiggyBank,
-    Receipt,
-    TrendingUp,
-    Crown,
-    Bell,
-    User,
-    ChevronRight,
-    ArrowUpRight,
-    ArrowDownRight
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
+import { ArrowRight, Wallet, TrendingUp, PiggyBank, PieChart, Receipt, Sparkles, Shield, Bot, MessageCircle } from "lucide-react";
 
-interface Transaction {
-    id: string;
-    amount: number;
-    description: string;
-    category: string;
-    type: "expense" | "income";
-    created_at: string;
-    is_verified: boolean;
-}
-
-interface Category {
-    id: number;
-    name: string;
-    color: string;
-    icon: string;
-    type: "expense" | "income";
-}
-
-const mainFeatures = [
-    { label: "Insight AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
-    { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "#" },
-    { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/budgets" },
-    { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "#" },
-    { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "#" },
-    { label: "Upgrade", icon: <Crown size={24} />, color: "indigo", href: "#" },
-];
-
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1 }
-    }
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-};
-
-export default function Home() {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
-    const [loading, setLoading] = useState(true);
-    
-    const today = new Date();
-    const formattedDate = format(today, "EEEE, d MMMM yyyy", { locale: id });
-
-    useEffect(() => {
-        async function loadData() {
-            try {
-                // Get current month stats
-                const currentMonth = new Date().getMonth() + 1;
-                const currentYear = new Date().getFullYear();
-                
-                const statsResponse = await fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
-                const statsResult = await statsResponse.json();
-                if (statsResult.success) {
-                    setStats(statsResult.data);
-                }
-
-                // Get recent transactions
-                const transResponse = await fetch("/api/transactions");
-                const transResult = await transResponse.json();
-                
-                if (transResult.success) {
-                    // Get categories for lookup
-                    const catsResponse = await fetch("/api/categories");
-                    const catsResult = await catsResponse.json();
-                    const categories: Category[] = catsResult.success ? catsResult.data : [];
-                    
-                    // Map transactions with category names
-                    const mappedTransactions = transResult.data.slice(0, 5).map((t: {
-                        id: number;
-                        amount: number;
-                        description: string;
-                        categoryId: number;
-                        type: "expense" | "income";
-                        date: string;
-                        isVerified: boolean;
-                    }) => ({
-                        id: t.id.toString(),
-                        amount: t.amount,
-                        description: t.description,
-                        category: categories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
-                        type: t.type,
-                        created_at: t.date,
-                        is_verified: t.isVerified,
-                    }));
-                    
-                    setTransactions(mappedTransactions);
-                }
-            } catch (error) {
-                console.error("Error loading data:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        loadData();
-    }, []);
-
+export default function HomePage() {
     return (
-        <div className="relative min-h-screen pb-28 bg-gradient-to-b from-slate-50 via-white to-slate-50">
-            {/* Header */}
-            <motion.header
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-4"
-            >
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 overflow-hidden flex items-center justify-center shadow-lg shadow-blue-600/25"
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50">
+            {/* Hero Section */}
+            <div className="max-w-6xl mx-auto px-4 py-16">
+                <div className="text-center mb-16">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6">
+                        <Sparkles className="w-4 h-4" />
+                        Monev Finance App
+                    </div>
+                    <h1 className="text-5xl font-bold text-gray-900 mb-6">
+                        Kelola Keuanganmu
+                        <br />
+                        <span className="text-emerald-600">Dengan Mudah</span>
+                    </h1>
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+                        Catat pemasukan dan pengeluaran, atur budget, dan capai goals finansialmu dengan bantuan AI Assistant.
+                    </p>
+                    <div className="flex items-center justify-center gap-4 flex-wrap">
+                        <Link
+                            href="/dashboard"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
                         >
-                            <User size={22} className="text-white" />
-                        </motion.div>
-                        <div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{formattedDate}</p>
-                            <h1 className="text-lg font-bold text-slate-900 tracking-tight">Mochamad Alif Prayogo</h1>
-                        </div>
-                    </div>
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="w-11 h-11 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/10 transition-all"
-                    >
-                        <Bell size={20} />
-                    </motion.button>
-                </div>
-            </motion.header>
-
-            {/* Balance Card */}
-            <motion.section
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                className="px-6 mb-8"
-            >
-                <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 text-white p-6 shadow-2xl shadow-slate-900/20">
-                    {/* Background Effects */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -mr-20 -mt-20" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-45" />
-
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-slate-300 text-xs font-medium">Total Balance</p>
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/10">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span className="text-[10px] font-semibold text-emerald-400">+12.5%</span>
-                            </div>
-                        </div>
-
-                        <h2 className="text-4xl font-bold tracking-tight mb-8">
-                            {loading ? "Loading..." : formatCurrency(stats.balance)}
-                        </h2>
-
-                        <div className="flex gap-3">
-                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                        <ArrowUpRight size={14} className="text-emerald-400" />
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Income</p>
-                                </div>
-                                <p className="font-bold text-sm text-emerald-400">
-                                    + {loading ? "..." : formatCurrency(stats.income).replace("Rp", "")}
-                                </p>
-                            </div>
-
-                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                                        <ArrowDownRight size={14} className="text-rose-400" />
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expense</p>
-                                </div>
-                                <p className="font-bold text-sm text-rose-400">
-                                    − {loading ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </motion.section>
-
-            {/* Features Grid */}
-            <motion.section
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                className="px-6 mb-8"
-            >
-                <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-sm font-bold text-slate-900">Fitur Andalan</h2>
-                    <Link href="/fitur" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
-                        Lihat Semua
-                        <ChevronRight size={14} />
-                    </Link>
-                </motion.div>
-
-                <motion.div 
-                    variants={itemVariants} 
-                    className="grid grid-cols-3 gap-y-8 gap-x-4 justify-items-center"
-                >
-                    {mainFeatures.map((feature) => (
-                        <Link key={feature.label} href={feature.href}>
-                            <FeatureItem
-                                label={feature.label}
-                                icon={feature.icon}
-                                color={feature.color}
-                            />
+                            <Wallet className="w-5 h-5" />
+                            Buka Dashboard
+                            <ArrowRight className="w-5 h-5" />
                         </Link>
-                    ))}
-                </motion.div>
-            </motion.section>
+                        <Link
+                            href="/transactions"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            <Receipt className="w-5 h-5" />
+                            Catat Transaksi
+                        </Link>
+                    </div>
+                </div>
 
-            {/* Recent Transactions */}
-            <motion.section
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                className="px-6"
-            >
-                <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-sm font-bold text-slate-900">Riwayat Terbaru</h2>
-                    <Link href="/transactions" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                        Lihat Semua
+                {/* Telegram Bot Banner */}
+                <div className="max-w-2xl mx-auto mb-16">
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <Bot className="w-7 h-7" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-lg mb-1">Telegram Bot Tersedia! 🤖</h3>
+                                <p className="text-blue-100 text-sm mb-3">
+                                    Catat transaksi langsung dari Telegram. Cukup kirim pesan seperti "50000 makan siang"
+                                </p>
+                                <Link 
+                                    href="/settings" 
+                                    className="inline-flex items-center gap-1 text-sm font-medium text-white hover:text-blue-100"
+                                >
+                                    Setup Bot Sekarang
+                                    <ArrowRight className="w-4 h-4" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Features Grid */}
+                <div id="features" className="grid md:grid-cols-3 gap-8 mb-16">
+                    <FeatureCard
+                        icon={Receipt}
+                        title="Catat Transaksi"
+                        description="Catat pemasukan dan pengeluaran dengan cepat via web atau Telegram bot."
+                        href="/transactions"
+                    />
+                    <FeatureCard
+                        icon={PieChart}
+                        title="Analisis Keuangan"
+                        description="Visualisasi pengeluaran by kategori dan analisis cashflow bulanan."
+                        href="/analytics"
+                    />
+                    <FeatureCard
+                        icon={Wallet}
+                        title="Budget Management"
+                        description="Atur budget bulanan per kategori dan pantau penggunaannya."
+                        href="/budgets"
+                    />
+                    <FeatureCard
+                        icon={PiggyBank}
+                        title="Goals Tabungan"
+                        description="Tetapkan dan tracking progress goals finansialmu."
+                        href="/budgets"
+                    />
+                    <FeatureCard
+                        icon={MessageCircle}
+                        title="Telegram Bot"
+                        description="Input transaksi cepat via bot Telegram dengan smart categorization."
+                        href="/settings"
+                    />
+                    <FeatureCard
+                        icon={Shield}
+                        title="Aman & Private"
+                        description="Data keuanganmu tersimpan aman. Pilih SQLite local atau Supabase cloud."
+                        href="#"
+                    />
+                </div>
+
+                {/* Stats Section */}
+                <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 mb-16">
+                    <h2 className="text-2xl font-bold text-center mb-8">Kenapa Monev?</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                        <StatItem value="100%" label="Gratis" />
+                        <StatItem value="AI" label="Powered" />
+                        <StatItem value="Telegram" label="Bot Ready" />
+                        <StatItem value="24/7" label="Available" />
+                    </div>
+                </div>
+
+                {/* CTA */}
+                <div className="text-center">
+                    <h2 className="text-3xl font-bold mb-4">Siap mengelola keuangan?</h2>
+                    <p className="text-gray-600 mb-8">Mulai catat transaksi pertamamu sekarang</p>
+                    <Link
+                        href="/dashboard"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                        <Wallet className="w-5 h-5" />
+                        Buka Dashboard
                     </Link>
-                </motion.div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-                <motion.div variants={itemVariants} className="space-y-3">
-                    {loading ? (
-                        <p className="text-center text-slate-500 py-4">Loading...</p>
-                    ) : transactions.length === 0 ? (
-                        <p className="text-center text-slate-500 py-4">Belum ada transaksi</p>
-                    ) : (
-                        transactions.map((t) => (
-                            <TransactionItem key={t.id} transaction={t} />
-                        ))
-                    )}
-                </motion.div>
-            </motion.section>
+function FeatureCard({
+    icon: Icon,
+    title,
+    description,
+    href,
+}: {
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    href: string;
+}) {
+    return (
+        <Link href={href}>
+            <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg hover:border-emerald-200 transition-all h-full">
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
+                    <Icon className="w-6 h-6 text-emerald-600" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{title}</h3>
+                <p className="text-gray-600">{description}</p>
+            </div>
+        </Link>
+    );
+}
+
+function StatItem({ value, label }: { value: string; label: string }) {
+    return (
+        <div className="p-4">
+            <p className="text-3xl font-bold text-emerald-600">{value}</p>
+            <p className="text-sm text-gray-500">{label}</p>
         </div>
     );
 }
