@@ -122,6 +122,16 @@ export default function Home() {
         }
 
         loadData();
+
+        // Listen for transaction added event
+        const handleTransactionAdded = () => {
+            loadData();
+        };
+        window.addEventListener("transactionAdded", handleTransactionAdded);
+        
+        return () => {
+            window.removeEventListener("transactionAdded", handleTransactionAdded);
+        };
     }, []);
 
     return (

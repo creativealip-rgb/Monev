@@ -69,13 +69,43 @@ export default function BudgetsPage() {
     const [loading, setLoading] = useState(true);
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<"budgets" | "goals">("budgets");
-
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
+    
+    // Initialize from localStorage directly
+    const [activeTab, setActiveTab] = useState<"budgets" | "goals">(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("budgetsActiveTab");
+            if (saved === "budgets" || saved === "goals") return saved;
+        }
+        return "budgets";
+    });
+
+    // Hydration fix: sync with localStorage after mount
+    useEffect(() => {
+        const saved = localStorage.getItem("budgetsActiveTab");
+        if ((saved === "budgets" || saved === "goals") && saved !== activeTab) {
+            setActiveTab(saved);
+        }
+    }, []);
+
+    // Save to localStorage when tab changes
+    useEffect(() => {
+        localStorage.setItem("budgetsActiveTab", activeTab);
+    }, [activeTab]);
 
     useEffect(() => {
         loadData();
+
+        // Listen for transaction added event
+        const handleTransactionAdded = () => {
+            loadData();
+        };
+        window.addEventListener("transactionAdded", handleTransactionAdded);
+        
+        return () => {
+            window.removeEventListener("transactionAdded", handleTransactionAdded);
+        };
     }, []);
 
     async function loadData() {
@@ -361,44 +391,53 @@ export default function BudgetsPage() {
                                 <p className="text-xs text-slate-400 mt-1">Tambah goal untuk mulai menabung</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-1 gap-3">
                                 {goals.map((g, i) => (
                                     <motion.div 
                                         key={g.id}
-                                        whileHover={{ scale: 1.02 }}
-                                        className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group relative"
+                                        whileHover={{ scale: 1.01 }}
+                                        className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm group relative"
                                     >
                                         <button
                                             onClick={() => handleDeleteGoal(g.id)}
-                                            className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                            className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={14} />
                                         </button>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-3">
+                                            {/* Icon */}
                                             <div 
-                                                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-                                                style={{ backgroundColor: g.color + "20" }}
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                                                style={{ backgroundColor: g.color + "15" }}
                                             >
-                                                {g.icon}
+                                                <span style={{ color: g.color }}>{g.icon}</span>
                                             </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-slate-900 text-sm mb-1">{g.name}</h3>
-                                                <div className="flex items-baseline gap-1 mb-2">
-                                                    <span className="text-sm font-bold text-emerald-600">{formatCurrency(g.saved)}</span>
-                                                    <span className="text-xs text-slate-400">/ {formatCurrency(g.target)}</span>
+                                            
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h3 className="font-semibold text-slate-900 text-sm truncate">{g.name}</h3>
+                                                    <span className="text-sm font-bold text-slate-700">{Math.round(g.percentage)}%</span>
                                                 </div>
-                                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                
+                                                <div className="flex items-center gap-2 text-xs mb-2">
+                                                    <span className="font-semibold" style={{ color: g.color }}>
+                                                        {formatCurrency(g.saved)}
+                                                    </span>
+                                                    <span className="text-slate-400">/</span>
+                                                    <span className="text-slate-500">{formatCurrency(g.target)}</span>
+                                                </div>
+                                                
+                                                {/* Progress Bar */}
+                                                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${g.percentage}%` }}
-                                                        transition={{ duration: 1, delay: 0.3 + i * 0.1 }}
+                                                        transition={{ duration: 0.8, delay: i * 0.1 }}
                                                         className="h-full rounded-full"
                                                         style={{ backgroundColor: g.color }}
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="text-center min-w-[50px]">
-                                                <span className="text-lg font-bold text-slate-900">{Math.round(g.percentage)}%</span>
                                             </div>
                                         </div>
                                     </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Wallet, TrendingUp, Utensils, Car, Gamepad2, ShoppingBag, Heart, BookOpen, Receipt, TrendingUp as InvestIcon, Banknote, Briefcase, MoreHorizontal } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
@@ -57,6 +57,27 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
             console.error("Error loading categories:", err);
         }
     };
+
+    // Listen for smart input data
+    useEffect(() => {
+        const handleSmartInput = (e: CustomEvent) => {
+            const data = e.detail;
+            if (data) {
+                setAmount(data.amount?.toString() || "");
+                setDescription(data.description || data.merchantName || "");
+                // Try to auto-select category
+                if (data.category) {
+                    const cat = categories.find(c => c.name === data.category);
+                    if (cat) {
+                        setSelectedCategory(cat.id);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener("smartInputData", handleSmartInput as EventListener);
+        return () => window.removeEventListener("smartInputData", handleSmartInput as EventListener);
+    }, [categories]);
 
     const handleTypeSelect = async (type: "expense" | "income") => {
         setTransactionType(type);

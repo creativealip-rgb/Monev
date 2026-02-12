@@ -43,7 +43,6 @@ const itemVariants = {
 
 export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -51,12 +50,20 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         loadData();
+
+        // Listen for transaction added event
+        const handleTransactionAdded = () => {
+            loadData();
+        };
+        window.addEventListener("transactionAdded", handleTransactionAdded);
+        
+        return () => {
+            window.removeEventListener("transactionAdded", handleTransactionAdded);
+        };
     }, []);
 
     async function loadData() {
         try {
-            setLoading(true);
-            
             // Fetch transactions
             const transResponse = await fetch("/api/transactions");
             const transResult = await transResponse.json();
@@ -92,8 +99,6 @@ export default function TransactionsPage() {
             }
         } catch (error) {
             console.error("Error loading data:", error);
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -201,12 +206,7 @@ export default function TransactionsPage() {
                     </span>
                 </motion.div>
 
-                {loading ? (
-                    <div className="text-center py-8">
-                        <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-                        <p className="text-slate-500 text-sm mt-2">Memuat data...</p>
-                    </div>
-                ) : filteredTransactions.length === 0 ? (
+                {filteredTransactions.length === 0 ? (
                     <div className="text-center py-8">
                         <p className="text-slate-500">
                             {searchQuery ? "Tidak ada transaksi yang cocok" : "Belum ada transaksi"}

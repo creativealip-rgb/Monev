@@ -149,11 +149,45 @@ export async function getCategoryStats(year: number, month: number): Promise<Arr
         .sort((a, b) => b.total - a.total);
 }
 
+// Ensure sample budgets exist
+async function ensureSampleBudgets(month: number, year: number) {
+    const db = getDb();
+    
+    const existingBudgets = await db.select()
+        .from(budgets)
+        .where(and(
+            eq(budgets.month, month),
+            eq(budgets.year, year)
+        ))
+        .all();
+    
+    if (existingBudgets.length >= 3) return;
+    
+    const allCategories = await db.select().from(categories).all();
+    const getCatId = (name: string) => allCategories.find(c => c.name === name)?.id;
+    
+    const sampleBudgets = [
+        { categoryId: getCatId("Makan & Minuman")!, amount: 2500000, month, year },
+        { categoryId: getCatId("Transportasi")!, amount: 1000000, month, year },
+        { categoryId: getCatId("Hiburan")!, amount: 800000, month, year },
+    ];
+    
+    for (const budget of sampleBudgets) {
+        const exists = existingBudgets.some(b => b.categoryId === budget.categoryId);
+        if (!exists) {
+            await db.insert(budgets).values(budget);
+        }
+    }
+}
+
 // Budgets
 export async function getBudgets(month: number, year: number): Promise<Array<Budget & { category: Category; spent: number }>> {
     const db = getDb();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // Ensure sample budgets exist for current month
+    await ensureSampleBudgets(month, year);
 
     const budgetsWithCategories = await db.select({
         budget: budgets,
@@ -219,8 +253,32 @@ export async function deleteBudget(id: number): Promise<void> {
     await db.delete(budgets).where(eq(budgets.id, id));
 }
 
+// Ensure sample goals exist
+async function ensureSampleGoals() {
+    const db = getDb();
+    
+    const existingGoals = await db.select().from(goals).all();
+    if (existingGoals.length >= 5) return;
+    
+    const sampleGoals = [
+        { name: "MacBook Air M3", targetAmount: 20000000, currentAmount: 8500000, deadline: new Date("2026-06-01"), icon: "💻", color: "#3b82f6" },
+        { name: "Emergency Fund", targetAmount: 30000000, currentAmount: 12500000, deadline: new Date("2026-12-31"), icon: "🛡️", color: "#22c55e" },
+        { name: "Liburan Jepang", targetAmount: 35000000, currentAmount: 5200000, deadline: new Date("2026-08-01"), icon: "✈️", color: "#f97316" },
+        { name: "iPhone 16 Pro", targetAmount: 18000000, currentAmount: 6200000, deadline: new Date("2026-05-01"), icon: "📱", color: "#a855f7" },
+        { name: "Motor NMAX", targetAmount: 35000000, currentAmount: 15000000, deadline: new Date("2026-09-01"), icon: "🏍️", color: "#ec4899" },
+    ];
+    
+    for (const goal of sampleGoals) {
+        const exists = existingGoals.some(g => g.name === goal.name);
+        if (!exists) {
+            await db.insert(goals).values(goal);
+        }
+    }
+}
+
 // Goals - Full CRUD operations
 export async function getGoals(): Promise<Goal[]> {
+    await ensureSampleGoals();
     const db = getDb();
     return db.select().from(goals).all();
 }

@@ -1,6 +1,7 @@
 import { getDb } from "./index";
 import { categories, transactions, budgets, goals } from "./schema";
 import type { Category } from "./schema";
+import { and, eq } from "drizzle-orm";
 
 export async function seedDatabase() {
     const db = getDb();
@@ -12,22 +13,20 @@ export async function seedDatabase() {
         return date.getMonth() === 1 && date.getFullYear() === 2026; // February = month 1
     });
     
-    if (hasFebruaryData) {
-        console.log("Database already has February 2026 data");
-        return;
-    }
-
-    console.log("Seeding database...");
-    
     // Check if we need to do initial seed
     const existingCategories = db.select().from(categories).all();
     if (existingCategories.length === 0) {
         // Do full seed (initial setup)
+        console.log("Seeding database...");
         await doFullSeed(db);
-    } else {
+    } else if (!hasFebruaryData) {
         // Just add February 2026 data
+        console.log("Adding February 2026 data...");
         await addFebruaryData(db);
     }
+    
+    // Always ensure budgets and goals exist for demo purposes
+    await ensureSampleBudgetsAndGoals(db);
 }
 
 async function doFullSeed(db: any) {
@@ -170,4 +169,98 @@ async function addFebruaryData(db: any) {
     ]);
     
     console.log("February 2026 data added successfully!");
+}
+
+async function ensureSampleBudgetsAndGoals(db: any) {
+    const cats = db.select().from(categories).all();
+    if (cats.length === 0) return;
+    
+    const getCatId = (name: string) => cats.find((c: Category) => c.name === name)?.id || 1;
+    
+    // Check current month budgets
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    const existingBudgets = db.select().from(budgets).where(
+        and(
+            eq(budgets.month, currentMonth),
+            eq(budgets.year, currentYear)
+        )
+    ).all();
+    
+    // Add sample budgets if less than 3 exist
+    if (existingBudgets.length < 3) {
+        console.log("Adding sample budgets...");
+        const sampleBudgets = [
+            { categoryId: getCatId("Makan & Minuman"), amount: 2500000, month: currentMonth, year: currentYear },
+            { categoryId: getCatId("Transportasi"), amount: 1000000, month: currentMonth, year: currentYear },
+            { categoryId: getCatId("Hiburan"), amount: 800000, month: currentMonth, year: currentYear },
+        ];
+        
+        for (const budget of sampleBudgets) {
+            const exists = existingBudgets.some((b: any) => b.categoryId === budget.categoryId);
+            if (!exists) {
+                await db.insert(budgets).values(budget);
+            }
+        }
+    }
+    
+    // Check existing goals
+    const existingGoals = db.select().from(goals).all();
+    
+    // Add sample goals if less than 5 exist (3 original + 2 new)
+    if (existingGoals.length < 5) {
+        console.log("Adding sample goals...");
+        const sampleGoals = [
+            { 
+                name: "MacBook Air M3", 
+                targetAmount: 20000000, 
+                currentAmount: 8500000, 
+                deadline: new Date("2026-06-01"), 
+                icon: "Laptop", 
+                color: "#3b82f6" 
+            },
+            { 
+                name: "Emergency Fund", 
+                targetAmount: 30000000, 
+                currentAmount: 12500000, 
+                deadline: new Date("2026-12-31"), 
+                icon: "Shield", 
+                color: "#22c55e" 
+            },
+            { 
+                name: "Liburan Jepang", 
+                targetAmount: 35000000, 
+                currentAmount: 5200000, 
+                deadline: new Date("2026-08-01"), 
+                icon: "Plane", 
+                color: "#f97316" 
+            },
+            { 
+                name: "iPhone 16 Pro", 
+                targetAmount: 18000000, 
+                currentAmount: 6200000, 
+                deadline: new Date("2026-05-01"), 
+                icon: "Smartphone", 
+                color: "#a855f7" 
+            },
+            { 
+                name: "Motor NMAX", 
+                targetAmount: 35000000, 
+                currentAmount: 15000000, 
+                deadline: new Date("2026-09-01"), 
+                icon: "Bike", 
+                color: "#ec4899" 
+            },
+        ];
+        
+        for (const goal of sampleGoals) {
+            const exists = existingGoals.some((g: any) => g.name === goal.name);
+            if (!exists) {
+                await db.insert(goals).values(goal);
+            }
+        }
+    }
+    
+    console.log("Sample budgets and goals check complete!");
 }

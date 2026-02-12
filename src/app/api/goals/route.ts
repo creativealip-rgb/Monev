@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 import { getGoals, createGoal } from "@/backend/db/operations";
 
+// Map icon names to emojis
+const iconToEmoji: Record<string, string> = {
+    "Laptop": "💻",
+    "Shield": "🛡️",
+    "Plane": "✈️",
+    "Smartphone": "📱",
+    "Bike": "🏍️",
+    "Target": "🎯",
+    "Home": "🏠",
+    "Car": "🚗",
+    "GraduationCap": "🎓",
+    "Heart": "❤️",
+    "Gift": "🎁",
+};
+
 export async function GET() {
     try {
         const goals = await getGoals();
@@ -12,7 +27,7 @@ export async function GET() {
             target: g.targetAmount,
             saved: g.currentAmount,
             percentage: Math.min((g.currentAmount / g.targetAmount) * 100, 100),
-            icon: g.icon,
+            icon: iconToEmoji[g.icon] || g.icon || "🎯",
             color: g.color,
         }));
         

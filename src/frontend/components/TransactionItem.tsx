@@ -122,16 +122,16 @@ export function TransactionItem({ transaction }: TransactionItemProps) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0 mr-4">
-                <h4 className="font-semibold text-slate-900 text-sm truncate leading-tight">
+            <div className="flex-1 min-w-0 overflow-hidden mr-4">
+                <h4 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-1 break-all">
                     {transaction.description}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[11px] font-medium text-slate-500">
+                    <span className="text-[11px] font-medium text-slate-500 truncate">
                         {transaction.category}
                     </span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    <span className="text-[11px] font-medium text-slate-400">
+                    <span className="w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-400 flex-shrink-0">
                         {format(new Date(transaction.created_at), "dd MMM, HH:mm")}
                     </span>
                 </div>
