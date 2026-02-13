@@ -52,12 +52,20 @@ export const merchantMappings = sqliteTable("merchant_mappings", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const userSettings = sqliteTable("user_settings", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    hourlyRate: real("hourly_rate").notNull().default(50000),
+    primaryGoalId: integer("primary_goal_id").references(() => goals.id),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 // Types
 export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type MerchantMapping = typeof merchantMappings.$inferSelect;
+export type UserSettings = typeof userSettings.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -65,6 +73,7 @@ export type InsertTransaction = typeof transactions.$inferInsert;
 export type InsertBudget = typeof budgets.$inferInsert;
 export type InsertGoal = typeof goals.$inferInsert;
 export type InsertMerchantMapping = typeof merchantMappings.$inferInsert;
+export type InsertUserSettings = typeof userSettings.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -75,3 +84,5 @@ export const insertBudgetSchema = createInsertSchema(budgets);
 export const selectBudgetSchema = createSelectSchema(budgets);
 export const insertGoalSchema = createInsertSchema(goals);
 export const selectGoalSchema = createSelectSchema(goals);
+export const insertUserSettingsSchema = createInsertSchema(userSettings);
+export const selectUserSettingsSchema = createSelectSchema(userSettings);

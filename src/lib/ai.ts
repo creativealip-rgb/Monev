@@ -22,7 +22,51 @@ function cleanJsonResponse(content: string) {
     return content.replace(/^```json/, "").replace(/```$/, "").trim();
 }
 
-export async function processOCR(input: Buffer | string) {
+export interface AIResult {
+    type?: "receipt" | "checkout";
+    transactionType?: "expense" | "income";
+    merchantName?: string;
+    amount: number;
+    description: string;
+    date: string;
+    category: string;
+}
+
+export interface CategorizationResult {
+    category: string;
+    transactionType: "expense" | "income";
+    confidence: number;
+    reason: string;
+    searchUsed: boolean;
+    merchantType?: string;
+}
+
+export interface NLPResult {
+    intent: "transaction" | "query";
+    amount?: number;
+    description?: string;
+    transactionType?: "expense" | "income";
+    category?: string;
+    queryEntities?: string[]; // e.g., ["saldo", "pemasukan", "goal"]
+}
+
+export interface FinancialContext {
+    monthlyStats: {
+        income: number;
+        expense: number;
+        balance: number;
+    };
+    goals: Array<{
+        name: string;
+        targetAmount: number;
+        currentAmount: number;
+        remaining: number;
+        percent: number;
+    }>;
+    userName?: string;
+}
+
+export async function processOCR(input: Buffer | string): Promise<AIResult> {
     try {
         const openai = getOpenAIClient();
         // Support both Buffer (from Telegram) and string URL (from web API)
@@ -35,9 +79,11 @@ export async function processOCR(input: Buffer | string) {
             messages: [
                 {
                     role: "system",
-                    content: `Anda adalah asisten AI yang mengekstrak informasi transaksi keuangan dari gambar receipt atau screenshot transfer. 
+                    content: `Anda adalah asisten AI yang mengekstrak informasi transaksi keuangan dari gambar receipt (struk belanja) atau screenshot checkout (keranjang belanja/halaman pembayaran). 
                     
 Extrahak informasi berikut dari gambar:
+- type: "receipt" (jika sudah dibayar/ada bukti transfer) atau "checkout" (jika masih berupa keranjang belanja/menunggu pembayaran)
+- transactionType: "expense" (pengeluaran) atau "income" (pemasukan, misal transfer masuk/gaji)
 - merchantName: Nama toko/merchant (jika ada)
 - amount: Jumlah nominal transaksi (angka saja, tanpa Rupiah)
 - description: Deskripsi transaksi
@@ -48,6 +94,8 @@ ${CATEGORIES.map(c => `- ${c}`).join("\n")}
 
 Jawab dalam format JSON saja, tanpa markdown:
 {
+  "type": "receipt",
+  "transactionType": "expense",
   "merchantName": "nama merchant",
   "amount": 50000,
   "description": "deskripsi",
@@ -74,6 +122,7 @@ Jawab dalam format JSON saja, tanpa markdown:
         console.error("OCR Error:", e);
         return {
             amount: 0,
+            transactionType: "expense",
             description: "Gagal memproses gambar",
             category: "Lainnya",
             date: new Date().toISOString()
@@ -81,7 +130,7 @@ Jawab dalam format JSON saja, tanpa markdown:
     }
 }
 
-export async function processVoice(audioBuffer: Buffer) {
+export async function processVoice(audioBuffer: Buffer): Promise<{ transcription: string; parsed: AIResult }> {
     let text = "";
     try {
         const openai = getOpenAIClient();
@@ -108,8 +157,9 @@ export async function processVoice(audioBuffer: Buffer) {
 Ekstrak informasi berikut dari teks:
 - merchantName: Nama toko/merchant (jika ada)
 - amount: Jumlah nominal transaksi (angka saja)
+- transactionType: "expense" (pengeluaran) atau "income" (pemasukan, misal gajian/transfer masuk)
 - description: Deskripsi transaksi
-- date: Tanggal transaksi (format ISO YYYY-MM-DD). PENTING: Jika tanggal di struk terlihat sangat lama (misal tahun lalu), gunakan tanggal hari ini (${new Date().toISOString().split('T')[0]}) kecuali user menyebutkan tanggal spesifik.
+- date: Tanggal transaksi (format ISO YYYY-MM-DD). PENTING: Jika tidak disebutkan tahun, gunakan tahun sekarang (${new Date().getFullYear()}). Jika tanggal terlihat lama, gunakan tanggal hari ini (${new Date().toISOString().split('T')[0]}).
 
 Kategori yang tersedia:
 ${CATEGORIES.map(c => `- ${c}`).join("\n")}
@@ -118,6 +168,7 @@ Jawab dalam format JSON saja:
 {
   "merchantName": "nama merchant",
   "amount": 50000,
+  "transactionType": "expense",
   "description": "deskripsi",
   "date": "2026-02-13",
   "category": "Makan & Minuman"
@@ -139,6 +190,7 @@ Jawab dalam format JSON saja:
             transcription: text,
             parsed: {
                 amount: 0,
+                transactionType: "expense",
                 description: text || "Gagal memproses suara",
                 category: "Lainnya",
                 date: new Date().toISOString()
@@ -151,29 +203,22 @@ Jawab dalam format JSON saja:
 // Detective Agent: Smart Categorization
 // =====================================
 
-/**
- * Search the web for a merchant name to determine what type of business it is.
- * Uses DuckDuckGo (no API key required).
- */
 async function searchMerchant(merchantName: string): Promise<string | null> {
     try {
         const query = encodeURIComponent(`${merchantName} toko bisnis Indonesia`);
         const url = `https://api.duckduckgo.com/?q=${query}&format=json&no_html=1&skip_disambig=1`;
 
         const res = await fetch(url, {
-            signal: AbortSignal.timeout(5000) // 5s timeout
+            signal: AbortSignal.timeout(5000)
         });
 
         if (!res.ok) return null;
         const data = await res.json();
-
-        // Collect useful text from DuckDuckGo response
         const parts: string[] = [];
 
         if (data.Abstract) parts.push(data.Abstract);
         if (data.AbstractText) parts.push(data.AbstractText);
 
-        // Check related topics for hints
         if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
             for (const topic of data.RelatedTopics.slice(0, 3)) {
                 if (topic.Text) parts.push(topic.Text);
@@ -183,7 +228,6 @@ async function searchMerchant(merchantName: string): Promise<string | null> {
         const result = parts.join(". ").substring(0, 500);
 
         if (!result || result.length < 10) {
-            // Fallback: try Google search via scraping snippet
             return await searchMerchantFallback(merchantName);
         }
 
@@ -195,9 +239,6 @@ async function searchMerchant(merchantName: string): Promise<string | null> {
     }
 }
 
-/**
- * Fallback search using simple Google scraping for merchant info.
- */
 async function searchMerchantFallback(merchantName: string): Promise<string | null> {
     try {
         const query = encodeURIComponent(`"${merchantName}" adalah`);
@@ -212,8 +253,6 @@ async function searchMerchantFallback(merchantName: string): Promise<string | nu
 
         if (!res.ok) return null;
         const html = await res.text();
-
-        // Extract text snippets from search results (between > and <)
         const snippets = html.match(/<span[^>]*>([^<]{20,200})<\/span>/g);
         if (!snippets || snippets.length === 0) return null;
 
@@ -231,16 +270,10 @@ async function searchMerchantFallback(merchantName: string): Promise<string | nu
     }
 }
 
-/**
- * Smart categorization with "Detective Agent" two-pass system:
- * - Pass 1: AI categorizes with internal knowledge
- * - Pass 2: If confidence < 0.7, search the web for merchant info, then re-categorize
- */
-export async function categorizeTransaction(merchantName: string | null, description: string | null) {
+export async function categorizeTransaction(merchantName: string | null, description: string | null): Promise<CategorizationResult> {
     try {
         const openai = getOpenAIClient();
 
-        // === PASS 1: AI Internal Knowledge ===
         const pass1 = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -254,6 +287,7 @@ ${CATEGORIES.map(c => `- ${c}`).join("\n")}
 Jawab dalam format JSON saja:
 {
   "category": "Nama Kategori",
+  "transactionType": "expense",
   "confidence": 0.95,
   "reason": "alasan singkat"
 }`
@@ -269,24 +303,16 @@ Jawab dalam format JSON saja:
         const pass1Content = pass1.choices[0]?.message?.content || "";
         const result1 = JSON.parse(cleanJsonResponse(pass1Content));
 
-        console.log(`[Detective] Pass 1 — "${merchantName}" → ${result1.category} (confidence: ${result1.confidence})`);
-
-        // If confidence is high enough, return immediately
         if (result1.confidence >= 0.7) {
-            return { ...result1, searchUsed: false };
+            return { ...result1, searchUsed: false, transactionType: result1.transactionType || "expense" };
         }
-
-        // === PASS 2: Web Search + Re-categorize ===
-        console.log(`[Detective] Confidence low (${result1.confidence}). Searching web for "${merchantName}"...`);
 
         const searchContext = merchantName ? await searchMerchant(merchantName) : null;
 
         if (!searchContext) {
-            console.log("[Detective] No web results found. Using Pass 1 result.");
-            return { ...result1, searchUsed: false };
+            return { ...result1, searchUsed: false, transactionType: result1.transactionType || "expense" };
         }
 
-        // Re-categorize with search context
         const pass2 = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -305,6 +331,7 @@ ${CATEGORIES.map(c => `- ${c}`).join("\n")}
 Jawab dalam format JSON saja:
 {
   "category": "Nama Kategori",
+  "transactionType": "expense",
   "confidence": 0.95,
   "reason": "alasan berdasarkan info dari internet",
   "merchantType": "jenis usaha yang ditemukan"
@@ -320,18 +347,178 @@ Jawab dalam format JSON saja:
 
         const pass2Content = pass2.choices[0]?.message?.content || "";
         const result2 = JSON.parse(cleanJsonResponse(pass2Content));
-
-        console.log(`[Detective] Pass 2 — "${merchantName}" → ${result2.category} (confidence: ${result2.confidence}, type: ${result2.merchantType})`);
-
-        return { ...result2, searchUsed: true };
+        return { ...result2, searchUsed: true, transactionType: result2.transactionType || "expense" };
 
     } catch (e) {
         console.error("Categorize Error:", e);
         return {
             category: "Lainnya",
+            transactionType: "expense",
             confidence: 0,
             reason: "AI Error or Parse Error",
             searchUsed: false
         };
+    }
+}
+
+export async function getPsychologicalImpact(amount: number, hourlyRate: number, primaryGoal?: { name: string; targetAmount: number }) {
+    const workHours = amount / hourlyRate;
+    let message = `⏱️ Pengeluaran ini sebanding dengan **${workHours.toFixed(1)} jam** kerja kamu.`;
+
+    if (primaryGoal) {
+        const percentOfGoal = (amount / primaryGoal.targetAmount) * 100;
+        message += `\n🎯 Ini setara dengan **${percentOfGoal.toFixed(2)}%** dari target **"${primaryGoal.name}"** kamu.`;
+
+        if (percentOfGoal > 0.05) {
+            message += `\n⚠️ Hati-hati Bos, jajan ini bikin target "${primaryGoal.name}" makin menjauh!`;
+        }
+    }
+
+    return message;
+}
+
+export async function getImpulseJudgment(data: { item: string, amount: number, category: string }, recentHistory: any[], budgetInfo?: any) {
+    const openai = getOpenAIClient();
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            {
+                role: "system",
+                content: `Anda adalah "Impulse Buying Judge" yang galak, sarkas, tapi peduli dengan masa depan finansial user. 
+Tugas Anda adalah menilai apakah user sebaiknya checkout barang ini atau tidak.
+
+Data Konteks:
+- Item: ${data.item}
+- Harga: Rp ${data.amount.toLocaleString('id-ID')}
+- Kategori: ${data.category}
+- Riwayat barang serupa/kategori ini baru-baru ini: ${JSON.stringify(recentHistory)}
+- Budget sisa bulan ini (kategori ${data.category}): ${budgetInfo ? `Rp ${(budgetInfo.amount - budgetInfo.spent).toLocaleString('id-ID')}` : "Tidak ada budget set"}
+
+Aturan:
+1. Beri penilaian yang punchy, jujur, dan sedikit "nyelekit" jika user terlihat boros atau impulsif. 
+2. Gunakan bahasa Indonesia santai (gaul/seru). 
+3. Jika budget sudah tipis atau habis, larang dengan keras!
+4. Ingatkan tentang konsekuensi terhadap kondisi dompet mereka.
+5. Jawab dalam 2-3 kalimat saja.`
+            },
+            {
+                role: "user",
+                content: "Haruskah saya beli ini?"
+            }
+        ],
+        max_tokens: 300,
+    });
+
+    return response.choices[0]?.message?.content || "Pikir-pikir dulu deh, mending simpan duitnya buat masa depan.";
+}
+
+/**
+ * Natural Language Processor for flexible text input.
+ * Handles "freelance 10 juta", "tadi makan soto 25rb" (TRANSACTION)
+ * or "berapa saldo saya?", "goal kurang berapa?" (QUERY)
+ */
+export async function processNLP(text: string): Promise<NLPResult | null> {
+    try {
+        const openai = getOpenAIClient();
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `Anda adalah asisten AI yang menganalisa pesan user untuk menentukan apakah mereka ingin MENCATAT transaksi atau BERTANYA tentang keuangan mereka.
+                    
+Tentukan intent:
+1. "transaction": Jika user menyebutkan barang/jasa dan nominal uang (e.g., "makan 20rb", "gajian 10jt").
+2. "query": Jika user bertanya tentang saldo, pengeluaran, pemasukan, atau target goal. Pastikan pertanyaan tetap di ranah KEUANGAN PRIBADI.
+
+Jika user bertanya hal yang sama sekali tidak berhubungan dengan keuangan (misal: "siapa presiden?", "resep nasi goreng", dll), tetap kategorikan sebagai "query", tapi asisten di langkah selanjutnya akan menolak menjawab secara detail.
+
+Untuk "transaction":
+- Ekstrak 'amount' (nominal angka), 'description', 'transactionType' (expense/income), dan 'category'.
+
+Untuk "query":
+- Ekstrak 'queryEntities' (daftar hal yang ditanyakan: "saldo", "pemasukan", "pengeluaran", "goal").
+
+Jawab dalam format JSON saja:
+{
+  "intent": "transaction",
+  "amount": 10000000,
+  "description": "gajian freelance",
+  "transactionType": "income",
+  "category": "Freelance"
+}
+Atau:
+{
+  "intent": "query",
+  "queryEntities": ["saldo", "pemasukan"]
+}`
+                },
+                {
+                    role: "user",
+                    content: text
+                }
+            ],
+            max_tokens: 300,
+            response_format: { type: "json_object" }
+        });
+
+        const content = response.choices[0]?.message?.content || "";
+        const parsed = JSON.parse(cleanJsonResponse(content));
+
+        return {
+            intent: parsed.intent || "transaction",
+            amount: parsed.amount ? Number(parsed.amount) : undefined,
+            description: parsed.description || text,
+            transactionType: parsed.transactionType,
+            category: parsed.category,
+            queryEntities: parsed.queryEntities
+        };
+    } catch (e) {
+        console.error("NLP Error:", e);
+        return null;
+    }
+}
+
+/**
+ * AI Assistant to answer financial questions based on context.
+ */
+export async function askFinanceAgent(query: string, context: FinancialContext): Promise<string> {
+    try {
+        const openai = getOpenAIClient();
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `Anda adalah asisten keuangan pribadi yang cerdas dan bersahabat. 
+Tugas Anda adalah menjawab pertanyaan user berdasarkan data keuangan berikut:
+
+DATA BULAN INI:
+- Pemasukan: Rp ${context.monthlyStats.income.toLocaleString('id-ID')}
+- Pengeluaran: Rp ${context.monthlyStats.expense.toLocaleString('id-ID')}
+- Saldo (Pemasukan - Pengeluaran): Rp ${context.monthlyStats.balance.toLocaleString('id-ID')}
+
+TARGET GOAL:
+${context.goals.map(g => `- ${g.name}: Terkumpul Rp ${g.currentAmount.toLocaleString('id-ID')} dari Rp ${g.targetAmount.toLocaleString('id-ID')} (${g.percent.toFixed(1)}%). Sisa: Rp ${g.remaining.toLocaleString('id-ID')}`).join("\n")}
+
+Aturan:
+1. Jawab dengan bahasa Indonesia yang santai, suportif, dan ringkas.
+2. Gunakan emoji yang relevan.
+3. Jika saldo menipis, berikan saran penghematan singkat.
+4. Jika goal hampir tercapai, berikan semangat!
+5. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan (politik, selebriti, pengetahuan umum non-finansial, dll), jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.** Jangan menjawab pertanyaan seperti "siapa presiden", "cuaca hari ini", atau topik non-keuangan lainnya.`
+                },
+                {
+                    role: "user",
+                    content: query
+                }
+            ],
+            max_tokens: 500,
+        });
+
+        return response.choices[0]?.message?.content || "Duh, maaf saya agak bingung nih. Bisa diulang pertanyaannya?";
+    } catch (e) {
+        console.error("Agent Chat Error:", e);
+        return "Maaf, asisten AI sedang istirahat sebentar. Coba tanya lagi nanti ya!";
     }
 }

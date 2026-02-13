@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { processOCR, processVoice, categorizeTransaction, CATEGORIES } from '@/lib/ai';
-import { createTransaction, getCategories } from '@/backend/db/operations';
+import { processOCR, processVoice, categorizeTransaction, getPsychologicalImpact, getImpulseJudgment, processNLP, askFinanceAgent, CATEGORIES } from '@/lib/ai';
+import { createTransaction, getCategories, getUserSettings, getGoalById, getRecentTransactionsByCategory, getBudgets, getGoals, updateUserSettings, getMonthlyStats } from '@/backend/db/operations';
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -25,14 +25,33 @@ export async function POST(req: NextRequest) {
             if (!imgRes.ok) throw new Error("Gagal mengunduh gambar dari Telegram");
             const buffer = Buffer.from(await imgRes.arrayBuffer());
 
-            await sendTelegramMessage(chatId, "🔍 Menganalisa struk dengan AI...");
             const parsed = await processOCR(buffer);
+            console.log("OCR Data:", parsed);
 
-            if (parsed.amount === 0) {
-                await sendTelegramMessage(chatId, "⚠️ AI gagal membaca nominal. Mencatat sebagai 0.");
+            if (parsed.type === "checkout") {
+                await sendTelegramMessage(chatId, "⚖️ Hmm, sepertinya ini halaman checkout. Biar saya nilai dulu ya...");
+
+                const cats = await getCategories();
+                const category = cats.find(c => c.name.toLowerCase() === (parsed.category || "Lainnya").toLowerCase()) || { id: 1, name: "Lainnya" };
+
+                const now = new Date();
+                const monthBudgets = await getBudgets(now.getMonth() + 1, now.getFullYear());
+                const categoryBudget = monthBudgets.find(b => b.categoryId === category.id);
+                const recentHistory = await getRecentTransactionsByCategory(category.id);
+
+                const judgment = await getImpulseJudgment(
+                    { item: parsed.description || parsed.merchantName || "Barang ini", amount: parsed.amount, category: category.name },
+                    recentHistory,
+                    categoryBudget
+                );
+
+                await sendTelegramMessage(chatId, `👨‍⚖️ **IMPULSE BUYING JUDGE**\n\n${judgment}\n\n🛒: ${parsed.description || parsed.merchantName}\n💰: Rp ${parsed.amount.toLocaleString('id-ID')}`);
+            } else {
+                if (parsed.amount === 0) {
+                    await sendTelegramMessage(chatId, "⚠️ AI gagal membaca nominal. Mencatat sebagai 0.");
+                }
+                await saveAndNotify(chatId, parsed);
             }
-
-            await saveAndNotify(chatId, parsed);
 
         } else if (voice) {
             console.log("Processing Telegram Voice message...");
@@ -55,32 +74,87 @@ export async function POST(req: NextRequest) {
             }
 
         } else if (text) {
-            // Check for explicit "Name Amount" format
-            const expenseRegex = /(.+?)\s+(\d+)$/;
-            const match = text.trim().match(expenseRegex);
+            const lowerText = text.toLowerCase();
 
-            if (match) {
-                const item = match[1].trim();
-                const amount = parseInt(match[2]);
+            // Commands first
+            if (lowerText.startsWith('set goal ')) {
+                const goalName = text.substring(9).trim();
+                const allGoals = await getGoals();
+                const goal = allGoals.find(g => g.name.toLowerCase().includes(goalName.toLowerCase()));
 
-                await sendTelegramMessage(chatId, "🔍 Menganalisa kategori...");
-                const categorization = await categorizeTransaction(item, null);
-
-                // Show detective feedback if web search was used
-                if (categorization.searchUsed && categorization.merchantType) {
-                    await sendTelegramMessage(chatId, `🕵️ Detective: "${item}" terdeteksi sebagai ${categorization.merchantType}`);
+                if (goal) {
+                    await updateUserSettings({ primaryGoalId: goal.id });
+                    await sendTelegramMessage(chatId, `🎯 Target utama berhasil diset ke: **${goal.name}**\n\nSekarang saya akan memantau dampak setiap jajanmu terhadap target ini.`);
+                } else {
+                    await sendTelegramMessage(chatId, `❌ Target "${goalName}" tidak ditemukan. Coba cek nama target di dashboard.`);
                 }
-
-                await saveAndNotify(chatId, {
-                    amount,
-                    description: item,
-                    category: categorization.category,
-                    date: new Date().toISOString()
-                });
-            } else if (text.toLowerCase() === '/start' || text.toLowerCase() === 'test') {
-                await sendTelegramMessage(chatId, "Halo! Saya asisten keuangan kamu. 🚀\n\nKamu bisa:\n1. Kirim teks (e.g., 'Kopi 20000')\n2. Kirim foto struk/transfer\n3. Kirim pesan suara");
+            } else if (lowerText.startsWith('set rate ')) {
+                const rate = parseInt(text.substring(9).replace(/\./g, ''));
+                if (!isNaN(rate) && rate > 0) {
+                    await updateUserSettings({ hourlyRate: rate });
+                    await sendTelegramMessage(chatId, `⏱️ Rate per jam kamu diset ke: **Rp ${rate.toLocaleString('id-ID')}**\n\nSekarang saya bisa menghitung berapa jam kerja yang "terbuang" setiap kali kamu jajan.`);
+                } else {
+                    await sendTelegramMessage(chatId, `❌ Format salah. Gunakan: "set rate 50000"`);
+                }
+            } else if (lowerText === '/start' || lowerText === 'test') {
+                await sendTelegramMessage(chatId, "Halo! Saya asisten keuangan kamu. 🚀\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ Pengaturan:\n- `set goal [nama]` : Set target tabungan utama\n- `set rate [angka]` : Set gaji per jam kamu");
             } else {
-                await sendTelegramMessage(chatId, `Saya tidak mengerti formatnya. Gunakan 'NamaBarang Harga' atau kirim foto/suara.`);
+                // Fallback to Smart NLP
+                await sendTelegramMessage(chatId, "🔍 Menganalisa pesan kamu...");
+                const nlpParsed = await processNLP(text);
+
+                if (nlpParsed) {
+                    if (nlpParsed.intent === "query") {
+                        await sendTelegramMessage(chatId, "🧠 Menghitung data keuangan kamu...");
+
+                        // Fetch context data
+                        const now = new Date();
+                        const stats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
+                        const allGoals = await getGoals();
+
+                        const goalsContext = allGoals.map(g => ({
+                            name: g.name,
+                            targetAmount: g.targetAmount,
+                            currentAmount: g.currentAmount,
+                            remaining: Math.max(0, g.targetAmount - g.currentAmount),
+                            percent: (g.currentAmount / g.targetAmount) * 100
+                        }));
+
+                        const aiReply = await askFinanceAgent(text, {
+                            monthlyStats: stats,
+                            goals: goalsContext
+                        });
+
+                        await sendTelegramMessage(chatId, aiReply);
+                    } else {
+                        // Original transaction logic
+                        // If AI didn't provide a category, use categorizeTransaction for more depth
+                        let categoryString = nlpParsed.category;
+                        let merchantType = undefined;
+                        let searchUsed = false;
+
+                        if (!categoryString) {
+                            const categorization = await categorizeTransaction(nlpParsed.description || text, null);
+                            categoryString = categorization.category;
+                            merchantType = categorization.merchantType;
+                            searchUsed = categorization.searchUsed;
+                        }
+
+                        if (searchUsed && merchantType) {
+                            await sendTelegramMessage(chatId, `🕵️ Detective: "${nlpParsed.description}" terdeteksi sebagai ${merchantType}`);
+                        }
+
+                        await saveAndNotify(chatId, {
+                            amount: nlpParsed.amount || 0,
+                            description: nlpParsed.description,
+                            category: categoryString,
+                            transactionType: nlpParsed.transactionType || "expense",
+                            date: new Date().toISOString()
+                        });
+                    }
+                } else {
+                    await sendTelegramMessage(chatId, `Saya tidak mengerti formatnya. Gunakan bahasa santai seperti 'berapa saldo saya?' atau 'freelance 10 juta'.`);
+                }
             }
         }
     } catch (error) {
@@ -110,18 +184,43 @@ async function saveAndNotify(chatId: number, parsed: any) {
             { id: 1, name: "Lainnya" };
 
         const amount = Number(parsed.amount) || 0;
+        const type = parsed.transactionType || "expense";
+
         const transaction = await createTransaction({
             amount: amount,
             description: parsed.description || parsed.merchantName || "Transaksi Telegram",
             merchantName: parsed.merchantName,
             categoryId: category.id,
-            type: "expense",
+            type: type,
             date: new Date(), // Always use today's date for Telegram entries
         });
 
         const formattedDate = format(transaction.date, "dd MMM yyyy", { locale: id });
         console.log("Transaction saved:", transaction.id);
-        await sendTelegramMessage(chatId, `✅ Dicatat otomatis!\n\n🛒: ${transaction.description}\n💰: Rp ${transaction.amount.toLocaleString('id-ID')}\n📂: ${category.name}\n📅: ${formattedDate}`);
+
+        let message = `✅ Berhasil dicatat!\n\n🛒: ${transaction.description}\n💰: Rp ${transaction.amount.toLocaleString('id-ID')}\n📂: ${category.name}\n📅: ${formattedDate}\n🏷️: ${type === 'income' ? 'Pemasukan' : 'Pengeluaran'}`;
+
+        // Phase 3: Psychological Feedback (Expense Only)
+        if (type === 'expense' && amount > 0) {
+            try {
+                const settings = await getUserSettings();
+                let primaryGoal = undefined;
+                if (settings.primaryGoalId) {
+                    primaryGoal = await getGoalById(settings.primaryGoalId);
+                }
+                const psychologicalImpact = await getPsychologicalImpact(amount, settings.hourlyRate, primaryGoal);
+                message += `\n\n${psychologicalImpact}`;
+            } catch (pError) {
+                console.error("Psychological Calculation Error:", pError);
+            }
+        }
+
+        // Phase 3: Freelance Reality Check (Income Only)
+        if (type === 'income' && amount >= 5000000) {
+            message += `\n\n💰 **FREELANCE REALITY CHECK**\n\nMantap, Bos! Dapat Rp ${amount.toLocaleString('id-ID')} 🔥\nTapi ingat, ini harus cukup buat hidup beberapa bulan ke depan. Saya akan "umpetin" sebagian saldo ini di dashboard biar kamu nggak khilaf belanja ya! 😉`;
+        }
+
+        await sendTelegramMessage(chatId, message);
     } catch (error) {
         console.error("Save Error:", error);
         await sendTelegramMessage(chatId, "❌ Gagal menyimpan ke database.");
