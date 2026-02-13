@@ -1,32 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, ShieldAlert, TrendingUp, ChevronLeft, Trash2 } from "lucide-react";
+import { Plus, ShieldAlert, TrendingUp, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
-import { AddBudgetForm, AddGoalForm } from "@/frontend/components/BudgetForms";
-
-interface Budget {
-    id: number;
-    category: string;
-    categoryId: number;
-    limit: number;
-    spent: number;
-    color: string;
-    percentage: number;
-}
-
-interface Goal {
-    id: number;
-    name: string;
-    target: number;
-    saved: number;
-    percentage: number;
-    icon: string;
-    color: string;
-}
+import { AddBudgetForm, AddGoalForm, EditBudgetForm, EditGoalForm } from "@/frontend/components/BudgetForms";
+import { BudgetDetailModal, GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
+import { Budget, Goal } from "@/types";
 
 interface Category {
     id: number;
@@ -67,11 +49,19 @@ export default function BudgetsPage() {
     const [goals, setGoals] = useState<Goal[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Modals state
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+
+    const [detailBudget, setDetailBudget] = useState<Budget | null>(null);
+    const [detailGoal, setDetailGoal] = useState<Goal | null>(null);
+    const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+    const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
-    
+
     // Initialize from localStorage directly
     const [activeTab, setActiveTab] = useState<"budgets" | "goals">(() => {
         if (typeof window !== "undefined") {
@@ -102,7 +92,7 @@ export default function BudgetsPage() {
             loadData();
         };
         window.addEventListener("transactionAdded", handleTransactionAdded);
-        
+
         return () => {
             window.removeEventListener("transactionAdded", handleTransactionAdded);
         };
@@ -111,26 +101,26 @@ export default function BudgetsPage() {
     async function loadData() {
         try {
             setLoading(true);
-            
+
             // Fetch categories first
             const catsResponse = await fetch("/api/categories");
             const catsResult = await catsResponse.json();
             if (catsResult.success) {
                 setCategories(catsResult.data);
             }
-            
+
             // Fetch budgets
             const budgetsResponse = await fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`);
             const budgetsResult = await budgetsResponse.json();
-            
+
             if (budgetsResult.success) {
                 setBudgets(budgetsResult.data);
             }
-            
+
             // Fetch goals
             const goalsResponse = await fetch("/api/goals");
             const goalsResult = await goalsResponse.json();
-            
+
             if (goalsResult.success) {
                 setGoals(goalsResult.data);
             }
@@ -143,12 +133,12 @@ export default function BudgetsPage() {
 
     async function handleDeleteBudget(id: number) {
         if (!confirm("Yakin mau hapus budget ini?")) return;
-        
+
         try {
             const response = await fetch(`/api/budgets/${id}`, {
                 method: "DELETE",
             });
-            
+
             if (response.ok) {
                 setBudgets(budgets.filter(b => b.id !== id));
             } else {
@@ -162,12 +152,12 @@ export default function BudgetsPage() {
 
     async function handleDeleteGoal(id: number) {
         if (!confirm("Yakin mau hapus goal ini?")) return;
-        
+
         try {
             const response = await fetch(`/api/goals/${id}`, {
                 method: "DELETE",
             });
-            
+
             if (response.ok) {
                 setGoals(goals.filter(g => g.id !== id));
             } else {
@@ -190,22 +180,22 @@ export default function BudgetsPage() {
     return (
         <div className="relative min-h-screen bg-slate-50 pb-28">
             {/* Header */}
-            <motion.header 
+            <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="px-6 pt-12 pb-6 bg-white border-b border-slate-100"
             >
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                        <Link 
-                            href="/" 
+                        <Link
+                            href="/"
                             className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
                             <ChevronLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <h1 className="text-xl font-bold text-slate-900 tracking-tight">Budget & Goals</h1>
                     </div>
-                    <motion.button 
+                    <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => activeTab === "budgets" ? setIsBudgetModalOpen(true) : setIsGoalModalOpen(true)}
@@ -241,8 +231,8 @@ export default function BudgetsPage() {
                         transition={{ duration: 1 }}
                         className={cn(
                             "h-full rounded-full",
-                            totalPercentage > 90 ? "bg-rose-400" : 
-                            totalPercentage > 75 ? "bg-amber-400" : "bg-emerald-400"
+                            totalPercentage > 90 ? "bg-rose-400" :
+                                totalPercentage > 75 ? "bg-amber-400" : "bg-emerald-400"
                         )}
                     />
                 </div>
@@ -254,8 +244,8 @@ export default function BudgetsPage() {
                     onClick={() => setActiveTab("budgets")}
                     className={cn(
                         "flex-1 py-3 rounded-xl font-semibold text-sm transition-all",
-                        activeTab === "budgets" 
-                            ? "bg-blue-600 text-white" 
+                        activeTab === "budgets"
+                            ? "bg-blue-600 text-white"
                             : "bg-white text-slate-600 border border-slate-200"
                     )}
                 >
@@ -265,8 +255,8 @@ export default function BudgetsPage() {
                     onClick={() => setActiveTab("goals")}
                     className={cn(
                         "flex-1 py-3 rounded-xl font-semibold text-sm transition-all",
-                        activeTab === "goals" 
-                            ? "bg-emerald-600 text-white" 
+                        activeTab === "goals"
+                            ? "bg-emerald-600 text-white"
                             : "bg-white text-slate-600 border border-slate-200"
                     )}
                 >
@@ -274,7 +264,7 @@ export default function BudgetsPage() {
                 </button>
             </div>
 
-            <motion.div 
+            <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -310,19 +300,14 @@ export default function BudgetsPage() {
                                     const isWarning = b.percentage > 75;
 
                                     return (
-                                        <motion.div 
+                                        <motion.div
                                             key={b.id}
                                             whileHover={{ scale: 1.02 }}
-                                            className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group relative"
+                                            onClick={() => setDetailBudget(b)} // Open detail modal
+                                            className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group relative cursor-pointer hover:shadow-md transition-all"
                                         >
-                                            <button
-                                                onClick={() => handleDeleteBudget(b.id)}
-                                                className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div 
+                                                <div
                                                     className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                                                     style={{ backgroundColor: b.color + "20" }}
                                                 >
@@ -332,7 +317,7 @@ export default function BudgetsPage() {
                                                     <span className="font-semibold text-slate-800 text-sm">{b.category}</span>
                                                     <p className="text-xs text-slate-400">Limit: {formatCurrency(b.limit)}</p>
                                                 </div>
-                                                <div className="text-right pr-8">
+                                                <div className="text-right pr-2">
                                                     <span className={cn(
                                                         "font-bold text-sm block",
                                                         isDanger ? "text-rose-600" : "text-slate-900"
@@ -393,33 +378,28 @@ export default function BudgetsPage() {
                         ) : (
                             <div className="grid grid-cols-1 gap-3">
                                 {goals.map((g, i) => (
-                                    <motion.div 
+                                    <motion.div
                                         key={g.id}
                                         whileHover={{ scale: 1.01 }}
-                                        className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm group relative"
+                                        onClick={() => setDetailGoal(g)} // Open detail modal
+                                        className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm group relative cursor-pointer hover:shadow-md transition-all"
                                     >
-                                        <button
-                                            onClick={() => handleDeleteGoal(g.id)}
-                                            className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
                                         <div className="flex items-center gap-3">
                                             {/* Icon */}
-                                            <div 
+                                            <div
                                                 className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                                                 style={{ backgroundColor: g.color + "15" }}
                                             >
                                                 <span style={{ color: g.color }}>{g.icon}</span>
                                             </div>
-                                            
+
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <h3 className="font-semibold text-slate-900 text-sm truncate">{g.name}</h3>
                                                     <span className="text-sm font-bold text-slate-700">{Math.round(g.percentage)}%</span>
                                                 </div>
-                                                
+
                                                 <div className="flex items-center gap-2 text-xs mb-2">
                                                     <span className="font-semibold" style={{ color: g.color }}>
                                                         {formatCurrency(g.saved)}
@@ -427,7 +407,7 @@ export default function BudgetsPage() {
                                                     <span className="text-slate-400">/</span>
                                                     <span className="text-slate-500">{formatCurrency(g.target)}</span>
                                                 </div>
-                                                
+
                                                 {/* Progress Bar */}
                                                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                     <motion.div
@@ -470,6 +450,60 @@ export default function BudgetsPage() {
                     setIsGoalModalOpen(false);
                 }}
             />
+
+            {/* Detail Modals */}
+            <BudgetDetailModal
+                isOpen={!!detailBudget}
+                onClose={() => setDetailBudget(null)}
+                budget={detailBudget}
+                onEdit={(b) => {
+                    setDetailBudget(null);
+                    setEditingBudget(b);
+                }}
+                onDelete={(id) => {
+                    handleDeleteBudget(id);
+                    setDetailBudget(null);
+                }}
+            />
+
+            <GoalDetailModal
+                isOpen={!!detailGoal}
+                onClose={() => setDetailGoal(null)}
+                goal={detailGoal}
+                onEdit={(g) => {
+                    setDetailGoal(null);
+                    setEditingGoal(g);
+                }}
+                onDelete={(id) => {
+                    handleDeleteGoal(id);
+                    setDetailGoal(null);
+                }}
+            />
+
+            {/* Edit Forms */}
+            {editingBudget && (
+                <EditBudgetForm
+                    isOpen={!!editingBudget}
+                    onClose={() => setEditingBudget(null)}
+                    onSuccess={() => {
+                        loadData();
+                        setEditingBudget(null);
+                    }}
+                    budget={editingBudget}
+                />
+            )}
+
+            {editingGoal && (
+                <EditGoalForm
+                    isOpen={!!editingGoal}
+                    onClose={() => setEditingGoal(null)}
+                    onSuccess={() => {
+                        loadData();
+                        setEditingGoal(null);
+                    }}
+                    goal={editingGoal}
+                />
+            )}
         </div>
     );
 }

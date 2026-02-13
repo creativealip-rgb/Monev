@@ -3,22 +3,14 @@
 import { useState, useEffect } from "react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
-import { Filter, Search, ChevronLeft, Trash2, Edit2 } from "lucide-react";
+import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
+import { Filter, Search, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
-interface Transaction {
-    id: string;
-    amount: number;
-    description: string;
-    category: string;
-    categoryId: number;
-    type: "expense" | "income";
-    created_at: string;
-    is_verified: boolean;
-}
+import { Transaction } from "@/types";
 
 interface Category {
     id: number;
@@ -46,6 +38,7 @@ export default function TransactionsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
@@ -56,7 +49,7 @@ export default function TransactionsPage() {
             loadData();
         };
         window.addEventListener("transactionAdded", handleTransactionAdded);
-        
+
         return () => {
             window.removeEventListener("transactionAdded", handleTransactionAdded);
         };
@@ -67,14 +60,14 @@ export default function TransactionsPage() {
             // Fetch transactions
             const transResponse = await fetch("/api/transactions");
             const transResult = await transResponse.json();
-            
+
             // Fetch categories for mapping
             const catsResponse = await fetch("/api/categories");
             const catsResult = await catsResponse.json();
-            
+
             if (transResult.success && catsResult.success) {
                 const categories: Category[] = catsResult.data;
-                
+
                 // Map transactions with category names
                 const mappedTransactions = transResult.data.map((t: {
                     id: number;
@@ -94,7 +87,7 @@ export default function TransactionsPage() {
                     created_at: t.date,
                     is_verified: t.isVerified,
                 }));
-                
+
                 setTransactions(mappedTransactions);
             }
         } catch (error) {
@@ -104,13 +97,13 @@ export default function TransactionsPage() {
 
     async function handleDelete(id: string) {
         if (!confirm("Yakin mau hapus transaksi ini?")) return;
-        
+
         setDeletingId(id);
         try {
             const response = await fetch(`/api/transactions/${id}`, {
                 method: "DELETE",
             });
-            
+
             if (response.ok) {
                 setTransactions(transactions.filter(t => t.id !== id));
             } else {
@@ -136,7 +129,7 @@ export default function TransactionsPage() {
     }
 
     // Filter transactions based on search
-    const filteredTransactions = transactions.filter(t => 
+    const filteredTransactions = transactions.filter(t =>
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -154,22 +147,22 @@ export default function TransactionsPage() {
     return (
         <div className="relative min-h-screen bg-slate-50 pb-28">
             {/* Sticky Header */}
-            <motion.header 
+            <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="sticky top-0 z-40 glass border-b border-slate-200/50 px-6 pt-12 pb-4"
             >
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                        <Link 
-                            href="/" 
+                        <Link
+                            href="/"
                             className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
                             <ChevronLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <h1 className="text-xl font-bold text-slate-900 tracking-tight">Riwayat</h1>
                     </div>
-                    <motion.button 
+                    <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
@@ -193,7 +186,7 @@ export default function TransactionsPage() {
 
             {/* Content */}
             <div className="px-6">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex items-center justify-between mb-4"
@@ -213,7 +206,7 @@ export default function TransactionsPage() {
                         </p>
                     </div>
                 ) : (
-                    <motion.div 
+                    <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
@@ -225,56 +218,19 @@ export default function TransactionsPage() {
                                     {date}
                                 </h3>
                                 <div className="space-y-3">
+
                                     {dayTransactions.map((t) => (
-                                        <motion.div 
-                                            key={t.id} 
+                                        <motion.div
+                                            key={t.id}
                                             variants={itemVariants}
                                             className="group"
                                         >
-                                            <div className="flex items-center gap-2">
-                                                {/* Transaction Item */}
-                                                <div className="flex-1">
-                                                    <TransactionItem transaction={t} />
-                                                </div>
-                                                
-                                                {/* Action Buttons */}
-                                                <AnimatePresence>
-                                                    {deletingId === t.id ? (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, scale: 0.8 }}
-                                                            animate={{ opacity: 1, scale: 1 }}
-                                                            exit={{ opacity: 0, scale: 0.8 }}
-                                                            className="flex-shrink-0"
-                                                        >
-                                                            <div className="w-10 h-10 flex items-center justify-center">
-                                                                <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                                                            </div>
-                                                        </motion.div>
-                                                    ) : (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, width: 0 }}
-                                                            animate={{ opacity: 1, width: "auto" }}
-                                                            exit={{ opacity: 0, width: 0 }}
-                                                            className="flex-shrink-0 flex gap-1 overflow-hidden"
-                                                        >
-                                                            <button
-                                                                onClick={() => handleEdit(t)}
-                                                                className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-all border border-blue-100"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(t.id)}
-                                                                className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-all border border-rose-100"
-                                                                title="Hapus"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
+                                            <TransactionItem
+                                                transaction={t}
+                                                onClick={() => {
+                                                    setDetailTransaction(t);
+                                                }}
+                                            />
                                         </motion.div>
                                     ))}
                                 </div>
@@ -283,6 +239,22 @@ export default function TransactionsPage() {
                     </motion.div>
                 )}
             </div>
+
+            {/* Detail Modal */}
+            <TransactionDetailModal
+                isOpen={!!detailTransaction}
+                onClose={() => setDetailTransaction(null)}
+                transaction={detailTransaction}
+                onEdit={(t) => {
+                    setDetailTransaction(null);
+                    setEditingTransaction(t);
+                    setIsEditModalOpen(true);
+                }}
+                onDelete={(id) => {
+                    handleDelete(id);
+                    setDetailTransaction(null);
+                }}
+            />
 
             {/* Edit Transaction Modal */}
             <EditTransactionForm

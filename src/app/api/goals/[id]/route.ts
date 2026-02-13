@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateGoal, deleteGoal } from "@/backend/db/operations";
+import { updateGoal, removeGoal } from "@/backend/db/operations";
 
 export async function PUT(
     request: Request,
@@ -8,7 +8,7 @@ export async function PUT(
     try {
         const { id: idString } = await params;
         const id = parseInt(idString);
-        
+
         if (isNaN(id)) {
             return NextResponse.json(
                 { success: false, error: "Invalid goal ID" },
@@ -17,7 +17,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        
+
         const updated = await updateGoal(id, {
             name: body.name,
             targetAmount: body.targetAmount,
@@ -26,14 +26,14 @@ export async function PUT(
             icon: body.icon,
             color: body.color,
         });
-        
+
         if (!updated) {
             return NextResponse.json(
                 { success: false, error: "Goal not found" },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
         console.error("Error updating goal:", error);
@@ -51,7 +51,7 @@ export async function DELETE(
     try {
         const { id: idString } = await params;
         const id = parseInt(idString);
-        
+
         if (isNaN(id)) {
             return NextResponse.json(
                 { success: false, error: "Invalid goal ID" },
@@ -59,8 +59,8 @@ export async function DELETE(
             );
         }
 
-        await deleteGoal(id);
-        
+        await removeGoal(id);
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error deleting goal:", error);

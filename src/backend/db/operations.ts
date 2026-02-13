@@ -1,10 +1,10 @@
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings } from "./schema";
-import type { Transaction, Category, Budget, Goal, UserSettings } from "./schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages } from "./schema";
+import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage } from "./schema";
+import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 
 // Re-export types
-export type { Transaction, Category, Budget, Goal, UserSettings };
+export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt };
 
 // Categories
 export async function getCategories(): Promise<Category[]> {
@@ -328,6 +328,11 @@ export async function updateGoalProgress(id: number, amount: number): Promise<Go
         .get();
 }
 
+export async function removeGoal(id: number): Promise<void> {
+    const db = getDb();
+    await db.delete(goals).where(eq(goals.id, id));
+}
+
 export async function getRecentTransactionsByCategory(categoryId: number, limit: number = 5): Promise<Transaction[]> {
     const db = getDb();
     return db.select()
@@ -336,6 +341,48 @@ export async function getRecentTransactionsByCategory(categoryId: number, limit:
         .orderBy(desc(transactions.date))
         .limit(limit)
         .all();
+}
+
+// Users
+export async function upsertUser(data: {
+    telegramId: number;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+}): Promise<User> {
+    const db = getDb();
+
+    // Check if user exists
+    const existing = db.select().from(users).where(eq(users.telegramId, data.telegramId)).get();
+
+    if (existing) {
+        return db.update(users)
+            .set({
+                username: data.username,
+                firstName: data.firstName,
+                lastName: data.lastName
+            })
+            .where(eq(users.id, existing.id))
+            .returning()
+            .get();
+    } else {
+        return db.insert(users).values({
+            telegramId: data.telegramId,
+            username: data.username,
+            firstName: data.firstName,
+            lastName: data.lastName,
+        }).returning().get();
+    }
+}
+
+export async function getAllUsers(): Promise<User[]> {
+    const db = getDb();
+    return db.select().from(users).all();
+}
+
+export async function getUserByTelegramId(telegramId: number): Promise<User | undefined> {
+    const db = getDb();
+    return db.select().from(users).where(eq(users.telegramId, telegramId)).get();
 }
 
 // User Settings
@@ -365,4 +412,124 @@ export async function updateUserSettings(data: Partial<UserSettings>): Promise<U
         .where(eq(userSettings.id, settings.id))
         .returning()
         .get();
+}
+
+// Advanced Features
+export async function analyzeSubscriptions(monthsBack = 3): Promise<Array<{ merchant: string, amount: number, frequency: number, lastDate: Date }>> {
+    const db = getDb();
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setMonth(now.getMonth() - monthsBack);
+
+    // Get all expenses in window
+    const expenses = await db.select()
+        .from(transactions)
+        .where(and(
+            eq(transactions.type, "expense"),
+            gte(transactions.date, startDate)
+        ))
+        .orderBy(desc(transactions.date))
+        .all();
+
+    // Group by Merchant
+    const groups: Record<string, Transaction[]> = {};
+    expenses.forEach(t => {
+        if (!t.merchantName) return;
+        const key = t.merchantName.toLowerCase().trim();
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+    });
+
+    const potentialSubs = [];
+
+    for (const [merchant, trans] of Object.entries(groups)) {
+        if (trans.length < 2) continue;
+
+        // Check if amounts are consistent (variance < 5%)
+        const amounts = trans.map(t => t.amount);
+        const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const isConsistent = amounts.every(a => Math.abs(a - avg) / avg < 0.05);
+
+        if (isConsistent) {
+            // Check intervals (roughly monthly, e.g., 25-35 days)
+            // simplified: if count >= monthsBack - 1, likely recurring
+            if (trans.length >= monthsBack - 1) {
+                potentialSubs.push({
+                    merchant: trans[0].merchantName!,
+                    amount: avg,
+                    frequency: trans.length,
+                    lastDate: trans[0].date
+                });
+            }
+        }
+    }
+
+    return potentialSubs;
+}
+
+// Debts / Create Split Bill
+export async function createDebt(data: {
+    userId: number;
+    debtorName: string;
+    amount: number;
+    description: string;
+    dueDate?: Date;
+}): Promise<Debt> {
+    const db = getDb();
+    return db.insert(debts).values(data).returning().get();
+}
+
+export async function getDebts(userId: number, status: "paid" | "unpaid" = "unpaid"): Promise<Debt[]> {
+    const db = getDb();
+    return db.select()
+        .from(debts)
+        .where(and(
+            eq(debts.userId, userId),
+            eq(debts.status, status)
+        ))
+        .orderBy(desc(debts.createdAt))
+        .all();
+}
+
+export async function updateDebtStatus(id: number, status: "paid" | "unpaid"): Promise<Debt | undefined> {
+    const db = getDb();
+    return db.update(debts)
+        .set({ status })
+        .where(eq(debts.id, id))
+        .returning()
+        .get();
+}
+
+// Scheduled Messages (Stock Opname etc)
+export async function createScheduledMessage(data: {
+    userId: number;
+    message: string;
+    scheduledAt: Date;
+    type?: "stock_opname" | "reminder" | "other"
+}): Promise<ScheduledMessage> {
+    const db = getDb();
+    return db.insert(scheduledMessages).values({
+        ...data,
+        status: "pending",
+        type: data.type || "other"
+    }).returning().get();
+}
+
+export async function getPendingScheduledMessages(): Promise<ScheduledMessage[]> {
+    const db = getDb();
+    const now = new Date();
+    return db.select()
+        .from(scheduledMessages)
+        .where(and(
+            eq(scheduledMessages.status, "pending"),
+            lte(scheduledMessages.scheduledAt, now)
+        ))
+        .all();
+}
+
+export async function markScheduledMessageSent(id: number): Promise<void> {
+    const db = getDb();
+    await db.update(scheduledMessages)
+        .set({ status: "sent" })
+        .where(eq(scheduledMessages.id, id));
 }

@@ -10,6 +10,15 @@ export const categories = sqliteTable("categories", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const users = sqliteTable("users", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    telegramId: integer("telegram_id").unique().notNull(),
+    username: text("username"),
+    firstName: text("first_name"),
+    lastName: text("last_name"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 export const transactions = sqliteTable("transactions", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     amount: real("amount").notNull(),
@@ -59,13 +68,37 @@ export const userSettings = sqliteTable("user_settings", {
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const debts = sqliteTable("debts", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    debtorName: text("debtor_name").notNull(),
+    amount: real("amount").notNull(), // Positive = Receivables (Piutang), Negative = Payables (Utang)
+    description: text("description"),
+    dueDate: integer("due_date", { mode: "timestamp" }),
+    status: text("status", { enum: ["unpaid", "paid"] }).notNull().default("unpaid"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const scheduledMessages = sqliteTable("scheduled_messages", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    message: text("message").notNull(),
+    scheduledAt: integer("scheduled_at", { mode: "timestamp" }).notNull(),
+    status: text("status", { enum: ["pending", "sent", "failed"] }).notNull().default("pending"),
+    type: text("type", { enum: ["stock_opname", "reminder", "other"] }).default("other"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 // Types
 export type Category = typeof categories.$inferSelect;
+export type User = typeof users.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type MerchantMapping = typeof merchantMappings.$inferSelect;
 export type UserSettings = typeof userSettings.$inferSelect;
+export type Debt = typeof debts.$inferSelect;
+export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -74,6 +107,8 @@ export type InsertBudget = typeof budgets.$inferInsert;
 export type InsertGoal = typeof goals.$inferInsert;
 export type InsertMerchantMapping = typeof merchantMappings.$inferInsert;
 export type InsertUserSettings = typeof userSettings.$inferInsert;
+export type InsertDebt = typeof debts.$inferInsert;
+export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);

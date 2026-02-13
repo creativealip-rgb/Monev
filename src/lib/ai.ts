@@ -30,6 +30,7 @@ export interface AIResult {
     description: string;
     date: string;
     category: string;
+    paymentMethod?: "cash" | "qris" | "transfer";
 }
 
 export interface CategorizationResult {
@@ -42,12 +43,15 @@ export interface CategorizationResult {
 }
 
 export interface NLPResult {
-    intent: "transaction" | "query";
+    intent: "transaction" | "query" | "debt";
     amount?: number;
     description?: string;
     transactionType?: "expense" | "income";
     category?: string;
+    paymentMethod?: "cash" | "qris" | "transfer";
     queryEntities?: string[]; // e.g., ["saldo", "pemasukan", "goal"]
+    debtorName?: string;
+    debtType?: "receivable" | "payable";
 }
 
 export interface FinancialContext {
@@ -88,6 +92,7 @@ Extrahak informasi berikut dari gambar:
 - amount: Jumlah nominal transaksi (angka saja, tanpa Rupiah)
 - description: Deskripsi transaksi
 - date: Tanggal transaksi (format ISO YYYY-MM-DD). PENTING: Jika tanggal di struk terlihat sangat lama (misal tahun lalu), gunakan tanggal hari ini (${new Date().toISOString().split('T')[0]}) kecuali user menyebutkan tanggal spesifik.
+- paymentMethod: Deteksi metode pembayaran ("cash", "qris", "transfer") jika ada indikasi di gambar. Default "qris" jika tidak yakin, kecuali struk fisik yang terlihat bayar tunai.
 
 Kategori yang tersedia:
 ${CATEGORIES.map(c => `- ${c}`).join("\n")}
@@ -361,16 +366,33 @@ Jawab dalam format JSON saja:
     }
 }
 
-export async function getPsychologicalImpact(amount: number, hourlyRate: number, primaryGoal?: { name: string; targetAmount: number }) {
+export async function getPsychologicalImpact(
+    amount: number,
+    hourlyRate: number,
+    primaryGoal?: { name: string; targetAmount: number },
+    monthlySaving: number = 0 // Estimated monthly saving capacity
+) {
     const workHours = amount / hourlyRate;
-    let message = `⏱️ Pengeluaran ini sebanding dengan **${workHours.toFixed(1)} jam** kerja kamu.`;
+    let message = `⏱️ Setara **${workHours.toFixed(1)} jam** kerja.`;
 
     if (primaryGoal) {
         const percentOfGoal = (amount / primaryGoal.targetAmount) * 100;
-        message += `\n🎯 Ini setara dengan **${percentOfGoal.toFixed(2)}%** dari target **"${primaryGoal.name}"** kamu.`;
 
-        if (percentOfGoal > 0.05) {
-            message += `\n⚠️ Hati-hati Bos, jajan ini bikin target "${primaryGoal.name}" makin menjauh!`;
+        // Calculate Delay
+        // Asumsi: Jika saving 0, gunakan 20% dari budget bulanan (misal UMR 5jt -> saving 1jt) as fallback or just 0.
+        const dailySaving = monthlySaving > 0 ? monthlySaving / 30 : (amount * 10); // Fallback: anggap user nabung 10% dari jajan ini per hari (arbitrary heuristic)
+
+        const delayDays = Math.ceil(amount / dailySaving);
+
+        if (percentOfGoal > 0.1 || amount > 50000) {
+            message += `\n🎯 **Goal Alert: "${primaryGoal.name}"**`;
+            message += `\n📉 Jajan ini bikin targetmu **MUNDUR ${delayDays} HARI**!`;
+
+            if (delayDays > 7) {
+                message += `\n💀 Yakin? Seminggu kerja rodi cuma buat ini?`;
+            } else if (delayDays > 3) {
+                message += `\n⚠️ Sayang banget lho...`;
+            }
         }
     }
 
@@ -412,6 +434,40 @@ Aturan:
     return response.choices[0]?.message?.content || "Pikir-pikir dulu deh, mending simpan duitnya buat masa depan.";
 }
 
+export async function getSocialDebtReminder(debtorName: string, amount: number, type: "polite" | "firm" | "aggressive" = "polite"): Promise<string> {
+    const openai = getOpenAIClient();
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            {
+                role: "system",
+                content: `Anda adalah asisten "Social Debt Collector" yang ahli merangkai kata-kata untuk menagih utang.
+                
+Tugas Anda: Buatlah pesan singkat untuk menagih utang ke teman/kerabat.
+
+Konteks:
+- Nama: ${debtorName}
+- Jumlah: Rp ${amount.toLocaleString('id-ID')}
+- Gaya Bahasa: ${type}
+
+Gaya Bahasa Guide:
+1. "polite": Sopan, halus, basa-basi dulu (e.g., "Halo bro, apa kabar? Btw mau ingetin...").
+2. "firm": Tegas, to the point, formal tapi tidak kasar (e.g., "Halo, mohon segera diselesaikan...").
+3. "aggressive": Sarkas, menyindir, atau sedikit menekan (e.g., "Woy, gaya elit bayar utang sulit...").
+
+Buat pesan yang natural dan cocok dikirim via WhatsApp.`
+            },
+            {
+                role: "user",
+                content: "Buatkan draft pesannya."
+            }
+        ],
+        max_tokens: 200,
+    });
+
+    return response.choices[0]?.message?.content || `Halo ${debtorName}, jangan lupa utangnya Rp ${amount.toLocaleString('id-ID')} ya. Thanks!`;
+}
+
 /**
  * Natural Language Processor for flexible text input.
  * Handles "freelance 10 juta", "tadi makan soto 25rb" (TRANSACTION)
@@ -429,23 +485,28 @@ export async function processNLP(text: string): Promise<NLPResult | null> {
                     
 Tentukan intent:
 1. "transaction": Jika user menyebutkan barang/jasa dan nominal uang (e.g., "makan 20rb", "gajian 10jt").
-2. "query": Jika user bertanya tentang saldo, pengeluaran, pemasukan, atau target goal. Pastikan pertanyaan tetap di ranah KEUANGAN PRIBADI.
+2. "debt": Jika user menyebutkan pinjaman, utang, atau bayarin orang lain (e.g., "pinjamkan Budi 50rb", "utang ke Ani 20rb", "bayarin makan Siti 30rb").
+3. "query": Jika user bertanya tentang saldo, pengeluaran, pemasukan, atau target goal.
 
-Jika user bertanya hal yang sama sekali tidak berhubungan dengan keuangan (misal: "siapa presiden?", "resep nasi goreng", dll), tetap kategorikan sebagai "query", tapi asisten di langkah selanjutnya akan menolak menjawab secara detail.
+Jika user bertanya hal yang sama sekali tidak berhubungan dengan keuangan, tetap kategorikan sebagai "query".
 
 Untuk "transaction":
-- Ekstrak 'amount' (nominal angka), 'description', 'transactionType' (expense/income), dan 'category'.
+- Ekstrak 'amount', 'description', 'transactionType' (expense/income), 'category', dan 'paymentMethod' (cash/transfer/qris - default "qris" untuk jajan, "transfer" untuk gaji/besar, "cash" jika disebut tunai).
+
+Untuk "debt":
+- Ekstrak 'amount', 'debtorName' (nama orangnya), 'debtType' ("receivable" jika kita meminjamkan/bayarin, "payable" jika kita berhutang).
+- 'description' (optional, e.g. "makan siang").
 
 Untuk "query":
-- Ekstrak 'queryEntities' (daftar hal yang ditanyakan: "saldo", "pemasukan", "pengeluaran", "goal").
+- Ekstrak 'queryEntities'.
 
 Jawab dalam format JSON saja:
 {
-  "intent": "transaction",
-  "amount": 10000000,
-  "description": "gajian freelance",
-  "transactionType": "income",
-  "category": "Freelance"
+  "intent": "debt",
+  "amount": 50000,
+  "debtorName": "Budi",
+  "debtType": "receivable",
+  "description": "pinjam uang"
 }
 Atau:
 {
@@ -471,7 +532,10 @@ Atau:
             description: parsed.description || text,
             transactionType: parsed.transactionType,
             category: parsed.category,
-            queryEntities: parsed.queryEntities
+            paymentMethod: parsed.paymentMethod,
+            queryEntities: parsed.queryEntities,
+            debtorName: parsed.debtorName,
+            debtType: parsed.debtType
         };
     } catch (e) {
         console.error("NLP Error:", e);

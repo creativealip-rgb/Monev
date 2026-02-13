@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { processOCR, processVoice, categorizeTransaction, getPsychologicalImpact, getImpulseJudgment, processNLP, askFinanceAgent, CATEGORIES } from '@/lib/ai';
-import { createTransaction, getCategories, getUserSettings, getGoalById, getRecentTransactionsByCategory, getBudgets, getGoals, updateUserSettings, getMonthlyStats } from '@/backend/db/operations';
+import { processOCR, processVoice, categorizeTransaction, getPsychologicalImpact, getImpulseJudgment, processNLP, askFinanceAgent, getSocialDebtReminder, CATEGORIES } from '@/lib/ai';
+import { createTransaction, getCategories, getUserSettings, getGoalById, getRecentTransactionsByCategory, getBudgets, getGoals, updateUserSettings, getMonthlyStats, upsertUser, createDebt, createScheduledMessage } from '@/backend/db/operations';
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -13,8 +13,19 @@ export async function POST(req: NextRequest) {
     const text = body.message.text;
     const photo = body.message.photo;
     const voice = body.message.voice;
+    const from = body.message.from;
 
     try {
+        // Upsert User
+        if (from) {
+            await upsertUser({
+                telegramId: from.id,
+                username: from.username,
+                firstName: from.first_name,
+                lastName: from.last_name
+            });
+        }
+
         if (photo) {
             console.log("Processing Telegram Photo message...");
             await sendTelegramMessage(chatId, "📸 Menemukan gambar, sedang mengunduh...");
@@ -96,6 +107,27 @@ export async function POST(req: NextRequest) {
                 } else {
                     await sendTelegramMessage(chatId, `❌ Format salah. Gunakan: "set rate 50000"`);
                 }
+            } else if (lowerText.startsWith('/remind ')) {
+                // Command: /remind [Name] [Amount (optional)]
+                const parts = text.substring(8).trim().split(' ');
+                const debtorName = parts[0];
+                const amountStr = parts[1] || "0";
+                const amount = parseInt(amountStr.replace(/\./g, '').replace(/,/g, '')) || 0;
+
+                if (debtorName) {
+                    await sendTelegramMessage(chatId, `💬 Sebentar, saya racik kata-kata mutiara buat nagih si **${debtorName}**...`);
+                    const reminder = await getSocialDebtReminder(debtorName, amount, "polite"); // Default polite
+                    await sendTelegramMessage(chatId, `👇 Copy-paste ini ke WhatsApp dia:\n\n${reminder}`);
+
+                    if (amount > 1000000) {
+                        const firmReminder = await getSocialDebtReminder(debtorName, amount, "firm");
+                        setTimeout(async () => {
+                            await sendTelegramMessage(chatId, `😈 Opsi lebih tegas (kalau dia ngeyel):\n\n${firmReminder}`);
+                        }, 2000);
+                    }
+                } else {
+                    await sendTelegramMessage(chatId, `❌ Format: "/remind [Nama] [Jumlah]"\nContoh: "/remind Budi 50000"`);
+                }
             } else if (lowerText === '/start' || lowerText === 'test') {
                 await sendTelegramMessage(chatId, "Halo! Saya asisten keuangan kamu. 🚀\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ Pengaturan:\n- `set goal [nama]` : Set target tabungan utama\n- `set rate [angka]` : Set gaji per jam kamu");
             } else {
@@ -126,6 +158,42 @@ export async function POST(req: NextRequest) {
                         });
 
                         await sendTelegramMessage(chatId, aiReply);
+                    } else if (nlpParsed.intent === "debt") {
+                        // SOCIAL & CASH - Debt Handling
+                        const debtAmount = nlpParsed.amount || 0;
+                        const debtor = nlpParsed.debtorName || "Seseorang";
+                        // If we are LENDING (receivable) -> amount is positive.
+                        // If we are BORROWING (payable) -> amount should be negative for logic, but usually stored as positive with type distinction?
+                        // Let's store amount as positive, but use description to clarify context or add a type field if we had one.
+                        // For now, schema has 'amount'. Positive = Receivable (Orang utang ke kita), Negative = Payable (Kita utang).
+
+                        let finalAmount = debtAmount;
+                        let responseMsg = "";
+
+                        if (nlpParsed.debtType === "payable") {
+                            finalAmount = -debtAmount;
+                            responseMsg = `📝 **Catatan Utang**\n\nKamu berutang ke **${debtor}** sebesar Rp ${debtAmount.toLocaleString('id-ID')}.\n\nJangan lupa bayar ya! 💸`;
+                        } else {
+                            responseMsg = `📝 **Catatan Piutang**\n\n**${debtor}** berutang ke kamu sebesar Rp ${debtAmount.toLocaleString('id-ID')}.\n\nNanti saya ingatkan buat nagih! 🔫`;
+                        }
+
+                        // Need to get userId from chatId
+                        // We upserted user at the beginning, so we can fetch user by telegramId
+                        const { getUserByTelegramId } = await import('@/backend/db/operations');
+                        const user = await getUserByTelegramId(chatId);
+
+                        if (user) {
+                            await createDebt({
+                                userId: user.id,
+                                debtorName: debtor,
+                                amount: finalAmount,
+                                description: nlpParsed.description || "Utang via Bot",
+                            });
+                            await sendTelegramMessage(chatId, responseMsg);
+                        } else {
+                            await sendTelegramMessage(chatId, "⚠️ Gagal mencatat utang. User tidak ditemukan.");
+                        }
+
                     } else {
                         // Original transaction logic
                         // If AI didn't provide a category, use categorizeTransaction for more depth
@@ -193,6 +261,7 @@ async function saveAndNotify(chatId: number, parsed: any) {
             categoryId: category.id,
             type: type,
             date: new Date(), // Always use today's date for Telegram entries
+            paymentMethod: parsed.paymentMethod || "qris", // Default to QRIS if not detected
         });
 
         const formattedDate = format(transaction.date, "dd MMM yyyy", { locale: id });
@@ -208,7 +277,14 @@ async function saveAndNotify(chatId: number, parsed: any) {
                 if (settings.primaryGoalId) {
                     primaryGoal = await getGoalById(settings.primaryGoalId);
                 }
-                const psychologicalImpact = await getPsychologicalImpact(amount, settings.hourlyRate, primaryGoal);
+
+                // Calculate Monthly Saving (Income - Expense) for this month
+                const now = new Date();
+                const stats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
+                // If balance is negative or zero, assume minimum saving capacity (e.g. 1 million or 10% income) for calculation sake
+                const monthlySaving = stats.balance > 0 ? stats.balance : (stats.income * 0.2) || 1000000;
+
+                const psychologicalImpact = await getPsychologicalImpact(amount, settings.hourlyRate, primaryGoal, monthlySaving);
                 message += `\n\n${psychologicalImpact}`;
             } catch (pError) {
                 console.error("Psychological Calculation Error:", pError);
@@ -218,6 +294,44 @@ async function saveAndNotify(chatId: number, parsed: any) {
         // Phase 3: Freelance Reality Check (Income Only)
         if (type === 'income' && amount >= 5000000) {
             message += `\n\n💰 **FREELANCE REALITY CHECK**\n\nMantap, Bos! Dapat Rp ${amount.toLocaleString('id-ID')} 🔥\nTapi ingat, ini harus cukup buat hidup beberapa bulan ke depan. Saya akan "umpetin" sebagian saldo ini di dashboard biar kamu nggak khilaf belanja ya! 😉`;
+        }
+
+        // Phase 6: Reimbursable Spy (Tech Vendors)
+        const techVendors = ["namecheap", "niagahoster", "aws", "google cloud", "digitalocean", "envato", "themeforest", "godaddy"];
+        const isTechVendor = parsed.merchantName && techVendors.some(v => parsed.merchantName.toLowerCase().includes(v));
+
+        if (type === 'expense' && isTechVendor) {
+            message += `\n\n🕵️ **REIMBURSABLE SPY**\n`;
+            message += `Lho, beli aset digital di **${parsed.merchantName}**?`;
+            message += `\nIni buat projek klien siapa? Jangan lupa tagih ya! 🧾`;
+        }
+
+        // Phase 6: Proactive Split Bill (Large F&B)
+        if (type === 'expense' && category.name === "Makan & Minuman" && amount > 500000) {
+            message += `\n\n💸 **SPLIT BILL CHECK**\n`;
+            message += `Habis Rp ${amount.toLocaleString('id-ID')} buat makan? 😲`;
+            message += `\nIni traktir atau patungan? Kalau patungan, langsung ketik command:\n\`/remind [Nama] [Jumlah]\` biar nggak lupa nagih!`;
+        }
+
+        // Phase 6: Stock Opname Scheduler (Cash Withdrawal)
+        // Phase 6: Stock Opname Scheduler (Cash Withdrawal)
+        if (type === 'expense' && (parsed.description?.toLowerCase().includes("tarik tunai") || parsed.description?.toLowerCase().includes("ambil uang"))) {
+            const scheduleDate = new Date();
+            scheduleDate.setDate(scheduleDate.getDate() + 3); // Schedule for 3 days later
+
+            // Dynamic import to avoid circular dependency
+            const { getUserByTelegramId } = await import('@/backend/db/operations');
+            const user = await getUserByTelegramId(chatId);
+
+            if (user) {
+                await createScheduledMessage({
+                    userId: user.id,
+                    message: `🕵️ **STOCK OPNAME (CASH)**\n\n3 hari lalu kamu tarik tunai Rp ${amount.toLocaleString('id-ID')}.\nCoba cek dompet sekarang, sisa berapa lembar? 💵\n\nJawab jujur ya, biar saya catat "uang gaib"-nya.`,
+                    scheduledAt: scheduleDate,
+                    type: "stock_opname"
+                });
+                console.log(`Stock Opname scheduled for user ${user.id}`);
+            }
         }
 
         await sendTelegramMessage(chatId, message);

@@ -1,36 +1,53 @@
-"use client";
-
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { BottomNav } from "@/frontend/components/BottomNav";
-import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
-import { useState } from "react";
+import ClientLayout from "./ClientLayout";
+import { Metadata, Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+    title: "Monev - Agentic Finance",
+    description: "Asisten keuangan pribadi berbasis AI yang proaktif.",
+    manifest: "/manifest.json",
+    icons: {
+        icon: "/icon.svg",
+        apple: "/icon.svg",
+    },
+};
+
+export const viewport: Viewport = {
+    themeColor: "#7c3aed",
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+};
 
 export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
-
     return (
-        <html lang="en">
+        <html lang="id">
             <body className={inter.className}>
-                <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-100">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-200/30 via-transparent to-transparent" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-200/30 via-transparent to-transparent" />
-                </div>
-                <main className="min-h-screen max-w-[500px] mx-auto bg-slate-50/40 backdrop-blur-xl shadow-2xl shadow-blue-900/10 pb-24 relative">
-                    {children}
-                </main>
-                <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />
-                <AddTransactionSheet 
-                    isOpen={isAddSheetOpen} 
-                    onClose={() => setIsAddSheetOpen(false)} 
-                    onSuccess={() => window.location.reload()}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            if ('serviceWorker' in navigator) {
+                                caches.keys().then(function(names) {
+                                    for (let name of names) caches.delete(name);
+                                });
+                                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                                    for (let registration of registrations) {
+                                        registration.unregister();
+                                    }
+                                });
+                            }
+                        `,
+                    }}
                 />
+                <ClientLayout>{children}</ClientLayout>
             </body>
         </html>
     );
