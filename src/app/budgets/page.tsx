@@ -63,18 +63,12 @@ export default function BudgetsPage() {
     const currentYear = new Date().getFullYear();
 
     // Initialize from localStorage directly
-    const [activeTab, setActiveTab] = useState<"budgets" | "goals">(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("budgetsActiveTab");
-            if (saved === "budgets" || saved === "goals") return saved;
-        }
-        return "budgets";
-    });
+    const [activeTab, setActiveTab] = useState<"budgets" | "goals">("budgets");
 
     // Hydration fix: sync with localStorage after mount
     useEffect(() => {
         const saved = localStorage.getItem("budgetsActiveTab");
-        if ((saved === "budgets" || saved === "goals") && saved !== activeTab) {
+        if ((saved === "budgets" || saved === "goals")) {
             setActiveTab(saved);
         }
     }, []);

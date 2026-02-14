@@ -61,11 +61,28 @@ export interface FinancialContext {
         balance: number;
     };
     goals: Array<{
+        id: number;
         name: string;
         targetAmount: number;
         currentAmount: number;
         remaining: number;
         percent: number;
+    }>;
+    budgets: Array<{
+        id: number;
+        category: string;
+        limit: number;
+        spent: number;
+        remaining: number;
+        percent: number;
+    }>;
+    transactions: Array<{
+        id: number;
+        date: string;
+        amount: number;
+        description: string;
+        category: string;
+        type: "expense" | "income";
     }>;
     userName?: string;
 }
@@ -492,6 +509,10 @@ Jika user bertanya hal yang sama sekali tidak berhubungan dengan keuangan, tetap
 
 Untuk "transaction":
 - Ekstrak 'amount', 'description', 'transactionType' (expense/income), 'category', dan 'paymentMethod' (cash/transfer/qris - default "qris" untuk jajan, "transfer" untuk gaji/besar, "cash" jika disebut tunai).
+- PENTING: Pilih kategori yang paling sesuai dari daftar berikut:
+${CATEGORIES.map(c => `- ${c}`).join("\n")}
+- Jika user membeli barang fisik (seperti sepatu, baju, elektronik), gunakan kategori "Belanja".
+- Jika user membeli makanan/minuman, gunakan "Makan & Minuman".
 
 Untuk "debt":
 - Ekstrak 'amount', 'debtorName' (nama orangnya), 'debtType' ("receivable" jika kita meminjamkan/bayarin, "payable" jika kita berhutang).
@@ -508,11 +529,7 @@ Jawab dalam format JSON saja:
   "debtType": "receivable",
   "description": "pinjam uang"
 }
-Atau:
-{
-  "intent": "query",
-  "queryEntities": ["saldo", "pemasukan"]
-}`
+Aturan categorization yang ketat: Selalu gunakan salah satu dari kategori yang tersedia di atas.`
                 },
                 {
                     role: "user",
@@ -546,7 +563,23 @@ Atau:
 /**
  * AI Assistant to answer financial questions based on context.
  */
-export async function askFinanceAgent(query: string, context: FinancialContext): Promise<string> {
+export async function askFinanceAgent(
+    query: string,
+    context: FinancialContext,
+    history: { role: "user" | "assistant", content: string }[] = []
+): Promise<{ content: string; toolCall?: any }> {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const timeStr = now.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
     try {
         const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
@@ -555,7 +588,18 @@ export async function askFinanceAgent(query: string, context: FinancialContext):
                 {
                     role: "system",
                     content: `Anda adalah asisten keuangan pribadi yang cerdas dan bersahabat. 
-Tugas Anda adalah menjawab pertanyaan user berdasarkan data keuangan berikut:
+SAPAAN: Panggil user dengan sebutan "Bos" atau "Alip".
+
+WAKTU SEKARANG: ${dateStr}, pukul ${timeStr}.
+PENTING: Gunakan waktu sekarang sebagai acuan untuk kata "hari ini", "kemarin", "besok", atau "bulan ini".
+
+SUMBER KEBENARAN UTAMA:
+Data yang tertera di bawah ini (DATA BULAN INI, TARGET GOAL, dll.) adalah data ASLI dari database saat ini. 
+PENTING: Jika riwayat obrolan (history) sebelumnya menyebutkan sebuah data sudah dihapus atau diubah, tapi data tersebut MASIH MUNCUL atau BERBEDA di context di bawah ini, maka Anda HARUS mengikuti data di context ini. Jangan berbohong kepada Bos berdasarkan ingatan masa lalu jika database berkata lain.
+
+Tugas Anda adalah:
+1. Menjawab pertanyaan user berdasarkan DATA REAL-TIME yang disediakan di bawah.
+2. Membantu mencatat/ubah/hapus transaksi jika diminta.
 
 DATA BULAN INI:
 - Pemasukan: Rp ${context.monthlyStats.income.toLocaleString('id-ID')}
@@ -563,26 +607,240 @@ DATA BULAN INI:
 - Saldo (Pemasukan - Pengeluaran): Rp ${context.monthlyStats.balance.toLocaleString('id-ID')}
 
 TARGET GOAL:
-${context.goals.map(g => `- ${g.name}: Terkumpul Rp ${g.currentAmount.toLocaleString('id-ID')} dari Rp ${g.targetAmount.toLocaleString('id-ID')} (${g.percent.toFixed(1)}%). Sisa: Rp ${g.remaining.toLocaleString('id-ID')}`).join("\n")}
+${context.goals.map(g => `- [ID: ${g.id}] ${g.name}: Terkumpul Rp ${g.currentAmount.toLocaleString('id-ID')} dari Rp ${g.targetAmount.toLocaleString('id-ID')} (${g.percent.toFixed(1)}%). Sisa: Rp ${g.remaining.toLocaleString('id-ID')}`).join("\n")}
+
+BUDGET BULAN INI:
+${context.budgets.map(b => `- [ID: ${b.id}] ${b.category}: Limit Rp ${b.limit.toLocaleString('id-ID')}, Terpakai Rp ${b.spent.toLocaleString('id-ID')} (${b.percent.toFixed(1)}%). Sisa: Rp ${b.remaining.toLocaleString('id-ID')}`).join("\n")}
+
+RIWAYAT TRANSAKSI TERAKHIR (30 transaksi terakhir):
+${context.transactions.map(t => `- [ID: ${t.id}] [${new Date(t.date).toLocaleDateString('id-ID')}] ${t.description}: ${t.type === 'expense' ? '-' : '+'}Rp ${t.amount.toLocaleString('id-ID')} (${t.category})`).join("\n")}
 
 Aturan:
 1. Jawab dengan bahasa Indonesia yang santai, suportif, dan ringkas.
 2. Gunakan emoji yang relevan.
 3. Jika saldo menipis, berikan saran penghematan singkat.
 4. Jika goal hampir tercapai, berikan semangat!
-5. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan (politik, selebriti, pengetahuan umum non-finansial, dll), jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.** Jangan menjawab pertanyaan seperti "siapa presiden", "cuaca hari ini", atau topik non-keuangan lainnya.`
+5. **MENCATAT/UBAH/HAPUS TRANSAKSI**: Gunakan tool 'record_transaction', 'update_transaction', atau 'delete_transaction'.
+   - Untuk update/delete, WAJIB gunakan ID yang tertera di data riwayat.
+6. **BUAT/UBAH/HAPUS BUDGET**: Gunakan tool 'create_budget', 'update_budget', atau 'delete_budget'.
+   - Untuk update/delete, WAJIB gunakan ID yang tertera di data budget.
+7. **BUAT/UBAH/HAPUS GOAL**: Gunakan tool 'create_goal', 'update_goal', atau 'delete_goal'.
+   - Untuk update/delete, WAJIB gunakan ID yang tertera di data goal.
+   - **PENTING**: Jika user ingin membuat goal baru yang belum ada, gunakan 'create_goal'. JANGAN mengubah goal lama milik user
+8. **PENGELOLAAN DANA GOAL**:
+   - Untuk menambah tabungan ke goal dari Saldo Utama: Gunakan tool add_goal_funds.
+   - Untuk memindahkan dana antar goal atau mengembalikan dana goal ke Saldo Utama: Gunakan tool reallocate_goal_funds.
+   - Jika Bos minta hapus goal yang MASIH ADA TABUNGANNYA (currentAmount > 0), Anda DILARANG langsung memanggil delete_goal. Anda WAJIB bertanya dulu: "Bos, uang Rp XXX di goal [Nama Goal] mau dipindah ke goal mana? Atau mau saya masukkan kembali ke Saldo (Pemasukan)?"
+9. **PENTING - DATA YANG DIHAPUS**: Jika Anda baru saja menghapus sebuah data (transaksi/budget/goal) menggunakan tool delete_* data tersebut sudah tidak ada di database. 
+   - JANGAN mencoba mengupdate ID yang baru saja dihapus. 
+   - Jika user ingin "mengganti" data yang baru saja dihapus, gunakan tool 'create_*' untuk membuat entry baru.
+10. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan, jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.**`
                 },
+                ...history.map(h => ({
+                    role: h.role,
+                    content: h.content
+                })),
                 {
                     role: "user",
                     content: query
                 }
             ],
+            tools: [
+                {
+                    type: "function",
+                    function: {
+                        name: "record_transaction",
+                        description: "Mencatat transaksi keuangan baru (pemasukan atau pengeluaran)",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                amount: { type: "number", description: "Nominal transaksi (angka positif)" },
+                                description: { type: "string", description: "Keterangan transaksi" },
+                                category: { type: "string", description: "Nama kategori" },
+                                type: { type: "string", enum: ["expense", "income"], description: "Tipe transaksi" }
+                            },
+                            required: ["amount", "description", "category", "type"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "create_budget",
+                        description: "Membuat budget bulanan baru untuk kategori tertentu",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                amount: { type: "number", description: "Limit budget (angka positif)" },
+                                category: { type: "string", description: "Nama kategori budget" },
+                                month: { type: "number", description: "Bulan (1-12)" },
+                                year: { type: "number", description: "Tahun" }
+                            },
+                            required: ["amount", "category", "month", "year"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "create_goal",
+                        description: "Membuat target tabungan/financial goal baru",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                name: { type: "string", description: "Nama target (misal: Beli Laptop)" },
+                                targetAmount: { type: "number", description: "Jumlah yang ingin dikumpulkan" },
+                                deadline: { type: "string", description: "Tenggat waktu (format ISO: YYYY-MM-DD)" },
+                                icon: { type: "string", description: "Emoji yang cocok untuk goal ini" }
+                            },
+                            required: ["name", "targetAmount"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "update_transaction",
+                        description: "Mengubah data transaksi yang sudah ada",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID transaksi yang akan diubah" },
+                                amount: { type: "number", description: "Nominal baru" },
+                                description: { type: "string", description: "Deskripsi baru" },
+                                category: { type: "string", description: "Kategori baru" },
+                                type: { type: "string", enum: ["expense", "income"], description: "Tipe baru" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "delete_transaction",
+                        description: "Menghapus transaksi",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID transaksi yang akan dihapus" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "update_budget",
+                        description: "Mengubah limit budget bulanan",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID budget yang akan diubah" },
+                                amount: { type: "number", description: "Limit baru" }
+                            },
+                            required: ["id", "amount"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "delete_budget",
+                        description: "Menghapus budget",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID budget yang akan dihapus" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "update_goal",
+                        description: "Mengubah target tabungan/goal yang sudah ada",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID goal yang akan diubah" },
+                                name: { type: "string", description: "Nama baru" },
+                                targetAmount: { type: "number", description: "Target nominal baru" },
+                                deadline: { type: "string", description: "Deadline baru (YYYY-MM-DD)" },
+                                icon: { type: "string", description: "Icon/Emoji baru" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "reallocate_goal_funds",
+                        description: "Memindahkan dana tabungan dari satu goal ke goal lain ATAU dari goal kembali ke saldo umum (Pemasukan)",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                fromGoalId: { type: "number", description: "ID goal sumber dana" },
+                                toGoalId: { type: "number", description: "ID goal tujuan (opsional, jika target adalah 'goal')" },
+                                target: { type: "string", enum: ["goal", "balance"], description: "Tujuan pengalokasian dana" },
+                                amount: { type: "number", description: "Jumlah dana yang akan dipindah (default: semua dana di goal sumber)" }
+                            },
+                            required: ["fromGoalId", "target"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "add_goal_funds",
+                        description: "Menambahkan dana ke sebuah goal dari saldo utama (akan dicatat sebagai pengeluaran/tabungan)",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                goalId: { type: "number", description: "ID goal yang akan ditambah dananya" },
+                                amount: { type: "number", description: "Jumlah dana yang ditambahkan" }
+                            },
+                            required: ["goalId", "amount"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "delete_goal",
+                        description: "Menghapus target tabungan/goal",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID goal yang akan dihapus" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                }
+            ],
+            tool_choice: "auto",
             max_tokens: 500,
         });
 
-        return response.choices[0]?.message?.content || "Duh, maaf saya agak bingung nih. Bisa diulang pertanyaannya?";
+        const message = response.choices[0]?.message;
+
+        if (message?.tool_calls && message.tool_calls.length > 0) {
+            return {
+                content: message.content || "Sedang memproses catatan transaksi Anda...",
+                toolCall: message.tool_calls[0]
+            };
+        }
+
+        return {
+            content: message?.content || "Duh, maaf saya agak bingung nih. Bisa diulang pertanyaannya?"
+        };
     } catch (e) {
         console.error("Agent Chat Error:", e);
-        return "Maaf, asisten AI sedang istirahat sebentar. Coba tanya lagi nanti ya!";
+        return { content: "Maaf, asisten AI sedang istirahat sebentar. Coba tanya lagi nanti ya!" };
     }
 }

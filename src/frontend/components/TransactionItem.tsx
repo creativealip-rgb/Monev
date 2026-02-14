@@ -128,15 +128,22 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             {/* Content */}
             <div className="flex-1 min-w-0 overflow-hidden mr-4">
                 <h4 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-1 break-all">
-                    {transaction.description}
+                    {transaction.description || "Tanpa Deskripsi"}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] font-medium text-slate-500 truncate">
-                        {transaction.category}
+                        {transaction.category || "Lainnya"}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
                     <span className="text-[11px] font-medium text-slate-400 flex-shrink-0">
-                        {format(new Date(transaction.created_at), "dd MMM, HH:mm")}
+                        {(() => {
+                            try {
+                                const date = new Date(transaction.created_at);
+                                return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm");
+                            } catch (e) {
+                                return "N/A";
+                            }
+                        })()}
                     </span>
                 </div>
             </div>

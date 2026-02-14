@@ -328,9 +328,15 @@ export async function updateGoalProgress(id: number, amount: number): Promise<Go
         .get();
 }
 
-export async function removeGoal(id: number): Promise<void> {
+export async function removeGoal(id: number): Promise<Goal | undefined> {
     const db = getDb();
-    await db.delete(goals).where(eq(goals.id, id));
+
+    // Check if this goal is set as primaryGoalId in userSettings
+    await db.update(userSettings)
+        .set({ primaryGoalId: null })
+        .where(eq(userSettings.primaryGoalId, id));
+
+    return db.delete(goals).where(eq(goals.id, id)).returning().get();
 }
 
 export async function getRecentTransactionsByCategory(categoryId: number, limit: number = 5): Promise<Transaction[]> {

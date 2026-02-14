@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { 
-    Camera, 
-    Bell, 
-    Mic, 
-    Search, 
-    ShieldAlert, 
+import {
+    Camera,
+    Bell,
+    Mic,
+    Search,
+    ShieldAlert,
     TrendingUp,
     Wallet,
     Clock,
@@ -26,50 +26,50 @@ const features = [
     {
         category: "⭐ Fitur Andalan",
         items: [
-            { 
-                id: 101, 
-                icon: Sparkles, 
-                title: "Insight AI", 
+            {
+                id: 101,
+                icon: Sparkles,
+                title: "Monev AI",
                 desc: "Chat dengan AI Assistant untuk analisis keuangan",
                 status: "ready",
                 color: "purple"
             },
-            { 
-                id: 102, 
-                icon: PieChart, 
-                title: "Analisa", 
+            {
+                id: 102,
+                icon: PieChart,
+                title: "Analisa",
                 desc: "Analisis cashflow dan pengeluaran by kategori",
                 status: "ready",
                 color: "blue"
             },
-            { 
-                id: 103, 
-                icon: PiggyBank, 
-                title: "Tabungan", 
+            {
+                id: 103,
+                icon: PiggyBank,
+                title: "Tabungan",
                 desc: "Tracking goals dan target tabungan",
                 status: "ready",
                 color: "emerald"
             },
-            { 
-                id: 104, 
-                icon: Receipt, 
-                title: "Tagihan", 
+            {
+                id: 104,
+                icon: Receipt,
+                title: "Tagihan",
                 desc: "Kelola tagihan rutin dan utang piutang",
                 status: "ready",
                 color: "rose"
             },
-            { 
-                id: 105, 
-                icon: TrendingUp, 
-                title: "Investasi", 
+            {
+                id: 105,
+                icon: TrendingUp,
+                title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
                 status: "coming",
                 color: "amber"
             },
-            { 
-                id: 106, 
-                icon: Crown, 
-                title: "Upgrade", 
+            {
+                id: 106,
+                icon: Crown,
+                title: "Upgrade",
                 desc: "Upgrade ke akun Pro/Expert untuk fitur premium",
                 status: "ready",
                 color: "indigo"
@@ -79,26 +79,26 @@ const features = [
     {
         category: "🔍 Smart Input",
         items: [
-            { 
-                id: 1, 
-                icon: Camera, 
-                title: "Screenshot Agent", 
+            {
+                id: 1,
+                icon: Camera,
+                title: "Screenshot Agent",
                 desc: "Upload screenshot bukti transfer/QRIS",
                 status: "ready",
                 color: "emerald"
             },
-            { 
-                id: 2, 
-                icon: Bell, 
-                title: "Notification Listener", 
+            {
+                id: 2,
+                icon: Bell,
+                title: "Notification Listener",
                 desc: "Auto-detect notifikasi Gojek/BCA/Tokopedia",
                 status: "coming",
                 color: "blue"
             },
-            { 
-                id: 3, 
-                icon: Mic, 
-                title: "Voice Memo Catcher", 
+            {
+                id: 3,
+                icon: Mic,
+                title: "Voice Memo Catcher",
                 desc: "Rekam suara untuk input multi-item",
                 status: "ready",
                 color: "purple"
@@ -108,18 +108,18 @@ const features = [
     {
         category: "🧠 Smart Categorization",
         items: [
-            { 
-                id: 4, 
-                icon: Search, 
-                title: "Detective Agent", 
+            {
+                id: 4,
+                icon: Search,
+                title: "Detective Agent",
                 desc: "Google search untuk merchant ambigu",
                 status: "coming",
                 color: "indigo"
             },
-            { 
-                id: 5, 
-                icon: ShieldAlert, 
-                title: "Reimbursable Spy", 
+            {
+                id: 5,
+                icon: ShieldAlert,
+                title: "Reimbursable Spy",
                 desc: "Deteksi pengeluaran untuk klien",
                 status: "coming",
                 color: "amber"
@@ -129,34 +129,34 @@ const features = [
     {
         category: "🛡️ Psychological Defense",
         items: [
-            { 
-                id: 6, 
-                icon: Wallet, 
-                title: "Goal Defender", 
+            {
+                id: 6,
+                icon: Wallet,
+                title: "Goal Defender",
                 desc: "Hitung dampak pengeluaran pada goal",
                 status: "ready",
                 color: "rose"
             },
-            { 
-                id: 7, 
-                icon: ShieldAlert, 
-                title: "Impulse Buying Judge", 
+            {
+                id: 7,
+                icon: ShieldAlert,
+                title: "Impulse Buying Judge",
                 desc: "Intervensi sebelum checkout e-commerce",
                 status: "coming",
                 color: "orange"
             },
-            { 
-                id: 8, 
-                icon: Clock, 
-                title: "Time-Cost Translator", 
+            {
+                id: 8,
+                icon: Clock,
+                title: "Time-Cost Translator",
                 desc: "Konversi rupiah ke jam kerja",
                 status: "coming",
                 color: "cyan"
             },
-            { 
-                id: 9, 
-                icon: TrendingUp, 
-                title: "Freelance Reality Check", 
+            {
+                id: 9,
+                icon: TrendingUp,
+                title: "Freelance Reality Check",
                 desc: "Bagi income besar ke gaji bulanan",
                 status: "coming",
                 color: "teal"
@@ -166,26 +166,26 @@ const features = [
     {
         category: "⚡ Optimization",
         items: [
-            { 
-                id: 10, 
-                icon: Zap, 
-                title: "Subscription Hunter", 
+            {
+                id: 10,
+                icon: Zap,
+                title: "Subscription Hunter",
                 desc: "Deteksi & tracking langganan",
                 status: "coming",
                 color: "violet"
             },
-            { 
-                id: 11, 
-                icon: TrendingUp, 
-                title: "Idle Cash Optimizer", 
+            {
+                id: 11,
+                icon: TrendingUp,
+                title: "Idle Cash Optimizer",
                 desc: "Saran investasi untuk uang nganggur",
                 status: "coming",
                 color: "green"
             },
-            { 
-                id: 12, 
-                icon: Sparkles, 
-                title: "Inflation-Adjusted Saving", 
+            {
+                id: 12,
+                icon: Sparkles,
+                title: "Inflation-Adjusted Saving",
                 desc: "Sesuaikan target dengan inflasi",
                 status: "coming",
                 color: "pink"
@@ -195,18 +195,18 @@ const features = [
     {
         category: "👥 Social Finance",
         items: [
-            { 
-                id: 13, 
-                icon: Users, 
-                title: "Split Bill Coordinator", 
+            {
+                id: 13,
+                icon: Users,
+                title: "Split Bill Coordinator",
                 desc: "Bagi pengeluaran F&B dengan teman",
                 status: "coming",
                 color: "sky"
             },
-            { 
-                id: 14, 
-                icon: CreditCard, 
-                title: "Social Debt Collector", 
+            {
+                id: 14,
+                icon: CreditCard,
+                title: "Social Debt Collector",
                 desc: "Tracking & reminder hutang piutang",
                 status: "coming",
                 color: "lime"
@@ -216,18 +216,18 @@ const features = [
     {
         category: "💵 Cash Management",
         items: [
-            { 
-                id: 15, 
-                icon: Wallet, 
-                title: "Pocket Transfer Agent", 
+            {
+                id: 15,
+                icon: Wallet,
+                title: "Pocket Transfer Agent",
                 desc: "Track penarikan tunai ATM",
                 status: "coming",
                 color: "stone"
             },
-            { 
-                id: 16, 
-                icon: TrendingUp, 
-                title: "Burn Rate Check", 
+            {
+                id: 16,
+                icon: TrendingUp,
+                title: "Burn Rate Check",
                 desc: "Interogasi saldo tunai fisik",
                 status: "coming",
                 color: "neutral"
@@ -253,14 +253,14 @@ export default function FiturPage() {
     return (
         <div className="relative min-h-screen pb-28">
             {/* Header */}
-            <motion.header 
+            <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="sticky top-0 z-40 glass border-b border-slate-200/50 px-6 pt-12 pb-4"
             >
                 <div className="flex items-center gap-3 mb-4">
-                    <Link 
-                        href="/" 
+                    <Link
+                        href="/"
                         className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                     >
                         <ArrowLeft size={20} strokeWidth={2.5} />
@@ -273,7 +273,7 @@ export default function FiturPage() {
             </motion.header>
 
             {/* Features List */}
-            <motion.div 
+            <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

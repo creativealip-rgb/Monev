@@ -41,7 +41,7 @@ interface Category {
 }
 
 const mainFeatures = [
-    { label: "Insight AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
+    { label: "Monev AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
     { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "#" },
     { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/budgets" },
     { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "#" },
@@ -66,17 +66,19 @@ export default function Home() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
-    
+    const [mounted, setMounted] = useState(false);
+
     const today = new Date();
-    const formattedDate = format(today, "EEEE, d MMMM yyyy", { locale: id });
+    const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
 
     useEffect(() => {
+        setMounted(true);
         async function loadData() {
             try {
                 // Get current month stats
                 const currentMonth = new Date().getMonth() + 1;
                 const currentYear = new Date().getFullYear();
-                
+
                 const statsResponse = await fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
                 const statsResult = await statsResponse.json();
                 if (statsResult.success) {
@@ -86,13 +88,13 @@ export default function Home() {
                 // Get recent transactions
                 const transResponse = await fetch("/api/transactions");
                 const transResult = await transResponse.json();
-                
+
                 if (transResult.success) {
                     // Get categories for lookup
                     const catsResponse = await fetch("/api/categories");
                     const catsResult = await catsResponse.json();
                     const categories: Category[] = catsResult.success ? catsResult.data : [];
-                    
+
                     // Map transactions with category names
                     const mappedTransactions = transResult.data.slice(0, 5).map((t: {
                         id: number;
@@ -111,7 +113,7 @@ export default function Home() {
                         created_at: t.date,
                         is_verified: t.isVerified,
                     }));
-                    
+
                     setTransactions(mappedTransactions);
                 }
             } catch (error) {
@@ -128,7 +130,7 @@ export default function Home() {
             loadData();
         };
         window.addEventListener("transactionAdded", handleTransactionAdded);
-        
+
         return () => {
             window.removeEventListener("transactionAdded", handleTransactionAdded);
         };
@@ -235,8 +237,8 @@ export default function Home() {
                     </Link>
                 </motion.div>
 
-                <motion.div 
-                    variants={itemVariants} 
+                <motion.div
+                    variants={itemVariants}
                     className="grid grid-cols-3 gap-y-8 gap-x-4 justify-items-center"
                 >
                     {mainFeatures.map((feature) => (

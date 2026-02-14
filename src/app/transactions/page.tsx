@@ -1,16 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
-import { Filter, Search, ChevronLeft } from "lucide-react";
+import { Filter, Search, ChevronLeft, X, Check } from "lucide-react";
+import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 import { Transaction } from "@/types";
+import { createPortal } from "react-dom";
+
+// Portal helper to render outside the main layout container
+function Portal({ children }: { children: React.ReactNode }) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+    return mounted ? createPortal(children, document.body) : null;
+}
 
 interface Category {
     id: number;
@@ -35,11 +47,49 @@ const itemVariants = {
 
 export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterCategory, setFilterCategory] = useState<number | "all">("all");
+    const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Derived values with useMemo for performance and stability
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+            const matchesSearch = (t.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (t.category || "").toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCategory = filterCategory === "all" || t.categoryId === filterCategory;
+            const matchesType = filterType === "all" || t.type === filterType;
+
+            return matchesSearch && matchesCategory && matchesType;
+        });
+    }, [transactions, searchQuery, filterCategory, filterType]);
+
+    const groupedTransactions = useMemo(() => {
+        return filteredTransactions.reduce((groups: Record<string, Transaction[]>, transaction: Transaction) => {
+            try {
+                const dateObj = new Date(transaction.created_at);
+                const date = isNaN(dateObj.getTime())
+                    ? "Tanggal Tidak Valid"
+                    : format(dateObj, "dd MMM yyyy");
+
+                if (!groups[date]) {
+                    groups[date] = [];
+                }
+                groups[date].push(transaction);
+            } catch (e) {
+                const fallbackDate = "Lainnya";
+                if (!groups[fallbackDate]) groups[fallbackDate] = [];
+                groups[fallbackDate].push(transaction);
+            }
+            return groups;
+        }, {} as Record<string, Transaction[]>);
+    }, [filteredTransactions]);
 
     useEffect(() => {
         loadData();
@@ -66,7 +116,8 @@ export default function TransactionsPage() {
             const catsResult = await catsResponse.json();
 
             if (transResult.success && catsResult.success) {
-                const categories: Category[] = catsResult.data;
+                const cats: Category[] = catsResult.data;
+                setCategories(cats);
 
                 // Map transactions with category names
                 const mappedTransactions = transResult.data.map((t: {
@@ -81,7 +132,7 @@ export default function TransactionsPage() {
                     id: t.id.toString(),
                     amount: t.amount,
                     description: t.description,
-                    category: categories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
+                    category: cats.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
                     categoryId: t.categoryId,
                     type: t.type,
                     created_at: t.date,
@@ -128,21 +179,7 @@ export default function TransactionsPage() {
         setEditingTransaction(null);
     }
 
-    // Filter transactions based on search
-    const filteredTransactions = transactions.filter(t =>
-        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    // Group transactions by date
-    const groupedTransactions = filteredTransactions.reduce((groups, transaction) => {
-        const date = format(new Date(transaction.created_at), "dd MMM yyyy");
-        if (!groups[date]) {
-            groups[date] = [];
-        }
-        groups[date].push(transaction);
-        return groups;
-    }, {} as Record<string, Transaction[]>);
+    // ... (removed redundant logic now handled by useMemo above)
 
     return (
         <div className="relative min-h-screen bg-slate-50 pb-28">
@@ -165,7 +202,13 @@ export default function TransactionsPage() {
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                            (filterCategory !== "all" || filterType !== "all")
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                                : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600"
+                        )}
                     >
                         <Filter size={20} />
                     </motion.button>
@@ -207,12 +250,13 @@ export default function TransactionsPage() {
                     </div>
                 ) : (
                     <motion.div
+                        key={`list-${filterCategory}-${filterType}-${searchQuery}`}
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="space-y-6"
                     >
-                        {Object.entries(groupedTransactions).map(([date, dayTransactions]) => (
+                        {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
                             <div key={date}>
                                 <h3 className="text-xs font-bold text-slate-400 mb-3 sticky top-32 bg-slate-50/80 backdrop-blur-sm py-2">
                                     {date}
@@ -239,6 +283,118 @@ export default function TransactionsPage() {
                     </motion.div>
                 )}
             </div>
+
+            {/* Filter Modal */}
+            <Portal>
+                <AnimatePresence>
+                    {isFilterModalOpen && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsFilterModalOpen(false)}
+                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, y: "100%" }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: "100%" }}
+                                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px]"
+                            >
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="text-xl font-bold text-slate-900">Filter Transaksi</h2>
+                                    <button
+                                        onClick={() => setIsFilterModalOpen(false)}
+                                        className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-8">
+                                    {/* Type Filter */}
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Tipe Transaksi</p>
+                                        <div className="flex gap-3">
+                                            {[
+                                                { id: "all", label: "Semua" },
+                                                { id: "expense", label: "Pengeluaran" },
+                                                { id: "income", label: "Pemasukan" }
+                                            ].map((type) => (
+                                                <button
+                                                    key={type.id}
+                                                    onClick={() => setFilterType(type.id as any)}
+                                                    className={cn(
+                                                        "flex-1 py-3 px-4 rounded-2xl text-sm font-semibold transition-all border-2",
+                                                        filterType === type.id
+                                                            ? "bg-blue-50 border-blue-600 text-blue-600"
+                                                            : "bg-white border-slate-100 text-slate-600 hover:border-slate-200"
+                                                    )}
+                                                >
+                                                    {type.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Category Filter */}
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Kategori</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                onClick={() => setFilterCategory("all")}
+                                                className={cn(
+                                                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2",
+                                                    filterCategory === "all"
+                                                        ? "bg-blue-600 border-blue-600 text-white"
+                                                        : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                                                )}
+                                            >
+                                                Semua
+                                            </button>
+                                            {categories.map((cat) => (
+                                                <button
+                                                    key={cat.id}
+                                                    onClick={() => setFilterCategory(cat.id)}
+                                                    className={cn(
+                                                        "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 flex items-center gap-2",
+                                                        filterCategory === cat.id
+                                                            ? "bg-blue-600 border-blue-600 text-white"
+                                                            : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                                                    )}
+                                                >
+                                                    {filterCategory === cat.id && <Check size={12} />}
+                                                    {cat.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex gap-4 pt-4">
+                                        <button
+                                            onClick={() => {
+                                                setFilterCategory("all");
+                                                setFilterType("all");
+                                            }}
+                                            className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all"
+                                        >
+                                            Reset Filter
+                                        </button>
+                                        <button
+                                            onClick={() => setIsFilterModalOpen(false)}
+                                            className="flex-[2] py-4 px-6 rounded-2xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all"
+                                        >
+                                            Terapkan Filter
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            </Portal>
 
             {/* Detail Modal */}
             <TransactionDetailModal

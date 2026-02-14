@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    ArrowLeft, 
-    Send, 
-    Bot, 
-    User, 
+import {
+    ArrowLeft,
+    Send,
+    Bot,
+    User,
     Sparkles,
     MoreVertical,
     FileText,
@@ -39,22 +39,16 @@ const quickActions = [
     { id: "tips", label: "Tips hemat", icon: Sparkles },
 ];
 
-let messageIdCounter = 0;
-
 function generateMessageId(): string {
-    messageIdCounter += 1;
-    return `msg-${messageIdCounter}`;
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    // Fallback for non-secure contexts (HTTP) or older browsers
+    return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 export default function ChatPage() {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: generateMessageId(),
-            role: "assistant",
-            content: "Halo Alip! Saya Monev AI Assistant. Ada yang bisa saya bantu hari ini? 💰",
-            timestamp: new Date(),
-        },
-    ]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -64,34 +58,101 @@ export default function ChatPage() {
     };
 
     useEffect(() => {
+        // Load messages from localStorage on mount
+        const saved = localStorage.getItem("monev_chat_history");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                const revived = parsed.map((m: any) => ({
+                    ...m,
+                    timestamp: new Date(m.timestamp)
+                }));
+                setMessages(revived);
+                return;
+            } catch (e) {
+                console.error("Failed to load chat history:", e);
+            }
+        }
+
+        // Initial message if no history
+        if (messages.length === 0) {
+            const initialMessage: Message = {
+                id: generateMessageId(),
+                role: "assistant",
+                content: "Halo Alip! Saya Monev AI Assistant. Saya siap membantumu menganalisis pengeluaran, memantau target tabungan, atau sekadar memberikan tips hemat hari ini. 💰✨\n\nApa yang ingin kamu diskusikan pertama kali?",
+                timestamp: new Date(),
+            };
+            setMessages([initialMessage]);
+            localStorage.setItem("monev_chat_history", JSON.stringify([initialMessage]));
+        }
+    }, []);
+
+    // Save to localStorage whenever messages change
+    useEffect(() => {
+        if (messages.length > 0) {
+            localStorage.setItem("monev_chat_history", JSON.stringify(messages));
+        }
+    }, [messages]);
+
+    useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+    const handleSend = async (customText?: string) => {
+        const textToSend = customText || input;
+        if (!textToSend.trim()) return;
 
         const userMessage: Message = {
             id: generateMessageId(),
             role: "user",
-            content: input,
+            content: textToSend,
             timestamp: new Date(),
         };
 
         setMessages((prev) => [...prev, userMessage]);
-        setInput("");
+        if (!customText) setInput("");
         setIsTyping(true);
+        // Prepare history (last 10 messages)
+        const historyContext = messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content
+        }));
 
-        // Simulate AI response
-        setTimeout(() => {
-            const aiMessage: Message = {
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: textToSend,
+                    history: historyContext
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.reply) {
+                const aiMessage: Message = {
+                    id: generateMessageId(),
+                    role: "assistant",
+                    content: data.reply,
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, aiMessage]);
+            } else {
+                throw new Error(data.error || "Gagal mendapatkan respons AI");
+            }
+        } catch (error: any) {
+            console.error("Chat Error:", error);
+            const errorMessage: Message = {
                 id: generateMessageId(),
                 role: "assistant",
-                content: "Terima kasih! Saya sedang memproses permintaanmu. Fitur chat AI ini akan segera terhubung dengan GPT-4o untuk memberikan respons yang lebih cerdas. 🚀",
+                content: `Waduh, sepertinya saya sedang ngantuk nih. 😴\n\nError: ${error.message || "Unknown error"}`,
                 timestamp: new Date(),
             };
-            setMessages((prev) => [...prev, aiMessage]);
+            setMessages((prev) => [...prev, errorMessage]);
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -109,47 +170,21 @@ export default function ChatPage() {
             tips: "Kasih tips hemat dong",
         };
 
-        const userMessage: Message = {
-            id: generateMessageId(),
-            role: "user",
-            content: actionMessages[actionId],
-            timestamp: new Date(),
-        };
-
-        setMessages((prev) => [...prev, userMessage]);
-        setIsTyping(true);
-
-        setTimeout(() => {
-            const responses: Record<string, string> = {
-                record: "Baik! Kamu bisa pilih metode input: 📝 Manual, 📸 Screenshot, 🎙️ Voice, atau 📱 Import notifikasi. Mau yang mana?",
-                goals: "📊 Progress goalmu:\n\n🎯 MacBook Air M3: 42% (Rp 8.5jt / 20jt)\n✈️ Liburan Jepang: 14% (Rp 5jt / 35jt)\n\nKeep going! 💪",
-                analysis: "📈 Analisis pengeluaran November:\n\n• Total: Rp 4.2jt\n• Tertinggi: Hiburan (Rp 1.2jt)\n• Hemat: Rp 800rb dari budget\n\nGood job! 🎉",
-                tips: "💡 Tips hemat hari ini:\n\n1. Pakai fitur 'Time-Cost' untuk konversi harga ke jam kerja\n2. Aktifkan 'Goal Defender' untuk cegah impulse buying\n3. Cek 'Subscription Hunter' untuk langganan yang jarang dipakai",
-            };
-
-            const aiMessage: Message = {
-                id: generateMessageId(),
-                role: "assistant",
-                content: responses[actionId],
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, aiMessage]);
-            setIsTyping(false);
-        }, 1000);
+        handleSend(actionMessages[actionId]);
     };
 
     return (
         <div className="relative min-h-screen flex flex-col bg-slate-50">
             {/* Header */}
-            <motion.header 
+            <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="sticky top-0 z-40 glass border-b border-slate-200/50 px-4 pt-12 pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link 
-                            href="/" 
+                        <Link
+                            href="/"
                             className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
@@ -167,7 +202,15 @@ export default function ChatPage() {
                             </div>
                         </div>
                     </div>
-                    <button className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
+                    <button
+                        onClick={() => {
+                            if (confirm("Hapus semua riwayat chat?")) {
+                                localStorage.removeItem("monev_chat_history");
+                                window.location.reload();
+                            }
+                        }}
+                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"
+                    >
                         <MoreVertical size={20} />
                     </button>
                 </div>
@@ -176,7 +219,7 @@ export default function ChatPage() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 {/* Welcome Card */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100"
@@ -218,8 +261,8 @@ export default function ChatPage() {
                             {/* Avatar */}
                             <div className={cn(
                                 "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-                                message.role === "user" 
-                                    ? "bg-slate-200" 
+                                message.role === "user"
+                                    ? "bg-slate-200"
                                     : "bg-gradient-to-br from-blue-600 to-purple-600"
                             )}>
                                 {message.role === "user" ? (
@@ -310,12 +353,12 @@ export default function ChatPage() {
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={handleSend}
+                        onClick={() => handleSend()}
                         disabled={!input.trim()}
                         className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                            input.trim() 
-                                ? "bg-blue-600 text-white hover:bg-blue-700" 
+                            input.trim()
+                                ? "bg-blue-600 text-white hover:bg-blue-700"
                                 : "bg-slate-200 text-slate-400"
                         )}
                     >
