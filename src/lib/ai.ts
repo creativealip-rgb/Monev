@@ -84,6 +84,15 @@ export interface FinancialContext {
         category: string;
         type: "expense" | "income";
     }>;
+    investments: Array<{
+        id: number;
+        name: string;
+        type: string;
+        quantity: number;
+        currentPrice: number;
+        totalValue: number;
+        platform: string | null;
+    }>;
     userName?: string;
 }
 
@@ -605,6 +614,10 @@ DATA BULAN INI:
 - Pemasukan: Rp ${context.monthlyStats.income.toLocaleString('id-ID')}
 - Pengeluaran: Rp ${context.monthlyStats.expense.toLocaleString('id-ID')}
 - Saldo (Pemasukan - Pengeluaran): Rp ${context.monthlyStats.balance.toLocaleString('id-ID')}
+
+DATA INVESTASI:
+${context.investments ? context.investments.map(i => `- ${i.name} (${i.type}): ${i.quantity} unit, Nilai Sekarang: Rp ${i.totalValue.toLocaleString('id-ID')} (${i.platform || 'Manual'})`).join("\n") : "Belum ada data investasi"}
+Total Nilai Investasi: Rp ${(context.investments || []).reduce((sum, i) => sum + i.totalValue, 0).toLocaleString('id-ID')}
 
 TARGET GOAL:
 ${context.goals.map(g => `- [ID: ${g.id}] ${g.name}: Terkumpul Rp ${g.currentAmount.toLocaleString('id-ID')} dari Rp ${g.targetAmount.toLocaleString('id-ID')} (${g.percent.toFixed(1)}%). Sisa: Rp ${g.remaining.toLocaleString('id-ID')}`).join("\n")}

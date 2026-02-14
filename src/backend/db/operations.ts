@@ -1,10 +1,10 @@
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages } from "./schema";
-import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage } from "./schema";
+import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments } from "./schema";
+import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment } from "./schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 
 // Re-export types
-export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt };
+export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment };
 
 // Categories
 export async function getCategories(): Promise<Category[]> {
@@ -632,3 +632,156 @@ export async function getAnalysisData(year: number, month: number) {
         }
     };
 }
+
+// ============ Bills CRUD ============
+
+export async function getBills(): Promise<Bill[]> {
+    const db = getDb();
+    return db.select().from(bills).orderBy(bills.dueDate).all();
+}
+
+export async function getBillById(id: number): Promise<Bill | undefined> {
+    const db = getDb();
+    return db.select().from(bills).where(eq(bills.id, id)).get();
+}
+
+export async function createBill(data: {
+    name: string;
+    amount: number;
+    categoryId?: number;
+    dueDate?: number;
+    frequency?: "monthly" | "weekly" | "yearly";
+    icon?: string;
+    color?: string;
+    notes?: string;
+}): Promise<Bill> {
+    const db = getDb();
+    const result = await db.insert(bills).values({
+        name: data.name,
+        amount: data.amount,
+        categoryId: data.categoryId || null,
+        dueDate: data.dueDate || 1,
+        frequency: data.frequency || "monthly",
+        icon: data.icon || "Receipt",
+        color: data.color || "#6366f1",
+        notes: data.notes || null,
+    }).returning();
+    return result[0];
+}
+
+export async function updateBill(id: number, data: Partial<Bill>): Promise<Bill | undefined> {
+    const db = getDb();
+    const result = await db.update(bills)
+        .set(data)
+        .where(eq(bills.id, id))
+        .returning();
+    return result[0];
+}
+
+export async function deleteBill(id: number): Promise<void> {
+    const db = getDb();
+    await db.delete(bills).where(eq(bills.id, id));
+}
+
+export async function toggleBillPaid(id: number): Promise<Bill | undefined> {
+    const db = getDb();
+    const bill = await getBillById(id);
+    if (!bill) return undefined;
+
+    const newPaid = !bill.isPaid;
+    const result = await db.update(bills)
+        .set({
+            isPaid: newPaid,
+            lastPaidAt: newPaid ? new Date() : null,
+        })
+        .where(eq(bills.id, id))
+        .returning();
+    return result[0];
+}
+
+export async function ensureSampleBills(): Promise<void> {
+    const db = getDb();
+    const existing = await db.select().from(bills).all();
+    if (existing.length > 0) return;
+
+    const allCats = await db.select().from(categories).all();
+    const getCatId = (name: string) => allCats.find(c => c.name === name)?.id || null;
+
+    await db.insert(bills).values([
+        { name: "Listrik PLN", amount: 350000, categoryId: getCatId("Tagihan"), dueDate: 20, icon: "Zap", color: "#f59e0b" },
+        { name: "WiFi Indihome", amount: 399000, categoryId: getCatId("Tagihan"), dueDate: 15, icon: "Wifi", color: "#3b82f6" },
+        { name: "Netflix", amount: 54000, categoryId: getCatId("Hiburan"), dueDate: 5, icon: "Tv", color: "#ef4444" },
+        { name: "Spotify", amount: 54990, categoryId: getCatId("Hiburan"), dueDate: 12, icon: "Music", color: "#22c55e" },
+        { name: "BPJS Kesehatan", amount: 150000, categoryId: getCatId("Kesehatan"), dueDate: 10, icon: "Heart", color: "#ec4899" },
+        { name: "Cicilan Motor", amount: 850000, categoryId: getCatId("Transportasi"), dueDate: 25, icon: "Bike", color: "#8b5cf6" },
+    ]);
+}
+
+// ============ Investments CRUD ============
+
+export async function getInvestments(): Promise<Investment[]> {
+    const db = getDb();
+    return db.select().from(investments).orderBy(desc(investments.createdAt)).all();
+}
+
+export async function getInvestmentById(id: number): Promise<Investment | undefined> {
+    const db = getDb();
+    return db.select().from(investments).where(eq(investments.id, id)).get();
+}
+
+export async function createInvestment(data: {
+    name: string;
+    type: "stock" | "crypto" | "mutual_fund" | "gold" | "bond" | "other";
+    quantity: number;
+    avgBuyPrice: number;
+    currentPrice: number;
+    platform?: string;
+    icon?: string;
+    color?: string;
+    notes?: string;
+}): Promise<Investment> {
+    const db = getDb();
+    const result = await db.insert(investments).values({
+        name: data.name,
+        type: data.type,
+        quantity: data.quantity,
+        avgBuyPrice: data.avgBuyPrice,
+        currentPrice: data.currentPrice,
+        platform: data.platform || null,
+        icon: data.icon || "TrendingUp",
+        color: data.color || "#10b981",
+        notes: data.notes || null,
+    }).returning();
+    return result[0];
+}
+
+export async function updateInvestment(id: number, data: Partial<Investment>): Promise<Investment | undefined> {
+    const db = getDb();
+    const result = await db.update(investments)
+        .set({
+            ...data,
+            updatedAt: new Date(),
+        })
+        .where(eq(investments.id, id))
+        .returning();
+    return result[0];
+}
+
+export async function deleteInvestment(id: number): Promise<void> {
+    const db = getDb();
+    await db.delete(investments).where(eq(investments.id, id));
+}
+
+export async function ensureSampleInvestments(): Promise<void> {
+    const db = getDb();
+    const existing = await db.select().from(investments).all();
+    if (existing.length > 0) return;
+
+    await db.insert(investments).values([
+        { name: "BBCA", type: "stock", quantity: 500, avgBuyPrice: 9200, currentPrice: 10500, platform: "Ajaib", icon: "BarChart", color: "#3b82f6" },
+        { name: "Bitcoin", type: "crypto", quantity: 0.005, avgBuyPrice: 950000000, currentPrice: 1530000000, platform: "Pintu", icon: "Bitcoin", color: "#f59e0b" },
+        { name: "Emas Antam", type: "gold", quantity: 5, avgBuyPrice: 1100000, currentPrice: 1350000, platform: "Pegadaian", icon: "Award", color: "#eab308" },
+        { name: "Reksadana Sucor", type: "mutual_fund", quantity: 1500, avgBuyPrice: 1000, currentPrice: 1250, platform: "Bibit", icon: "PieChart", color: "#8b5cf6" },
+    ]);
+}
+

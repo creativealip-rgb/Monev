@@ -143,8 +143,14 @@ export async function POST(req: NextRequest) {
                         const now = new Date();
                         const stats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
                         const allGoals = await getGoals();
+                        const { getBudgets, getTransactions, getCategories, getInvestments } = await import('@/backend/db/operations');
+                        const allBudgets = await getBudgets(now.getMonth() + 1, now.getFullYear());
+                        const allTransactions = await getTransactions(30);
+                        const allCats = await getCategories();
+                        const allInvestments = await getInvestments();
 
                         const goalsContext = allGoals.map(g => ({
+                            id: g.id,
                             name: g.name,
                             targetAmount: g.targetAmount,
                             currentAmount: g.currentAmount,
@@ -152,12 +158,43 @@ export async function POST(req: NextRequest) {
                             percent: (g.currentAmount / g.targetAmount) * 100
                         }));
 
+                        const budgetsContext = allBudgets.map(b => ({
+                            id: b.id,
+                            category: b.category?.name || "Lainnya",
+                            limit: b.amount,
+                            spent: b.spent,
+                            remaining: Math.max(0, b.amount - b.spent),
+                            percent: b.amount > 0 ? (b.spent / b.amount) * 100 : 0
+                        }));
+
+                        const transactionsContext = allTransactions.map(t => ({
+                            id: t.id,
+                            date: t.date instanceof Date ? t.date.toISOString() : String(t.date),
+                            amount: t.amount,
+                            description: t.description,
+                            category: allCats.find(c => c.id === t.categoryId)?.name || "Lainnya",
+                            type: t.type as "expense" | "income"
+                        }));
+
+                        const investmentsContext = allInvestments.map(i => ({
+                            id: i.id,
+                            name: i.name,
+                            type: i.type,
+                            quantity: i.quantity,
+                            currentPrice: i.currentPrice,
+                            totalValue: i.quantity * i.currentPrice,
+                            platform: i.platform
+                        }));
+
                         const aiReply = await askFinanceAgent(text, {
                             monthlyStats: stats,
-                            goals: goalsContext
+                            goals: goalsContext,
+                            budgets: budgetsContext,
+                            transactions: transactionsContext,
+                            investments: investmentsContext
                         });
 
-                        await sendTelegramMessage(chatId, aiReply);
+                        await sendTelegramMessage(chatId, aiReply.content);
                     } else if (nlpParsed.intent === "debt") {
                         // SOCIAL & CASH - Debt Handling
                         const debtAmount = nlpParsed.amount || 0;

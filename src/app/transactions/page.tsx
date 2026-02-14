@@ -48,6 +48,7 @@ const itemVariants = {
 export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterCategory, setFilterCategory] = useState<number | "all">("all");
     const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -107,6 +108,7 @@ export default function TransactionsPage() {
 
     async function loadData() {
         try {
+            setLoading(true);
             // Fetch transactions
             const transResponse = await fetch("/api/transactions");
             const transResult = await transResponse.json();
@@ -143,6 +145,8 @@ export default function TransactionsPage() {
             }
         } catch (error) {
             console.error("Error loading data:", error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -178,6 +182,48 @@ export default function TransactionsPage() {
         setIsEditModalOpen(false);
         setEditingTransaction(null);
     }
+
+    // Skeleton loading component
+    const SkeletonLoader = () => (
+        <div className="space-y-6 animate-pulse">
+            {/* Date skeleton */}
+            <div>
+                <div className="h-3 w-24 bg-slate-200 rounded-full mb-4" />
+                <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-slate-100" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 w-32 bg-slate-100 rounded-full" />
+                                    <div className="h-3 w-20 bg-slate-50 rounded-full" />
+                                </div>
+                                <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            {/* Second date group skeleton */}
+            <div>
+                <div className="h-3 w-20 bg-slate-200 rounded-full mb-4" />
+                <div className="space-y-3">
+                    {[4, 5].map(i => (
+                        <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-slate-100" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 w-28 bg-slate-100 rounded-full" />
+                                    <div className="h-3 w-16 bg-slate-50 rounded-full" />
+                                </div>
+                                <div className="h-5 w-20 bg-slate-100 rounded-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
 
     // ... (removed redundant logic now handled by useMemo above)
 
@@ -238,16 +284,28 @@ export default function TransactionsPage() {
                         {searchQuery ? "Hasil Pencarian" : "Semua Transaksi"}
                     </p>
                     <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
-                        {filteredTransactions.length} Transaksi
+                        {loading ? "..." : `${filteredTransactions.length} Transaksi`}
                     </span>
                 </motion.div>
 
-                {filteredTransactions.length === 0 ? (
-                    <div className="text-center py-8">
-                        <p className="text-slate-500">
+                {loading ? (
+                    <SkeletonLoader />
+                ) : filteredTransactions.length === 0 ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center py-16 bg-white rounded-[2rem] border border-dashed border-slate-200"
+                    >
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Search size={24} className="text-slate-300" />
+                        </div>
+                        <p className="text-slate-500 font-bold">
                             {searchQuery ? "Tidak ada transaksi yang cocok" : "Belum ada transaksi"}
                         </p>
-                    </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                            {searchQuery ? "Coba ubah kata kunci pencarian" : "Transaksi akan muncul di sini"}
+                        </p>
+                    </motion.div>
                 ) : (
                     <motion.div
                         key={`list-${filterCategory}-${filterType}-${searchQuery}`}

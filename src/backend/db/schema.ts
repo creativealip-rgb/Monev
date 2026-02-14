@@ -89,6 +89,37 @@ export const scheduledMessages = sqliteTable("scheduled_messages", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const bills = sqliteTable("bills", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    amount: real("amount").notNull(),
+    categoryId: integer("category_id").references(() => categories.id),
+    dueDate: integer("due_date").notNull().default(1), // day of month (1-31)
+    frequency: text("frequency", { enum: ["monthly", "weekly", "yearly"] }).notNull().default("monthly"),
+    isPaid: integer("is_paid", { mode: "boolean" }).notNull().default(false),
+    lastPaidAt: integer("last_paid_at", { mode: "timestamp" }),
+    icon: text("icon").notNull().default("Receipt"),
+    color: text("color").notNull().default("#6366f1"),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    notes: text("notes"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const investments = sqliteTable("investments", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(), // e.g. BTC, BBCA, Emas
+    type: text("type", { enum: ["stock", "crypto", "mutual_fund", "gold", "bond", "other"] }).notNull().default("other"),
+    quantity: real("quantity").notNull(), // lembar/koin/gram
+    avgBuyPrice: real("avg_buy_price").notNull(), // harga beli rata-rata
+    currentPrice: real("current_price").notNull(), // harga pasar saat ini (manual update)
+    platform: text("platform"), // Bibit, Ajaib, Indodax, dll
+    icon: text("icon").notNull().default("TrendingUp"),
+    color: text("color").notNull().default("#10b981"),
+    notes: text("notes"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 // Types
 export type Category = typeof categories.$inferSelect;
 export type User = typeof users.$inferSelect;
@@ -99,6 +130,8 @@ export type MerchantMapping = typeof merchantMappings.$inferSelect;
 export type UserSettings = typeof userSettings.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
 export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
+export type Bill = typeof bills.$inferSelect;
+export type Investment = typeof investments.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -109,6 +142,8 @@ export type InsertMerchantMapping = typeof merchantMappings.$inferInsert;
 export type InsertUserSettings = typeof userSettings.$inferInsert;
 export type InsertDebt = typeof debts.$inferInsert;
 export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
+export type InsertBill = typeof bills.$inferInsert;
+export type InsertInvestment = typeof investments.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -121,3 +156,7 @@ export const insertGoalSchema = createInsertSchema(goals);
 export const selectGoalSchema = createSelectSchema(goals);
 export const insertUserSettingsSchema = createInsertSchema(userSettings);
 export const selectUserSettingsSchema = createSelectSchema(userSettings);
+export const insertBillSchema = createInsertSchema(bills);
+export const selectBillSchema = createSelectSchema(bills);
+export const insertInvestmentSchema = createInsertSchema(investments);
+export const selectInvestmentSchema = createSelectSchema(investments);

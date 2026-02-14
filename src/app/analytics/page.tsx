@@ -179,8 +179,74 @@ export default function AnalyticsPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <div className="min-h-screen bg-slate-50 pb-28">
+                {/* Header skeleton */}
+                <div className="sticky top-0 z-40 glass border-b border-slate-200/50">
+                    <div className="flex items-center gap-3 px-6 py-4 pt-12">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100" />
+                        <div className="h-6 w-20 bg-slate-200 rounded-full" />
+                    </div>
+                </div>
+
+                <div className="px-6 pt-6 space-y-6 animate-pulse">
+                    {/* Stats cards skeleton */}
+                    <div className="grid grid-cols-3 gap-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
+                                <div className="h-3 w-14 bg-slate-100 rounded-full mb-2" />
+                                <div className="h-5 w-full bg-slate-100 rounded-full" />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Allocation bars skeleton */}
+                    <div className="bg-white p-6 rounded-[2rem] border border-slate-100">
+                        <div className="h-4 w-32 bg-slate-100 rounded-full mb-6" />
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i}>
+                                    <div className="flex justify-between mb-2">
+                                        <div className="h-3 w-20 bg-slate-100 rounded-full" />
+                                        <div className="h-3 w-16 bg-slate-100 rounded-full" />
+                                    </div>
+                                    <div className="w-full h-3 bg-slate-100 rounded-full" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Chart skeleton */}
+                    <div className="bg-white p-6 rounded-[2rem] border border-slate-100">
+                        <div className="h-4 w-40 bg-slate-100 rounded-full mx-auto mb-6" />
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="w-48 h-48 rounded-full bg-slate-100" />
+                            <div className="w-full space-y-2">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="flex justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-3 h-3 rounded-full bg-slate-100" />
+                                            <div className="h-3 w-20 bg-slate-100 rounded-full" />
+                                        </div>
+                                        <div className="h-3 w-8 bg-slate-100 rounded-full" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* AI Insights skeleton */}
+                    <div className="rounded-[2rem] p-6 border border-slate-100 bg-white">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100" />
+                            <div className="h-4 w-16 bg-slate-100 rounded-full" />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-full bg-slate-50 rounded-full" />
+                            <div className="h-3 w-4/5 bg-slate-50 rounded-full" />
+                            <div className="h-3 w-3/5 bg-slate-50 rounded-full" />
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

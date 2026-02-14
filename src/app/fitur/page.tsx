@@ -45,13 +45,22 @@ const features = [
                 href: "/analytics"
             },
             {
+                id: 107,
+                icon: Wallet,
+                title: "Anggaran",
+                desc: "Kontrol batas pengeluaran bulanan",
+                status: "ready",
+                color: "orange",
+                href: "/budgets"
+            },
+            {
                 id: 103,
                 icon: PiggyBank,
                 title: "Tabungan",
                 desc: "Tracking goals dan target tabungan",
                 status: "ready",
                 color: "emerald",
-                href: "/budgets"
+                href: "/savings"
             },
             {
                 id: 104,
@@ -60,16 +69,16 @@ const features = [
                 desc: "Kelola tagihan rutin dan utang piutang",
                 status: "ready",
                 color: "rose",
-                href: "/transactions"
+                href: "/bills"
             },
             {
                 id: 105,
                 icon: TrendingUp,
                 title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
-                status: "coming",
+                status: "ready",
                 color: "amber",
-                href: "#"
+                href: "/investments"
             },
             {
                 id: 106,

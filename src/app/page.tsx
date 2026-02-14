@@ -14,7 +14,8 @@ import {
     User,
     ChevronRight,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Wallet
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -43,10 +44,10 @@ interface Category {
 const mainFeatures = [
     { label: "Monev AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
     { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "/analytics" },
-    { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/budgets" },
-    { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "#" },
-    { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "#" },
-    { label: "Upgrade", icon: <Crown size={24} />, color: "indigo", href: "#" },
+    { label: "Anggaran", icon: <Wallet size={24} />, color: "orange", href: "/budgets" },
+    { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/savings" },
+    { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
+    { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "/investments" },
 ];
 
 const containerVariants = {
@@ -145,7 +146,7 @@ export default function Home() {
                 className="px-6 pt-12 pb-4"
             >
                 <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
+                    <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
                             className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 overflow-hidden flex items-center justify-center shadow-lg shadow-blue-600/25"
@@ -154,9 +155,9 @@ export default function Home() {
                         </motion.div>
                         <div>
                             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{formattedDate}</p>
-                            <h1 className="text-lg font-bold text-slate-900 tracking-tight">Mochamad Alif Prayogo</h1>
+                            <h1 className="text-lg font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">Mochamad Alif Prayogo</h1>
                         </div>
-                    </div>
+                    </Link>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -269,9 +270,25 @@ export default function Home() {
 
                 <motion.div variants={itemVariants} className="space-y-3">
                     {loading ? (
-                        <p className="text-center text-slate-500 py-4">Loading...</p>
+                        <div className="space-y-3 animate-pulse">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-slate-100" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-4 w-28 bg-slate-100 rounded-full" />
+                                            <div className="h-3 w-16 bg-slate-50 rounded-full" />
+                                        </div>
+                                        <div className="h-5 w-20 bg-slate-100 rounded-full" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : transactions.length === 0 ? (
-                        <p className="text-center text-slate-500 py-4">Belum ada transaksi</p>
+                        <div className="text-center py-8 bg-white rounded-2xl border border-dashed border-slate-200">
+                            <p className="text-slate-500 font-bold">Belum ada transaksi</p>
+                            <p className="text-xs text-slate-400 mt-1">Transaksi akan muncul di sini</p>
+                        </div>
                     ) : (
                         transactions.map((t) => (
                             <TransactionItem key={t.id} transaction={t} />
