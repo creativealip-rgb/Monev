@@ -5,6 +5,7 @@ import { X, FileText, Camera, Mic, Bell, Sparkles } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
 import { TransactionForm } from "./TransactionForm";
+import { SmartInput } from "./SmartInput";
 
 interface AddTransactionSheetProps {
     isOpen: boolean;
@@ -45,6 +46,7 @@ const actions = [
 
 export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransactionSheetProps) {
     const [showForm, setShowForm] = useState(false);
+    const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
 
     // Close on escape key
     useEffect(() => {
@@ -64,6 +66,10 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
     const handleAction = (actionId: string) => {
         if (actionId === "manual") {
             setShowForm(true);
+        } else if (actionId === "screenshot") {
+            setSmartInputMode("screenshot");
+        } else if (actionId === "voice") {
+            setSmartInputMode("voice");
         } else {
             console.log(`Action selected: ${actionId}`);
             onClose();
@@ -72,6 +78,17 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
 
     const handleFormClose = () => {
         setShowForm(false);
+        onClose();
+    };
+
+    const handleSmartInputSuccess = (data: {
+        merchantName: string;
+        amount: number;
+        description: string;
+        category: string;
+    }) => {
+        // SmartInput saves directly, close everything
+        setSmartInputMode(null);
         onClose();
     };
 
@@ -88,6 +105,21 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                 isOpen={showForm}
                 onClose={handleFormClose}
                 onSuccess={onSuccess}
+            />
+        );
+    }
+
+    const handleSmartInputClose = () => {
+        setSmartInputMode(null);
+        onClose();
+    };
+
+    if (smartInputMode) {
+        return (
+            <SmartInput
+                mode={smartInputMode}
+                onClose={handleSmartInputClose}
+                onSuccess={handleSmartInputSuccess}
             />
         );
     }

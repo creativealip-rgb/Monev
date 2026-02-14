@@ -4,11 +4,19 @@ import * as schema from "./schema";
 
 let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let sqlite: Database.Database | null = null;
+let isSeeding = false;
 
 export function getDb() {
     if (!db) {
         sqlite = new Database("./sqlite.db");
         db = drizzle(sqlite, { schema });
+        // Auto-seed on first connection (but not during build)
+        if (!isSeeding && typeof window === "undefined") {
+            isSeeding = true;
+            import("./seed").then(({ seedDatabase }) => {
+                seedDatabase().catch(console.error);
+            });
+        }
     }
     return db;
 }

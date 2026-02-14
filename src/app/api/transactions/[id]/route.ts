@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { deleteTransaction, updateTransaction } from "@/backend/db/operations";
 
 export async function PUT(
@@ -6,9 +7,13 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const { id: idString } = await params;
         const id = parseInt(idString);
-        
+
         if (isNaN(id)) {
             return NextResponse.json(
                 { success: false, error: "Invalid transaction ID" },
@@ -17,8 +22,8 @@ export async function PUT(
         }
 
         const body = await request.json();
-        
-        const updated = await updateTransaction(id, {
+
+        const updated = await updateTransaction(userId, id, {
             amount: body.amount,
             description: body.description,
             merchantName: body.merchantName,
@@ -27,14 +32,14 @@ export async function PUT(
             paymentMethod: body.paymentMethod,
             date: body.date ? new Date(body.date) : undefined,
         });
-        
+
         if (!updated) {
             return NextResponse.json(
                 { success: false, error: "Transaction not found" },
                 { status: 404 }
             );
         }
-        
+
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
         console.error("Error updating transaction:", error);
@@ -50,9 +55,13 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const { id: idString } = await params;
         const id = parseInt(idString);
-        
+
         if (isNaN(id)) {
             return NextResponse.json(
                 { success: false, error: "Invalid transaction ID" },
@@ -60,8 +69,8 @@ export async function DELETE(
             );
         }
 
-        await deleteTransaction(id);
-        
+        await deleteTransaction(userId, id);
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error deleting transaction:", error);

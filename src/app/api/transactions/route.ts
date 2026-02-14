@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getTransactions, createTransaction } from "@/backend/db/operations";
 
 export async function GET() {
     try {
-        const transactions = await getTransactions(50);
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
+        const transactions = await getTransactions(userId, 50);
         return NextResponse.json({ success: true, data: transactions });
     } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -16,9 +21,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const body = await request.json();
-        
-        const transaction = await createTransaction({
+
+        const transaction = await createTransaction(userId, {
             amount: body.amount,
             description: body.description,
             merchantName: body.merchantName,
