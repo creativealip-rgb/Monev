@@ -8,7 +8,8 @@ let isSeeding = false;
 
 export function getDb() {
     if (!db) {
-        sqlite = new Database("./sqlite.db");
+        const dbPath = process.env.DATABASE_URL || "./sqlite.db";
+        sqlite = new Database(dbPath);
         db = drizzle(sqlite, { schema });
         // Auto-seed on first connection (but not during build)
         if (!isSeeding && typeof window === "undefined") {
