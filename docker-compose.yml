@@ -1,0 +1,27 @@
+services:
+  monev:
+    build:
+      context: /home/ubuntu/clawd/monev-dev
+      dockerfile: Dockerfile
+    container_name: monev-app
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.monev.rule=Host(`monevapp.web.id`) || Host(`www.monevapp.web.id`)"
+      - "traefik.http.routers.monev.entrypoints=websecure"
+      - "traefik.http.routers.monev.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.monev-http.rule=Host(`monevapp.web.id`) || Host(`www.monevapp.web.id`)"
+      - "traefik.http.routers.monev-http.entrypoints=web"
+      - "traefik.http.routers.monev-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.monev.loadbalancer.server.port=3000"
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
