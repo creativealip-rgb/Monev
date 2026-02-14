@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  monev:
+    container_name: monev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=/app/data/sqlite.db
+      - NODE_ENV=production
+      # Add other secrets here or in Dokploy UI
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      # - AUTH_SECRET=${AUTH_SECRET}
+    volumes:
+      - monev-data:/app/data
+
+volumes:
+  monev-data:
