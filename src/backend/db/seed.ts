@@ -5,14 +5,14 @@ import { and, eq } from "drizzle-orm";
 
 export async function seedDatabase() {
     const db = getDb();
-    
+
     // Check if already has February 2026 data
     const existingTrans = db.select().from(transactions).all();
     const hasFebruaryData = existingTrans.some((t: { date: Date }) => {
         const date = new Date(t.date);
         return date.getMonth() === 1 && date.getFullYear() === 2026; // February = month 1
     });
-    
+
     // Check if we need to do initial seed
     const existingCategories = db.select().from(categories).all();
     if (existingCategories.length === 0) {
@@ -24,7 +24,7 @@ export async function seedDatabase() {
         console.log("Adding February 2026 data...");
         await addFebruaryData(db);
     }
-    
+
     // Always ensure budgets and goals exist for demo purposes
     await ensureSampleBudgetsAndGoals(db);
 }
@@ -41,6 +41,7 @@ async function doFullSeed(db: any) {
         { name: "Pendidikan", color: "#14b8a6", icon: "BookOpen", type: "expense" },
         { name: "Tagihan", color: "#ef4444", icon: "Receipt", type: "expense" },
         { name: "Investasi", color: "#10b981", icon: "TrendingUp", type: "expense" },
+        { name: "Tabungan", color: "#3b82f6", icon: "Wallet", type: "expense" },
         { name: "Gaji", color: "#3b82f6", icon: "Banknote", type: "income" },
         { name: "Freelance", color: "#8b5cf6", icon: "Briefcase", type: "income" },
         { name: "Lainnya", color: "#64748b", icon: "MoreHorizontal", type: "expense" },
@@ -63,7 +64,7 @@ async function doFullSeed(db: any) {
         { amount: 120000, description: "Bensin Pertamax", merchantName: "Pertamina", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-11-08"), isVerified: true },
         { amount: 75000, description: "Parkir Kantor", merchantName: "Parkir Gedung", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-11-15"), isVerified: true },
         { amount: 2500000, description: "Project Website", merchantName: "Client A", categoryId: getCatId("Freelance"), type: "income" as const, paymentMethod: "transfer", date: new Date("2025-11-20"), isVerified: true },
-        
+
         // December 2025
         { amount: 28000, description: "Ayam Geprek + Es Teh", merchantName: "Ayam Geprek Pak Kumis", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-05"), isVerified: true },
         { amount: 52000, description: "Gojek Food - Sushi", merchantName: "Gojek", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-08"), isVerified: true },
@@ -72,7 +73,7 @@ async function doFullSeed(db: any) {
         { amount: 450000, description: "Keyboard Mechanical", merchantName: "Tokopedia", categoryId: getCatId("Belanja"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-12"), isVerified: true },
         { amount: 35000, description: "Parkir Mall", merchantName: "Parkir Grand Indonesia", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2025-12-14"), isVerified: true },
         { amount: 125000, description: "Nonton Bioskop", merchantName: "XXI", categoryId: getCatId("Hiburan"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2025-12-20"), isVerified: true },
-        
+
         // January 2026
         { amount: 22000, description: "Kopi Susu Gula Aren", merchantName: "Kopi Janji Jiwa", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-01-05"), isVerified: true },
         { amount: 48000, description: "Nasi Campur Komplit", merchantName: "Nasi Campur Bali", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-01-08"), isVerified: true },
@@ -82,7 +83,7 @@ async function doFullSeed(db: any) {
         { amount: 95000, description: "Pijat Refleksi", merchantName: "Spa & Massage", categoryId: getCatId("Kesehatan"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-01-15"), isVerified: true },
         { amount: 135000, description: "Bensin Full Tank", merchantName: "Shell", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-01-18"), isVerified: true },
         { amount: 650000, description: "Belanja Online Shopee", merchantName: "Shopee", categoryId: getCatId("Belanja"), type: "expense" as const, paymentMethod: "transfer", date: new Date("2026-01-22"), isVerified: true },
-        
+
         // February 2026 (current month)
         { amount: 28000, description: "Kopi Susu", merchantName: "Kopi Kenangan", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-05"), isVerified: true },
         { amount: 35000, description: "Nasi Goreng", merchantName: "Warung Nasi", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-02-06"), isVerified: true },
@@ -112,29 +113,29 @@ async function doFullSeed(db: any) {
 
     // Insert Goals
     await db.insert(goals).values([
-        { 
-            name: "MacBook Air M3", 
-            targetAmount: 20000000, 
-            currentAmount: 8500000, 
-            deadline: new Date("2026-06-01"), 
-            icon: "Laptop", 
-            color: "#3b82f6" 
+        {
+            name: "MacBook Air M3",
+            targetAmount: 20000000,
+            currentAmount: 8500000,
+            deadline: new Date("2026-06-01"),
+            icon: "Laptop",
+            color: "#3b82f6"
         },
-        { 
-            name: "Emergency Fund", 
-            targetAmount: 30000000, 
-            currentAmount: 12500000, 
-            deadline: new Date("2026-12-31"), 
-            icon: "Shield", 
-            color: "#22c55e" 
+        {
+            name: "Emergency Fund",
+            targetAmount: 30000000,
+            currentAmount: 12500000,
+            deadline: new Date("2026-12-31"),
+            icon: "Shield",
+            color: "#22c55e"
         },
-        { 
-            name: "Liburan Jepang", 
-            targetAmount: 35000000, 
-            currentAmount: 5200000, 
-            deadline: new Date("2026-08-01"), 
-            icon: "Plane", 
-            color: "#f97316" 
+        {
+            name: "Liburan Jepang",
+            targetAmount: 35000000,
+            currentAmount: 5200000,
+            deadline: new Date("2026-08-01"),
+            icon: "Plane",
+            color: "#f97316"
         },
     ]);
 
@@ -143,11 +144,11 @@ async function doFullSeed(db: any) {
 
 async function addFebruaryData(db: any) {
     console.log("Adding February 2026 data...");
-    
+
     // Get existing categories
     const cats = db.select().from(categories).all();
     const getCatId = (name: string) => cats.find((c: Category) => c.name === name)?.id || 1;
-    
+
     // Add February 2026 transactions
     await db.insert(transactions).values([
         { amount: 28000, description: "Kopi Susu", merchantName: "Kopi Kenangan", categoryId: getCatId("Makan & Minuman"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-05"), isVerified: true },
@@ -157,7 +158,7 @@ async function addFebruaryData(db: any) {
         { amount: 45000, description: "Grab Ride", merchantName: "Grab", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "gopay", date: new Date("2026-02-08"), isVerified: true },
         { amount: 120000, description: "Bensin Pertamax", merchantName: "Pertamina", categoryId: getCatId("Transportasi"), type: "expense" as const, paymentMethod: "cash", date: new Date("2026-02-10"), isVerified: true },
     ]);
-    
+
     // Add February 2026 budgets
     await db.insert(budgets).values([
         { categoryId: getCatId("Makan & Minuman"), amount: 2500000, month: 2, year: 2026 },
@@ -167,27 +168,27 @@ async function addFebruaryData(db: any) {
         { categoryId: getCatId("Kesehatan"), amount: 500000, month: 2, year: 2026 },
         { categoryId: getCatId("Tagihan"), amount: 500000, month: 2, year: 2026 },
     ]);
-    
+
     console.log("February 2026 data added successfully!");
 }
 
 async function ensureSampleBudgetsAndGoals(db: any) {
     const cats = db.select().from(categories).all();
     if (cats.length === 0) return;
-    
+
     const getCatId = (name: string) => cats.find((c: Category) => c.name === name)?.id || 1;
-    
+
     // Check current month budgets
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
-    
+
     const existingBudgets = db.select().from(budgets).where(
         and(
             eq(budgets.month, currentMonth),
             eq(budgets.year, currentYear)
         )
     ).all();
-    
+
     // Add sample budgets if less than 3 exist
     if (existingBudgets.length < 3) {
         console.log("Adding sample budgets...");
@@ -196,7 +197,7 @@ async function ensureSampleBudgetsAndGoals(db: any) {
             { categoryId: getCatId("Transportasi"), amount: 1000000, month: currentMonth, year: currentYear },
             { categoryId: getCatId("Hiburan"), amount: 800000, month: currentMonth, year: currentYear },
         ];
-        
+
         for (const budget of sampleBudgets) {
             const exists = existingBudgets.some((b: any) => b.categoryId === budget.categoryId);
             if (!exists) {
@@ -204,56 +205,56 @@ async function ensureSampleBudgetsAndGoals(db: any) {
             }
         }
     }
-    
+
     // Check existing goals
     const existingGoals = db.select().from(goals).all();
-    
+
     // Add sample goals if less than 5 exist (3 original + 2 new)
     if (existingGoals.length < 5) {
         console.log("Adding sample goals...");
         const sampleGoals = [
-            { 
-                name: "MacBook Air M3", 
-                targetAmount: 20000000, 
-                currentAmount: 8500000, 
-                deadline: new Date("2026-06-01"), 
-                icon: "Laptop", 
-                color: "#3b82f6" 
+            {
+                name: "MacBook Air M3",
+                targetAmount: 20000000,
+                currentAmount: 8500000,
+                deadline: new Date("2026-06-01"),
+                icon: "Laptop",
+                color: "#3b82f6"
             },
-            { 
-                name: "Emergency Fund", 
-                targetAmount: 30000000, 
-                currentAmount: 12500000, 
-                deadline: new Date("2026-12-31"), 
-                icon: "Shield", 
-                color: "#22c55e" 
+            {
+                name: "Emergency Fund",
+                targetAmount: 30000000,
+                currentAmount: 12500000,
+                deadline: new Date("2026-12-31"),
+                icon: "Shield",
+                color: "#22c55e"
             },
-            { 
-                name: "Liburan Jepang", 
-                targetAmount: 35000000, 
-                currentAmount: 5200000, 
-                deadline: new Date("2026-08-01"), 
-                icon: "Plane", 
-                color: "#f97316" 
+            {
+                name: "Liburan Jepang",
+                targetAmount: 35000000,
+                currentAmount: 5200000,
+                deadline: new Date("2026-08-01"),
+                icon: "Plane",
+                color: "#f97316"
             },
-            { 
-                name: "iPhone 16 Pro", 
-                targetAmount: 18000000, 
-                currentAmount: 6200000, 
-                deadline: new Date("2026-05-01"), 
-                icon: "Smartphone", 
-                color: "#a855f7" 
+            {
+                name: "iPhone 16 Pro",
+                targetAmount: 18000000,
+                currentAmount: 6200000,
+                deadline: new Date("2026-05-01"),
+                icon: "Smartphone",
+                color: "#a855f7"
             },
-            { 
-                name: "Motor NMAX", 
-                targetAmount: 35000000, 
-                currentAmount: 15000000, 
-                deadline: new Date("2026-09-01"), 
-                icon: "Bike", 
-                color: "#ec4899" 
+            {
+                name: "Motor NMAX",
+                targetAmount: 35000000,
+                currentAmount: 15000000,
+                deadline: new Date("2026-09-01"),
+                icon: "Bike",
+                color: "#ec4899"
             },
         ];
-        
+
         for (const goal of sampleGoals) {
             const exists = existingGoals.some((g: any) => g.name === goal.name);
             if (!exists) {
@@ -261,6 +262,6 @@ async function ensureSampleBudgetsAndGoals(db: any) {
             }
         }
     }
-    
+
     console.log("Sample budgets and goals check complete!");
 }

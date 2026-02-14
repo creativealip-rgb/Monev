@@ -844,3 +844,62 @@ Aturan:
         return { content: "Maaf, asisten AI sedang istirahat sebentar. Coba tanya lagi nanti ya!" };
     }
 }
+
+/**
+ * AI Insight Generator for Analysis Page.
+ * Analyzes the 50/30/20 allocation and category breakdowns.
+ */
+export async function getFinancialInsights(data: {
+    income: number;
+    expense: number;
+    balance: number;
+    allocations: Array<{ name: string; amount: number; percentage: number; target: number; color: string }>;
+    categoryBreakdown: {
+        expense: Array<{ name: string; amount: number; color: string; icon: string }>;
+        income: Array<{ name: string; amount: number; color: string; icon: string }>;
+    };
+}) {
+    try {
+        const openai = getOpenAIClient();
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `Anda adalah asisten AI Analis Keuangan pribadi yang cerdas. 
+Tugas Anda adalah menganalisa data alokasi pengeluaran user berdasarkan Rule 50/30/20 dan memberikan saran yang RINGKAS, TAJAM, dan MEMBANTU.
+
+DATA ANALISA BULAN INI:
+- Income: Rp ${data.income.toLocaleString('id-ID')}
+- Expense: Rp ${data.expense.toLocaleString('id-ID')}
+- Sisa Saldo: Rp ${data.balance.toLocaleString('id-ID')}
+
+ALOKASI 50/30/20:
+${data.allocations.map(a => `- ${a.name}: ${a.percentage}% (Target Ideal: ${a.target}%)`).join("\n")}
+
+TOP 5 PENGELUARAN PER KATEGORI:
+${data.categoryBreakdown.expense.slice(0, 5).map(e => `- ${e.name}: Rp ${e.amount.toLocaleString('id-ID')}`).join("\n")}
+
+ATURAN OUTPUT:
+1. Jawab dalam Bahasa Indonesia yang santai tapi profesional (seperti asisten pribadi).
+2. Fokus pada 1-2 point paling krusial saja.
+3. Jika "Keinginan" (Wants) > 30%, berikan teguran halus dan saran penghematan.
+4. Jika "Tabungan" (Savings) < 20%, beri tips cara menambah porsi tabungan.
+5. Gunakan emoji yang relevan.
+6. JANGAN bertele-tele. Maksimal 3-4 kalimat pendek.
+7. Akhiri dengan satu kalimat penyemangat.`
+                },
+                {
+                    role: "user",
+                    content: "Berikan analisa singkat dan saran untuk keuangan saya bulan ini."
+                }
+            ],
+            max_tokens: 300,
+        });
+
+        return response.choices[0]?.message?.content || "Data belum cukup untuk memberikan analisa. Terus catat transaksi Anda ya! 😊";
+    } catch (e) {
+        console.error("Financial Insights Error:", e);
+        return "Gagal menghasilkan analisa AI saat ini. Coba cek lagi nanti!";
+    }
+}

@@ -539,3 +539,96 @@ export async function markScheduledMessageSent(id: number): Promise<void> {
         .set({ status: "sent" })
         .where(eq(scheduledMessages.id, id));
 }
+
+export async function getAnalysisData(year: number, month: number) {
+    const db = getDb();
+
+    const allCategories = await db.select().from(categories).all();
+    const stats = await getMonthlyStats(year, month);
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const allTransactions = await db.select().from(transactions).all();
+    const monthlyTransactions = allTransactions.filter(t => {
+        const transDate = new Date(t.date);
+        return transDate >= startDate && transDate <= endDate;
+    });
+
+    const mapping = {
+        needs: ["Makan & Minuman", "Transportasi", "Tagihan", "Kesehatan", "Pendidikan"],
+        wants: ["Hiburan", "Belanja", "Lainnya"],
+        savings: ["Investasi", "Tabungan", "Tabungan & Investasi"]
+    };
+
+    let needsAmount = 0;
+    let wantsAmount = 0;
+    let investmentAmount = 0;
+
+    // Detailed breakdowns
+    const expenseBreakdown: Record<string, { amount: number; color: string; icon: string }> = {};
+    const incomeBreakdown: Record<string, { amount: number; color: string; icon: string }> = {};
+
+    monthlyTransactions.forEach(t => {
+        const cat = allCategories.find(c => c.id === t.categoryId);
+        if (!cat) return;
+
+        if (t.type === 'expense') {
+            // Rule 50/30/20 calculation
+            if (mapping.needs.includes(cat.name)) {
+                needsAmount += t.amount;
+            } else if (mapping.wants.includes(cat.name)) {
+                wantsAmount += t.amount;
+            } else if (mapping.savings.includes(cat.name)) {
+                investmentAmount += t.amount;
+            }
+
+            // Category breakdown calculation
+            if (!expenseBreakdown[cat.name]) {
+                expenseBreakdown[cat.name] = { amount: 0, color: cat.color, icon: cat.icon };
+            }
+            expenseBreakdown[cat.name].amount += t.amount;
+        } else if (t.type === 'income') {
+            if (!incomeBreakdown[cat.name]) {
+                incomeBreakdown[cat.name] = { amount: 0, color: cat.color, icon: cat.icon };
+            }
+            incomeBreakdown[cat.name].amount += t.amount;
+        }
+    });
+
+    // Savings Rule category includes actual investment expenses + unused balance
+    const totalSavings = investmentAmount + Math.max(0, stats.balance);
+
+    return {
+        income: stats.income,
+        expense: stats.expense,
+        balance: stats.balance,
+        allocations: [
+            {
+                name: "Kebutuhan",
+                amount: needsAmount,
+                percentage: stats.income > 0 ? Math.round((needsAmount / stats.income) * 100) : 0,
+                target: 50,
+                color: "orange"
+            },
+            {
+                name: "Keinginan",
+                amount: wantsAmount,
+                percentage: stats.income > 0 ? Math.round((wantsAmount / stats.income) * 100) : 0,
+                target: 30,
+                color: "rose"
+            },
+            {
+                name: "Tabungan",
+                amount: totalSavings,
+                percentage: stats.income > 0 ? Math.round((totalSavings / stats.income) * 100) : 0,
+                target: 20,
+                color: "blue"
+            }
+        ],
+        categoryBreakdown: {
+            expense: Object.entries(expenseBreakdown).map(([name, data]) => ({ name, ...data })),
+            income: Object.entries(incomeBreakdown).map(([name, data]) => ({ name, ...data }))
+        }
+    };
+}

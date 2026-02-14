@@ -198,7 +198,10 @@ Ada lagi yang mau dicatat?`;
                         await createTransaction({
                             amount: amountToMove,
                             description: `Pengalihan dana dari Goal: ${fromGoal.name}`,
-                            categoryId: allCategories.find(c => c.name === "Tabungan")?.id || allCategories[0].id,
+                            categoryId: allCategories.find(c => c.name === "Tabungan")?.id ||
+                                allCategories.find(c => c.name === "Investasi")?.id ||
+                                allCategories.find(c => c.name === "Lainnya")?.id ||
+                                allCategories[0].id,
                             type: "income",
                             date: new Date()
                         });
@@ -214,7 +217,10 @@ Ada lagi yang mau dicatat?`;
                     await createTransaction({
                         amount: args.amount,
                         description: `Setoran ke Goal: ${targetGoal.name}`,
-                        categoryId: allCategories.find(c => c.name === "Tabungan")?.id || allCategories[0].id,
+                        categoryId: allCategories.find(c => c.name === "Tabungan")?.id ||
+                            allCategories.find(c => c.name === "Investasi")?.id ||
+                            allCategories.find(c => c.name === "Lainnya")?.id ||
+                            allCategories[0].id,
                         type: "expense",
                         date: new Date()
                     });

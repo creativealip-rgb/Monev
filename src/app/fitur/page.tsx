@@ -32,7 +32,8 @@ const features = [
                 title: "Monev AI",
                 desc: "Chat dengan AI Assistant untuk analisis keuangan",
                 status: "ready",
-                color: "purple"
+                color: "purple",
+                href: "/chat"
             },
             {
                 id: 102,
@@ -40,7 +41,8 @@ const features = [
                 title: "Analisa",
                 desc: "Analisis cashflow dan pengeluaran by kategori",
                 status: "ready",
-                color: "blue"
+                color: "blue",
+                href: "/analytics"
             },
             {
                 id: 103,
@@ -48,7 +50,8 @@ const features = [
                 title: "Tabungan",
                 desc: "Tracking goals dan target tabungan",
                 status: "ready",
-                color: "emerald"
+                color: "emerald",
+                href: "/budgets"
             },
             {
                 id: 104,
@@ -56,7 +59,8 @@ const features = [
                 title: "Tagihan",
                 desc: "Kelola tagihan rutin dan utang piutang",
                 status: "ready",
-                color: "rose"
+                color: "rose",
+                href: "/transactions"
             },
             {
                 id: 105,
@@ -64,7 +68,8 @@ const features = [
                 title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
                 status: "coming",
-                color: "amber"
+                color: "amber",
+                href: "#"
             },
             {
                 id: 106,
@@ -72,7 +77,8 @@ const features = [
                 title: "Upgrade",
                 desc: "Upgrade ke akun Pro/Expert untuk fitur premium",
                 status: "ready",
-                color: "indigo"
+                color: "indigo",
+                href: "#"
             },
         ]
     },
@@ -85,7 +91,8 @@ const features = [
                 title: "Screenshot Agent",
                 desc: "Upload screenshot bukti transfer/QRIS",
                 status: "ready",
-                color: "emerald"
+                color: "emerald",
+                href: "#"
             },
             {
                 id: 2,
@@ -93,7 +100,8 @@ const features = [
                 title: "Notification Listener",
                 desc: "Auto-detect notifikasi Gojek/BCA/Tokopedia",
                 status: "coming",
-                color: "blue"
+                color: "blue",
+                href: "#"
             },
             {
                 id: 3,
@@ -101,7 +109,8 @@ const features = [
                 title: "Voice Memo Catcher",
                 desc: "Rekam suara untuk input multi-item",
                 status: "ready",
-                color: "purple"
+                color: "purple",
+                href: "#"
             },
         ]
     },
@@ -114,7 +123,8 @@ const features = [
                 title: "Detective Agent",
                 desc: "Google search untuk merchant ambigu",
                 status: "coming",
-                color: "indigo"
+                color: "indigo",
+                href: "#"
             },
             {
                 id: 5,
@@ -122,7 +132,8 @@ const features = [
                 title: "Reimbursable Spy",
                 desc: "Deteksi pengeluaran untuk klien",
                 status: "coming",
-                color: "amber"
+                color: "amber",
+                href: "#"
             },
         ]
     },
@@ -135,7 +146,8 @@ const features = [
                 title: "Goal Defender",
                 desc: "Hitung dampak pengeluaran pada goal",
                 status: "ready",
-                color: "rose"
+                color: "rose",
+                href: "/analytics"
             },
             {
                 id: 7,
@@ -143,7 +155,8 @@ const features = [
                 title: "Impulse Buying Judge",
                 desc: "Intervensi sebelum checkout e-commerce",
                 status: "coming",
-                color: "orange"
+                color: "orange",
+                href: "#"
             },
             {
                 id: 8,
@@ -151,7 +164,8 @@ const features = [
                 title: "Time-Cost Translator",
                 desc: "Konversi rupiah ke jam kerja",
                 status: "coming",
-                color: "cyan"
+                color: "cyan",
+                href: "#"
             },
             {
                 id: 9,
@@ -159,7 +173,8 @@ const features = [
                 title: "Freelance Reality Check",
                 desc: "Bagi income besar ke gaji bulanan",
                 status: "coming",
-                color: "teal"
+                color: "teal",
+                href: "#"
             },
         ]
     },
@@ -172,7 +187,8 @@ const features = [
                 title: "Subscription Hunter",
                 desc: "Deteksi & tracking langganan",
                 status: "coming",
-                color: "violet"
+                color: "violet",
+                href: "#"
             },
             {
                 id: 11,
@@ -180,7 +196,8 @@ const features = [
                 title: "Idle Cash Optimizer",
                 desc: "Saran investasi untuk uang nganggur",
                 status: "coming",
-                color: "green"
+                color: "green",
+                href: "#"
             },
             {
                 id: 12,
@@ -188,7 +205,8 @@ const features = [
                 title: "Inflation-Adjusted Saving",
                 desc: "Sesuaikan target dengan inflasi",
                 status: "coming",
-                color: "pink"
+                color: "pink",
+                href: "#"
             },
         ]
     },
@@ -201,7 +219,8 @@ const features = [
                 title: "Split Bill Coordinator",
                 desc: "Bagi pengeluaran F&B dengan teman",
                 status: "coming",
-                color: "sky"
+                color: "sky",
+                href: "#"
             },
             {
                 id: 14,
@@ -209,7 +228,8 @@ const features = [
                 title: "Social Debt Collector",
                 desc: "Tracking & reminder hutang piutang",
                 status: "coming",
-                color: "lime"
+                color: "lime",
+                href: "#"
             },
         ]
     },
@@ -222,7 +242,8 @@ const features = [
                 title: "Pocket Transfer Agent",
                 desc: "Track penarikan tunai ATM",
                 status: "coming",
-                color: "stone"
+                color: "stone",
+                href: "#"
             },
             {
                 id: 16,
@@ -230,7 +251,8 @@ const features = [
                 title: "Burn Rate Check",
                 desc: "Interogasi saldo tunai fisik",
                 status: "coming",
-                color: "neutral"
+                color: "neutral",
+                href: "#"
             },
         ]
     },
@@ -288,32 +310,37 @@ export default function FiturPage() {
                             {section.items.map((feature) => {
                                 const Icon = feature.icon;
                                 return (
-                                    <motion.div
+                                    <Link
                                         key={feature.id}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-200 hover:shadow-md transition-all"
+                                        href={feature.href || "#"}
+                                        className="block"
                                     >
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
-                                            <Icon className={`text-${feature.color}-600`} size={24} strokeWidth={2} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="font-semibold text-slate-900">{feature.title}</h3>
-                                                {feature.status === "ready" && (
-                                                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-full">
-                                                        Ready
-                                                    </span>
-                                                )}
-                                                {feature.status === "coming" && (
-                                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
-                                                        Soon
-                                                    </span>
-                                                )}
+                                        <motion.div
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-200 hover:shadow-md transition-all"
+                                        >
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
+                                                <Icon className={`text-${feature.color}-600`} size={24} strokeWidth={2} />
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-0.5">{feature.desc}</p>
-                                        </div>
-                                    </motion.div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-semibold text-slate-900">{feature.title}</h3>
+                                                    {feature.status === "ready" && (
+                                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-full">
+                                                            Ready
+                                                        </span>
+                                                    )}
+                                                    {feature.status === "coming" && (
+                                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
+                                                            Soon
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-slate-500 mt-0.5">{feature.desc}</p>
+                                            </div>
+                                        </motion.div>
+                                    </Link>
                                 );
                             })}
                         </div>

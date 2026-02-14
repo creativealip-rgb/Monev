@@ -42,7 +42,7 @@ interface Category {
 
 const mainFeatures = [
     { label: "Monev AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
-    { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "#" },
+    { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "/analytics" },
     { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/budgets" },
     { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "#" },
     { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "#" },
