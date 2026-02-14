@@ -1,30 +1,55 @@
 import { NextResponse } from "next/server";
-import { updateInvestment, deleteInvestment, getInvestmentById } from "@/backend/db/operations";
+import { auth } from "@/auth";
+import { updateInvestment, deleteInvestment } from "@/backend/db/operations";
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
-        const { id } = await params;
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
+        const { id: idString } = await params;
+        const id = parseInt(idString);
+
+        if (isNaN(id)) {
+            return NextResponse.json({ success: false, error: "Invalid investment ID" }, { status: 400 });
+        }
+
         const body = await request.json();
+        const updated = await updateInvestment(userId, id, body);
 
-        // If body has price update logic, handle it.
-        // For now, general update.
-        const investment = await updateInvestment(Number(id), body);
-
-        if (!investment) {
+        if (!updated) {
             return NextResponse.json({ success: false, error: "Investment not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, data: investment });
+        return NextResponse.json({ success: true, data: updated });
     } catch (error) {
         console.error("Error updating investment:", error);
         return NextResponse.json({ success: false, error: "Failed to update investment" }, { status: 500 });
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
-        const { id } = await params;
-        await deleteInvestment(Number(id));
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
+        const { id: idString } = await params;
+        const id = parseInt(idString);
+
+        if (isNaN(id)) {
+            return NextResponse.json({ success: false, error: "Invalid investment ID" }, { status: 400 });
+        }
+
+        await deleteInvestment(userId, id);
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error deleting investment:", error);

@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
 import { SecurityProvider } from "@/components/SecurityProvider";
+import { Providers } from "@/components/Providers";
 import { Metadata, Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -32,25 +33,25 @@ export default function RootLayout({
     return (
         <html lang="id">
             <body className={inter.className}>
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `
-                            if ('serviceWorker' in navigator) {
-                                caches.keys().then(function(names) {
-                                    for (let name of names) caches.delete(name);
-                                });
-                                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                                    for (let registration of registrations) {
-                                        registration.unregister();
-                                    }
-                                });
-                            }
-                        `,
-                    }}
-                />
-                <SecurityProvider>
-                    <ClientLayout>{children}</ClientLayout>
-                </SecurityProvider>
+                <Providers>
+                    <script
+                        dangerouslySetInnerHTML={{
+                            __html: `
+                                if ('serviceWorker' in navigator) {
+                                    caches.keys().then(function(names) {
+                                        for (let name of names) caches.delete(name);
+                                    });
+                                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                                        for (let registration of registrations) {
+                                            registration.unregister();
+                                        }
+                                    });
+                                }
+                            `,
+                        }}
+                    />
+                    {children}
+                </Providers>
             </body>
         </html>
     );

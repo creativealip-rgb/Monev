@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { updateGoal, removeGoal } from "@/backend/db/operations";
 
 export async function PUT(
@@ -6,6 +7,10 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const { id: idString } = await params;
         const id = parseInt(idString);
 
@@ -18,7 +23,7 @@ export async function PUT(
 
         const body = await request.json();
 
-        const updated = await updateGoal(id, {
+        const updated = await updateGoal(userId, id, {
             name: body.name,
             targetAmount: body.targetAmount,
             currentAmount: body.currentAmount,
@@ -49,6 +54,10 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const { id: idString } = await params;
         const id = parseInt(idString);
 
@@ -59,7 +68,7 @@ export async function DELETE(
             );
         }
 
-        await removeGoal(id);
+        await removeGoal(userId, id);
 
         return NextResponse.json({ success: true });
     } catch (error) {

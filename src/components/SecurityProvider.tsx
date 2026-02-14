@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Lock, Unlock, ShieldCheck } from "lucide-react";
-import { fetchProfileData } from "@/app/profile/actions";
+import { fetchProfileData } from "@/app/(protected)/profile/actions";
 
 interface SecurityContextType {
     isLocked: boolean;
@@ -35,7 +35,8 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
 
     const checkSecuritySettings = async () => {
         try {
-            const { settings } = await fetchProfileData();
+            const data = await fetchProfileData();
+            const settings = data?.settings;
             const enabled = settings?.isAppLockEnabled || false;
             const pin = settings?.securityPin || null;
 
@@ -126,8 +127,8 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
                                     setError(false);
                                 }}
                                 className={`w-full text-center text-3xl font-bold tracking-[0.5em] py-4 rounded-2xl border-2 focus:outline-none focus:ring-4 transition-all ${error
-                                        ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20 text-rose-600 bg-rose-50"
-                                        : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 text-slate-800 bg-white"
+                                    ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20 text-rose-600 bg-rose-50"
+                                    : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 text-slate-800 bg-white"
                                     }`}
                                 placeholder="••••••"
                                 autoFocus

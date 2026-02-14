@@ -1,310 +1,111 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { FeatureItem } from "@/frontend/components/FeatureItem";
-import { TransactionItem } from "@/frontend/components/TransactionItem";
-import {
-    Sparkles,
-    PieChart,
-    PiggyBank,
-    Receipt,
-    TrendingUp,
-    Crown,
-    Bell,
-    User,
-    ChevronRight,
-    ArrowUpRight,
-    ArrowDownRight,
-    Wallet
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
-import { fetchProfileData } from "@/app/profile/actions";
+import { ArrowRight, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
+import { FeatureItem } from "@/frontend/components/FeatureItem"; // Reuse if available, or just inline
 
-interface Transaction {
-    id: string;
-    amount: number;
-    description: string;
-    category: string;
-    type: "expense" | "income";
-    created_at: string;
-    is_verified: boolean;
-}
-
-interface Category {
-    id: number;
-    name: string;
-    color: string;
-    icon: string;
-    type: "expense" | "income";
-}
-
-const mainFeatures = [
-    { label: "Monev AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
-    { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "/analytics" },
-    { label: "Anggaran", icon: <Wallet size={24} />, color: "orange", href: "/budgets" },
-    { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/savings" },
-    { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
-    { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "/investments" },
-];
-
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1 }
-    }
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-};
-
-export default function Home() {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
-    const [loading, setLoading] = useState(true);
-    const [mounted, setMounted] = useState(false);
-    const [userName, setUserName] = useState("Pengguna");
-
-    const today = new Date();
-    const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
-
-    useEffect(() => {
-        setMounted(true);
-        async function loadData() {
-            try {
-                // Fetch Profile Data
-                const profileData = await fetchProfileData();
-                if (profileData?.user) {
-                    const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
-                    setUserName(fullName || "Pengguna");
-                }
-
-                // Get current month stats
-                const currentMonth = new Date().getMonth() + 1;
-                const currentYear = new Date().getFullYear();
-
-                const statsResponse = await fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
-                const statsResult = await statsResponse.json();
-                if (statsResult.success) {
-                    setStats(statsResult.data);
-                }
-
-                // Get recent transactions
-                const transResponse = await fetch("/api/transactions");
-                const transResult = await transResponse.json();
-
-                if (transResult.success) {
-                    // Get categories for lookup
-                    const catsResponse = await fetch("/api/categories");
-                    const catsResult = await catsResponse.json();
-                    const categories: Category[] = catsResult.success ? catsResult.data : [];
-
-                    // Map transactions with category names
-                    const mappedTransactions = transResult.data.slice(0, 5).map((t: {
-                        id: number;
-                        amount: number;
-                        description: string;
-                        categoryId: number;
-                        type: "expense" | "income";
-                        date: string;
-                        isVerified: boolean;
-                    }) => ({
-                        id: t.id.toString(),
-                        amount: t.amount,
-                        description: t.description,
-                        category: categories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
-                        type: t.type,
-                        created_at: t.date,
-                        is_verified: t.isVerified,
-                    }));
-
-                    setTransactions(mappedTransactions);
-                }
-            } catch (error) {
-                console.error("Error loading data:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        loadData();
-
-        // Listen for transaction added event
-        const handleTransactionAdded = () => {
-            loadData();
-        };
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-
-        return () => {
-            window.removeEventListener("transactionAdded", handleTransactionAdded);
-        };
-    }, []);
-
+export default function LandingPage() {
     return (
-        <div className="relative min-h-screen pb-28 bg-gradient-to-b from-slate-50 via-white to-slate-50">
-            {/* Header */}
-            <motion.header
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-4"
-            >
-                <div className="flex items-center justify-between mb-6">
-                    <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 overflow-hidden flex items-center justify-center shadow-lg shadow-blue-600/25"
-                        >
-                            <User size={22} className="text-white" />
-                        </motion.div>
-                        <div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{formattedDate}</p>
-                            <h1 className="text-lg font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{userName}</h1>
-                        </div>
-                    </Link>
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="w-11 h-11 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/10 transition-all"
-                    >
-                        <Bell size={20} />
-                    </motion.button>
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+            {/* Navbar */}
+            <nav className="px-6 py-6 flex items-center justify-between max-w-7xl mx-auto w-full">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">M</div>
+                    <span className="text-xl font-bold text-slate-900">Monev</span>
                 </div>
-            </motion.header>
+                <div className="flex items-center gap-4">
+                    <Link href="/login" className="text-slate-600 font-medium hover:text-blue-600 transition-colors">
+                        Login
+                    </Link>
+                    <Link href="/register" className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
+                        Get Started
+                    </Link>
+                </div>
+            </nav>
 
-            {/* Balance Card */}
-            <motion.section
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                className="px-6 mb-8"
-            >
-                <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 text-white p-6 shadow-2xl shadow-slate-900/20">
-                    {/* Background Effects */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -mr-20 -mt-20" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-45" />
+            {/* Hero Section */}
+            <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-4xl mx-auto mt-10 mb-20">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold mb-6 border border-blue-100">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    </span>
+                    New: AI Financial Advisor 2.0
+                </div>
 
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-slate-300 text-xs font-medium">Total Balance</p>
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/10">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span className="text-[10px] font-semibold text-emerald-400">+12.5%</span>
-                            </div>
-                        </div>
+                <h1 className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight mb-6 leading-tight">
+                    Master Your Money with <span className="text-blue-600 relative">
+                        AI Precision
+                        <svg className="absolute w-full h-3 -bottom-1 left-0 text-blue-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                            <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                        </svg>
+                    </span>
+                </h1>
 
-                        <h2 className="text-4xl font-bold tracking-tight mb-8">
-                            {loading ? "Loading..." : formatCurrency(stats.balance)}
-                        </h2>
+                <p className="text-lg text-slate-500 mb-10 max-w-2xl leading-relaxed">
+                    Monev helps you track expenses, manage budgets, and achieve financial goals with the help of an intelligent AI assistant.
+                    Stop guessing, start growing.
+                </p>
 
-                        <div className="flex gap-3">
-                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                        <ArrowUpRight size={14} className="text-emerald-400" />
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Income</p>
-                                </div>
-                                <p className="font-bold text-sm text-emerald-400">
-                                    + {loading ? "..." : formatCurrency(stats.income).replace("Rp", "")}
-                                </p>
-                            </div>
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                    <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-2">
+                        Start for Free
+                        <ArrowRight size={20} />
+                    </Link>
+                    <Link href="#features" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center">
+                        View Demo
+                    </Link>
+                </div>
 
-                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                                        <ArrowDownRight size={14} className="text-rose-400" />
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expense</p>
-                                </div>
-                                <p className="font-bold text-sm text-rose-400">
-                                    − {loading ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
-                                </p>
-                            </div>
-                        </div>
+                {/* Social Proof / Trust */}
+                <div className="mt-16 pt-8 border-t border-slate-100 w-full">
+                    <p className="text-sm text-slate-400 font-medium mb-4">TRUSTED BY FREELANCERS & FOUNDERS</p>
+                    <div className="flex flex-wrap justify-center gap-8 opacity-50 grayscale transition-all hover:grayscale-0">
+                        {/* Placeholders for logos */}
+                        <div className="font-bold text-xl text-slate-400 flex items-center gap-2"><div className="w-6 h-6 bg-slate-200 rounded-full" /> Acme Corp</div>
+                        <div className="font-bold text-xl text-slate-400 flex items-center gap-2"><div className="w-6 h-6 bg-slate-200 rounded-full" /> GlobalBank</div>
+                        <div className="font-bold text-xl text-slate-400 flex items-center gap-2"><div className="w-6 h-6 bg-slate-200 rounded-full" /> IndieHacker</div>
                     </div>
                 </div>
-            </motion.section>
+            </main>
 
-            {/* Features Grid */}
-            <motion.section
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                className="px-6 mb-8"
-            >
-                <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-sm font-bold text-slate-900">Fitur Andalan</h2>
-                    <Link href="/fitur" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
-                        Lihat Semua
-                        <ChevronRight size={14} />
-                    </Link>
-                </motion.div>
+            {/* Features (Simple Grid) */}
+            <section id="features" className="py-20 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <FeatureCard
+                            icon={<Zap className="text-amber-500" />}
+                            title="Instant Tracking"
+                            desc="Record transactions via Telegram bot, voice notes, or photo receipts in seconds."
+                        />
+                        <FeatureCard
+                            icon={<ShieldCheck className="text-emerald-500" />}
+                            title="Bank-Grade Security"
+                            desc="Your data is encrypted and secure. We prioritize your privacy above all else."
+                        />
+                        <FeatureCard
+                            icon={<CheckCircle2 className="text-blue-500" />}
+                            title="Smart Budgeting"
+                            desc="Set limits and get proactive alerts before you overspend. Stay on track effortlessly."
+                        />
+                    </div>
+                </div>
+            </section>
 
-                <motion.div
-                    variants={itemVariants}
-                    className="grid grid-cols-3 gap-y-8 gap-x-4 justify-items-center"
-                >
-                    {mainFeatures.map((feature) => (
-                        <Link key={feature.label} href={feature.href}>
-                            <FeatureItem
-                                label={feature.label}
-                                icon={feature.icon}
-                                color={feature.color}
-                            />
-                        </Link>
-                    ))}
-                </motion.div>
-            </motion.section>
+            {/* Footer */}
+            <footer className="py-8 text-center text-slate-400 text-sm border-t border-slate-100 bg-slate-50">
+                &copy; {new Date().getFullYear()} Monev SaaS. All rights reserved.
+            </footer>
+        </div>
+    );
+}
 
-            {/* Recent Transactions */}
-            <motion.section
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                className="px-6"
-            >
-                <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-sm font-bold text-slate-900">Riwayat Terbaru</h2>
-                    <Link href="/transactions" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                        Lihat Semua
-                    </Link>
-                </motion.div>
-
-                <motion.div variants={itemVariants} className="space-y-3">
-                    {loading ? (
-                        <div className="space-y-3 animate-pulse">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="h-4 w-28 bg-slate-100 rounded-full" />
-                                            <div className="h-3 w-16 bg-slate-50 rounded-full" />
-                                        </div>
-                                        <div className="h-5 w-20 bg-slate-100 rounded-full" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : transactions.length === 0 ? (
-                        <div className="text-center py-8 bg-white rounded-2xl border border-dashed border-slate-200">
-                            <p className="text-slate-500 font-bold">Belum ada transaksi</p>
-                            <p className="text-xs text-slate-400 mt-1">Transaksi akan muncul di sini</p>
-                        </div>
-                    ) : (
-                        transactions.map((t) => (
-                            <TransactionItem key={t.id} transaction={t} />
-                        ))
-                    )}
-                </motion.div>
-            </motion.section>
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+    return (
+        <div className="p-6 rounded-3xl bg-slate-50/50 border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4 text-2xl group-hover:scale-110 transition-transform duration-300">
+                {icon}
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
+            <p className="text-slate-500 leading-relaxed">{desc}</p>
         </div>
     );
 }

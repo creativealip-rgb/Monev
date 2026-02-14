@@ -1,33 +1,63 @@
 import { NextResponse } from "next/server";
-import { updateBill, deleteBill, toggleBillPaid, getBillById } from "@/backend/db/operations";
+import { auth } from "@/auth";
+import { updateBill, deleteBill, toggleBillPaid } from "@/backend/db/operations";
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
-        const { id } = await params;
-        const body = await request.json();
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
 
-        let bill;
-        if (body.togglePaid) {
-            bill = await toggleBillPaid(Number(id));
-        } else {
-            bill = await updateBill(Number(id), body);
+        const { id: idString } = await params;
+        const id = parseInt(idString);
+
+        if (isNaN(id)) {
+            return NextResponse.json({ success: false, error: "Invalid bill ID" }, { status: 400 });
         }
 
-        if (!bill) {
+        const body = await request.json();
+
+        // Check if this is a toggle paid action or full update
+        if (body.action === "toggle") {
+            const updated = await toggleBillPaid(userId, id);
+            if (!updated) return NextResponse.json({ success: false, error: "Bill not found" }, { status: 404 });
+            return NextResponse.json({ success: true, data: updated });
+        }
+
+        const updated = await updateBill(userId, id, body);
+
+        if (!updated) {
             return NextResponse.json({ success: false, error: "Bill not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, data: bill });
+        return NextResponse.json({ success: true, data: updated });
     } catch (error) {
         console.error("Error updating bill:", error);
         return NextResponse.json({ success: false, error: "Failed to update bill" }, { status: 500 });
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
-        const { id } = await params;
-        await deleteBill(Number(id));
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
+        const { id: idString } = await params;
+        const id = parseInt(idString);
+
+        if (isNaN(id)) {
+            return NextResponse.json({ success: false, error: "Invalid bill ID" }, { status: 400 });
+        }
+
+        await deleteBill(userId, id);
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error deleting bill:", error);

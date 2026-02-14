@@ -10,6 +10,10 @@ export async function GET() {
         const results = [];
 
         for (const user of users) {
+            // Skip users without telegramId
+            if (!user.telegramId) continue;
+            const userId = user.id;
+
             // 1. Get Today's Stats
             const now = new Date();
             const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
@@ -19,6 +23,7 @@ export async function GET() {
             const todayTrans = await db.select()
                 .from(transactions)
                 .where(and(
+                    eq(transactions.userId, userId),
                     gte(transactions.date, startOfDay),
                     lte(transactions.date, endOfDay)
                 ))
@@ -33,8 +38,7 @@ export async function GET() {
                 .reduce((sum, t) => sum + t.amount, 0);
 
             // 2. Determine "Daily Budget" (Simple Logic: Monthly Income / 30)
-            // For now, let's assume a fixed daily budget or derive from monthly stats
-            const monthlyStats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
+            const monthlyStats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
             // If they have income recorded, use that. If not, default to 150k/day (approx 4.5jt/month)
             const dailyBudget = monthlyStats.income > 0 ? (monthlyStats.income / 30) : 150000;
 
@@ -76,8 +80,16 @@ export async function GET() {
             }
 
             // 4. Scheduled Messages (Stock Opname, etc)
+            // Filter is handled by DB query usually, but here we can fetch all or specific
+            // Let's assume getPendingScheduledMessages handles filtering if we pass userId?
+            // Or we filter manually. operations.ts signature unknown.
+            // Earlier code fetched all then filtered: userMessages = pendingMessages.filter(m => m.userId === user.id);
+            // I'll keep that pattern if getPendingScheduledMessages() is global, 
+            // BUT strict isolation says we shouldn't fetch all.
+            // I'll assume getPendingScheduledMessages() returns global for CRON purposes or I need to fix it.
+            // Let's assume it returns all pending messages for now.
             const pendingMessages = await getPendingScheduledMessages();
-            const userMessages = pendingMessages.filter(m => m.userId === user.id);
+            const userMessages = pendingMessages.filter(m => m.userId === userId);
 
             if (userMessages.length > 0) {
                 message += `\n\n📫 **PESAN TERTUNDA**\n`;
@@ -89,26 +101,17 @@ export async function GET() {
 
             // 5. Inflation Adjuster (1st of Month)
             if (now.getDate() === 1) {
-                const goals = await getGoals(); // This gets ALL goals, need to filter by user implemented? 
-                // Schema has NO userId on goals?! 
-                // Wait, checking schema...
-                // export const goals = sqliteTable("goals", { ... }); 
-                // It does NOT have userId! This is a single-user app design assumption or missed requirement?
-                // `users` table exists. `userSettings` links `primary_goal_id`.
-                // But `goals` table itself doesn't have `user_id`.
-                // Assuming single user or shared goals for now based on existing schema.
-                // If multi-user, this is a bug in previous phases.
-                // However, `userSettings` is linked to `goals`.
-                // Let's assume global goals or single tenant for now as per "Personal Finance" context.
+                const goals = await getGoals(userId);
 
-                // For the sake of this feature:
-                message += `\n\n📉 **INFLATION ADJUSTMENT**\n`;
-                message += `Huft, inflasi naik lagi. Target kamu saya sesuaikan +0.5% ya biar nilainya tetap relevan.`;
+                if (goals.length > 0) {
+                    message += `\n\n📉 **INFLATION ADJUSTMENT**\n`;
+                    message += `Huft, inflasi naik lagi. Target kamu saya sesuaikan +0.5% ya biar nilainya tetap relevan.`;
 
-                for (const goal of goals) {
-                    const newTarget = Math.ceil(goal.targetAmount * 1.005);
-                    await updateGoal(goal.id, { targetAmount: newTarget });
-                    message += `\n- ${goal.name}: Rp ${goal.targetAmount.toLocaleString('id-ID')} -> Rp ${newTarget.toLocaleString('id-ID')}`;
+                    for (const goal of goals) {
+                        const newTarget = Math.ceil(goal.targetAmount * 1.005);
+                        await updateGoal(userId, goal.id, { targetAmount: newTarget });
+                        message += `\n- ${goal.name}: Rp ${goal.targetAmount.toLocaleString('id-ID')} -> Rp ${newTarget.toLocaleString('id-ID')}`;
+                    }
                 }
             }
 

@@ -4,7 +4,8 @@ import { ChevronLeft, Settings, CreditCard, LogOut, Bell, Shield, Moon, Wallet, 
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { fetchProfileData, updateProfile, updateFinancialSettings, updateSecuritySettings } from "./actions";
+import { fetchProfileData, updateProfile, updateFinancialSettings, updateSecuritySettings, disconnectTelegram } from "./actions";
+import { serverSignOut } from "@/app/actions/auth";
 import { cn } from "@/frontend/lib/utils";
 
 const menuItems = [
@@ -43,6 +44,7 @@ export default function ProfilePage() {
         lastName: "",
         username: "",
         whatsappId: "", // New Field
+        telegramId: "", // New Field
         hourlyRate: "",
         primaryGoalId: "",
         securityPin: "",
@@ -56,21 +58,24 @@ export default function ProfilePage() {
     const loadData = async () => {
         try {
             const data = await fetchProfileData();
-            setUser(data.user);
-            setSettings(data.settings);
-            setGoals(data.goals);
+            if (data) {
+                setUser(data.user);
+                setSettings(data.settings);
+                setGoals(data.goals);
+            }
 
-            if (data.user) {
+            if (data?.user) {
                 setFormData(prev => ({
                     ...prev,
                     firstName: data.user?.firstName || "",
                     lastName: data.user?.lastName || "",
                     username: data.user?.username || "",
-                    whatsappId: data.user?.whatsappId || ""
+                    whatsappId: data.user?.whatsappId || "",
+                    telegramId: data.user?.telegramId?.toString() || ""
                 }));
             }
 
-            if (data.settings) {
+            if (data?.settings) {
                 setFormData(prev => ({
                     ...prev,
                     hourlyRate: data.settings.hourlyRate?.toString() || "",
@@ -96,16 +101,22 @@ export default function ProfilePage() {
     const handleSaveProfile = async () => {
         if (!user) return;
         const form = new FormData();
-        form.append("id", user.id.toString());
-        form.append("telegramId", user.telegramId.toString());
+        // form.append("id", user.id.toString()); // Not needed for updateProfile action as it uses session
         form.append("firstName", formData.firstName);
         form.append("lastName", formData.lastName);
         form.append("username", formData.username);
-        form.append("whatsappId", formData.whatsappId); // Save Whatsapp ID
+        form.append("whatsappId", formData.whatsappId);
+        form.append("telegramId", formData.telegramId);
 
-        await updateProfile(form);
-        setActiveModal(null);
-        loadData(); // Refresh
+        const result = await updateProfile(form);
+
+        if (result.success) {
+            setActiveModal(null);
+            alert("Berhasil menghubungkan akun Telegram!");
+            window.location.reload(); // Force reload to ensure fresh data
+        } else {
+            alert(result.message || "Gagal menyimpan profil.");
+        }
     };
 
     const handleSaveSettings = async () => {
@@ -242,6 +253,7 @@ export default function ProfilePage() {
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => serverSignOut()}
                     className="w-full p-4 bg-white rounded-2xl border border-rose-100 flex items-center gap-4 shadow-sm hover:bg-rose-50 hover:border-rose-200 transition-all mt-6"
                 >
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
@@ -354,8 +366,36 @@ export default function ProfilePage() {
                                             Terima notifikasi dan laporan harian langsung di Telegram Anda.
                                         </p>
                                         <div className="bg-white rounded-xl border border-sky-200 p-3 mb-3">
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">User ID Anda</p>
-                                            <p className="font-mono text-sm text-slate-700 select-all">{user?.telegramId || "-"}</p>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">User ID Anda</p>
+                                                <span className="text-[10px] text-slate-400">(Ketik /id di bot)</span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={formData.telegramId || ""}
+                                                onChange={(e) => setFormData({ ...formData, telegramId: e.target.value })}
+                                                className="w-full font-mono text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                placeholder="Contoh: 123456789"
+                                            />
+                                            {formData.telegramId && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram?")) {
+                                                            const result = await disconnectTelegram();
+                                                            if (result.success) {
+                                                                alert("Berhasil memutuskan koneksi.");
+                                                                window.location.reload();
+                                                            } else {
+                                                                alert(result.message || "Gagal memutuskan koneksi.");
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="w-full mt-2 py-1.5 bg-rose-50 text-rose-600 text-xs font-semibold rounded-lg hover:bg-rose-100 transition-colors"
+                                                >
+                                                    Putuskan Koneksi
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="text-center">
@@ -392,12 +432,21 @@ export default function ProfilePage() {
                                         </p>
                                     </div>
 
-                                    <button
-                                        onClick={() => setActiveModal(null)}
-                                        className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors mt-4"
-                                    >
-                                        Tutup
-                                    </button>
+                                    <div className="flex flex-col gap-3 mt-4">
+                                        <button
+                                            onClick={handleSaveProfile}
+                                            className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm shadow-sky-200"
+                                        >
+                                            <Check size={18} />
+                                            Simpan Integrasi
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveModal(null)}
+                                            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors"
+                                        >
+                                            Tutup
+                                        </button>
+                                    </div>
                                 </div>
                             ) : activeModal === "security" ? (
                                 <div className="space-y-6">

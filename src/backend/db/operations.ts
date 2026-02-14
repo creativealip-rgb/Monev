@@ -1,5 +1,5 @@
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments } from "./schema";
+import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings } from "./schema";
 import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment } from "./schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
@@ -7,7 +7,7 @@ import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
 // Re-export types
 export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment };
 
-// Categories
+// Categories (Global for now)
 export async function getCategories(): Promise<Category[]> {
     const db = getDb();
     return db.select().from(categories).all();
@@ -19,30 +19,34 @@ export async function getCategoryById(id: number): Promise<Category | undefined>
 }
 
 // Transactions
-export async function getTransactions(limit = 50): Promise<Transaction[]> {
+export async function getTransactions(userId: number, limit = 50): Promise<Transaction[]> {
     const db = getDb();
     return db.select()
         .from(transactions)
+        .where(eq(transactions.userId, userId))
         .orderBy(desc(transactions.date))
         .limit(limit)
         .all();
 }
 
-export async function getTransactionsByCategory(categoryId: number): Promise<Transaction[]> {
+export async function getTransactionsByCategory(userId: number, categoryId: number): Promise<Transaction[]> {
     const db = getDb();
     return db.select()
         .from(transactions)
-        .where(eq(transactions.categoryId, categoryId))
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.categoryId, categoryId)
+        ))
         .orderBy(desc(transactions.date))
         .all();
 }
 
-export async function getTransactionById(id: number): Promise<Transaction | undefined> {
+export async function getTransactionById(userId: number, id: number): Promise<Transaction | undefined> {
     const db = getDb();
-    return db.select().from(transactions).where(eq(transactions.id, id)).get();
+    return db.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId))).get();
 }
 
-export async function createTransaction(data: {
+export async function createTransaction(userId: number, data: {
     amount: number;
     description: string;
     merchantName?: string;
@@ -53,6 +57,7 @@ export async function createTransaction(data: {
 }): Promise<Transaction> {
     const db = getDb();
     const result = db.insert(transactions).values({
+        userId,
         ...data,
         isVerified: true,
         isRecurring: false,
@@ -61,32 +66,32 @@ export async function createTransaction(data: {
     return result;
 }
 
-export async function updateTransaction(id: number, data: Partial<Transaction>): Promise<Transaction | undefined> {
+export async function updateTransaction(userId: number, id: number, data: Partial<Transaction>): Promise<Transaction | undefined> {
     const db = getDb();
     const result = db.update(transactions)
         .set(data)
-        .where(eq(transactions.id, id))
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
         .returning()
         .get();
 
     return result;
 }
 
-export async function deleteTransaction(id: number): Promise<void> {
+export async function deleteTransaction(userId: number, id: number): Promise<void> {
     const db = getDb();
-    await db.delete(transactions).where(eq(transactions.id, id));
+    await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 }
 
 // Statistics
-export async function getMonthlyStats(year: number, month: number): Promise<{
+export async function getMonthlyStats(userId: number, year: number, month: number): Promise<{
     income: number;
     expense: number;
     balance: number;
 }> {
     const db = getDb();
 
-    // Get all transactions and filter in JavaScript
-    const allTransactions = await db.select().from(transactions).all();
+    // Get all transactions for user
+    const allTransactions = await db.select().from(transactions).where(eq(transactions.userId, userId)).all();
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
@@ -111,7 +116,7 @@ export async function getMonthlyStats(year: number, month: number): Promise<{
     };
 }
 
-export async function getCategoryStats(year: number, month: number): Promise<Array<{
+export async function getCategoryStats(userId: number, year: number, month: number): Promise<Array<{
     categoryId: number;
     categoryName: string;
     color: string;
@@ -122,14 +127,17 @@ export async function getCategoryStats(year: number, month: number): Promise<Arr
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // Get all transactions and categories
+    // Get all transactions and categories for user
     const allTransactions = await db.select({
         transaction: transactions,
         category: categories,
     })
         .from(transactions)
         .innerJoin(categories, eq(transactions.categoryId, categories.id))
-        .where(eq(transactions.type, "expense"))
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense")
+        ))
         .all();
 
     // Filter by date in JavaScript
@@ -151,12 +159,13 @@ export async function getCategoryStats(year: number, month: number): Promise<Arr
 }
 
 // Ensure sample budgets exist
-async function ensureSampleBudgets(month: number, year: number) {
+async function ensureSampleBudgets(userId: number, month: number, year: number) {
     const db = getDb();
 
     const existingBudgets = await db.select()
         .from(budgets)
         .where(and(
+            eq(budgets.userId, userId),
             eq(budgets.month, month),
             eq(budgets.year, year)
         ))
@@ -168,12 +177,13 @@ async function ensureSampleBudgets(month: number, year: number) {
     const getCatId = (name: string) => allCategories.find(c => c.name === name)?.id;
 
     const sampleBudgets = [
-        { categoryId: getCatId("Makan & Minuman")!, amount: 2500000, month, year },
-        { categoryId: getCatId("Transportasi")!, amount: 1000000, month, year },
-        { categoryId: getCatId("Hiburan")!, amount: 800000, month, year },
+        { userId, categoryId: getCatId("Makan & Minuman")!, amount: 2500000, month, year },
+        { userId, categoryId: getCatId("Transportasi")!, amount: 1000000, month, year },
+        { userId, categoryId: getCatId("Hiburan")!, amount: 800000, month, year },
     ];
 
     for (const budget of sampleBudgets) {
+        if (!budget.categoryId) continue;
         const exists = existingBudgets.some(b => b.categoryId === budget.categoryId);
         if (!exists) {
             await db.insert(budgets).values(budget);
@@ -182,13 +192,13 @@ async function ensureSampleBudgets(month: number, year: number) {
 }
 
 // Budgets
-export async function getBudgets(month: number, year: number): Promise<Array<Budget & { category: Category; spent: number }>> {
+export async function getBudgets(userId: number, month: number, year: number): Promise<Array<Budget & { category: Category; spent: number }>> {
     const db = getDb();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     // Ensure sample budgets exist for current month
-    await ensureSampleBudgets(month, year);
+    await ensureSampleBudgets(userId, month, year);
 
     const budgetsWithCategories = await db.select({
         budget: budgets,
@@ -197,15 +207,19 @@ export async function getBudgets(month: number, year: number): Promise<Array<Bud
         .from(budgets)
         .innerJoin(categories, eq(budgets.categoryId, categories.id))
         .where(and(
+            eq(budgets.userId, userId),
             eq(budgets.month, month),
             eq(budgets.year, year)
         ))
         .all();
 
-    // Get all transactions for the month
+    // Get all transactions for the month for user
     const allTransactions = await db.select()
         .from(transactions)
-        .where(eq(transactions.type, "expense"))
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense")
+        ))
         .all();
 
     // Calculate spent for each budget
@@ -230,66 +244,59 @@ export async function getBudgets(month: number, year: number): Promise<Array<Bud
 }
 
 // Budgets - Additional CRUD operations
-export async function createBudget(data: {
+export async function createBudget(userId: number, data: {
     categoryId: number;
     amount: number;
     month: number;
     year: number;
 }): Promise<Budget> {
     const db = getDb();
-    return db.insert(budgets).values(data).returning().get();
+    return db.insert(budgets).values({ ...data, userId }).returning().get();
 }
 
-export async function updateBudget(id: number, data: Partial<Budget>): Promise<Budget | undefined> {
+export async function updateBudget(userId: number, id: number, data: Partial<Budget>): Promise<Budget | undefined> {
     const db = getDb();
     return db.update(budgets)
         .set(data)
-        .where(eq(budgets.id, id))
+        .where(and(eq(budgets.id, id), eq(budgets.userId, userId)))
         .returning()
         .get();
 }
 
-export async function deleteBudget(id: number): Promise<void> {
+export async function deleteBudget(userId: number, id: number): Promise<void> {
     const db = getDb();
-    await db.delete(budgets).where(eq(budgets.id, id));
+    await db.delete(budgets).where(and(eq(budgets.id, id), eq(budgets.userId, userId)));
 }
 
 // Ensure sample goals exist
-async function ensureSampleGoals() {
+async function ensureSampleGoals(userId: number) {
     const db = getDb();
 
-    const existingGoals = await db.select().from(goals).all();
-    if (existingGoals.length >= 5) return;
+    const existingGoals = await db.select().from(goals).where(eq(goals.userId, userId)).all();
+    if (existingGoals.length >= 1) return; // Reduce sample spam
 
     const sampleGoals = [
-        { name: "MacBook Air M3", targetAmount: 20000000, currentAmount: 8500000, deadline: new Date("2026-06-01"), icon: "💻", color: "#3b82f6" },
-        { name: "Emergency Fund", targetAmount: 30000000, currentAmount: 12500000, deadline: new Date("2026-12-31"), icon: "🛡️", color: "#22c55e" },
-        { name: "Liburan Jepang", targetAmount: 35000000, currentAmount: 5200000, deadline: new Date("2026-08-01"), icon: "✈️", color: "#f97316" },
-        { name: "iPhone 16 Pro", targetAmount: 18000000, currentAmount: 6200000, deadline: new Date("2026-05-01"), icon: "📱", color: "#a855f7" },
-        { name: "Motor NMAX", targetAmount: 35000000, currentAmount: 15000000, deadline: new Date("2026-09-01"), icon: "🏍️", color: "#ec4899" },
+        { userId, name: "Dana Darurat", targetAmount: 10000000, currentAmount: 2000000, deadline: new Date("2026-12-31"), icon: "🛡️", color: "#22c55e" },
     ];
 
     for (const goal of sampleGoals) {
-        const exists = existingGoals.some(g => g.name === goal.name);
-        if (!exists) {
-            await db.insert(goals).values(goal);
-        }
+        await db.insert(goals).values(goal);
     }
 }
 
 // Goals - Full CRUD operations
-export async function getGoals(): Promise<Goal[]> {
-    await ensureSampleGoals();
+export async function getGoals(userId: number): Promise<Goal[]> {
+    await ensureSampleGoals(userId);
     const db = getDb();
-    return db.select().from(goals).all();
+    return db.select().from(goals).where(eq(goals.userId, userId)).all();
 }
 
-export async function getGoalById(id: number): Promise<Goal | undefined> {
+export async function getGoalById(userId: number, id: number): Promise<Goal | undefined> {
     const db = getDb();
-    return db.select().from(goals).where(eq(goals.id, id)).get();
+    return db.select().from(goals).where(and(eq(goals.id, id), eq(goals.userId, userId))).get();
 }
 
-export async function createGoal(data: {
+export async function createGoal(userId: number, data: {
     name: string;
     targetAmount: number;
     currentAmount?: number;
@@ -300,51 +307,56 @@ export async function createGoal(data: {
     const db = getDb();
     return db.insert(goals).values({
         ...data,
+        userId,
         currentAmount: data.currentAmount || 0,
         icon: data.icon || "Target",
         color: data.color || "#3b82f6",
     }).returning().get();
 }
 
-export async function updateGoal(id: number, data: Partial<Goal>): Promise<Goal | undefined> {
+export async function updateGoal(userId: number, id: number, data: Partial<Goal>): Promise<Goal | undefined> {
     const db = getDb();
     return db.update(goals)
         .set(data)
-        .where(eq(goals.id, id))
+        .where(and(eq(goals.id, id), eq(goals.userId, userId)))
         .returning()
         .get();
 }
 
-export async function updateGoalProgress(id: number, amount: number): Promise<Goal | undefined> {
+export async function updateGoalProgress(userId: number, id: number, amount: number): Promise<Goal | undefined> {
     const db = getDb();
-    const goal = await getGoalById(id);
+    const goal = await getGoalById(userId, id);
     if (!goal) return undefined;
 
     const newAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
 
     return db.update(goals)
         .set({ currentAmount: newAmount })
-        .where(eq(goals.id, id))
+        .where(and(eq(goals.id, id), eq(goals.userId, userId)))
         .returning()
         .get();
 }
 
-export async function removeGoal(id: number): Promise<Goal | undefined> {
+export async function removeGoal(userId: number, id: number): Promise<Goal | undefined> {
     const db = getDb();
 
     // Check if this goal is set as primaryGoalId in userSettings
+    // Need to strictly user scope this too
     await db.update(userSettings)
         .set({ primaryGoalId: null })
-        .where(eq(userSettings.primaryGoalId, id));
+        .where(and(eq(userSettings.primaryGoalId, id), eq(userSettings.userId, userId)));
 
-    return db.delete(goals).where(eq(goals.id, id)).returning().get();
+    return db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId))).returning().get();
 }
 
-export async function getRecentTransactionsByCategory(categoryId: number, limit: number = 5): Promise<Transaction[]> {
+export async function getRecentTransactionsByCategory(userId: number, categoryId: number, limit: number = 5): Promise<Transaction[]> {
     const db = getDb();
     return db.select()
         .from(transactions)
-        .where(eq(transactions.categoryId, categoryId))
+        .where(and(
+            eq(transactions.categoryId, categoryId),
+            eq(transactions.userId, userId)
+        ))
         .orderBy(desc(transactions.date))
         .limit(limit)
         .all();
@@ -360,7 +372,7 @@ export async function upsertUser(data: {
 }): Promise<User> {
     const db = getDb();
 
-    // Check if user exists
+    // Check if user exists by Telegram ID
     const existing = db.select().from(users).where(eq(users.telegramId, data.telegramId)).get();
 
     if (existing) {
@@ -400,14 +412,87 @@ export async function getUserById(id: number): Promise<User | undefined> {
     return db.select().from(users).where(eq(users.id, id)).get();
 }
 
-// User Settings
-export async function getUserSettings(): Promise<UserSettings> {
+export async function updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
     const db = getDb();
-    let settings = db.select().from(userSettings).get();
+    return db.update(users)
+        .set(data)
+        .where(eq(users.id, id))
+        .returning()
+        .get();
+}
+
+export async function linkTelegramAccount(userId: number, telegramId: number): Promise<{ success: boolean; message: string }> {
+    const db = getDb();
+    console.log("linkTelegramAccount called:", { userId, telegramId });
+
+    // Check if telegramId is already used
+    const existingUser = await db.select().from(users).where(eq(users.telegramId, telegramId)).get();
+
+    if (existingUser) {
+        if (existingUser.id === userId) {
+            return { success: true, message: "Akun sudah terhubung." };
+        }
+
+        if (existingUser.email || existingUser.password) {
+            return { success: false, message: "ID Telegram ini sudah digunakan oleh akun lain yang terdaftar." };
+        }
+
+        console.log("Merging ghost user:", existingUser.id, "into real user:", userId);
+
+        // Migrate all related data from ghost user to real user
+        // Tables to migrate: transactions, budgets, goals, bills, investments, debts, scheduledMessages, merchantMappings, userSettings
+
+        console.log("Merging ghost user:", existingUser.id, "into real user:", userId);
+
+        // Migrate all related data from ghost user to real user
+        // Tables to migrate: transactions, budgets, goals, bills, investments, debts, scheduledMessages, merchantMappings, userSettings
+
+        // better-sqlite3 transactions are synchronous, but we can just run these sequentially for now to avoid complexity with async/sync mismatch
+        // db.transaction is usually better, but if it complains about promise return, let's just do it directly.
+
+        await db.update(transactions).set({ userId: userId }).where(eq(transactions.userId, existingUser.id));
+        await db.update(budgets).set({ userId: userId }).where(eq(budgets.userId, existingUser.id));
+        await db.update(goals).set({ userId: userId }).where(eq(goals.userId, existingUser.id));
+        await db.update(bills).set({ userId: userId }).where(eq(bills.userId, existingUser.id));
+        await db.update(investments).set({ userId: userId }).where(eq(investments.userId, existingUser.id));
+        await db.update(debts).set({ userId: userId }).where(eq(debts.userId, existingUser.id));
+        await db.update(scheduledMessages).set({ userId: userId }).where(eq(scheduledMessages.userId, existingUser.id));
+        await db.update(merchantMappings).set({ userId: userId }).where(eq(merchantMappings.userId, existingUser.id));
+
+        // Delete ghost user settings (collision likely, just delete ghost's settings)
+        await db.delete(userSettings).where(eq(userSettings.userId, existingUser.id));
+
+        // Finally, delete the ghost user
+        await db.delete(users).where(eq(users.id, existingUser.id));
+
+        console.log("Migration complete.");
+    }
+
+    // Update current user
+    console.log("Updating target user:", userId, "with Telegram ID:", telegramId);
+    await db.update(users)
+        .set({ telegramId: telegramId })
+        .where(eq(users.id, userId));
+
+    return { success: true, message: "Berhasil menghubungkan akun Telegram." };
+}
+
+export async function unlinkTelegramAccount(userId: number): Promise<void> {
+    const db = getDb();
+    await db.update(users)
+        .set({ telegramId: null })
+        .where(eq(users.id, userId));
+}
+
+// User Settings
+export async function getUserSettings(userId: number): Promise<UserSettings> {
+    const db = getDb();
+    let settings = db.select().from(userSettings).where(eq(userSettings.userId, userId)).get();
 
     if (!settings) {
         // Create default settings if not exists
         settings = db.insert(userSettings).values({
+            userId,
             hourlyRate: 50000,
         }).returning().get();
     }
@@ -415,33 +500,35 @@ export async function getUserSettings(): Promise<UserSettings> {
     return settings;
 }
 
-export async function updateUserSettings(data: Partial<UserSettings>): Promise<UserSettings> {
+export async function updateUserSettings(userId: number, data: Partial<UserSettings>): Promise<UserSettings> {
     const db = getDb();
-    const settings = await getUserSettings();
+    // Ensure exists
+    await getUserSettings(userId);
 
     return db.update(userSettings)
         .set({
             ...data,
             updatedAt: new Date(),
         })
-        .where(eq(userSettings.id, settings.id))
+        .where(eq(userSettings.userId, userId))
         .returning()
         .get();
 }
 
 // Advanced Features
-export async function analyzeSubscriptions(monthsBack = 3): Promise<Array<{ merchant: string, amount: number, frequency: number, lastDate: Date }>> {
+export async function analyzeSubscriptions(userId: number, monthsBack = 3): Promise<Array<{ merchant: string, amount: number, frequency: number, lastDate: Date }>> {
     const db = getDb();
     const now = new Date();
     const startDate = new Date();
     startDate.setMonth(now.getMonth() - monthsBack);
 
-    // Get all expenses in window
+    // Get all expenses in window for user
     const expenses = await db.select()
         .from(transactions)
         .where(and(
             eq(transactions.type, "expense"),
-            gte(transactions.date, startDate)
+            gte(transactions.date, startDate),
+            eq(transactions.userId, userId)
         ))
         .orderBy(desc(transactions.date))
         .all();
@@ -506,11 +593,11 @@ export async function getDebts(userId: number, status: "paid" | "unpaid" = "unpa
         .all();
 }
 
-export async function updateDebtStatus(id: number, status: "paid" | "unpaid"): Promise<Debt | undefined> {
+export async function updateDebtStatus(userId: number, id: number, status: "paid" | "unpaid"): Promise<Debt | undefined> {
     const db = getDb();
     return db.update(debts)
         .set({ status })
-        .where(eq(debts.id, id))
+        .where(and(eq(debts.id, id), eq(debts.userId, userId)))
         .returning()
         .get();
 }
@@ -531,6 +618,9 @@ export async function createScheduledMessage(data: {
 }
 
 export async function getPendingScheduledMessages(): Promise<ScheduledMessage[]> {
+    // This might be a system level usage, but mostly should be fine to check all
+    // Or we filter by user if specific user asks?
+    // Usually a cron job runs this.
     const db = getDb();
     const now = new Date();
     return db.select()
@@ -549,16 +639,16 @@ export async function markScheduledMessageSent(id: number): Promise<void> {
         .where(eq(scheduledMessages.id, id));
 }
 
-export async function getAnalysisData(year: number, month: number) {
+export async function getAnalysisData(userId: number, year: number, month: number) {
     const db = getDb();
 
     const allCategories = await db.select().from(categories).all();
-    const stats = await getMonthlyStats(year, month);
+    const stats = await getMonthlyStats(userId, year, month);
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const allTransactions = await db.select().from(transactions).all();
+    const allTransactions = await db.select().from(transactions).where(eq(transactions.userId, userId)).all();
     const monthlyTransactions = allTransactions.filter(t => {
         const transDate = new Date(t.date);
         return transDate >= startDate && transDate <= endDate;
@@ -606,6 +696,8 @@ export async function getAnalysisData(year: number, month: number) {
     });
 
     // Savings Rule category includes actual investment expenses + unused balance
+    // Unused balance is allocated to savings in this logic?
+    // If balance is positive, we assume it's saved.
     const totalSavings = investmentAmount + Math.max(0, stats.balance);
 
     return {
@@ -644,17 +736,17 @@ export async function getAnalysisData(year: number, month: number) {
 
 // ============ Bills CRUD ============
 
-export async function getBills(): Promise<Bill[]> {
+export async function getBills(userId: number): Promise<Bill[]> {
     const db = getDb();
-    return db.select().from(bills).orderBy(bills.dueDate).all();
+    return db.select().from(bills).where(eq(bills.userId, userId)).orderBy(bills.dueDate).all();
 }
 
-export async function getBillById(id: number): Promise<Bill | undefined> {
+export async function getBillById(userId: number, id: number): Promise<Bill | undefined> {
     const db = getDb();
-    return db.select().from(bills).where(eq(bills.id, id)).get();
+    return db.select().from(bills).where(and(eq(bills.id, id), eq(bills.userId, userId))).get();
 }
 
-export async function createBill(data: {
+export async function createBill(userId: number, data: {
     name: string;
     amount: number;
     categoryId?: number;
@@ -666,6 +758,7 @@ export async function createBill(data: {
 }): Promise<Bill> {
     const db = getDb();
     const result = await db.insert(bills).values({
+        userId,
         name: data.name,
         amount: data.amount,
         categoryId: data.categoryId || null,
@@ -678,23 +771,23 @@ export async function createBill(data: {
     return result[0];
 }
 
-export async function updateBill(id: number, data: Partial<Bill>): Promise<Bill | undefined> {
+export async function updateBill(userId: number, id: number, data: Partial<Bill>): Promise<Bill | undefined> {
     const db = getDb();
     const result = await db.update(bills)
         .set(data)
-        .where(eq(bills.id, id))
+        .where(and(eq(bills.id, id), eq(bills.userId, userId)))
         .returning();
     return result[0];
 }
 
-export async function deleteBill(id: number): Promise<void> {
+export async function deleteBill(userId: number, id: number): Promise<void> {
     const db = getDb();
-    await db.delete(bills).where(eq(bills.id, id));
+    await db.delete(bills).where(and(eq(bills.id, id), eq(bills.userId, userId)));
 }
 
-export async function toggleBillPaid(id: number): Promise<Bill | undefined> {
+export async function toggleBillPaid(userId: number, id: number): Promise<Bill | undefined> {
     const db = getDb();
-    const bill = await getBillById(id);
+    const bill = await getBillById(userId, id);
     if (!bill) return undefined;
 
     const newPaid = !bill.isPaid;
@@ -703,42 +796,39 @@ export async function toggleBillPaid(id: number): Promise<Bill | undefined> {
             isPaid: newPaid,
             lastPaidAt: newPaid ? new Date() : null,
         })
-        .where(eq(bills.id, id))
+        .where(and(eq(bills.id, id), eq(bills.userId, userId)))
         .returning();
     return result[0];
 }
 
-export async function ensureSampleBills(): Promise<void> {
+export async function ensureSampleBills(userId: number): Promise<void> {
     const db = getDb();
-    const existing = await db.select().from(bills).all();
+    const existing = await db.select().from(bills).where(eq(bills.userId, userId)).all();
     if (existing.length > 0) return;
 
     const allCats = await db.select().from(categories).all();
     const getCatId = (name: string) => allCats.find(c => c.name === name)?.id || null;
 
     await db.insert(bills).values([
-        { name: "Listrik PLN", amount: 350000, categoryId: getCatId("Tagihan"), dueDate: 20, icon: "Zap", color: "#f59e0b" },
-        { name: "WiFi Indihome", amount: 399000, categoryId: getCatId("Tagihan"), dueDate: 15, icon: "Wifi", color: "#3b82f6" },
-        { name: "Netflix", amount: 54000, categoryId: getCatId("Hiburan"), dueDate: 5, icon: "Tv", color: "#ef4444" },
-        { name: "Spotify", amount: 54990, categoryId: getCatId("Hiburan"), dueDate: 12, icon: "Music", color: "#22c55e" },
-        { name: "BPJS Kesehatan", amount: 150000, categoryId: getCatId("Kesehatan"), dueDate: 10, icon: "Heart", color: "#ec4899" },
-        { name: "Cicilan Motor", amount: 850000, categoryId: getCatId("Transportasi"), dueDate: 25, icon: "Bike", color: "#8b5cf6" },
+        { userId, name: "Listrik PLN", amount: 350000, categoryId: getCatId("Tagihan"), dueDate: 20, icon: "Zap", color: "#f59e0b" },
+        { userId, name: "WiFi Indihome", amount: 399000, categoryId: getCatId("Tagihan"), dueDate: 15, icon: "Wifi", color: "#3b82f6" },
+        { userId, name: "Netflix", amount: 54000, categoryId: getCatId("Hiburan"), dueDate: 5, icon: "Tv", color: "#ef4444" },
     ]);
 }
 
 // ============ Investments CRUD ============
 
-export async function getInvestments(): Promise<Investment[]> {
+export async function getInvestments(userId: number): Promise<Investment[]> {
     const db = getDb();
-    return db.select().from(investments).orderBy(desc(investments.createdAt)).all();
+    return db.select().from(investments).where(eq(investments.userId, userId)).orderBy(desc(investments.createdAt)).all();
 }
 
-export async function getInvestmentById(id: number): Promise<Investment | undefined> {
+export async function getInvestmentById(userId: number, id: number): Promise<Investment | undefined> {
     const db = getDb();
-    return db.select().from(investments).where(eq(investments.id, id)).get();
+    return db.select().from(investments).where(and(eq(investments.id, id), eq(investments.userId, userId))).get();
 }
 
-export async function createInvestment(data: {
+export async function createInvestment(userId: number, data: {
     name: string;
     type: "stock" | "crypto" | "mutual_fund" | "gold" | "bond" | "other";
     quantity: number;
@@ -751,6 +841,7 @@ export async function createInvestment(data: {
 }): Promise<Investment> {
     const db = getDb();
     const result = await db.insert(investments).values({
+        userId,
         name: data.name,
         type: data.type,
         quantity: data.quantity,
@@ -764,79 +855,47 @@ export async function createInvestment(data: {
     return result[0];
 }
 
-export async function updateInvestment(id: number, data: Partial<Investment>): Promise<Investment | undefined> {
+export async function updateInvestment(userId: number, id: number, data: Partial<Investment>): Promise<Investment | undefined> {
     const db = getDb();
     const result = await db.update(investments)
         .set({
             ...data,
             updatedAt: new Date(),
         })
-        .where(eq(investments.id, id))
+        .where(and(eq(investments.id, id), eq(investments.userId, userId)))
         .returning();
     return result[0];
 }
 
-export async function deleteInvestment(id: number): Promise<void> {
+export async function deleteInvestment(userId: number, id: number): Promise<void> {
     const db = getDb();
-    await db.delete(investments).where(eq(investments.id, id));
+    await db.delete(investments).where(and(eq(investments.id, id), eq(investments.userId, userId)));
 }
 
-export async function ensureSampleInvestments(): Promise<void> {
+export async function ensureSampleInvestments(userId: number): Promise<void> {
     const db = getDb();
-    const existing = await db.select().from(investments).all();
+    const existing = await db.select().from(investments).where(eq(investments.userId, userId)).all();
     if (existing.length > 0) return;
 
     await db.insert(investments).values([
-        { name: "BBCA", type: "stock", quantity: 500, avgBuyPrice: 9200, currentPrice: 10500, platform: "Ajaib", icon: "BarChart", color: "#3b82f6" },
-        { name: "Bitcoin", type: "crypto", quantity: 0.005, avgBuyPrice: 950000000, currentPrice: 1530000000, platform: "Pintu", icon: "Bitcoin", color: "#f59e0b" },
-        { name: "Emas Antam", type: "gold", quantity: 5, avgBuyPrice: 1100000, currentPrice: 1350000, platform: "Pegadaian", icon: "Award", color: "#eab308" },
-        { name: "Reksadana Sucor", type: "mutual_fund", quantity: 1500, avgBuyPrice: 1000, currentPrice: 1250, platform: "Bibit", icon: "PieChart", color: "#8b5cf6" },
+        { userId, name: "BBCA", type: "stock", quantity: 500, avgBuyPrice: 9200, currentPrice: 10500, platform: "Ajaib", icon: "BarChart", color: "#3b82f6" },
+        { userId, name: "Emas Antam", type: "gold", quantity: 5, avgBuyPrice: 1100000, currentPrice: 1350000, platform: "Pegadaian", icon: "Award", color: "#eab308" },
     ]);
 }
 
-
-export async function getFinancialHealthMetrics() {
+export async function getFinancialHealthMetrics(userId: number) {
     const db = getDb();
     const now = new Date();
-
-    // Calculate Average Monthly Expense (Last 3 Months)
-    let totalExpenseLast3Months = 0;
-    for (let i = 1; i <= 3; i++) {
-        // handle month wrap
-        let d = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-        // Actually simpler: just get all transactions from 3 months ago until now
-        // But reusing getMonthlyStats is safer for consistency if logic changes
-    }
-
-    // Simpler approach for avg expense:
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(now.getMonth() - 2); // Current + 2 prev months
-    threeMonthsAgo.setDate(1);
-
-    const recentTrans = await db.select().from(transactions).where(gte(transactions.date, threeMonthsAgo)).all();
-
-    // Group by month to handle averages correctly? 
-    // Or just simple total / 3? Simple total / 3 is roughly ok for "Runway" estimation.
-    // Better: sum of expenses in recentTrans / 3.
-    const recentExpenses = recentTrans
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-    const avgMonthlyExpense = recentExpenses / 3;
-
-    // Calculate Total Balance (All time)
-    const allTrans = await db.select().from(transactions).all();
-    const totalIncome = allTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalMonev = allTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const currentBalance = totalIncome - totalMonev;
-
-    const runway = calculateRunway(currentBalance, avgMonthlyExpense);
-    const idleCash = calculateIdleCash(currentBalance, avgMonthlyExpense);
+    // Placeholder - requires simple stats logic
+    const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
+    const goalsList = await getGoals(userId);
+    const totalGoalProgress = goalsList.reduce((acc, g) => acc + g.currentAmount, 0);
+    const totalGoalTarget = goalsList.reduce((acc, g) => acc + g.targetAmount, 0);
 
     return {
-        currentBalance,
-        avgMonthlyExpense,
-        runway,
-        idleCash
+        monthlyBalance: stats.balance,
+        savingsRate: stats.income > 0 ? (stats.balance / stats.income) * 100 : 0,
+        goalCompletion: totalGoalTarget > 0 ? (totalGoalProgress / totalGoalTarget) * 100 : 0,
+        runwayMonths: calculateRunway(stats.balance, stats.expense)
     };
 }

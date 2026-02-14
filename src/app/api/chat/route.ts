@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import {
     getMonthlyStats, getGoals, getBudgets, getTransactions, getTransactionById, getCategories,
     createTransaction, updateTransaction, deleteTransaction,
@@ -11,6 +12,12 @@ import { askFinanceAgent } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const userId = parseInt(session.user.id);
+
         const { message, history } = await req.json();
 
         if (!message) {
@@ -19,13 +26,13 @@ export async function POST(req: NextRequest) {
 
         // Fetch context data (current month)
         const now = new Date();
-        const stats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
-        const allGoals = await getGoals();
-        const allBudgets = await getBudgets(now.getMonth() + 1, now.getFullYear());
-        const rawTransactions = await getTransactions(30);
-        const allCategories = await getCategories();
-        const allInvestments = await getInvestments();
-        const allBills = await getBills();
+        const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
+        const allGoals = await getGoals(userId);
+        const allBudgets = await getBudgets(userId, now.getMonth() + 1, now.getFullYear());
+        const rawTransactions = await getTransactions(userId, 30);
+        const allCategories = await getCategories(); // Categories are global
+        const allInvestments = await getInvestments(userId);
+        const allBills = await getBills(userId);
 
         const goalsContext = allGoals.map(g => ({
             id: g.id,
@@ -104,7 +111,7 @@ export async function POST(req: NextRequest) {
                 ) || allCategories.find(c => c.name === "Lainnya");
 
                 if (category) {
-                    await createTransaction({
+                    await createTransaction(userId, {
                         amount: args.amount,
                         description: args.description,
                         categoryId: category.id,
@@ -130,7 +137,7 @@ Ada lagi yang mau dicatat?`;
                 ) || allCategories.find(c => c.name === "Lainnya");
 
                 if (category) {
-                    await createBudget({
+                    await createBudget(userId, {
                         categoryId: category.id,
                         amount: args.amount,
                         month: args.month,
@@ -140,7 +147,7 @@ Ada lagi yang mau dicatat?`;
                     finalReply = `✅ Oke Bos! Budget ${category.name} sebesar Rp ${args.amount.toLocaleString('id-ID')} untuk bulan ${args.month}/${args.year} sudah saya buatkan. 🏦⚡`;
                 }
             } else if (toolName === "create_goal") {
-                await createGoal({
+                await createGoal(userId, {
                     name: args.name,
                     targetAmount: args.targetAmount,
                     deadline: args.deadline ? new Date(args.deadline) : undefined,
@@ -160,25 +167,25 @@ Ada lagi yang mau dicatat?`;
                     if (category) updateData.categoryId = category.id;
                 }
 
-                const result = await updateTransaction(args.id, updateData);
+                const result = await updateTransaction(userId, args.id, updateData);
                 if (result) {
                     finalReply = `✅ Beres, Bos! Transaksi [ID: ${args.id}] sudah saya perbarui. 📝✨`;
                 } else {
                     finalReply = `❌ Waduh Bos, transaksi [ID: ${args.id}] tidak ketemu. Mungkin sudah terhapus sebelumnya? 🤔`;
                 }
             } else if (toolName === "delete_transaction") {
-                const transaction = await getTransactionById(args.id);
-                await deleteTransaction(args.id);
+                const transaction = await getTransactionById(userId, args.id);
+                await deleteTransaction(userId, args.id);
                 finalReply = `🗑️ Oke Bos, transaksi "${transaction ? transaction.description : 'ID ' + args.id}" sudah saya hapus dari catatan.`;
             } else if (toolName === "update_budget") {
-                const result = await updateBudget(args.id, { amount: args.amount });
+                const result = await updateBudget(userId, args.id, { amount: args.amount });
                 if (result) {
                     finalReply = `✅ Budget [ID: ${args.id}] sudah saya sesuaikan jadi Rp ${args.amount.toLocaleString('id-ID')}. 🏦⚡`;
                 } else {
                     finalReply = `❌ Hmm, budget [ID: ${args.id}] tidak ditemukan nih, Bos. 🤔`;
                 }
             } else if (toolName === "delete_budget") {
-                await deleteBudget(args.id);
+                await deleteBudget(userId, args.id);
                 finalReply = `🗑️ Budget [ID: ${args.id}] sudah dihapus ya, Bos.`;
             } else if (toolName === "update_goal") {
                 const updateData: any = {};
@@ -187,14 +194,14 @@ Ada lagi yang mau dicatat?`;
                 if (args.deadline) updateData.deadline = new Date(args.deadline);
                 if (args.icon) updateData.icon = args.icon;
 
-                const result = await updateGoal(args.id, updateData);
+                const result = await updateGoal(userId, args.id, updateData);
                 if (result) {
                     finalReply = `✅ Target goal [ID: ${args.id}] sudah saya perbarui sesuai permintaan Bos! 🎯✨`;
                 } else {
                     finalReply = `❌ Maaf Bos, goal [ID: ${args.id}] tidak ketemu di database. Coba cek lagi kodenya atau buat goal baru saja? 😊`;
                 }
             } else if (toolName === "delete_goal") {
-                const result = await removeGoal(args.id);
+                const result = await removeGoal(userId, args.id);
                 if (result) {
                     finalReply = `🗑️ Goal "${result.name}" [ID: ${args.id}] sudah saya hapus dari daftar target Bos.`;
                 } else {
@@ -210,16 +217,21 @@ Ada lagi yang mau dicatat?`;
                     if (args.target === "goal" && args.toGoalId) {
                         const toGoal = allGoals.find(g => g.id === args.toGoalId);
                         if (toGoal) {
-                            await updateGoal(toGoal.id, {
+                            await updateGoal(userId, toGoal.id, {
                                 currentAmount: toGoal.currentAmount + amountToMove
                             });
+                            // Also decrease fromGoal
+                            await updateGoal(userId, fromGoal.id, {
+                                currentAmount: fromGoal.currentAmount - amountToMove
+                            });
+
                             finalReply = `✅ Dana sebesar Rp ${amountToMove.toLocaleString('id-ID')} sudah saya pindahkan dari "${fromGoal.name}" ke "${toGoal.name}". Pindahan beres! 💸✨`;
                         } else {
                             finalReply = `❌ Goal tujuan [ID: ${args.toGoalId}] tidak ditemukan nih, Bos.`;
                         }
                     } else if (args.target === "balance") {
                         // Create income transaction to "return" funds to balance
-                        await createTransaction({
+                        await createTransaction(userId, {
                             amount: amountToMove,
                             description: `Pengalihan dana dari Goal: ${fromGoal.name}`,
                             categoryId: allCategories.find(c => c.name === "Tabungan")?.id ||
@@ -229,6 +241,11 @@ Ada lagi yang mau dicatat?`;
                             type: "income",
                             date: new Date()
                         });
+                        // Decrease fromGoal
+                        await updateGoal(userId, fromGoal.id, {
+                            currentAmount: fromGoal.currentAmount - amountToMove
+                        });
+
                         finalReply = `✅ Dana sebesar Rp ${amountToMove.toLocaleString('id-ID')} dari "${fromGoal.name}" sudah saya kembalikan ke Saldo Utama sebagai Pemasukan ya, Bos! 💰⚡`;
                     }
                 }
@@ -238,7 +255,7 @@ Ada lagi yang mau dicatat?`;
                     finalReply = `❌ Waduh Bos, goal [ID: ${args.goalId}] tidak ditemukan.`;
                 } else {
                     // Create expense transaction (moving money from balance to goal)
-                    await createTransaction({
+                    await createTransaction(userId, {
                         amount: args.amount,
                         description: `Setoran ke Goal: ${targetGoal.name}`,
                         categoryId: allCategories.find(c => c.name === "Tabungan")?.id ||
@@ -250,14 +267,14 @@ Ada lagi yang mau dicatat?`;
                     });
 
                     // Update goal currentAmount
-                    await updateGoal(targetGoal.id, {
+                    await updateGoal(userId, targetGoal.id, {
                         currentAmount: targetGoal.currentAmount + args.amount
                     });
 
                     finalReply = `✅ Beres Bos! Dana sebesar Rp ${args.amount.toLocaleString('id-ID')} sudah saya sisihkan dari Saldo Utama ke goal "${targetGoal.name}". Semangat nabungnya ya! 🎯✨`;
                 }
             } else if (toolName === "create_bill") {
-                await createBill({
+                await createBill(userId, {
                     name: args.name,
                     amount: args.amount,
                     dueDate: args.dueDate,
@@ -271,19 +288,19 @@ Ada lagi yang mau dicatat?`;
                 if (args.amount) updateData.amount = args.amount;
                 if (args.dueDate) updateData.dueDate = args.dueDate;
 
-                await updateBill(args.id, updateData);
+                await updateBill(userId, args.id, updateData);
                 finalReply = `✅ Tagihan [ID: ${args.id}] sudah saya update sesuai permintaan Bos! 👌`;
             } else if (toolName === "delete_bill") {
-                const bill = await getBillById(args.id);
-                await deleteBill(args.id);
+                const bill = await getBillById(userId, args.id);
+                await deleteBill(userId, args.id);
                 finalReply = `🗑️ Oke, tagihan "${bill ? bill.name : 'ID ' + args.id}" sudah saya hapus.`;
             } else if (toolName === "mark_bill_paid") {
-                const bill = await toggleBillPaid(args.id);
+                const bill = await toggleBillPaid(userId, args.id);
                 if (bill) {
                     let extraMessage = "";
                     if (args.paidFromBalance && bill.isPaid) {
                         // Create expense transaction
-                        await createTransaction({
+                        await createTransaction(userId, {
                             amount: bill.amount,
                             description: `Bayar Tagihan: ${bill.name}`,
                             categoryId: allCategories.find(c => c.name === "Tagihan")?.id || allCategories[0].id,
@@ -300,7 +317,7 @@ Ada lagi yang mau dicatat?`;
                     finalReply = `❌ Tagihan tidak ditemukan Bos.`;
                 }
             } else if (toolName === "create_investment") {
-                await createInvestment({
+                await createInvestment(userId, {
                     name: args.name,
                     type: args.type,
                     quantity: args.quantity,
@@ -310,21 +327,21 @@ Ada lagi yang mau dicatat?`;
                 });
                 finalReply = `✅ Keren! Aset investasi baru "${args.name}" (${args.quantity} unit) sudah saya tambahkan ke portofolio. 📈🚀`;
             } else if (toolName === "update_investment") {
-                const investment = await getInvestmentById(args.id);
+                const investment = await getInvestmentById(userId, args.id);
                 const updateData: any = {};
                 if (args.quantity) updateData.quantity = args.quantity;
                 if (args.buyPrice) updateData.avgBuyPrice = args.buyPrice;
                 if (args.currentPrice) updateData.currentPrice = args.currentPrice;
 
-                await updateInvestment(args.id, updateData);
-                const updatedInvestment = await getInvestmentById(args.id); // Re-fetch to confirm
+                await updateInvestment(userId, args.id, updateData);
+                const updatedInvestment = await getInvestmentById(userId, args.id); // Re-fetch to confirm
 
                 if (!updatedInvestment) {
                     finalReply = `❌ Gagal mengupdate investasi [ID: ${args.id}]. Data tidak ditemukan di database.`;
                 } else {
                     let extra = "";
                     if (args.soldAmount) {
-                        await createTransaction({
+                        await createTransaction(userId, {
                             amount: args.soldAmount,
                             description: `Penjualan Aset Partial: ${updatedInvestment.name}`,
                             categoryId: allCategories.find(c => c.name === "Investasi")?.id || allCategories.find(c => c.name === "Pemasukan")?.id || allCategories[0].id,
@@ -337,12 +354,12 @@ Ada lagi yang mau dicatat?`;
                     finalReply = `✅ Data portofolio "${updatedInvestment.name}" sudah diperbarui!\n📊 Total Unit Sekarang: ${updatedInvestment.quantity}${extra}`;
                 }
             } else if (toolName === "delete_investment") {
-                const investment = await getInvestmentById(args.id); // Need to fetch details first
-                await deleteInvestment(args.id);
+                const investment = await getInvestmentById(userId, args.id); // Need to fetch details first
+                await deleteInvestment(userId, args.id);
 
                 let extra = "";
                 if (args.soldAmount && investment) {
-                    await createTransaction({
+                    await createTransaction(userId, {
                         amount: args.soldAmount,
                         description: `Penjualan Aset: ${investment.name}`,
                         categoryId: allCategories.find(c => c.name === "Investasi")?.id || allCategories.find(c => c.name === "Pemasukan")?.id || allCategories[0].id,

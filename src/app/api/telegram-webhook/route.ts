@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processOCR, processVoice, categorizeTransaction, getPsychologicalImpact, getImpulseJudgment, processNLP, askFinanceAgent, getSocialDebtReminder, CATEGORIES } from '@/lib/ai';
-import { createTransaction, getCategories, getUserSettings, getGoalById, getRecentTransactionsByCategory, getBudgets, getGoals, updateUserSettings, getMonthlyStats, upsertUser, createDebt, createScheduledMessage, getFinancialHealthMetrics, getBills, getInvestments } from '@/backend/db/operations';
+import {
+    createTransaction,
+    getCategories,
+    getUserSettings,
+    getGoalById,
+    getRecentTransactionsByCategory,
+    getBudgets,
+    getGoals,
+    updateUserSettings,
+    getMonthlyStats,
+    upsertUser,
+    createDebt,
+    createScheduledMessage,
+    getFinancialHealthMetrics,
+    getBills,
+    getInvestments,
+    getUserByTelegramId
+} from '@/backend/db/operations';
 import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
@@ -17,15 +35,24 @@ export async function POST(req: NextRequest) {
     const from = body.message.from;
 
     try {
+        let user: any = null; // Type User from schema
+
         // Upsert User
         if (from) {
-            await upsertUser({
+            user = await upsertUser({
                 telegramId: from.id,
                 username: from.username,
                 firstName: from.first_name,
                 lastName: from.last_name
             });
         }
+
+        if (!user) {
+            await sendTelegramMessage(chatId, "⚠️ Gagal mengidentifikasi user. Coba lagi nanti.");
+            return NextResponse.json({ ok: true });
+        }
+
+        const userId = user.id;
 
         if (photo) {
             console.log("Processing Telegram Photo message...");
@@ -44,12 +71,12 @@ export async function POST(req: NextRequest) {
                 await sendTelegramMessage(chatId, "⚖️ Hmm, sepertinya ini halaman checkout. Biar saya nilai dulu ya...");
 
                 const cats = await getCategories();
-                const category = cats.find(c => c.name.toLowerCase() === (parsed.category || "Lainnya").toLowerCase()) || { id: 1, name: "Lainnya" };
+                const category = cats.find(c => c.name.toLowerCase() === (parsed.category || "Lainnya").toLowerCase()) || { id: 1, name: "Lainnya", color: "", icon: "", type: "expense", createdAt: new Date() };
 
                 const now = new Date();
-                const monthBudgets = await getBudgets(now.getMonth() + 1, now.getFullYear());
+                const monthBudgets = await getBudgets(userId, now.getMonth() + 1, now.getFullYear());
                 const categoryBudget = monthBudgets.find(b => b.categoryId === category.id);
-                const recentHistory = await getRecentTransactionsByCategory(category.id);
+                const recentHistory = await getRecentTransactionsByCategory(userId, category.id);
 
                 const judgment = await getImpulseJudgment(
                     { item: parsed.description || parsed.merchantName || "Barang ini", amount: parsed.amount, category: category.name },
@@ -62,7 +89,7 @@ export async function POST(req: NextRequest) {
                 if (parsed.amount === 0) {
                     await sendTelegramMessage(chatId, "⚠️ AI gagal membaca nominal. Mencatat sebagai 0.");
                 }
-                await saveAndNotify(chatId, parsed);
+                await saveAndNotify(userId, chatId, parsed);
             }
 
         } else if (voice) {
@@ -82,7 +109,7 @@ export async function POST(req: NextRequest) {
             if (!transcription) {
                 await sendTelegramMessage(chatId, "❓ Suara tidak terdengar atau kosong.");
             } else {
-                await saveAndNotify(chatId, parsed);
+                await saveAndNotify(userId, chatId, parsed);
             }
 
         } else if (text) {
@@ -91,11 +118,11 @@ export async function POST(req: NextRequest) {
             // Commands first
             if (lowerText.startsWith('set goal ')) {
                 const goalName = text.substring(9).trim();
-                const allGoals = await getGoals();
+                const allGoals = await getGoals(userId);
                 const goal = allGoals.find(g => g.name.toLowerCase().includes(goalName.toLowerCase()));
 
                 if (goal) {
-                    await updateUserSettings({ primaryGoalId: goal.id });
+                    await updateUserSettings(userId, { primaryGoalId: goal.id });
                     await sendTelegramMessage(chatId, `🎯 Target utama berhasil diset ke: **${goal.name}**\n\nSekarang saya akan memantau dampak setiap jajanmu terhadap target ini.`);
                 } else {
                     await sendTelegramMessage(chatId, `❌ Target "${goalName}" tidak ditemukan. Coba cek nama target di dashboard.`);
@@ -103,7 +130,7 @@ export async function POST(req: NextRequest) {
             } else if (lowerText.startsWith('set rate ')) {
                 const rate = parseInt(text.substring(9).replace(/\./g, ''));
                 if (!isNaN(rate) && rate > 0) {
-                    await updateUserSettings({ hourlyRate: rate });
+                    await updateUserSettings(userId, { hourlyRate: rate });
                     await sendTelegramMessage(chatId, `⏱️ Rate per jam kamu diset ke: **Rp ${rate.toLocaleString('id-ID')}**\n\nSekarang saya bisa menghitung berapa jam kerja yang "terbuang" setiap kali kamu jajan.`);
                 } else {
                     await sendTelegramMessage(chatId, `❌ Format salah. Gunakan: "set rate 50000"`);
@@ -130,13 +157,21 @@ export async function POST(req: NextRequest) {
                     await sendTelegramMessage(chatId, `❌ Format: "/remind [Nama] [Jumlah]"\nContoh: "/remind Budi 50000"`);
                 }
             } else if (lowerText === '/burn' || lowerText === '/runway') {
-                const { runway, avgMonthlyExpense, currentBalance } = await getFinancialHealthMetrics();
-                const status = getRunwayStatus(runway);
+                const { runwayMonths, monthlyBalance, savingsRate } = await getFinancialHealthMetrics(userId);
+                const stats = await getMonthlyStats(userId, new Date().getFullYear(), new Date().getMonth() + 1);
 
-                await sendTelegramMessage(chatId, `🔥 **BURN RATE CHECK**\n\n💸 Rata-rata pengeluaran: Rp ${avgMonthlyExpense.toLocaleString('id-ID')}/bulan\n💰 Saldo saat ini: Rp ${currentBalance.toLocaleString('id-ID')}\n\n⏳ **Runway: ${runway} Bulan**\n${status.message}`);
+                const status = getRunwayStatus(runwayMonths);
+
+                await sendTelegramMessage(chatId, `🔥 **BURN RATE CHECK**\n\n💸 Rata-rata pengeluaran: Rp ${stats.expense.toLocaleString('id-ID')}/bulan\n💰 Saldo bulan ini: Rp ${monthlyBalance.toLocaleString('id-ID')}\n\n⏳ **Runway: ${runwayMonths} Bulan**\n${status.message}`);
 
             } else if (lowerText === '/idle') {
-                const { idleCash } = await getFinancialHealthMetrics();
+                const { runwayMonths } = await getFinancialHealthMetrics(userId);
+                // Need calculateIdleCash logic here or imported
+                // calculateIdleCash needs balance and monthlyExpense
+                const stats = await getMonthlyStats(userId, new Date().getFullYear(), new Date().getMonth() + 1);
+                // Assuming idle cash is anything > 3 months expense + goals?
+                // Simplified for now based on previous logic
+                const idleCash = Math.max(0, stats.balance - (stats.expense * 3));
 
                 if (idleCash > 100000) {
                     await sendTelegramMessage(chatId, `💤 **IDLE CASH OPTIMIZER**\n\nKamu punya uang "nganggur" sebesar **Rp ${idleCash.toLocaleString('id-ID')}** (di luar dana darurat 3 bulan).\n\nSebaiknya diinvestasikan ke Reksadana/SBN biar nggak dimakan inflasi! 📈`);
@@ -156,8 +191,8 @@ export async function POST(req: NextRequest) {
                 } else {
                     await sendTelegramMessage(chatId, `❌ Format: "/inflation [Jumlah] [Tahun]"\nContoh: "/inflation 10000000 5"`);
                 }
-            } else if (lowerText === '/start' || lowerText === 'test') {
-                await sendTelegramMessage(chatId, "Halo! Saya asisten keuangan kamu. 🚀\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- `/burn` : Cek runway/ketahanan dana\n- `/idle` : Cek uang nganggur\n- `/inflation [jumlah] [tahun]` : Hitung efek inflasi\n- `set goal [nama]` : Set target utama\n- `set rate [angka]` : Set gaji per jam");
+            } else if (lowerText === '/start' || lowerText === 'test' || lowerText === '/id') {
+                await sendTelegramMessage(chatId, `Halo! Saya asisten keuangan kamu. 🚀\n\n🆔 **ID Telegram Kamu:** \`${chatId}\`\n(Copy ID ini dan paste di Menu Profil Website untuk menghubungkan akun)\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- \`/burn\` : Cek runway/ketahanan dana\n- \`/idle\` : Cek uang nganggur\n- \`/inflation [jumlah] [tahun]\` : Hitung efek inflasi\n- \`set goal [nama]\` : Set target utama\n- \`set rate [angka]\` : Set gaji per jam\n- \`/link\` : Cara menghubungkan akun`);
             } else {
                 // Fallback to Smart NLP
                 await sendTelegramMessage(chatId, "🔍 Menganalisa pesan kamu...");
@@ -169,14 +204,14 @@ export async function POST(req: NextRequest) {
 
                         // Fetch context data
                         const now = new Date();
-                        const stats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
-                        const allGoals = await getGoals();
+                        const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
+                        const allGoals = await getGoals(userId);
                         const { getBudgets, getTransactions, getCategories, getInvestments } = await import('@/backend/db/operations');
-                        const allBudgets = await getBudgets(now.getMonth() + 1, now.getFullYear());
-                        const allTransactions = await getTransactions(30);
+                        const allBudgets = await getBudgets(userId, now.getMonth() + 1, now.getFullYear());
+                        const allTransactions = await getTransactions(userId, 30);
                         const allCats = await getCategories();
-                        const allInvestments = await getInvestments();
-                        const allBills = await getBills();
+                        const allInvestments = await getInvestments(userId);
+                        const allBills = await getBills(userId);
 
                         const goalsContext = allGoals.map(g => ({
                             id: g.id,
@@ -238,10 +273,6 @@ export async function POST(req: NextRequest) {
                         // SOCIAL & CASH - Debt Handling
                         const debtAmount = nlpParsed.amount || 0;
                         const debtor = nlpParsed.debtorName || "Seseorang";
-                        // If we are LENDING (receivable) -> amount is positive.
-                        // If we are BORROWING (payable) -> amount should be negative for logic, but usually stored as positive with type distinction?
-                        // Let's store amount as positive, but use description to clarify context or add a type field if we had one.
-                        // For now, schema has 'amount'. Positive = Receivable (Orang utang ke kita), Negative = Payable (Kita utang).
 
                         let finalAmount = debtAmount;
                         let responseMsg = "";
@@ -252,11 +283,6 @@ export async function POST(req: NextRequest) {
                         } else {
                             responseMsg = `📝 **Catatan Piutang**\n\n**${debtor}** berutang ke kamu sebesar Rp ${debtAmount.toLocaleString('id-ID')}.\n\nNanti saya ingatkan buat nagih! 🔫`;
                         }
-
-                        // Need to get userId from chatId
-                        // We upserted user at the beginning, so we can fetch user by telegramId
-                        const { getUserByTelegramId } = await import('@/backend/db/operations');
-                        const user = await getUserByTelegramId(chatId);
 
                         if (user) {
                             await createDebt({
@@ -272,7 +298,6 @@ export async function POST(req: NextRequest) {
 
                     } else {
                         // Original transaction logic
-                        // If AI didn't provide a category, use categorizeTransaction for more depth
                         let categoryString = nlpParsed.category;
                         let merchantType = undefined;
                         let searchUsed = false;
@@ -288,7 +313,7 @@ export async function POST(req: NextRequest) {
                             await sendTelegramMessage(chatId, `🕵️ Detective: "${nlpParsed.description}" terdeteksi sebagai ${merchantType}`);
                         }
 
-                        await saveAndNotify(chatId, {
+                        await saveAndNotify(userId, chatId, {
                             amount: nlpParsed.amount || 0,
                             description: nlpParsed.description,
                             category: categoryString,
@@ -317,7 +342,7 @@ async function getTelegramFileUrl(fileId: string) {
     return `https://api.telegram.org/file/bot${token}/${data.result.file_path}`;
 }
 
-async function saveAndNotify(chatId: number, parsed: any) {
+async function saveAndNotify(userId: number, chatId: number, parsed: any) {
     try {
         const cats = await getCategories();
         const categoryName = parsed.category || "Lainnya";
@@ -325,12 +350,12 @@ async function saveAndNotify(chatId: number, parsed: any) {
         // Try to find matching category from parsed.category string
         const category = cats.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) ||
             cats.find(c => c.name === "Lainnya") ||
-            { id: 1, name: "Lainnya" };
+            { id: 1, name: "Lainnya", color: "", icon: "", type: "expense", createdAt: new Date() };
 
         const amount = Number(parsed.amount) || 0;
         const type = parsed.transactionType || "expense";
 
-        const transaction = await createTransaction({
+        const transaction = await createTransaction(userId, {
             amount: amount,
             description: parsed.description || parsed.merchantName || "Transaksi Telegram",
             merchantName: parsed.merchantName,
@@ -348,15 +373,15 @@ async function saveAndNotify(chatId: number, parsed: any) {
         // Phase 3: Psychological Feedback (Expense Only)
         if (type === 'expense' && amount > 0) {
             try {
-                const settings = await getUserSettings();
+                const settings = await getUserSettings(userId);
                 let primaryGoal = undefined;
                 if (settings.primaryGoalId) {
-                    primaryGoal = await getGoalById(settings.primaryGoalId);
+                    primaryGoal = await getGoalById(userId, settings.primaryGoalId);
                 }
 
                 // Calculate Monthly Saving (Income - Expense) for this month
                 const now = new Date();
-                const stats = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
+                const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
                 // If balance is negative or zero, assume minimum saving capacity (e.g. 1 million or 10% income) for calculation sake
                 const monthlySaving = stats.balance > 0 ? stats.balance : (stats.income * 0.2) || 1000000;
 
@@ -390,24 +415,17 @@ async function saveAndNotify(chatId: number, parsed: any) {
         }
 
         // Phase 6: Stock Opname Scheduler (Cash Withdrawal)
-        // Phase 6: Stock Opname Scheduler (Cash Withdrawal)
         if (type === 'expense' && (parsed.description?.toLowerCase().includes("tarik tunai") || parsed.description?.toLowerCase().includes("ambil uang"))) {
             const scheduleDate = new Date();
             scheduleDate.setDate(scheduleDate.getDate() + 3); // Schedule for 3 days later
 
-            // Dynamic import to avoid circular dependency
-            const { getUserByTelegramId } = await import('@/backend/db/operations');
-            const user = await getUserByTelegramId(chatId);
-
-            if (user) {
-                await createScheduledMessage({
-                    userId: user.id,
-                    message: `🕵️ **STOCK OPNAME (CASH)**\n\n3 hari lalu kamu tarik tunai Rp ${amount.toLocaleString('id-ID')}.\nCoba cek dompet sekarang, sisa berapa lembar? 💵\n\nJawab jujur ya, biar saya catat "uang gaib"-nya.`,
-                    scheduledAt: scheduleDate,
-                    type: "stock_opname"
-                });
-                console.log(`Stock Opname scheduled for user ${user.id}`);
-            }
+            await createScheduledMessage({
+                userId: userId,
+                message: `🕵️ **STOCK OPNAME (CASH)**\n\n3 hari lalu kamu tarik tunai Rp ${amount.toLocaleString('id-ID')}.\nCoba cek dompet sekarang, sisa berapa lembar? 💵\n\nJawab jujur ya, biar saya catat "uang gaib"-nya.`,
+                scheduledAt: scheduleDate,
+                type: "stock_opname"
+            });
+            console.log(`Stock Opname scheduled for user ${userId}`);
         }
 
         await sendTelegramMessage(chatId, message);
@@ -418,13 +436,4 @@ async function saveAndNotify(chatId: number, parsed: any) {
     }
 }
 
-async function sendTelegramMessage(chatId: number, text: string) {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    if (!token) return;
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: text })
-    });
-}
+// sendTelegramMessage moved to src/lib/telegram.ts

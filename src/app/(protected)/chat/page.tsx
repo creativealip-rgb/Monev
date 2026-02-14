@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
+import { useSession } from "next-auth/react";
 
 interface Message {
     id: string;
@@ -48,18 +49,24 @@ function generateMessageId(): string {
 }
 
 export default function ChatPage() {
+    const { data: session } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
     useEffect(() => {
+        if (!session?.user?.id) return;
+
+        const storageKey = `monev_chat_history_${session.user.id}`;
+
         // Load messages from localStorage on mount
-        const saved = localStorage.getItem("monev_chat_history");
+        const saved = localStorage.getItem(storageKey);
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -68,31 +75,35 @@ export default function ChatPage() {
                     timestamp: new Date(m.timestamp)
                 }));
                 setMessages(revived);
-                return;
             } catch (e) {
                 console.error("Failed to load chat history:", e);
+                // Fallback to initial if corrupted
+                initializeChat(storageKey);
             }
+        } else {
+            initializeChat(storageKey);
         }
+        setIsHistoryLoaded(true);
+    }, [session?.user?.id]);
 
-        // Initial message if no history
-        if (messages.length === 0) {
-            const initialMessage: Message = {
-                id: generateMessageId(),
-                role: "assistant",
-                content: "Halo Alip! Saya Monev AI Assistant. Saya siap membantumu menganalisis pengeluaran, memantau target tabungan, atau sekadar memberikan tips hemat hari ini. 💰✨\n\nApa yang ingin kamu diskusikan pertama kali?",
-                timestamp: new Date(),
-            };
-            setMessages([initialMessage]);
-            localStorage.setItem("monev_chat_history", JSON.stringify([initialMessage]));
-        }
-    }, []);
+    const initializeChat = (key: string) => {
+        const initialMessage: Message = {
+            id: generateMessageId(),
+            role: "assistant",
+            content: "Halo Alip! Saya Monev AI Assistant. Saya siap membantumu menganalisis pengeluaran, memantau target tabungan, atau sekadar memberikan tips hemat hari ini. 💰✨\n\nApa yang ingin kamu diskusikan pertama kali?",
+            timestamp: new Date(),
+        };
+        setMessages([initialMessage]);
+        localStorage.setItem(key, JSON.stringify([initialMessage]));
+    }
 
     // Save to localStorage whenever messages change
     useEffect(() => {
-        if (messages.length > 0) {
-            localStorage.setItem("monev_chat_history", JSON.stringify(messages));
+        if (messages.length > 0 && session?.user?.id && isHistoryLoaded) {
+            const storageKey = `monev_chat_history_${session.user.id}`;
+            localStorage.setItem(storageKey, JSON.stringify(messages));
         }
-    }, [messages]);
+    }, [messages, session?.user?.id, isHistoryLoaded]);
 
     useEffect(() => {
         scrollToBottom();
@@ -205,8 +216,10 @@ export default function ChatPage() {
                     <button
                         onClick={() => {
                             if (confirm("Hapus semua riwayat chat?")) {
-                                localStorage.removeItem("monev_chat_history");
-                                window.location.reload();
+                                if (session?.user?.id) {
+                                    localStorage.removeItem(`monev_chat_history_${session.user.id}`);
+                                    window.location.reload();
+                                }
                             }
                         }}
                         className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"

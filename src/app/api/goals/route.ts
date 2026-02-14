@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getGoals, createGoal } from "@/backend/db/operations";
 
 // Map icon names to emojis
@@ -18,8 +19,12 @@ const iconToEmoji: Record<string, string> = {
 
 export async function GET() {
     try {
-        const goals = await getGoals();
-        
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
+        const goals = await getGoals(userId);
+
         // Map to simpler format for frontend
         const mappedGoals = goals.map(g => ({
             id: g.id,
@@ -30,7 +35,7 @@ export async function GET() {
             icon: iconToEmoji[g.icon] || g.icon || "🎯",
             color: g.color,
         }));
-        
+
         return NextResponse.json({ success: true, data: mappedGoals });
     } catch (error) {
         console.error("Error fetching goals:", error);
@@ -43,9 +48,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const body = await request.json();
-        
-        const goal = await createGoal({
+
+        const goal = await createGoal(userId, {
             name: body.name,
             targetAmount: body.targetAmount,
             currentAmount: body.currentAmount || 0,

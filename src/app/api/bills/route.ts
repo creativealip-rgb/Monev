@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getBills, createBill, ensureSampleBills } from "@/backend/db/operations";
 
 export async function GET() {
     try {
-        await ensureSampleBills();
-        const allBills = await getBills();
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
+        await ensureSampleBills(userId);
+        const allBills = await getBills(userId);
 
         const data = allBills.map(b => ({
             id: b.id,
@@ -30,8 +35,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const userId = parseInt(session.user.id);
+
         const body = await request.json();
-        const bill = await createBill(body);
+        const bill = await createBill(userId, body);
 
         return NextResponse.json({ success: true, data: bill });
     } catch (error) {
