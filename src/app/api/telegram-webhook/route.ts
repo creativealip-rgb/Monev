@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processOCR, processVoice, categorizeTransaction, getPsychologicalImpact, getImpulseJudgment, processNLP, askFinanceAgent, getSocialDebtReminder, CATEGORIES } from '@/lib/ai';
-import { createTransaction, getCategories, getUserSettings, getGoalById, getRecentTransactionsByCategory, getBudgets, getGoals, updateUserSettings, getMonthlyStats, upsertUser, createDebt, createScheduledMessage } from '@/backend/db/operations';
+import { createTransaction, getCategories, getUserSettings, getGoalById, getRecentTransactionsByCategory, getBudgets, getGoals, updateUserSettings, getMonthlyStats, upsertUser, createDebt, createScheduledMessage, getFinancialHealthMetrics, getBills, getInvestments } from '@/backend/db/operations';
+import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -128,8 +129,35 @@ export async function POST(req: NextRequest) {
                 } else {
                     await sendTelegramMessage(chatId, `❌ Format: "/remind [Nama] [Jumlah]"\nContoh: "/remind Budi 50000"`);
                 }
+            } else if (lowerText === '/burn' || lowerText === '/runway') {
+                const { runway, avgMonthlyExpense, currentBalance } = await getFinancialHealthMetrics();
+                const status = getRunwayStatus(runway);
+
+                await sendTelegramMessage(chatId, `🔥 **BURN RATE CHECK**\n\n💸 Rata-rata pengeluaran: Rp ${avgMonthlyExpense.toLocaleString('id-ID')}/bulan\n💰 Saldo saat ini: Rp ${currentBalance.toLocaleString('id-ID')}\n\n⏳ **Runway: ${runway} Bulan**\n${status.message}`);
+
+            } else if (lowerText === '/idle') {
+                const { idleCash } = await getFinancialHealthMetrics();
+
+                if (idleCash > 100000) {
+                    await sendTelegramMessage(chatId, `💤 **IDLE CASH OPTIMIZER**\n\nKamu punya uang "nganggur" sebesar **Rp ${idleCash.toLocaleString('id-ID')}** (di luar dana darurat 3 bulan).\n\nSebaiknya diinvestasikan ke Reksadana/SBN biar nggak dimakan inflasi! 📈`);
+                } else {
+                    await sendTelegramMessage(chatId, `💤 **IDLE CASH OPTIMIZER**\n\nBelum ada uang nganggur yang signifikan. Fokus penuhi dana darurat dulu ya! Semangat 💪`);
+                }
+
+            } else if (lowerText.startsWith('/inflation ')) {
+                // /inflation [amount] [years]
+                const parts = text.split(' ');
+                const amount = parseInt(parts[1]?.replace(/\./g, '') || '0');
+                const years = parseInt(parts[2] || '5');
+
+                if (amount > 0) {
+                    const futureValue = calculateFutureValue(amount, years);
+                    await sendTelegramMessage(chatId, `🎈 **INFLASI CHECK**\n\nUang Rp ${amount.toLocaleString('id-ID')} hari ini, nilainya setara dengan **Rp ${futureValue.toLocaleString('id-ID')}** di ${years} tahun lagi (asumsi inflasi 5%).\n\nJadi kalau target kamu segitu, mending naikin dikit biar aman! 😉`);
+                } else {
+                    await sendTelegramMessage(chatId, `❌ Format: "/inflation [Jumlah] [Tahun]"\nContoh: "/inflation 10000000 5"`);
+                }
             } else if (lowerText === '/start' || lowerText === 'test') {
-                await sendTelegramMessage(chatId, "Halo! Saya asisten keuangan kamu. 🚀\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ Pengaturan:\n- `set goal [nama]` : Set target tabungan utama\n- `set rate [angka]` : Set gaji per jam kamu");
+                await sendTelegramMessage(chatId, "Halo! Saya asisten keuangan kamu. 🚀\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- `/burn` : Cek runway/ketahanan dana\n- `/idle` : Cek uang nganggur\n- `/inflation [jumlah] [tahun]` : Hitung efek inflasi\n- `set goal [nama]` : Set target utama\n- `set rate [angka]` : Set gaji per jam");
             } else {
                 // Fallback to Smart NLP
                 await sendTelegramMessage(chatId, "🔍 Menganalisa pesan kamu...");
@@ -148,6 +176,7 @@ export async function POST(req: NextRequest) {
                         const allTransactions = await getTransactions(30);
                         const allCats = await getCategories();
                         const allInvestments = await getInvestments();
+                        const allBills = await getBills();
 
                         const goalsContext = allGoals.map(g => ({
                             id: g.id,
@@ -186,12 +215,22 @@ export async function POST(req: NextRequest) {
                             platform: i.platform
                         }));
 
+                        const billsContext = allBills.map(b => ({
+                            id: b.id,
+                            name: b.name,
+                            amount: b.amount,
+                            dueDate: b.dueDate,
+                            isPaid: b.isPaid,
+                            frequency: b.frequency || "monthly"
+                        }));
+
                         const aiReply = await askFinanceAgent(text, {
                             monthlyStats: stats,
                             goals: goalsContext,
                             budgets: budgetsContext,
                             transactions: transactionsContext,
-                            investments: investmentsContext
+                            investments: investmentsContext,
+                            bills: billsContext
                         });
 
                         await sendTelegramMessage(chatId, aiReply.content);

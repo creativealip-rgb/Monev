@@ -16,6 +16,7 @@ export const users = sqliteTable("users", {
     username: text("username"),
     firstName: text("first_name"),
     lastName: text("last_name"),
+    whatsappId: text("whatsapp_id"), // Number in international format e.g. 62812...
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -65,6 +66,8 @@ export const userSettings = sqliteTable("user_settings", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     hourlyRate: real("hourly_rate").notNull().default(50000),
     primaryGoalId: integer("primary_goal_id").references(() => goals.id),
+    securityPin: text("security_pin"),
+    isAppLockEnabled: integer("is_app_lock_enabled", { mode: "boolean" }).notNull().default(false),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 

@@ -107,8 +107,8 @@ const features = [
                 id: 2,
                 icon: Bell,
                 title: "Notification Listener",
-                desc: "Auto-detect notifikasi Gojek/BCA/Tokopedia",
-                status: "coming",
+                desc: "Auto-detect notifikasi via OCR/Text Bot",
+                status: "ready",
                 color: "blue",
                 href: "#"
             },
@@ -131,7 +131,7 @@ const features = [
                 icon: Search,
                 title: "Detective Agent",
                 desc: "Google search untuk merchant ambigu",
-                status: "coming",
+                status: "ready",
                 color: "indigo",
                 href: "#"
             },
@@ -140,7 +140,7 @@ const features = [
                 icon: ShieldAlert,
                 title: "Reimbursable Spy",
                 desc: "Deteksi pengeluaran untuk klien",
-                status: "coming",
+                status: "ready",
                 color: "amber",
                 href: "#"
             },
@@ -163,7 +163,7 @@ const features = [
                 icon: ShieldAlert,
                 title: "Impulse Buying Judge",
                 desc: "Intervensi sebelum checkout e-commerce",
-                status: "coming",
+                status: "ready",
                 color: "orange",
                 href: "#"
             },
@@ -172,7 +172,7 @@ const features = [
                 icon: Clock,
                 title: "Time-Cost Translator",
                 desc: "Konversi rupiah ke jam kerja",
-                status: "coming",
+                status: "ready",
                 color: "cyan",
                 href: "#"
             },
@@ -181,7 +181,7 @@ const features = [
                 icon: TrendingUp,
                 title: "Freelance Reality Check",
                 desc: "Bagi income besar ke gaji bulanan",
-                status: "coming",
+                status: "ready",
                 color: "teal",
                 href: "#"
             },
@@ -227,7 +227,7 @@ const features = [
                 icon: Users,
                 title: "Split Bill Coordinator",
                 desc: "Bagi pengeluaran F&B dengan teman",
-                status: "coming",
+                status: "ready",
                 color: "sky",
                 href: "#"
             },
@@ -236,7 +236,7 @@ const features = [
                 icon: CreditCard,
                 title: "Social Debt Collector",
                 desc: "Tracking & reminder hutang piutang",
-                status: "coming",
+                status: "ready",
                 color: "lime",
                 href: "#"
             },
@@ -250,7 +250,7 @@ const features = [
                 icon: Wallet,
                 title: "Pocket Transfer Agent",
                 desc: "Track penarikan tunai ATM",
-                status: "coming",
+                status: "ready",
                 color: "stone",
                 href: "#"
             },

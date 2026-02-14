@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Edit2, Trash2, Calendar, Tag } from "lucide-react";
+import { X, Edit2, Trash2, Calendar, Tag, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { Transaction, Budget, Goal } from "@/types";
+import { calculateFutureValue } from "@/lib/financial-advising";
 
 // Portal helper to render outside the main layout container
 function Portal({ children }: { children: React.ReactNode }) {
@@ -340,6 +341,33 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                         <span>Deadline: <b className="font-bold">{format(new Date(goal.deadline), "d MMM yyyy", { locale: id })}</b></span>
                                     </div>
                                 )}
+
+
+                                {goal.deadline && (
+                                    (() => {
+                                        const now = new Date();
+                                        const deadlineDate = new Date(goal.deadline);
+                                        const diffTime = deadlineDate.getTime() - now.getTime();
+                                        const diffDays = diffTime / (1000 * 3600 * 24);
+                                        const diffYears = diffDays / 365;
+
+                                        if (diffYears > 0.5) { // Only show for goals > 6 months away
+                                            const futureVal = calculateFutureValue(goal.target, diffYears);
+                                            return (
+                                                <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-100 text-amber-800 text-xs shadow-sm">
+                                                    <div className="flex items-center gap-2 font-bold mb-1 text-amber-600">
+                                                        <TrendingUp size={14} />
+                                                        <span>Waspada Inflasi (Est. 5%/thn)</span>
+                                                    </div>
+                                                    <p className="leading-relaxed">
+                                                        Untuk daya beli yang sama, estimasi target ini di masa depan adalah <b className="text-amber-700 decoration-amber-300 underline underline-offset-2">{formatCurrency(futureVal)}</b>.
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 pt-2">
@@ -362,6 +390,6 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                     </motion.div>
                 </motion.div>
             </AnimatePresence>
-        </Portal>
+        </Portal >
     );
 }

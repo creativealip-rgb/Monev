@@ -93,6 +93,14 @@ export interface FinancialContext {
         totalValue: number;
         platform: string | null;
     }>;
+    bills: Array<{
+        id: number;
+        name: string;
+        amount: number;
+        dueDate: number;
+        isPaid: boolean;
+        frequency: string;
+    }>;
     userName?: string;
 }
 
@@ -616,8 +624,11 @@ DATA BULAN INI:
 - Saldo (Pemasukan - Pengeluaran): Rp ${context.monthlyStats.balance.toLocaleString('id-ID')}
 
 DATA INVESTASI:
-${context.investments ? context.investments.map(i => `- ${i.name} (${i.type}): ${i.quantity} unit, Nilai Sekarang: Rp ${i.totalValue.toLocaleString('id-ID')} (${i.platform || 'Manual'})`).join("\n") : "Belum ada data investasi"}
+${context.investments ? context.investments.map(i => `- [ID: ${i.id}] ${i.name} (${i.type}): ${i.quantity} unit @ Rp ${i.currentPrice.toLocaleString('id-ID')}/unit = Total Rp ${i.totalValue.toLocaleString('id-ID')} (${i.platform || 'Manual'})`).join("\n") : "Belum ada data investasi"}
 Total Nilai Investasi: Rp ${(context.investments || []).reduce((sum, i) => sum + i.totalValue, 0).toLocaleString('id-ID')}
+
+DATA TAGIHAN (BILLS):
+${context.bills ? context.bills.map(b => `- [ID: ${b.id}] ${b.name}: Rp ${b.amount.toLocaleString('id-ID')} (Tgl ${b.dueDate}, ${b.frequency}) [${b.isPaid ? 'SUDAH DIBAYAR' : 'BELUM DIBAYAR'}]`).join("\n") : "Belum ada data tagihan"}
 
 TARGET GOAL:
 ${context.goals.map(g => `- [ID: ${g.id}] ${g.name}: Terkumpul Rp ${g.currentAmount.toLocaleString('id-ID')} dari Rp ${g.targetAmount.toLocaleString('id-ID')} (${g.percent.toFixed(1)}%). Sisa: Rp ${g.remaining.toLocaleString('id-ID')}`).join("\n")}
@@ -631,11 +642,12 @@ ${context.transactions.map(t => `- [ID: ${t.id}] [${new Date(t.date).toLocaleDat
 Aturan:
 1. Jawab dengan bahasa Indonesia yang santai, suportif, dan ringkas.
 2. Gunakan emoji yang relevan.
-3. Jika saldo menipis, berikan saran penghematan singkat.
-4. Jika goal hampir tercapai, berikan semangat!
-5. **MENCATAT/UBAH/HAPUS TRANSAKSI**: Gunakan tool 'record_transaction', 'update_transaction', atau 'delete_transaction'.
+3. JANGAN GUNAKAN MARKDOWN BOLD (**). Tulis teks seperti biasa saja.
+4. Jika saldo menipis, berikan saran penghematan singkat.
+5. Jika goal hampir tercapai, berikan semangat!
+6. **MENCATAT/UBAH/HAPUS TRANSAKSI**: Gunakan tool 'record_transaction', 'update_transaction', atau 'delete_transaction'.
    - Untuk update/delete, WAJIB gunakan ID yang tertera di data riwayat.
-6. **BUAT/UBAH/HAPUS BUDGET**: Gunakan tool 'create_budget', 'update_budget', atau 'delete_budget'.
+7. **BUAT/UBAH/HAPUS BUDGET**: Gunakan tool 'create_budget', 'update_budget', atau 'delete_budget'.
    - Untuk update/delete, WAJIB gunakan ID yang tertera di data budget.
 7. **BUAT/UBAH/HAPUS GOAL**: Gunakan tool 'create_goal', 'update_goal', atau 'delete_goal'.
    - Untuk update/delete, WAJIB gunakan ID yang tertera di data goal.
@@ -644,10 +656,22 @@ Aturan:
    - Untuk menambah tabungan ke goal dari Saldo Utama: Gunakan tool add_goal_funds.
    - Untuk memindahkan dana antar goal atau mengembalikan dana goal ke Saldo Utama: Gunakan tool reallocate_goal_funds.
    - Jika Bos minta hapus goal yang MASIH ADA TABUNGANNYA (currentAmount > 0), Anda DILARANG langsung memanggil delete_goal. Anda WAJIB bertanya dulu: "Bos, uang Rp XXX di goal [Nama Goal] mau dipindah ke goal mana? Atau mau saya masukkan kembali ke Saldo (Pemasukan)?"
-9. **PENTING - DATA YANG DIHAPUS**: Jika Anda baru saja menghapus sebuah data (transaksi/budget/goal) menggunakan tool delete_* data tersebut sudah tidak ada di database. 
+9. **KELOLA TAGIHAN (BILLS)**:
+   - Gunakan tool 'create_bill', 'update_bill', 'delete_bill', atau 'mark_bill_paid'.
+   - Jika user bilang "saya sudah bayar listrik pakai saldo", pastikan set parameter 'paidFromBalance' ke true saat memanggil 'mark_bill_paid'.
+   - Jika user hanya bilang "saya sudah bayar listrik" (tanpa mention saldo), tanya dulu: "Oke Bos, pembayarannya mau dicatat mengurangi Saldo Utama (buat transaksi pengeluaran) atau cuma tandai lunas saja?"
+10. **KELOLA INVESTASI**:
+     - Gunakan tool 'create_investment', 'update_investment', atau 'delete_investment'.
+     - Jika user ingin MENJUAL atau WITHDRAW investasi:
+       - **JUAL SEMUA**: Gunakan 'delete_investment' dengan parameter 'soldAmount'.
+       - **JUAL SEBAGIAN (Partial)**: Gunakan 'update_investment'. ANDA HARUS MENGHITUNG MATEMATIKA DENGAN BENAR.
+         Contoh: Punya 100 unit, jual 10%. 100 * 0.9 = 90. Maka parameter 'quantity' HARUS 90. Jangan isi 10!
+       - WAJIB tanya dulu: "Oke Bos, uang hasil penjualannya berapa? Dan mau dimasukkan kembali ke Saldo Utama (Pemasukan)?"
+     - Jika user menyebut nominal penjualan, masukkan ke parameter 'soldAmount' saat memanggil tool.
+11. **PENTING - DATA YANG DIHAPUS**: Jika Anda baru saja menghapus sebuah data (transaksi/budget/goal/tagihan/investasi) menggunakan tool delete_* data tersebut sudah tidak ada di database. 
    - JANGAN mencoba mengupdate ID yang baru saja dihapus. 
    - Jika user ingin "mengganti" data yang baru saja dihapus, gunakan tool 'create_*' untuk membuat entry baru.
-10. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan, jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.**`
+12. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan, jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.**`
                 },
                 ...history.map(h => ({
                     role: h.role,
@@ -818,6 +842,124 @@ Aturan:
                                 amount: { type: "number", description: "Jumlah dana yang ditambahkan" }
                             },
                             required: ["goalId", "amount"]
+                        }
+                    }
+                },
+                // --- BILLS TOOLS ---
+                {
+                    type: "function",
+                    function: {
+                        name: "create_bill",
+                        description: "Mencatat tagihan rutin baru",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                name: { type: "string", description: "Nama tagihan" },
+                                amount: { type: "number", description: "Jumlah tagihan" },
+                                dueDate: { type: "number", description: "Tanggal jatuh tempo (1-31)" },
+                                frequency: { type: "string", enum: ["monthly", "weekly", "yearly"], description: "Frekuensi tagihan (default: monthly)" },
+                                icon: { type: "string" }
+                            },
+                            required: ["name", "amount", "dueDate"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "update_bill",
+                        description: "Mengubah data tagihan",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID tagihan" },
+                                name: { type: "string" },
+                                amount: { type: "number" },
+                                dueDate: { type: "number" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "delete_bill",
+                        description: "Menghapus tagihan",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID tagihan" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "mark_bill_paid",
+                        description: "Menandai tagihan sudah dibayar (atau belum)",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID tagihan" },
+                                paidFromBalance: { type: "boolean", description: "Set true jika pembayaran ini harus mengurangi Saldo Utama (membuat transaksi pengeluaran). Default: false" }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                // --- INVESTMENTS TOOLS ---
+                {
+                    type: "function",
+                    function: {
+                        name: "create_investment",
+                        description: "Mencatat aset investasi baru",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                name: { type: "string", description: "Nama aset (misal: BBCA, Bitcoin)" },
+                                type: { type: "string", enum: ["stock", "crypto", "mutual_fund", "gold", "bond", "other"], description: "Jenis investasi" },
+                                quantity: { type: "number", description: "Jumlah unit/lot" },
+                                buyPrice: { type: "number", description: "Harga beli rata-rata per unit" },
+                                currentPrice: { type: "number", description: "Harga sekarang per unit" },
+                                platform: { type: "string", description: "Platform investasi (opsional)" }
+                            },
+                            required: ["name", "type", "quantity", "buyPrice", "currentPrice"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "update_investment",
+                        description: "Mengubah data investasi (atau jual sebagian/withdraw partial)",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID investasi" },
+                                quantity: { type: "number", description: "Jumlah unit BARU (setelah dikurangi/ditambah)" },
+                                buyPrice: { type: "number" },
+                                currentPrice: { type: "number" },
+                                soldAmount: { type: "number", description: "Jika jual sebagian, masukkan nominal uang yang didapat (Rupiah). Nanti akan jadi Pemasukan." }
+                            },
+                            required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "delete_investment",
+                        description: "Menghapus aset investasi (atau menjual/withdraw)",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                id: { type: "number", description: "ID investasi" },
+                                soldAmount: { type: "number", description: "Jika dijual, masukkan total nilai penjualan (Rupiah). Jika hanya dihapus (karena salah input), biarkan kosong." }
+                            },
+                            required: ["id"]
                         }
                     }
                 },

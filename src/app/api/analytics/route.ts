@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnalysisData } from "@/backend/db/operations";
+import { getAnalysisData, getFinancialHealthMetrics } from "@/backend/db/operations";
 import { getFinancialInsights } from "@/lib/ai";
 
 export async function GET(req: NextRequest) {
@@ -10,12 +10,14 @@ export async function GET(req: NextRequest) {
         const year = parseInt(searchParams.get("year") || now.getFullYear().toString());
 
         const data = await getAnalysisData(year, month);
+        const health = await getFinancialHealthMetrics();
 
         // Generate AI insights based on the analysis data
         const insights = await getFinancialInsights(data);
 
         return NextResponse.json({
             ...data,
+            health,
             insights
         });
     } catch (error: any) {

@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
+import { SecurityProvider } from "@/components/SecurityProvider";
 import { Metadata, Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -47,7 +48,9 @@ export default function RootLayout({
                         `,
                     }}
                 />
-                <ClientLayout>{children}</ClientLayout>
+                <SecurityProvider>
+                    <ClientLayout>{children}</ClientLayout>
+                </SecurityProvider>
             </body>
         </html>
     );

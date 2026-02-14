@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
+import { fetchProfileData } from "@/app/profile/actions";
 
 interface Transaction {
     id: string;
@@ -68,6 +69,7 @@ export default function Home() {
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
+    const [userName, setUserName] = useState("Pengguna");
 
     const today = new Date();
     const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
@@ -76,6 +78,13 @@ export default function Home() {
         setMounted(true);
         async function loadData() {
             try {
+                // Fetch Profile Data
+                const profileData = await fetchProfileData();
+                if (profileData?.user) {
+                    const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
+                    setUserName(fullName || "Pengguna");
+                }
+
                 // Get current month stats
                 const currentMonth = new Date().getMonth() + 1;
                 const currentYear = new Date().getFullYear();
@@ -155,7 +164,7 @@ export default function Home() {
                         </motion.div>
                         <div>
                             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{formattedDate}</p>
-                            <h1 className="text-lg font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">Mochamad Alif Prayogo</h1>
+                            <h1 className="text-lg font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{userName}</h1>
                         </div>
                     </Link>
                     <motion.button

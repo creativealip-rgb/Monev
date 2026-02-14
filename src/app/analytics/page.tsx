@@ -1,7 +1,7 @@
 "use client";
 
 import { StatsCard } from "@/frontend/components/StatsCard";
-import { ChevronLeft, TrendingUp, Wallet, PieChart, ArrowUpRight, Loader2, Sparkles } from "lucide-react";
+import { ChevronLeft, TrendingUp, Wallet, PieChart, ArrowUpRight, Loader2, Sparkles, Activity, AlertTriangle, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -25,6 +25,12 @@ interface AnalysisData {
         income: { name: string; amount: number; color: string; icon: string }[];
     };
     insights?: string;
+    health?: {
+        currentBalance: number;
+        avgMonthlyExpense: number;
+        runway: number;
+        idleCash: number;
+    };
 }
 
 function AIInsights({ content }: { content: string }) {
@@ -293,6 +299,61 @@ export default function AnalyticsPage() {
                         trend={0}
                     />
                 </motion.div>
+
+                {/* Health & Runway Section */}
+                {data.health && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Runway Card */}
+                        <motion.div
+                            variants={itemVariants}
+                            className={cn(
+                                "p-6 rounded-[2rem] border text-white relative overflow-hidden",
+                                data.health.runway < 3 ? "bg-rose-500 border-rose-400" :
+                                    data.health.runway < 6 ? "bg-orange-500 border-orange-400" : "bg-blue-600 border-blue-500"
+                            )}
+                        >
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Activity size={18} className="text-white/80" />
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-white/80">Cashflow Runway</h3>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-3xl font-black">{data.health.runway}</span>
+                                    <span className="text-sm font-medium text-white/80">Bulan</span>
+                                </div>
+                                <p className="text-xs mt-2 text-white/90 font-medium">
+                                    {data.health.runway < 3 ? "⚠️ Bahaya! Dana darurat menipis." :
+                                        data.health.runway < 6 ? "⚠️ Hati-hati, perbanyak tabungan." : "✅ Aman! Cashflow sehat."}
+                                </p>
+                            </div>
+                            <div className="absolute right-[-20px] bottom-[-20px] opacity-20">
+                                <Activity size={100} />
+                            </div>
+                        </motion.div>
+
+                        {/* Idle Cash Card */}
+                        {data.health.idleCash > 100000 && (
+                            <motion.div
+                                variants={itemVariants}
+                                className="p-6 rounded-[2rem] border border-emerald-100 bg-emerald-50 relative overflow-hidden"
+                            >
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Sparkles size={18} className="text-emerald-600" />
+                                        <h3 className="text-xs font-bold uppercase tracking-widest text-emerald-600">Idle Cash Optimizer</h3>
+                                    </div>
+                                    <p className="text-3xl font-black text-emerald-900">{formatRp(data.health.idleCash).replace(",00", "")}</p>
+                                    <p className="text-xs mt-2 text-emerald-700 font-medium">
+                                        Uang "nganggur" yang bisa diinvestasikan agar tidak tergerus inflasi. 📈
+                                    </p>
+                                </div>
+                                <div className="absolute right-[-20px] bottom-[-20px] opacity-10 text-emerald-600">
+                                    <Sparkles size={100} />
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
+                )}
 
                 {/* Summary Card */}
                 <motion.div

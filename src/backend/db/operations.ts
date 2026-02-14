@@ -2,6 +2,7 @@ import { getDb } from "./index";
 import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments } from "./schema";
 import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment } from "./schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
+import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
 
 // Re-export types
 export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment };
@@ -355,6 +356,7 @@ export async function upsertUser(data: {
     username?: string;
     firstName?: string;
     lastName?: string;
+    whatsappId?: string;
 }): Promise<User> {
     const db = getDb();
 
@@ -366,7 +368,8 @@ export async function upsertUser(data: {
             .set({
                 username: data.username,
                 firstName: data.firstName,
-                lastName: data.lastName
+                lastName: data.lastName,
+                whatsappId: data.whatsappId,
             })
             .where(eq(users.id, existing.id))
             .returning()
@@ -377,6 +380,7 @@ export async function upsertUser(data: {
             username: data.username,
             firstName: data.firstName,
             lastName: data.lastName,
+            whatsappId: data.whatsappId,
         }).returning().get();
     }
 }
@@ -389,6 +393,11 @@ export async function getAllUsers(): Promise<User[]> {
 export async function getUserByTelegramId(telegramId: number): Promise<User | undefined> {
     const db = getDb();
     return db.select().from(users).where(eq(users.telegramId, telegramId)).get();
+}
+
+export async function getUserById(id: number): Promise<User | undefined> {
+    const db = getDb();
+    return db.select().from(users).where(eq(users.id, id)).get();
 }
 
 // User Settings
@@ -785,3 +794,49 @@ export async function ensureSampleInvestments(): Promise<void> {
     ]);
 }
 
+
+export async function getFinancialHealthMetrics() {
+    const db = getDb();
+    const now = new Date();
+
+    // Calculate Average Monthly Expense (Last 3 Months)
+    let totalExpenseLast3Months = 0;
+    for (let i = 1; i <= 3; i++) {
+        // handle month wrap
+        let d = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+        // Actually simpler: just get all transactions from 3 months ago until now
+        // But reusing getMonthlyStats is safer for consistency if logic changes
+    }
+
+    // Simpler approach for avg expense:
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(now.getMonth() - 2); // Current + 2 prev months
+    threeMonthsAgo.setDate(1);
+
+    const recentTrans = await db.select().from(transactions).where(gte(transactions.date, threeMonthsAgo)).all();
+
+    // Group by month to handle averages correctly? 
+    // Or just simple total / 3? Simple total / 3 is roughly ok for "Runway" estimation.
+    // Better: sum of expenses in recentTrans / 3.
+    const recentExpenses = recentTrans
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const avgMonthlyExpense = recentExpenses / 3;
+
+    // Calculate Total Balance (All time)
+    const allTrans = await db.select().from(transactions).all();
+    const totalIncome = allTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalMonev = allTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const currentBalance = totalIncome - totalMonev;
+
+    const runway = calculateRunway(currentBalance, avgMonthlyExpense);
+    const idleCash = calculateIdleCash(currentBalance, avgMonthlyExpense);
+
+    return {
+        currentBalance,
+        avgMonthlyExpense,
+        runway,
+        idleCash
+    };
+}
