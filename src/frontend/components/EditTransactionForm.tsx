@@ -6,22 +6,14 @@ import { X, ArrowLeft, Wallet, TrendingUp, Utensils, Car, Gamepad2, ShoppingBag,
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 
+import { Transaction } from "@/types";
+
 interface Category {
     id: number;
     name: string;
     color: string;
     icon: string;
     type: "expense" | "income";
-}
-
-interface Transaction {
-    id: string;
-    amount: number;
-    description: string;
-    category: string;
-    categoryId: number;
-    type: "expense" | "income";
-    created_at: string;
 }
 
 interface EditTransactionFormProps {
@@ -60,8 +52,12 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
         if (transaction && isOpen) {
             setAmount(transaction.amount.toString());
             setDescription(transaction.description);
-            setSelectedCategory(transaction.categoryId);
-            loadCategories(transaction.type);
+            setSelectedCategory(transaction.categoryId || null);
+            if (transaction.type === "expense" || transaction.type === "income") {
+                loadCategories(transaction.type);
+            } else {
+                loadCategories("expense"); // Fallback for transfer
+            }
             setStep("amount");
             setError(null);
         }
@@ -110,14 +106,14 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                     amount: parseFloat(amount),
                     description,
                     categoryId: selectedCategory,
-                    type: transaction.type,
+                    type: transaction.type as "expense" | "income",
                     paymentMethod: "cash",
                     date: transaction.created_at,
                 }),
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 onSuccess?.();
                 onClose();
@@ -231,12 +227,12 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                                 onClick={() => handleCategorySelect(cat.id)}
                                                 className={cn(
                                                     "p-4 rounded-2xl border-2 transition-all text-left",
-                                                    isSelected 
-                                                        ? "border-blue-500 bg-blue-50" 
+                                                    isSelected
+                                                        ? "border-blue-500 bg-blue-50"
                                                         : "border-transparent bg-slate-50 hover:border-blue-300"
                                                 )}
                                             >
-                                                <div 
+                                                <div
                                                     className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center"
                                                     style={{ backgroundColor: cat.color + "20" }}
                                                 >

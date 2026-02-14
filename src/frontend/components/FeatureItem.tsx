@@ -10,9 +10,17 @@ interface FeatureItemProps {
     color?: string;
 }
 
+const colorClasses: Record<string, { bg: string; text: string; hoverBg: string; hoverBorder: string }> = {
+    purple: { bg: "bg-purple-50", text: "text-purple-600", hoverBg: "group-hover:bg-purple-100", hoverBorder: "group-hover:border-purple-200" },
+    blue: { bg: "bg-blue-50", text: "text-blue-600", hoverBg: "group-hover:bg-blue-100", hoverBorder: "group-hover:border-blue-200" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", hoverBg: "group-hover:bg-emerald-100", hoverBorder: "group-hover:border-emerald-200" },
+    rose: { bg: "bg-rose-50", text: "text-rose-600", hoverBg: "group-hover:bg-rose-100", hoverBorder: "group-hover:border-rose-200" },
+    amber: { bg: "bg-amber-50", text: "text-amber-600", hoverBg: "group-hover:bg-amber-100", hoverBorder: "group-hover:border-amber-200" },
+    indigo: { bg: "bg-indigo-50", text: "text-indigo-600", hoverBg: "group-hover:bg-indigo-100", hoverBorder: "group-hover:border-indigo-200" },
+};
+
 export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureItemProps) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _color = color;
+    const colors = colorClasses[color] || colorClasses.blue;
 
     return (
         <motion.button
@@ -23,12 +31,14 @@ export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureIte
         >
             <div className={cn(
                 "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300",
-                "bg-white border border-slate-100 shadow-sm",
-                "group-hover:border-blue-200 group-hover:bg-blue-50/30",
-                "group-hover:shadow-lg group-hover:shadow-blue-500/10",
+                "border shadow-sm",
+                colors.bg,
+                colors.hoverBg,
+                colors.hoverBorder,
+                "group-hover:shadow-lg",
                 "group-active:scale-95"
             )}>
-                <div className="transform group-hover:scale-110 transition-transform duration-300">
+                <div className={cn("transform group-hover:scale-110 transition-transform duration-300", colors.text)}>
                     {icon}
                 </div>
             </div>
