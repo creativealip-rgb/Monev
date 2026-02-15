@@ -15,8 +15,10 @@ import {
     createScheduledMessage,
     getFinancialHealthMetrics,
     getBills,
-    getInvestments,
-    getUserByTelegramId
+
+    getUserByTelegramId,
+    addChatMessage,
+    getChatHistory
 } from '@/backend/db/operations';
 import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising";
 import { format } from "date-fns";
@@ -113,6 +115,8 @@ export async function POST(req: NextRequest) {
             }
 
         } else if (text) {
+            // 1. Save User Message to History
+            await addChatMessage(userId, 'user', text);
             const lowerText = text.toLowerCase();
 
             // Commands first
@@ -259,6 +263,10 @@ export async function POST(req: NextRequest) {
                             frequency: b.frequency || "monthly"
                         }));
 
+                        // 2. Fetch Chat History
+                        const historyRaw = await getChatHistory(userId, 25);
+                        const history = historyRaw.map(h => ({ role: h.role as "user" | "assistant", content: h.content }));
+
                         const aiReply = await askFinanceAgent(text, {
                             monthlyStats: stats,
                             goals: goalsContext,
@@ -266,7 +274,10 @@ export async function POST(req: NextRequest) {
                             transactions: transactionsContext,
                             investments: investmentsContext,
                             bills: billsContext
-                        });
+                        }, history);
+
+                        // 3. Save AI Response to History
+                        await addChatMessage(userId, 'assistant', aiReply.content);
 
                         await sendTelegramMessage(chatId, aiReply.content);
                     } else if (nlpParsed.intent === "debt") {

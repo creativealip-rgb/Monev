@@ -1,7 +1,7 @@
 # AGENTS.md - Coding Guidelines for Monev
 
 ## Project Overview
-Next.js 16+ financial app with React 19, TypeScript, Tailwind CSS v4, and Supabase backend.
+Next.js 16+ financial app with React 19, TypeScript, Tailwind CSS v4, and Supabase backend with SQLite + Drizzle ORM.
 
 ## Build Commands
 
@@ -14,8 +14,14 @@ npm run build            # Build for production
 npm run start            # Start production server
 
 # Linting
-npm run lint             # Run ESLint
+npm run lint             # Run ESLint on entire project
 npx eslint src/path/file.tsx  # Lint specific file
+npx eslint --fix src/path/file.tsx  # Fix auto-fixable issues
+
+# Database (Drizzle ORM)
+npx drizzle-kit push        # Push schema to SQLite database
+npx drizzle-kit generate    # Generate migrations
+npx drizzle-kit studio      # Open Drizzle Studio (optional)
 ```
 
 **No test framework is currently configured.**
@@ -85,6 +91,7 @@ export function ComponentName({ label, onClick }: ComponentProps) {
 - Use `type` for unions/objects, `interface` for extensible contracts
 - Avoid `any` - use `unknown` with type guards
 - Nullable types: use `?` for optional, `| null` for explicit null
+- Path alias: Use `@/` for src directory (configured in tsconfig.json)
 
 ### Error Handling
 ```typescript
@@ -121,31 +128,27 @@ export async function POST(req: NextRequest) {
 ### File Organization
 ```
 src/
-├── app/               # Next.js App Router
-│   ├── page.tsx       # Route page
-│   ├── layout.tsx     # Root layout
-│   └── api/           # API routes
+├── app/               # Next.js App Router (page.tsx, layout.tsx, api/)
 ├── components/        # React components
 ├── lib/               # Utilities (cn, formatters)
-└── types/             # TypeScript types
+├── types/             # TypeScript types
+└── backend/db/       # Database schema and logic
 ```
 
 ### Key Libraries
 - **UI**: Tailwind CSS v4, lucide-react (icons)
 - **Utils**: clsx, tailwind-merge (via `cn()`)
-- **Dates**: date-fns
-- **Animation**: framer-motion
-- **DB**: @supabase/supabase-js
+- **Dates**: date-fns | **Animation**: framer-motion
+- **DB**: drizzle-orm, drizzle-kit, better-sqlite3
+- **Auth**: next-auth v5 (beta) | **AI**: openai, ai (Vercel AI SDK)
 
-### Localization
-- UI uses Indonesian language ("Selamat Sore", "Riwayat Terbaru")
+### Database
+- Schema: `src/backend/db/schema.ts` | Migrations: `drizzle/`
+- Commands: `npx drizzle-kit push` (push), `npx drizzle-kit generate` (migrate)
+- Local file: `sqlite.db` | Studio: `npx drizzle-kit studio`
+
+### Localization & Config
+- UI: Indonesian ("Selamat Sore", "Riwayat Terbaru")
 - Currency: IDR format with `formatCurrency()` utility
-
-### Environment Variables
-Required in `.env.local`:
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-OPENAI_API_KEY=
-TELEGRAM_BOT_TOKEN=
-```
+- ESLint: `eslint.config.mjs` (flat config, extends `eslint-config-next`)
+- Env: `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`

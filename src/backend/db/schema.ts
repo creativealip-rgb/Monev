@@ -121,6 +121,14 @@ export const bills = sqliteTable("bills", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const chatHistory = sqliteTable("chat_history", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    role: text("role", { enum: ["user", "assistant"] }).notNull(),
+    content: text("content").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 export const investments = sqliteTable("investments", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id").references(() => users.id).notNull(), // New: SaaS Isolation
@@ -148,6 +156,7 @@ export type UserSettings = typeof userSettings.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
 export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
+export type ChatHistory = typeof chatHistory.$inferSelect;
 export type Investment = typeof investments.$inferSelect;
 
 // Insert types
@@ -160,6 +169,7 @@ export type InsertUserSettings = typeof userSettings.$inferInsert;
 export type InsertDebt = typeof debts.$inferInsert;
 export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
 export type InsertBill = typeof bills.$inferInsert;
+export type InsertChatHistory = typeof chatHistory.$inferInsert;
 export type InsertInvestment = typeof investments.$inferInsert;
 
 // Zod schemas

@@ -1,11 +1,11 @@
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings } from "./schema";
-import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment } from "./schema";
+import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory } from "./schema";
+import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory } from "./schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
 
 // Re-export types
-export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment };
+export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory };
 
 // Categories (Global for now)
 export async function getCategories(): Promise<Category[]> {
@@ -898,4 +898,26 @@ export async function getFinancialHealthMetrics(userId: number) {
         goalCompletion: totalGoalTarget > 0 ? (totalGoalProgress / totalGoalTarget) * 100 : 0,
         runwayMonths: calculateRunway(stats.balance, stats.expense)
     };
+}
+
+// Chat History
+export async function getChatHistory(userId: number, limit = 25): Promise<ChatHistory[]> {
+    const db = getDb();
+    const history = await db.select()
+        .from(chatHistory)
+        .where(eq(chatHistory.userId, userId))
+        .orderBy(desc(chatHistory.createdAt))
+        .limit(limit)
+        .all();
+
+    return history.reverse(); // Return in chronological order
+}
+
+export async function addChatMessage(userId: number, role: "user" | "assistant", content: string): Promise<ChatHistory> {
+    const db = getDb();
+    return db.insert(chatHistory).values({
+        userId,
+        role,
+        content
+    }).returning().get();
 }
