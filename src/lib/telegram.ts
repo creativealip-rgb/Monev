@@ -1,4 +1,7 @@
 
+
+import https from 'https';
+
 export async function sendTelegramMessage(chatId: number, text: string) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) {
@@ -12,23 +15,53 @@ export async function sendTelegramMessage(chatId: number, text: string) {
         return;
     }
 
-    try {
-        const url = `https://api.telegram.org/bot${token}/sendMessage`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: text,
-                parse_mode: 'Markdown' // Enable markdown by default for nice formatting
-            })
+    const data = JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'Markdown'
+    });
+
+    const options = {
+        hostname: 'api.telegram.org',
+        port: 443,
+        path: `/bot${token}/sendMessage`,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(data)
+        },
+        family: 4 // Force IPv4 to avoid VPS timeout/network unreachable errors
+    };
+
+    return new Promise<void>((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            let responseBody = '';
+
+            res.on('data', (chunk) => {
+                responseBody += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const parsedData = JSON.parse(responseBody);
+                    if (!parsedData.ok) {
+                        console.error("Telegram API Error:", parsedData);
+                    }
+                    resolve();
+                } catch (e) {
+                    console.error("Failed to parse Telegram response:", e);
+                    resolve(); // Don't crash on parse error
+                }
+            });
         });
 
-        const data = await response.json();
-        if (!data.ok) {
-            console.error("Telegram API Error:", data);
-        }
-    } catch (error) {
-        console.error("Failed to send Telegram message:", error);
-    }
+        req.on('error', (e) => {
+            console.error("Failed to send Telegram message:", e);
+            resolve(); // Resolve anyway to prevent blocking
+        });
+
+        req.write(data);
+        req.end();
+    });
 }
+

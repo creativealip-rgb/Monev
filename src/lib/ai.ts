@@ -1,7 +1,15 @@
+
 import OpenAI from "openai";
+import https from "https";
+
+// Create an agent that forces IPv4 to avoid VPS IPv6 issues
+const agent = new https.Agent({ family: 4 });
 
 function getOpenAIClient() {
-    return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    return new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        httpAgent: agent
+    } as any);
 }
 
 export const CATEGORIES = [
