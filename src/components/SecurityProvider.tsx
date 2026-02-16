@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Lock, Unlock, ShieldCheck } from "lucide-react";
-import { fetchProfileData } from "@/app/(protected)/profile/actions";
+import { Lock, Unlock } from "lucide-react";
+import { fetchProfileData, verifySecurityPin } from "@/app/(protected)/profile/actions";
 
 interface SecurityContextType {
     isLocked: boolean;
-    unlock: (pin: string) => Promise<boolean>;
+    unlock: (pin: string) => Promise<{ success: boolean; message?: string }>;
     isEnabled: boolean;
     hasPin: boolean;
 }
@@ -23,11 +23,11 @@ export function useSecurity() {
 
 export function SecurityProvider({ children }: { children: ReactNode }) {
     const [isEnabled, setIsEnabled] = useState(false);
-    const [storedPin, setStoredPin] = useState<string | null>(null);
+    const [hasPin, setHasPin] = useState(false);
     const [isLocked, setIsLocked] = useState(true); // Default to locked until verified
     const [isLoading, setIsLoading] = useState(true);
     const [inputPin, setInputPin] = useState("");
-    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         checkSecuritySettings();
@@ -38,10 +38,10 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
             const data = await fetchProfileData();
             const settings = data?.settings;
             const enabled = settings?.isAppLockEnabled || false;
-            const pin = settings?.securityPin || null;
+            const pinExists = settings?.hasPin || false;
 
             setIsEnabled(enabled);
-            setStoredPin(pin);
+            setHasPin(pinExists);
 
             // Logic:
             // If NOT enabled -> Not Locked.
@@ -49,7 +49,7 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
             // If Session says "unlocked", then Not Locked.
             // Else -> Locked.
 
-            if (!enabled || !pin) {
+            if (!enabled || !pinExists) {
                 setIsLocked(false);
             } else {
                 const sessionUnlocked = sessionStorage.getItem("monev_unlocked");
@@ -68,25 +68,33 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const unlock = async (pin: string) => {
-        if (storedPin === pin) {
+    const unlock = async (pin: string): Promise<{ success: boolean; message?: string }> => {
+        const result = await verifySecurityPin(pin);
+        
+        if (result.success) {
             setIsLocked(false);
             sessionStorage.setItem("monev_unlocked", "true");
-            return true;
+            return { success: true };
         }
-        return false;
+        
+        return { 
+            success: false, 
+            message: result.message || "PIN salah. Silakan coba lagi."
+        };
     };
 
     const handleUnlockSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const success = await unlock(inputPin);
-        if (success) {
+        setErrorMessage(null);
+        
+        const result = await unlock(inputPin);
+        
+        if (result.success) {
             setInputPin("");
-            setError(false);
+            setErrorMessage(null);
         } else {
-            setError(true);
+            setErrorMessage(result.message || "PIN salah. Silakan coba lagi.");
             setInputPin("");
-            // Shake effect logic typically handled by UI/Framer
         }
     };
 
@@ -102,7 +110,7 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
     }
 
     // LOCK SCREEN UI
-    if (isLocked && isEnabled && storedPin) {
+    if (isLocked && isEnabled && hasPin) {
         return (
             <div className="fixed inset-0 z-[99999] bg-slate-50 flex flex-col items-center justify-center px-6">
                 <div className="w-full max-w-sm">
@@ -124,9 +132,9 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
                                 value={inputPin}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 6) setInputPin(e.target.value);
-                                    setError(false);
+                                    setErrorMessage(null);
                                 }}
-                                className={`w-full text-center text-3xl font-bold tracking-[0.5em] py-4 rounded-2xl border-2 focus:outline-none focus:ring-4 transition-all ${error
+                                className={`w-full text-center text-3xl font-bold tracking-[0.5em] py-4 rounded-2xl border-2 focus:outline-none focus:ring-4 transition-all ${errorMessage
                                     ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/20 text-rose-600 bg-rose-50"
                                     : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 text-slate-800 bg-white"
                                     }`}
@@ -135,9 +143,9 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
                             />
                         </div>
 
-                        {error && (
-                            <p className="text-center text-rose-500 text-sm font-medium animate-pulse">
-                                PIN salah. Silakan coba lagi.
+                        {errorMessage && (
+                            <p className="text-center text-rose-500 text-sm font-medium">
+                                {errorMessage}
                             </p>
                         )}
 
@@ -160,7 +168,7 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <SecurityContext.Provider value={{ isLocked, unlock, isEnabled, hasPin: !!storedPin }}>
+        <SecurityContext.Provider value={{ isLocked, unlock, isEnabled, hasPin }}>
             {children}
         </SecurityContext.Provider>
     );

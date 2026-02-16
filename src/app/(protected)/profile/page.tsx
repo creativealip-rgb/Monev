@@ -80,7 +80,8 @@ export default function ProfilePage() {
                     ...prev,
                     hourlyRate: data.settings.hourlyRate?.toString() || "",
                     primaryGoalId: data.settings.primaryGoalId?.toString() || "",
-                    securityPin: data.settings.securityPin || "",
+                    // Don't load existing PIN for security - user must enter new one
+                    securityPin: "",
                     isAppLockEnabled: data.settings.isAppLockEnabled || false
                 }));
             }
@@ -488,6 +489,9 @@ export default function ProfilePage() {
                                             className="w-full text-center text-2xl font-bold tracking-[0.5em] py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                                             placeholder="••••••"
                                         />
+                                        <p className="text-xs text-slate-400 mt-1 text-center">
+                                            PIN dienkripsi untuk keamanan. Masukkan PIN baru untuk mengubah.
+                                        </p>
                                     </div>
 
                                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">

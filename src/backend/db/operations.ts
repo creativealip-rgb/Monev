@@ -1,7 +1,7 @@
 import { getDb } from "./index";
 import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory } from "./schema";
 import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory } from "./schema";
-import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, like, or } from "drizzle-orm";
 import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
 
 // Re-export types
@@ -18,15 +18,54 @@ export async function getCategoryById(id: number): Promise<Category | undefined>
     return db.select().from(categories).where(eq(categories.id, id)).get();
 }
 
-// Transactions
-export async function getTransactions(userId: number, limit = 50): Promise<Transaction[]> {
+// Transactions with pagination and search support
+export interface GetTransactionsOptions {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    categoryId?: number;
+    type?: "expense" | "income" | "all";
+    startDate?: Date;
+    endDate?: Date;
+}
+
+export async function getTransactions(userId: number, limit = 50, offset = 0, search?: string): Promise<Transaction[]> {
     const db = getDb();
+    
+    const conditions = [eq(transactions.userId, userId)];
+    
+    if (search) {
+        conditions.push(
+            sql`(${transactions.description} LIKE ${'%' + search + '%'} OR ${transactions.merchantName} LIKE ${'%' + search + '%'})`
+        );
+    }
+    
     return db.select()
         .from(transactions)
-        .where(eq(transactions.userId, userId))
+        .where(and(...conditions))
         .orderBy(desc(transactions.date))
         .limit(limit)
+        .offset(offset)
         .all();
+}
+
+// Get total transaction count (for pagination)
+export async function getTransactionsCount(userId: number, search?: string): Promise<number> {
+    const db = getDb();
+    
+    let query = db.select({ count: sql<number>`COUNT(*)` }).from(transactions).where(eq(transactions.userId, userId));
+    
+    if (search) {
+        query = db.select({ count: sql<number>`COUNT(*)` })
+            .from(transactions)
+            .where(and(
+                eq(transactions.userId, userId),
+                sql`(${transactions.description} LIKE ${'%' + search + '%'} OR ${transactions.merchantName} LIKE ${'%' + search + '%'})`
+            ));
+    }
+    
+    const result = await query.get();
+    return result?.count || 0;
 }
 
 export async function getTransactionsByCategory(userId: number, categoryId: number): Promise<Transaction[]> {
@@ -90,24 +129,36 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
 }> {
     const db = getDb();
 
-    // Get all transactions for user
-    const allTransactions = await db.select().from(transactions).where(eq(transactions.userId, userId)).all();
-
+    // Optimized: Use SQL filtering instead of JavaScript filtering
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const filteredTransactions = allTransactions.filter(t => {
-        const transDate = new Date(t.date);
-        return transDate >= startDate && transDate <= endDate;
-    });
+    // Get income transactions with SQL date filtering
+    const incomeResult = await db
+        .select({ total: sql<number>`SUM(amount)` })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "income"),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .get();
 
-    const income = filteredTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+    // Get expense transactions with SQL date filtering
+    const expenseResult = await db
+        .select({ total: sql<number>`SUM(amount)` })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense"),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .get();
 
-    const expense = filteredTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
+    const income = incomeResult?.total || 0;
+    const expense = expenseResult?.total || 0;
 
     return {
         income,
@@ -124,38 +175,35 @@ export async function getCategoryStats(userId: number, year: number, month: numb
 }>> {
     const db = getDb();
 
+    // Optimized: Use SQL aggregation and filtering
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // Get all transactions and categories for user
-    const allTransactions = await db.select({
-        transaction: transactions,
-        category: categories,
+    // Use SQL GROUP BY for efficient aggregation
+    const results = await db.select({
+        categoryId: categories.id,
+        categoryName: categories.name,
+        color: categories.color,
+        total: sql<number>`SUM(${transactions.amount})`,
     })
         .from(transactions)
         .innerJoin(categories, eq(transactions.categoryId, categories.id))
         .where(and(
             eq(transactions.userId, userId),
-            eq(transactions.type, "expense")
+            eq(transactions.type, "expense"),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
         ))
+        .groupBy(categories.id)
+        .orderBy(sql`SUM(${transactions.amount}) DESC`)
         .all();
 
-    // Filter by date in JavaScript
-    const filtered = allTransactions.filter(({ transaction: t }) => {
-        const transDate = new Date(t.date);
-        return transDate >= startDate && transDate <= endDate;
-    });
-
-    // Group by category and sum amounts
-    const categoryMap = new Map();
-    filtered.forEach(({ transaction: t, category: c }) => {
-        const existing = categoryMap.get(c.id) || { categoryId: c.id, categoryName: c.name, color: c.color, total: 0 };
-        existing.total += t.amount;
-        categoryMap.set(c.id, existing);
-    });
-
-    return Array.from(categoryMap.values())
-        .sort((a, b) => b.total - a.total);
+    return results.map(r => ({
+        categoryId: r.categoryId,
+        categoryName: r.categoryName,
+        color: r.color,
+        total: r.total || 0,
+    }));
 }
 
 // Ensure sample budgets exist
@@ -213,32 +261,30 @@ export async function getBudgets(userId: number, month: number, year: number): P
         ))
         .all();
 
-    // Get all transactions for the month for user
-    const allTransactions = await db.select()
+    // Optimized: Use SQL aggregation for spent calculation
+    const spentByCategory = await db.select({
+        categoryId: transactions.categoryId,
+        total: sql<number>`SUM(${transactions.amount})`,
+    })
         .from(transactions)
         .where(and(
             eq(transactions.userId, userId),
-            eq(transactions.type, "expense")
+            eq(transactions.type, "expense"),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
         ))
+        .groupBy(transactions.categoryId)
         .all();
 
-    // Calculate spent for each budget
-    const result = budgetsWithCategories.map((item) => {
-        const spent = allTransactions
-            .filter(t => {
-                const transDate = new Date(t.date);
-                return t.categoryId === item.budget.categoryId &&
-                    transDate >= startDate &&
-                    transDate <= endDate;
-            })
-            .reduce((sum, t) => sum + t.amount, 0);
+    // Create lookup map for spent amounts
+    const spentMap = new Map(spentByCategory.map(s => [s.categoryId, s.total || 0]));
 
-        return {
-            ...item.budget,
-            category: item.category,
-            spent,
-        };
-    });
+    // Map budgets with spent amounts
+    const result = budgetsWithCategories.map((item) => ({
+        ...item.budget,
+        category: item.category,
+        spent: spentMap.get(item.budget.categoryId) || 0,
+    }));
 
     return result;
 }
@@ -642,17 +688,26 @@ export async function markScheduledMessageSent(id: number): Promise<void> {
 export async function getAnalysisData(userId: number, year: number, month: number) {
     const db = getDb();
 
+    // Optimized: Use SQL filtering instead of fetching all and filtering in JS
     const allCategories = await db.select().from(categories).all();
     const stats = await getMonthlyStats(userId, year, month);
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const allTransactions = await db.select().from(transactions).where(eq(transactions.userId, userId)).all();
-    const monthlyTransactions = allTransactions.filter(t => {
-        const transDate = new Date(t.date);
-        return transDate >= startDate && transDate <= endDate;
-    });
+    // Optimized: Fetch only monthly transactions with SQL filtering
+    const monthlyTransactions = await db.select({
+        transaction: transactions,
+        category: categories,
+    })
+        .from(transactions)
+        .innerJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(and(
+            eq(transactions.userId, userId),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .all();
 
     const mapping = {
         needs: ["Makan & Minuman", "Transportasi", "Tagihan", "Kesehatan", "Pendidikan"],
@@ -668,10 +723,7 @@ export async function getAnalysisData(userId: number, year: number, month: numbe
     const expenseBreakdown: Record<string, { amount: number; color: string; icon: string }> = {};
     const incomeBreakdown: Record<string, { amount: number; color: string; icon: string }> = {};
 
-    monthlyTransactions.forEach(t => {
-        const cat = allCategories.find(c => c.id === t.categoryId);
-        if (!cat) return;
-
+    monthlyTransactions.forEach(({ transaction: t, category: cat }) => {
         if (t.type === 'expense') {
             // Rule 50/30/20 calculation
             if (mapping.needs.includes(cat.name)) {

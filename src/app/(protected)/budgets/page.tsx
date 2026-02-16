@@ -76,16 +76,20 @@ export default function BudgetsPage() {
         try {
             setLoading(true);
 
-            // Fetch categories first
-            const catsResponse = await fetch("/api/categories");
-            const catsResult = await catsResponse.json();
+            // Optimized: Fetch categories and budgets in parallel
+            const [catsResponse, budgetsResponse] = await Promise.all([
+                fetch("/api/categories"),
+                fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`)
+            ]);
+
+            const [catsResult, budgetsResult] = await Promise.all([
+                catsResponse.json(),
+                budgetsResponse.json()
+            ]);
+
             if (catsResult.success) {
                 setCategories(catsResult.data);
             }
-
-            // Fetch budgets
-            const budgetsResponse = await fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`);
-            const budgetsResult = await budgetsResponse.json();
 
             if (budgetsResult.success) {
                 setBudgets(budgetsResult.data);

@@ -1,27 +1,27 @@
 # AGENTS.md - Coding Guidelines for Monev
 
 ## Project Overview
-Next.js 16+ financial app with React 19, TypeScript, Tailwind CSS v4, and Supabase backend with SQLite + Drizzle ORM.
+Next.js 16+ financial app with React 19, TypeScript, Tailwind CSS v4, and SQLite + Drizzle ORM backend.
 
 ## Build Commands
 
 ```bash
 # Development
-npm run dev              # Start Next.js dev server (Turbopack)
+npm run dev              # Start Next.js dev server
 
-# Production
-npm run build            # Build for production
+# Production  
+npm run build            # Build for production (uses Webpack)
 npm run start            # Start production server
 
 # Linting
 npm run lint             # Run ESLint on entire project
-npx eslint src/path/file.tsx  # Lint specific file
+npx eslint src/path/file.tsx     # Lint specific file
 npx eslint --fix src/path/file.tsx  # Fix auto-fixable issues
 
 # Database (Drizzle ORM)
-npx drizzle-kit push        # Push schema to SQLite database
-npx drizzle-kit generate    # Generate migrations
-npx drizzle-kit studio      # Open Drizzle Studio (optional)
+npx drizzle-kit push     # Push schema to SQLite database
+npx drizzle-kit generate # Generate migrations
+npx drizzle-kit studio   # Open Drizzle Studio
 ```
 
 **No test framework is currently configured.**
@@ -42,15 +42,16 @@ npx drizzle-kit studio      # Open Drizzle Studio (optional)
 - **Constants**: UPPER_SNAKE_CASE for true constants
 - **Files**: Match the default export name
 
-### Imports
+### Imports Order
 ```typescript
 // 1. External libraries (sorted alphabetically)
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Coffee } from "lucide-react";
+import { motion } from "framer-motion";
 
 // 2. Internal absolute imports with @/ alias
-import { BottomNav } from "@/components/BottomNav";
+import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { Transaction } from "@/types";
 
 // 3. Relative imports (avoid if possible)
@@ -64,7 +65,7 @@ import type { Metadata } from "next";
 ```typescript
 "use client"; // If using hooks/browser APIs
 
-import { cn } from "@/lib/utils"; // Always import cn utility
+import { cn } from "@/frontend/lib/utils"; // Always import cn utility
 
 // Props interface
 interface ComponentProps {
@@ -78,20 +79,22 @@ export function ComponentName({ label, onClick }: ComponentProps) {
 }
 ```
 
-### Styling (Tailwind)
-- Use `cn()` utility from `@/lib/utils` for conditional classes
+### Styling (Tailwind v4)
+- Use `cn()` utility from `@/frontend/lib/utils` for conditional classes
 - Order: layout → spacing → sizing → colors → effects → interactions
 - Use `group-hover:` and `active:` for interactive states
 - Custom colors via CSS variables in `globals.css`
 - Avoid arbitrary values (e.g., `w-[100px]`) - use design tokens
+- Use glass utilities: `glass`, `glass-card`, `card-clean`
+- Use component classes: `btn-primary`, `btn-secondary`, `input-modern`
 
 ### TypeScript
-- Enable strict mode (configured in tsconfig.json)
+- Strict mode enabled in tsconfig.json
 - Explicit return types on exported functions
 - Use `type` for unions/objects, `interface` for extensible contracts
 - Avoid `any` - use `unknown` with type guards
 - Nullable types: use `?` for optional, `| null` for explicit null
-- Path alias: Use `@/` for src directory (configured in tsconfig.json)
+- Path alias: Use `@/` for src directory
 
 ### Error Handling
 ```typescript
@@ -100,7 +103,6 @@ try {
     return result;
 } catch (error) {
     console.error("Operation failed:", error);
-    // Return user-friendly error or rethrow
     throw new Error("Failed to process request");
 }
 ```
@@ -112,11 +114,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        // Validate input
         if (!body.field) {
             return NextResponse.json({ error: "Missing field" }, { status: 400 });
         }
-        // Process...
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("API Error:", error);
@@ -128,11 +128,23 @@ export async function POST(req: NextRequest) {
 ### File Organization
 ```
 src/
-├── app/               # Next.js App Router (page.tsx, layout.tsx, api/)
-├── components/        # React components
-├── lib/               # Utilities (cn, formatters)
-├── types/             # TypeScript types
-└── backend/db/       # Database schema and logic
+├── app/                    # Next.js App Router
+│   ├── (protected)/       # Route groups
+│   ├── api/               # API routes
+│   ├── globals.css        # Global styles
+│   └── layout.tsx         # Root layout
+├── frontend/
+│   ├── components/        # React components
+│   └── lib/
+│       └── utils.ts       # cn() and formatCurrency()
+├── backend/
+│   └── db/
+│       ├── schema.ts      # Drizzle schema
+│       └── index.ts       # Database connection
+├── lib/                   # Shared utilities
+├── types/
+│   └── index.ts          # TypeScript types
+└── components/           # Cross-cutting components
 ```
 
 ### Key Libraries
@@ -140,11 +152,11 @@ src/
 - **Utils**: clsx, tailwind-merge (via `cn()`)
 - **Dates**: date-fns | **Animation**: framer-motion
 - **DB**: drizzle-orm, drizzle-kit, better-sqlite3
-- **Auth**: next-auth v5 (beta) | **AI**: openai, ai (Vercel AI SDK)
+- **Auth**: next-auth v5 (beta) | **AI**: openai, ai SDK
 
 ### Database
 - Schema: `src/backend/db/schema.ts` | Migrations: `drizzle/`
-- Commands: `npx drizzle-kit push` (push), `npx drizzle-kit generate` (migrate)
+- Commands: `npx drizzle-kit push`, `npx drizzle-kit generate`
 - Local file: `sqlite.db` | Studio: `npx drizzle-kit studio`
 
 ### Localization & Config

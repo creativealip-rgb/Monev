@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
-import { Filter, Search, ChevronLeft, X, Check } from "lucide-react";
+import { Filter, Search, ChevronLeft, X, Check, Loader2 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,7 @@ import { id } from "date-fns/locale";
 
 import { Transaction } from "@/types";
 import { createPortal } from "react-dom";
+import { InfiniteScrollList, ListSkeleton } from "@/frontend/components/InfiniteScrollList";
 
 // Portal helper to render outside the main layout container
 function Portal({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,23 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    
+    // Pagination state
+    const [pagination, setPagination] = useState({
+        total: 0,
+        limit: 20,
+        offset: 0,
+        hasMore: true
+    });
+
+    // Reload when search or filters change
+    useEffect(() => {
+        // Debounce search
+        const timer = setTimeout(() => {
+            loadData(true);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery, filterCategory, filterType]);
 
     // Derived values with useMemo for performance and stability
     const filteredTransactions = useMemo(() => {
@@ -93,11 +111,11 @@ export default function TransactionsPage() {
     }, [filteredTransactions]);
 
     useEffect(() => {
-        loadData();
+        loadData(true);
 
         // Listen for transaction added event
         const handleTransactionAdded = () => {
-            loadData();
+            loadData(true);
         };
         window.addEventListener("transactionAdded", handleTransactionAdded);
 
@@ -106,22 +124,62 @@ export default function TransactionsPage() {
         };
     }, []);
 
-    async function loadData() {
+    // Helper to map API response to Transaction type
+    const mapTransaction = useCallback((t: {
+        id: number;
+        amount: number;
+        description: string;
+        categoryId: number;
+        type: "expense" | "income";
+        date: string;
+        isVerified: boolean;
+    }): Transaction => ({
+        id: t.id.toString(),
+        amount: t.amount,
+        description: t.description,
+        category: categories.find(c => c.id === t.categoryId)?.name || "Lainnya",
+        categoryId: t.categoryId,
+        type: t.type,
+        created_at: t.date,
+        is_verified: t.isVerified,
+    }), [categories]);
+
+    // Fetch more transactions for infinite scroll
+    const fetchMoreTransactions = useCallback(async (offset: number, limit: number) => {
+        const transResponse = await fetch(`/api/transactions?offset=${offset}&limit=${limit}&search=${searchQuery}`);
+        const transResult = await transResponse.json();
+        
+        if (transResult.success) {
+            const mappedData = transResult.data.map(mapTransaction);
+            return {
+                data: mappedData,
+                pagination: transResult.pagination
+            };
+        }
+        return { data: [], pagination: { total: 0, limit, offset, hasMore: false } };
+    }, [searchQuery, mapTransaction]);
+
+    async function loadData(reset = false) {
         try {
             setLoading(true);
-            // Fetch transactions
-            const transResponse = await fetch("/api/transactions");
+            
+            // Fetch categories first and WAIT for it to complete
+            let currentCategories = categories;
+            if (currentCategories.length === 0) {
+                const catsResponse = await fetch("/api/categories");
+                const catsResult = await catsResponse.json();
+                if (catsResult.success) {
+                    currentCategories = catsResult.data;
+                    setCategories(currentCategories);
+                }
+            }
+
+            // Fetch transactions with pagination
+            const transResponse = await fetch(`/api/transactions?limit=${pagination.limit}&offset=0&search=${searchQuery}`);
             const transResult = await transResponse.json();
 
-            // Fetch categories for mapping
-            const catsResponse = await fetch("/api/categories");
-            const catsResult = await catsResponse.json();
-
-            if (transResult.success && catsResult.success) {
-                const cats: Category[] = catsResult.data;
-                setCategories(cats);
-
-                // Map transactions with category names
+            if (transResult.success) {
+                // Map transactions with category names using the fetched categories
                 const mappedTransactions = transResult.data.map((t: {
                     id: number;
                     amount: number;
@@ -134,14 +192,20 @@ export default function TransactionsPage() {
                     id: t.id.toString(),
                     amount: t.amount,
                     description: t.description,
-                    category: cats.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
+                    category: currentCategories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
                     categoryId: t.categoryId,
                     type: t.type,
                     created_at: t.date,
                     is_verified: t.isVerified,
                 }));
-
-                setTransactions(mappedTransactions);
+                
+                if (reset) {
+                    setTransactions(mappedTransactions);
+                } else {
+                    setTransactions(prev => [...prev, ...mappedTransactions]);
+                }
+                
+                setPagination(transResult.pagination);
             }
         } catch (error) {
             console.error("Error loading data:", error);
@@ -316,7 +380,7 @@ export default function TransactionsPage() {
                         >
                             {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
                                 <div key={date}>
-                                    <h3 className="text-xs font-bold text-slate-400 mb-3 sticky top-20 z-40 bg-slate-50/90 backdrop-blur-sm py-3 px-2 rounded-xl border border-slate-100/50 shadow-sm">
+                                    <h3 className="text-xs font-bold text-slate-400 mb-3 py-1 px-2 uppercase tracking-widest">
                                         {date}
                                     </h3>
                                     <div className="space-y-3">
@@ -341,6 +405,25 @@ export default function TransactionsPage() {
                         </motion.div>
                     )
                 }
+                
+                {/* Load More Button for Infinite Scroll - Outside the ternary */}
+                {!loading && pagination.hasMore && filteredTransactions.length > 0 && (
+                    <div className="text-center py-6">
+                        <button
+                            onClick={() => loadData(false)}
+                            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors"
+                        >
+                            Muat Lebih Banyak
+                        </button>
+                    </div>
+                )}
+                
+                {loading && filteredTransactions.length > 0 && (
+                    <div className="flex items-center justify-center gap-2 py-6 text-slate-500">
+                        <Loader2 size={20} className="animate-spin" />
+                        <span>Memuat...</span>
+                    </div>
+                )}
             </div >
 
             {/* Filter Modal */}

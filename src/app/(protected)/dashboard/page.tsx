@@ -85,31 +85,42 @@ export default function Home() {
         setMounted(true);
         async function loadData() {
             try {
-                // Fetch Profile Data
-                const profileData = await fetchProfileData();
+                // Get current month for stats
+                const currentMonth = new Date().getMonth() + 1;
+                const currentYear = new Date().getFullYear();
+
+                // Fetch all data in parallel for better performance
+                const [
+                    profileData,
+                    statsResponse,
+                    transResponse,
+                    catsResponse
+                ] = await Promise.all([
+                    fetchProfileData(),
+                    fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
+                    fetch("/api/transactions"),
+                    fetch("/api/categories")
+                ]);
+
+                // Process profile data
                 if (profileData?.user) {
                     const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
                     setUserName(fullName || "Pengguna");
                 }
 
-                // Get current month stats
-                const currentMonth = new Date().getMonth() + 1;
-                const currentYear = new Date().getFullYear();
-
-                const statsResponse = await fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
+                // Process stats
                 const statsResult = await statsResponse.json();
                 if (statsResult.success) {
                     setStats(statsResult.data);
                 }
 
-                // Get recent transactions
-                const transResponse = await fetch("/api/transactions");
-                const transResult = await transResponse.json();
+                // Process transactions and categories
+                const [transResult, catsResult] = await Promise.all([
+                    transResponse.json(),
+                    catsResponse.json()
+                ]);
 
                 if (transResult.success) {
-                    // Get categories for lookup
-                    const catsResponse = await fetch("/api/categories");
-                    const catsResult = await catsResponse.json();
                     const categories: Category[] = catsResult.success ? catsResult.data : [];
 
                     // Map transactions with category names

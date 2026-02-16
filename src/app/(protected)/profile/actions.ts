@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { hashPin, verifyPin } from "@/lib/security";
+import { checkPinRateLimit } from "@/lib/rate-limit";
 import {
     getUserSettings,
     updateUserSettings,
@@ -28,9 +30,18 @@ export async function fetchProfileData() {
     const settings = await getUserSettings(userId);
     const goals = await getGoals(userId);
 
+    // Return safe settings (without securityPin) and a flag indicating if PIN exists
     return {
         user,
-        settings,
+        settings: {
+            id: settings.id,
+            userId: settings.userId,
+            hourlyRate: settings.hourlyRate,
+            primaryGoalId: settings.primaryGoalId,
+            isAppLockEnabled: settings.isAppLockEnabled,
+            updatedAt: settings.updatedAt,
+            hasPin: !!settings.securityPin // Only return boolean flag, not the actual PIN
+        },
         goals
     };
 }
@@ -135,11 +146,53 @@ export async function updateSecuritySettings(formData: FormData) {
     const securityPin = formData.get("securityPin") as string;
     const isAppLockEnabled = formData.get("isAppLockEnabled") === "true";
 
+    // Hash the PIN before saving (if provided)
+    let hashedPin: string | null = null;
+    if (securityPin && securityPin.length === 6) {
+        hashedPin = await hashPin(securityPin);
+    }
+
     await updateUserSettings(userId, {
-        securityPin: securityPin || null,
+        securityPin: hashedPin,
         isAppLockEnabled: isAppLockEnabled
     });
 
     revalidatePath("/profile");
+    return { success: true };
+}
+
+export async function verifySecurityPin(pin: string): Promise<{ success: boolean; message?: string }> {
+    const session = await auth();
+    if (!session?.user?.id) {
+        return { success: false, message: "Unauthorized" };
+    }
+    const userId = parseInt(session.user.id);
+
+    // Check rate limiting
+    const rateLimit = checkPinRateLimit(`user:${userId}`);
+    if (!rateLimit.allowed) {
+        const minutesLeft = Math.ceil((rateLimit.resetTime - Date.now()) / (60 * 1000));
+        return {
+            success: false,
+            message: `Terlalu banyak percobaan. Silakan coba lagi dalam ${minutesLeft} menit.`
+        };
+    }
+
+    // Get user's hashed PIN from database
+    const settings = await getUserSettings(userId);
+    if (!settings.securityPin) {
+        return { success: false, message: "PIN belum diatur" };
+    }
+
+    // Verify PIN
+    const isValid = await verifyPin(pin, settings.securityPin);
+
+    if (!isValid) {
+        return {
+            success: false,
+            message: `PIN salah. Sisa percobaan: ${rateLimit.remaining}`
+        };
+    }
+
     return { success: true };
 }
