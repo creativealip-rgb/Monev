@@ -161,7 +161,7 @@ export default function Home() {
                     <Link href="/profile" className="flex items-center gap-4 group active:scale-95 transition-transform">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 p-[2px] shadow-lg shadow-blue-600/20"
+                            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 p-[2px] shadow-lg shadow-blue-600/10"
                         >
                             <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {userName === "Pengguna" ? (
@@ -183,7 +183,7 @@ export default function Home() {
                     <motion.button
                         whileHover={{ scale: 1.1, rotate: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        className="relative w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border border-slate-200/50 flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/10 transition-all shadow-sm"
+                        className="relative w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all"
                     >
                         <Bell size={22} strokeWidth={2.5} />
                         <span className="absolute top-3 right-3.5 w-2 h-2 bg-rose-500 rounded-full border border-white animate-pulse" />
@@ -198,11 +198,11 @@ export default function Home() {
                 transition={{ delay: 0.1 }}
                 className="px-6 mb-8"
             >
-                <div className="relative overflow-hidden rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white p-6 shadow-2xl shadow-indigo-500/20">
+                <div className="relative overflow-hidden rounded-2xl bg-slate-900 shadow-2xl shadow-indigo-500/10 border border-white/10 text-white p-6">
                     {/* Background Effects */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -mr-20 -mt-20" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-45" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl -mr-20 -mt-20 opacity-50" />
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-600/20 rounded-full blur-2xl -ml-10 -mb-10 opacity-50" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-12 opacity-30" />
 
                     <div
                         className="relative z-10 cursor-pointer group"
@@ -230,32 +230,32 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <h2 className="text-4xl font-bold tracking-tight mb-8 group-hover:scale-[1.02] transition-transform origin-left">
+                        <h2 className="text-3xl font-semibold tracking-tight mb-8 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
                             {loading ? "Loading..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
                         </h2>
                     </div>
 
                     <div className="flex gap-3">
-                        <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                        <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                                     <ArrowUpRight size={14} className="text-emerald-400" />
                                 </div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Income</p>
                             </div>
-                            <p className="font-bold text-sm text-emerald-400">
+                            <p className="font-semibold text-sm text-emerald-400 tabular-nums">
                                 + {loading ? "..." : formatCurrency(stats.income).replace("Rp", "")}
                             </p>
                         </div>
 
-                        <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                        <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
                                     <ArrowDownRight size={14} className="text-rose-400" />
                                 </div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expense</p>
                             </div>
-                            <p className="font-bold text-sm text-rose-400">
+                            <p className="font-semibold text-sm text-rose-400 tabular-nums">
                                 − {loading ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
                             </p>
                         </div>
@@ -325,7 +325,7 @@ export default function Home() {
                             ))}
                         </div>
                     ) : transactions.length === 0 ? (
-                        <div className="text-center py-8 card-clean border-dashed border-slate-300/50">
+                        <div className="text-center py-8 glass-card border-dashed border-slate-300/50">
                             <p className="text-slate-500 font-bold">Belum ada transaksi</p>
                             <p className="text-xs text-slate-400 mt-1">Transaksi akan muncul di sini</p>
                         </div>
@@ -346,96 +346,104 @@ export default function Home() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-md"
                         onClick={() => setShowBalanceDetail(false)}
                     />
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-[90%] max-w-md bg-white/80 backdrop-blur-xl border border-white/40 rounded-[2rem] p-8 shadow-2xl overflow-hidden z-10 ring-1 ring-white/50"
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="relative w-[92%] max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-2xl overflow-hidden z-10 shadow-slate-200/50"
                     >
-                        {/* Background Effects */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none" />
+                        {/* Clean Backdrop Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 to-white/10 pointer-events-none" />
 
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between mb-8 relative z-10">
-                            <div>
-                                <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Rincian Kekayaan</h3>
-                                <p className="text-sm text-slate-500 font-medium">Total aset dari semua sumber</p>
-                            </div>
+                        {/* Modal Header & Close */}
+                        <div className="flex justify-end mb-2 relative z-10">
                             <button
                                 onClick={() => setShowBalanceDetail(false)}
-                                className="w-9 h-9 rounded-full bg-slate-100/80 hover:bg-slate-200 border border-slate-200/50 flex items-center justify-center text-slate-500 hover:scale-105 transition-all active:scale-95"
+                                className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
                             >
-                                <X size={20} />
+                                <X size={16} />
                             </button>
                         </div>
 
-                        <div className="space-y-4 relative z-10">
-                            {/* Saldo Aktif Card */}
-                            <div className="relative overflow-hidden group p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 transition-all cursor-default ring-1 ring-white/20">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
-                                <div className="flex items-center gap-5 relative z-10">
-                                    <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border border-white/20">
-                                        <Wallet size={28} className="text-white drop-shadow-md" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-blue-100 mb-1">Saldo Aktif</p>
-                                        <p className="text-2xl font-bold tracking-tight text-white">{formatCurrency(stats.balance)}</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="text-center mb-6 relative z-10">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
+                            <h3 className="text-3xl font-black text-slate-900 tracking-tight tabular-nums">
+                                {formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
+                            </h3>
+                        </div>
 
-                            {/* Tabungan Card */}
-                            <div className="relative overflow-hidden group p-5 rounded-2xl bg-white/60 backdrop-blur-md border border-emerald-100/50 shadow-sm hover:shadow-md transition-all">
+                        {/* Distribution Bar */}
+                        <div className="mb-8 relative z-10 px-1">
+                            <div className="w-full h-2.5 bg-slate-100 rounded-full flex overflow-hidden ring-4 ring-slate-50">
+                                {(() => {
+                                    const total = stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0);
+                                    if (total <= 0) return <div className="w-full bg-slate-200/50 h-full" />;
+                                    const p1 = (stats.balance / total) * 100;
+                                    const p2 = ((stats.totalGoals || 0) / total) * 100;
+                                    const p3 = ((stats.totalInvestments || 0) / total) * 100;
+                                    return (
+                                        <>
+                                            <div className="h-full bg-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.3)]" style={{ width: `${p1}%` }} />
+                                            <div className="h-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]" style={{ width: `${p2}%` }} />
+                                            <div className="h-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]" style={{ width: `${p3}%` }} />
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* Minimalist Breakdown List */}
+                        <div className="space-y-7 relative z-10 px-2">
+                            {/* Saldo Aktif */}
+                            <div className="flex items-center justify-between group transition-all">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 rounded-2xl bg-emerald-100/80 flex items-center justify-center border border-emerald-200/50">
-                                        <PiggyBank size={28} className="text-emerald-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tabungan Goals</p>
-                                        <p className="text-xl font-bold text-slate-800 tracking-tight">{formatCurrency(stats.totalGoals || 0)}</p>
+                                    <div className="w-4 h-4 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)] border-2 border-white" />
+                                    <div>
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Saldo Aktif</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Liquid assets</p>
                                     </div>
                                 </div>
+                                <p className="text-lg font-bold text-slate-800 tabular-nums">
+                                    {formatCurrency(stats.balance)}
+                                </p>
                             </div>
 
-                            {/* Investasi Card */}
-                            <div className="relative overflow-hidden group p-5 rounded-2xl bg-white/60 backdrop-blur-md border border-amber-100/50 shadow-sm hover:shadow-md transition-all">
+                            {/* Tabungan Goals */}
+                            <div className="flex items-center justify-between group transition-all">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 rounded-2xl bg-amber-100/80 flex items-center justify-center border border-amber-200/50">
-                                        <TrendingUp size={28} className="text-amber-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Aset Investasi</p>
-                                        <p className="text-xl font-bold text-slate-800 tracking-tight">{formatCurrency(stats.totalInvestments || 0)}</p>
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-2 border-white" />
+                                    <div>
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tabungan Goals</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Future plans</p>
                                     </div>
                                 </div>
-                                <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 group-hover:opacity-10 transition-opacity">
-                                    <TrendingUp size={80} className="text-amber-500" />
-                                </div>
+                                <p className="text-lg font-bold text-slate-800 tabular-nums">
+                                    {formatCurrency(stats.totalGoals || 0)}
+                                </p>
                             </div>
 
-                            {/* Total Footer */}
-                            <div className="pt-6 mt-4 border-t border-slate-200/50">
-                                <div className="p-5 rounded-2xl bg-slate-50/80 backdrop-blur-sm border border-slate-200/60">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <p className="text-sm font-semibold text-slate-500">Total Kekayaan Bersih</p>
-                                        <div className="px-3 py-1 rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700 tracking-wide border border-emerald-200">
-                                            NET WORTH
-                                        </div>
+                            {/* Investasi */}
+                            <div className="flex items-center justify-between group transition-all">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] border-2 border-white" />
+                                    <div>
+                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Investasi</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Growth assets</p>
                                     </div>
-                                    <p className="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-                                        {formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
-                                    </p>
                                 </div>
+                                <p className="text-base font-bold text-slate-900 tabular-nums">
+                                    {formatCurrency(stats.totalInvestments || 0)}
+                                </p>
                             </div>
                         </div>
                     </motion.div>
                 </div>,
                 document.body
             )}
+
         </div>
     );
 }

@@ -200,7 +200,7 @@ export default function InvestmentsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 glass border-b border-slate-200/50"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -227,20 +227,20 @@ export default function InvestmentsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-emerald-900/80 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-emerald-900/20"
+                className="mx-6 mt-6 p-6 bg-emerald-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-white shadow-xl shadow-emerald-900/10"
             >
                 <p className="text-emerald-200 text-xs font-medium mb-1">Total Nilai Aset</p>
-                <h2 className="text-3xl font-bold mb-6">{loading ? "..." : formatCurrency(totalValue)}</h2>
+                <h2 className="text-2xl font-bold mb-6 tabular-nums">{loading ? "..." : formatCurrency(totalValue)}</h2>
 
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                     <div>
                         <p className="text-emerald-200 text-[10px] uppercase tracking-wider mb-1">Modal Awal</p>
-                        <p className="font-semibold">{loading ? "..." : formatCurrency(totalCost)}</p>
+                        <p className="font-medium tabular-nums">{loading ? "..." : formatCurrency(totalCost)}</p>
                     </div>
                     <div>
                         <p className="text-emerald-200 text-[10px] uppercase tracking-wider mb-1">Keuntungan</p>
                         <div className={cn(
-                            "flex items-center gap-1 font-bold",
+                            "flex items-center gap-1 font-semibold tabular-nums",
                             totalProfit >= 0 ? "text-emerald-300" : "text-rose-300"
                         )}>
                             {loading ? "..." : (
@@ -286,7 +286,7 @@ export default function InvestmentsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: i * 0.05 }}
                                     onClick={() => openEditModal(inv)}
-                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-slate-200/40 transition-all active:scale-[0.98]"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-3">
@@ -302,9 +302,9 @@ export default function InvestmentsPage() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-slate-900">{formatCurrency(value)}</p>
+                                            <p className="font-semibold text-slate-900 tabular-nums">{formatCurrency(value)}</p>
                                             <div className={cn(
-                                                "text-xs font-medium flex items-center justify-end gap-1",
+                                                "text-xs font-medium flex items-center justify-end gap-1 tabular-nums",
                                                 isProfit ? "text-emerald-600" : "text-rose-500"
                                             )}>
                                                 {isProfit ? "+" : ""}{formatCurrency(profit)} ({profitPct.toFixed(1)}%)
@@ -315,7 +315,7 @@ export default function InvestmentsPage() {
                                         <div className="text-xs text-slate-400">
                                             {inv.quantity.toLocaleString('id-ID')} @ {formatCurrency(inv.currentPrice)}
                                         </div>
-                                        <div className="text-xs text-slate-400">
+                                        <div className="text-xs text-slate-400 tabular-nums">
                                             Modal: {formatCurrency(inv.avgBuyPrice)}
                                         </div>
                                     </div>

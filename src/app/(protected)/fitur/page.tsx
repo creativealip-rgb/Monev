@@ -110,7 +110,7 @@ const features = [
                 desc: "Auto-detect notifikasi via OCR/Text Bot",
                 status: "ready",
                 color: "blue",
-                href: "#"
+                href: "/fitur/notification-guide"
             },
             {
                 id: 3,

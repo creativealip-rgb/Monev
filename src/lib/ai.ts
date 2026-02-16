@@ -1066,3 +1066,59 @@ ATURAN OUTPUT:
         return "Gagal menghasilkan analisa AI saat ini. Coba cek lagi nanti!";
     }
 }
+
+/**
+ * AI Parser for mobile notifications (Bank SMS, App Push, etc.)
+ */
+export async function processNotification(content: string, source: string): Promise<AIResult | null> {
+    try {
+        const openai = getOpenAIClient();
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `Anda adalah asisten AI yang mengekstrak informasi transaksi keuangan dari notifikasi HP (Bank SMS, Push Notification, atau E-wallet).
+                    
+Tugas Anda:
+1. Tentukan apakah notifikasi ini merupakan TRANSAKSI (pemasukan atau pengeluaran). Jika bukan transaksi (misal: promo, login alert, info saldo saja tanpa perubahan), kembalikan amount 0.
+2. Jika transaksi, ekstrak:
+   - merchantName: Nama toko, platform, atau pengirim/penerima transfer.
+   - amount: Nominal transaksi (angka saja).
+   - transactionType: "expense" (jika saldo berkurang/bayar) atau "income" (jika saldo bertambah/topup/masuk).
+   - description: Ringkasan singkat transaksi (misal: "Transfer ke BCA", "Bayar di Alfamart").
+   - category: Pilih kategori yang paling sesuai dari daftar di bawah.
+   - date: Gunakan format ISO YYYY-MM-DD. Gunakan hari ini (${new Date().toISOString().split('T')[0]}) jika tidak ada tanggal spesifik.
+
+Kategori yang tersedia:
+${CATEGORIES.map(c => `- ${c}`).join("\n")}
+
+Sumber Notifikasi: ${source}
+
+Jawab dalam format JSON saja:
+{
+  "merchantName": "nama merchant",
+  "amount": 50000,
+  "transactionType": "expense",
+  "description": "deskripsi",
+  "date": "2026-02-16",
+  "category": "Makan & Minuman"
+}`
+                },
+                {
+                    role: "user",
+                    content: content
+                }
+            ],
+            max_tokens: 300,
+            response_format: { type: "json_object" }
+        });
+
+        const reply = response.choices[0]?.message?.content || "";
+        return JSON.parse(cleanJsonResponse(reply));
+    } catch (e) {
+        console.error("Process Notification Error:", e);
+        return null;
+    }
+}
+

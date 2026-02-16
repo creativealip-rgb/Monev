@@ -110,7 +110,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             onClick={onClick}
             className={cn(
                 "relative flex items-center p-4 card-clean",
-                "hover:border-blue-300/50 hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer",
+                "hover:border-blue-300/50 hover:shadow-lg hover:shadow-slate-200/40 cursor-pointer",
                 "transition-all duration-300"
             )}>
             {/* Icon Container with Gradient */}
@@ -151,7 +151,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             {/* Amount */}
             <div className="text-right flex-shrink-0">
                 <p className={cn(
-                    "font-bold text-sm tracking-tight whitespace-nowrap",
+                    "font-semibold text-sm tracking-tight whitespace-nowrap tabular-nums",
                     isIncome ? "text-emerald-600" : isExpense ? "text-slate-900" : "text-slate-600"
                 )}>
                     {isIncome ? "+" : isExpense ? "−" : ""} {formatCurrency(transaction.amount)}

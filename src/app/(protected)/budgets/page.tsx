@@ -130,7 +130,7 @@ export default function BudgetsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 glass border-b border-slate-200/50"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -157,16 +157,16 @@ export default function BudgetsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-blue-900/20"
+                className="mx-6 mt-6 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-white shadow-xl shadow-blue-900/10"
             >
                 <p className="text-slate-300 text-xs mb-2">Budget Bulan Ini</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
-                        <p className="text-3xl font-bold">{formatCurrency(totalSpent)}</p>
-                        <p className="text-slate-400 text-xs">dari {formatCurrency(totalBudget)}</p>
+                        <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent)}</p>
+                        <p className="text-slate-400 text-xs tabular-nums">dari {formatCurrency(totalBudget)}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-2xl font-bold">{Math.round(totalPercentage)}%</p>
+                        <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
                         <p className="text-slate-400 text-xs">terpakai</p>
                     </div>
                 </div>
@@ -237,7 +237,7 @@ export default function BudgetsPage() {
                                         key={b.id}
                                         whileHover={{ scale: 1.02 }}
                                         onClick={() => setDetailBudget(b)} // Open detail modal
-                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-md transition-all"
+                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-slate-200/40 transition-all"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
                                             <div
@@ -248,16 +248,16 @@ export default function BudgetsPage() {
                                             </div>
                                             <div className="flex-1">
                                                 <span className="font-semibold text-slate-800 text-sm">{b.category}</span>
-                                                <p className="text-xs text-slate-400">Limit: {formatCurrency(b.limit)}</p>
+                                                <p className="text-xs text-slate-400 tabular-nums">Limit: {formatCurrency(b.limit)}</p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
-                                                    "font-bold text-sm block",
+                                                    "font-semibold text-sm block tabular-nums",
                                                     isDanger ? "text-rose-600" : "text-slate-900"
                                                 )}>
                                                     {formatCurrency(b.spent)}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400">
+                                                <span className="text-[10px] text-slate-400 tabular-nums">
                                                     {Math.round(b.percentage)}%
                                                 </span>
                                             </div>

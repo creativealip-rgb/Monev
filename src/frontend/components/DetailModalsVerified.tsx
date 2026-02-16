@@ -35,18 +35,16 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalCardStyle: React.CSSProperties = {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(24px)',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e2e8f0',
     width: '100%',
     maxWidth: '28rem',
-    borderRadius: '1.5rem',
-    padding: '1.25rem',
-    paddingBottom: '2rem',
+    borderRadius: '1rem', // rounded-2xl
+    padding: '1.5rem',
     overflowY: 'auto',
     maxHeight: '85vh',
     position: 'relative',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
 };
 
 interface TransactionDetailModalProps {
@@ -87,21 +85,21 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                         </div>
 
                         {/* Content */}
-                        <div className="space-y-4">
-                            <div className="flex flex-col items-center justify-center py-4 bg-slate-50/80 rounded-2xl border border-slate-100">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Total Nominal</span>
+                        <div className="space-y-5">
+                            <div className="flex flex-col items-center justify-center py-5 bg-slate-50 border border-slate-100 rounded-xl">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Total Nominal</span>
                                 <h3 className={cn(
-                                    "text-3xl font-bold",
+                                    "text-3xl font-black tabular-nums tracking-tight",
                                     transaction.type === 'income' ? "text-emerald-600" : "text-slate-900"
                                 )}>
                                     {formatCurrency(transaction.amount)}
                                 </h3>
-                                <span className={cn(
-                                    "text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mt-2",
-                                    transaction.type === 'income' ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
+                                <div className={cn(
+                                    "text-[9px] font-black uppercase tracking-[0.15em] px-3 py-1 rounded-full mt-3",
+                                    transaction.type === 'income' ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-600"
                                 )}>
                                     {transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
-                                </span>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -141,14 +139,14 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <button
                                     onClick={() => onEdit(transaction)}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
                                 >
                                     <Edit2 size={18} />
                                     Edit
                                 </button>
                                 <button
                                     onClick={() => onDelete(transaction.id)}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-all active:scale-95"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-lg bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-all active:scale-95"
                                 >
                                     <Trash2 size={18} />
                                     Hapus
@@ -203,14 +201,14 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
                         </div>
 
                         <div className="space-y-4">
-                            <div className="p-5 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-white/10 text-white shadow-xl">
+                            <div className="p-6 rounded-xl bg-slate-900 text-white shadow-xl shadow-slate-900/10">
                                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block mb-1">Kategori</span>
-                                <h3 className="text-2xl font-bold mb-4">{budget.category}</h3>
+                                <h3 className="text-2xl font-black mb-5 tracking-tight">{budget.category}</h3>
 
                                 <div className="space-y-1 mb-4">
-                                    <div className="flex justify-between text-xs font-bold">
-                                        <span className="opacity-60 uppercase tracking-wider">Pemakaian</span>
-                                        <span className="text-blue-200">{percentage}%</span>
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                        <span className="opacity-50">Pemakaian</span>
+                                        <span className="text-blue-400">{percentage}%</span>
                                     </div>
                                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
                                         <div
@@ -222,14 +220,14 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
                                     </div>
                                 </div>
 
-                                <div className="flex justify-between items-end">
+                                <div className="flex justify-between items-end border-t border-white/5 pt-4">
                                     <div>
-                                        <span className="text-[10px] opacity-40 uppercase font-bold tracking-wider block">Terpakai</span>
-                                        <span className="font-bold text-sm tracking-tight">{formatCurrency(budget.spent)}</span>
+                                        <span className="text-[9px] opacity-40 uppercase font-black tracking-widest block mb-0.5">Terpakai</span>
+                                        <span className="font-bold text-base tracking-tight tabular-nums">{formatCurrency(budget.spent)}</span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] opacity-40 uppercase font-bold tracking-wider block">Limit</span>
-                                        <span className="font-bold text-sm tracking-tight">{formatCurrency(budget.limit)}</span>
+                                        <span className="text-[9px] opacity-40 uppercase font-black tracking-widest block mb-0.5">Limit</span>
+                                        <span className="font-bold text-base tracking-tight tabular-nums">{formatCurrency(budget.limit)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -237,14 +235,14 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <button
                                     onClick={() => onEdit(budget)}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
                                 >
                                     <Edit2 size={18} />
                                     Edit
                                 </button>
                                 <button
                                     onClick={() => onDelete(budget.id)}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-all active:scale-95"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-lg bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-all active:scale-95"
                                 >
                                     <Trash2 size={18} />
                                     Hapus
@@ -294,18 +292,18 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="flex flex-col items-center py-6 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="space-y-5">
+                            <div className="flex flex-col items-center py-6 bg-slate-50 border border-slate-100 rounded-xl">
                                 <div
-                                    className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl mb-4 shadow-sm"
+                                    className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4 shadow-sm"
                                     style={{ backgroundColor: goal.color + "15" }}
                                 >
                                     <span style={{ color: goal.color }}>{goal.icon}</span>
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-1 tracking-tight">{goal.name}</h3>
-                                <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-100 shadow-sm">
+                                <h3 className="text-xl font-black text-slate-900 mb-1 tracking-tight">{goal.name}</h3>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-100">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Goal</span>
+                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Active Goal</span>
                                 </div>
                             </div>
 
@@ -327,18 +325,18 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3.5 rounded-2xl bg-white border border-slate-100 shadow-sm">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Terkumpul</span>
-                                        <span className="font-bold text-slate-900 tracking-tight">{formatCurrency(goal.saved)}</span>
+                                    <div className="p-3.5 rounded-xl bg-white border border-slate-100 shadow-sm">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Terkumpul</span>
+                                        <span className="font-black text-slate-900 tracking-tight tabular-nums">{formatCurrency(goal.saved)}</span>
                                     </div>
-                                    <div className="p-3.5 rounded-2xl bg-white border border-slate-100 shadow-sm">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Target</span>
-                                        <span className="font-bold text-slate-900 tracking-tight">{formatCurrency(goal.target)}</span>
+                                    <div className="p-3.5 rounded-xl bg-white border border-slate-100 shadow-sm">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Target</span>
+                                        <span className="font-black text-slate-900 tracking-tight tabular-nums">{formatCurrency(goal.target)}</span>
                                     </div>
                                 </div>
 
                                 {goal.deadline && (
-                                    <div className="flex items-center gap-3 p-3 bg-blue-50/50 text-blue-700 rounded-2xl text-xs font-medium">
+                                    <div className="flex items-center gap-3 p-3 bg-blue-50/50 text-blue-700 rounded-xl text-xs font-medium">
                                         <Calendar size={16} />
                                         <span>Deadline: <b className="font-bold">{format(new Date(goal.deadline), "d MMM yyyy", { locale: id })}</b></span>
                                     </div>
@@ -356,13 +354,13 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                         if (diffYears > 0.5) { // Only show for goals > 6 months away
                                             const futureVal = calculateFutureValue(goal.target, diffYears);
                                             return (
-                                                <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-100 text-amber-800 text-xs shadow-sm">
+                                                <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-100 text-amber-800 text-xs shadow-sm">
                                                     <div className="flex items-center gap-2 font-bold mb-1 text-amber-600">
                                                         <TrendingUp size={14} />
                                                         <span>Waspada Inflasi (Est. 5%/thn)</span>
                                                     </div>
                                                     <p className="leading-relaxed">
-                                                        Untuk daya beli yang sama, estimasi target ini di masa depan adalah <b className="text-amber-700 decoration-amber-300 underline underline-offset-2">{formatCurrency(futureVal)}</b>.
+                                                        Untuk daya beli yang sama, estimasi target ini di masa depan adalah <b className="text-amber-700 decoration-amber-300 underline underline-offset-2 tabular-nums">{formatCurrency(futureVal)}</b>.
                                                     </p>
                                                 </div>
                                             );
@@ -375,14 +373,14 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <button
                                     onClick={() => onEdit(goal)}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
                                 >
                                     <Edit2 size={18} />
                                     Edit
                                 </button>
                                 <button
                                     onClick={() => onDelete(goal.id)}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-all active:scale-95"
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-lg bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition-all active:scale-95"
                                 >
                                     <Trash2 size={18} />
                                     Hapus

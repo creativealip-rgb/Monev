@@ -24,6 +24,7 @@ import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising"
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { processAndSaveTransaction } from "@/lib/transaction-pipeline";
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
@@ -361,83 +362,18 @@ async function saveAndNotify(userId: number, chatId: number, parsed: any) {
         // Try to find matching category from parsed.category string
         const category = cats.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) ||
             cats.find(c => c.name === "Lainnya") ||
-            { id: 1, name: "Lainnya", color: "", icon: "", type: "expense", createdAt: new Date() };
+            { id: 1, name: "Lainnya" };
 
-        const amount = Number(parsed.amount) || 0;
-        const type = parsed.transactionType || "expense";
-
-        const transaction = await createTransaction(userId, {
-            amount: amount,
+        const { message } = await processAndSaveTransaction(userId, {
+            amount: Number(parsed.amount) || 0,
             description: parsed.description || parsed.merchantName || "Transaksi Telegram",
             merchantName: parsed.merchantName,
             categoryId: category.id,
-            type: type,
+            categoryName: category.name,
+            type: (parsed.transactionType as 'expense' | 'income') || "expense",
             date: new Date(), // Always use today's date for Telegram entries
-            paymentMethod: parsed.paymentMethod || "qris", // Default to QRIS if not detected
-        });
-
-        const formattedDate = format(transaction.date, "dd MMM yyyy", { locale: id });
-        console.log("Transaction saved:", transaction.id);
-
-        let message = `✅ Berhasil dicatat!\n\n🛒: ${transaction.description}\n💰: Rp ${transaction.amount.toLocaleString('id-ID')}\n📂: ${category.name}\n📅: ${formattedDate}\n🏷️: ${type === 'income' ? 'Pemasukan' : 'Pengeluaran'}`;
-
-        // Phase 3: Psychological Feedback (Expense Only)
-        if (type === 'expense' && amount > 0) {
-            try {
-                const settings = await getUserSettings(userId);
-                let primaryGoal = undefined;
-                if (settings.primaryGoalId) {
-                    primaryGoal = await getGoalById(userId, settings.primaryGoalId);
-                }
-
-                // Calculate Monthly Saving (Income - Expense) for this month
-                const now = new Date();
-                const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
-                // If balance is negative or zero, assume minimum saving capacity (e.g. 1 million or 10% income) for calculation sake
-                const monthlySaving = stats.balance > 0 ? stats.balance : (stats.income * 0.2) || 1000000;
-
-                const psychologicalImpact = await getPsychologicalImpact(amount, settings.hourlyRate, primaryGoal, monthlySaving);
-                message += `\n\n${psychologicalImpact}`;
-            } catch (pError) {
-                console.error("Psychological Calculation Error:", pError);
-            }
-        }
-
-        // Phase 3: Freelance Reality Check (Income Only)
-        if (type === 'income' && amount >= 5000000) {
-            message += `\n\n💰 **FREELANCE REALITY CHECK**\n\nMantap, Bos! Dapat Rp ${amount.toLocaleString('id-ID')} 🔥\nTapi ingat, ini harus cukup buat hidup beberapa bulan ke depan. Saya akan "umpetin" sebagian saldo ini di dashboard biar kamu nggak khilaf belanja ya! 😉`;
-        }
-
-        // Phase 6: Reimbursable Spy (Tech Vendors)
-        const techVendors = ["namecheap", "niagahoster", "aws", "google cloud", "digitalocean", "envato", "themeforest", "godaddy"];
-        const isTechVendor = parsed.merchantName && techVendors.some(v => parsed.merchantName.toLowerCase().includes(v));
-
-        if (type === 'expense' && isTechVendor) {
-            message += `\n\n🕵️ **REIMBURSABLE SPY**\n`;
-            message += `Lho, beli aset digital di **${parsed.merchantName}**?`;
-            message += `\nIni buat projek klien siapa? Jangan lupa tagih ya! 🧾`;
-        }
-
-        // Phase 6: Proactive Split Bill (Large F&B)
-        if (type === 'expense' && category.name === "Makan & Minuman" && amount > 500000) {
-            message += `\n\n💸 **SPLIT BILL CHECK**\n`;
-            message += `Habis Rp ${amount.toLocaleString('id-ID')} buat makan? 😲`;
-            message += `\nIni traktir atau patungan? Kalau patungan, langsung ketik command:\n\`/remind [Nama] [Jumlah]\` biar nggak lupa nagih!`;
-        }
-
-        // Phase 6: Stock Opname Scheduler (Cash Withdrawal)
-        if (type === 'expense' && (parsed.description?.toLowerCase().includes("tarik tunai") || parsed.description?.toLowerCase().includes("ambil uang"))) {
-            const scheduleDate = new Date();
-            scheduleDate.setDate(scheduleDate.getDate() + 3); // Schedule for 3 days later
-
-            await createScheduledMessage({
-                userId: userId,
-                message: `🕵️ **STOCK OPNAME (CASH)**\n\n3 hari lalu kamu tarik tunai Rp ${amount.toLocaleString('id-ID')}.\nCoba cek dompet sekarang, sisa berapa lembar? 💵\n\nJawab jujur ya, biar saya catat "uang gaib"-nya.`,
-                scheduledAt: scheduleDate,
-                type: "stock_opname"
-            });
-            console.log(`Stock Opname scheduled for user ${userId}`);
-        }
+            paymentMethod: parsed.paymentMethod || "qris",
+        }, 'telegram');
 
         await sendTelegramMessage(chatId, message);
     } catch (error) {

@@ -108,7 +108,7 @@ export default function SavingsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white/80 backdrop-blur-md border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 glass border-b border-slate-100"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -135,12 +135,12 @@ export default function SavingsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-gradient-to-br from-emerald-600/90 to-teal-800/90 backdrop-blur-xl border border-white/20 rounded-2xl text-white shadow-xl shadow-emerald-500/20"
+                className="mx-6 mt-6 p-6 bg-gradient-to-br from-emerald-600/90 to-teal-800/90 backdrop-blur-xl border border-white/20 rounded-xl text-white shadow-xl shadow-emerald-500/10"
             >
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-1">Total Tabungan</p>
-                        <p className="text-3xl font-black">{formatCurrency(totalSaved)}</p>
+                        <p className="text-3xl font-bold tabular-nums">{formatCurrency(totalSaved)}</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
                         <PiggyBank size={24} className="text-white" />
@@ -188,7 +188,7 @@ export default function SavingsPage() {
                 {loading ? (
                     <div className="space-y-4 animate-pulse">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100">
+                            <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0" />
                                     <div className="flex-1 space-y-3">
@@ -213,7 +213,7 @@ export default function SavingsPage() {
                         ))}
                     </div>
                 ) : goals.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-[2rem] border border-dashed border-slate-200">
+                    <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
                         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <PiggyBank size={24} className="text-slate-300" />
                         </div>
@@ -237,7 +237,7 @@ export default function SavingsPage() {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => setDetailGoal(g)}
-                                className="card-clean p-5 cursor-pointer group hover:shadow-emerald-500/10"
+                                className="card-clean p-5 cursor-pointer group hover:shadow-lg hover:shadow-slate-200/40"
                             >
                                 <div className="flex items-center gap-4">
                                     {/* Icon Container */}
@@ -253,20 +253,20 @@ export default function SavingsPage() {
                                         <div className="flex items-center justify-between mb-1.5">
                                             <h3 className="font-bold text-slate-900 text-base truncate pr-2 tracking-tight">{g.name}</h3>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-black text-slate-900">{Math.round(g.percentage)}%</span>
+                                                <span className="text-sm font-bold text-slate-900 tabular-nums">{Math.round(g.percentage)}%</span>
                                             </div>
                                         </div>
 
                                         <div className="flex items-end justify-between mb-3">
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">Terkumpul</span>
-                                                <span className="font-black text-sm" style={{ color: g.color }}>
+                                                <span className="font-bold text-sm tabular-nums" style={{ color: g.color }}>
                                                     {formatCurrency(g.saved)}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">Target</span>
-                                                <span className="text-xs font-bold text-slate-500">
+                                                <span className="text-xs font-semibold text-slate-500 tabular-nums">
                                                     {formatCurrency(g.target)}
                                                 </span>
                                             </div>
