@@ -287,9 +287,9 @@ export default function FiturPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-40 glass border-b border-slate-200/50 px-6 pt-12 pb-4"
+                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 pt-4 pb-4"
             >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3">
                     <Link
                         href="/"
                         className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
@@ -298,9 +298,6 @@ export default function FiturPage() {
                     </Link>
                     <h1 className="text-xl font-bold text-slate-900 tracking-tight">Semua Fitur</h1>
                 </div>
-                <p className="text-sm text-slate-500">
-                    22 fitur AI untuk membantu mengelola keuanganmu
-                </p>
             </motion.header>
 
             {/* Features List */}

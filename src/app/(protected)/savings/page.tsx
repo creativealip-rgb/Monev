@@ -103,14 +103,14 @@ export default function SavingsPage() {
     const totalPercentage = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
 
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-28">
+        <div className="relative min-h-screen pb-24">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-6 bg-white border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white/80 backdrop-blur-md border-b border-slate-100"
             >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
@@ -129,14 +129,13 @@ export default function SavingsPage() {
                         <Plus size={22} />
                     </motion.button>
                 </div>
-                <p className="text-sm text-slate-500 ml-13">Wujudkan impianmu pelan-pelan tapi pasti. ✨</p>
             </motion.header>
 
             {/* Savings Summary Card */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-gradient-to-br from-emerald-600 to-teal-800 rounded-[2rem] text-white shadow-xl shadow-emerald-500/20"
+                className="mx-6 mt-6 p-6 bg-gradient-to-br from-emerald-600/90 to-teal-800/90 backdrop-blur-xl border border-white/20 rounded-2xl text-white shadow-xl shadow-emerald-500/20"
             >
                 <div className="flex items-start justify-between mb-4">
                     <div>
@@ -238,7 +237,7 @@ export default function SavingsPage() {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => setDetailGoal(g)}
-                                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all cursor-pointer group"
+                                className="card-clean p-5 cursor-pointer group hover:shadow-emerald-500/10"
                             >
                                 <div className="flex items-center gap-4">
                                     {/* Icon Container */}
@@ -307,7 +306,7 @@ export default function SavingsPage() {
                 animate={{ opacity: 1 }}
                 className="px-6 mb-8"
             >
-                <div className="bg-slate-900 rounded-[2rem] p-6 text-white relative overflow-hidden">
+                <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 text-white relative overflow-hidden shadow-xl">
                     <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl"></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-3">

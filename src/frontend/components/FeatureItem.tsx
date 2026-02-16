@@ -11,12 +11,12 @@ interface FeatureItemProps {
 }
 
 const colorClasses: Record<string, { bg: string; text: string; hoverBg: string; hoverBorder: string }> = {
-    purple: { bg: "bg-purple-50", text: "text-purple-600", hoverBg: "group-hover:bg-purple-100", hoverBorder: "group-hover:border-purple-200" },
-    blue: { bg: "bg-blue-50", text: "text-blue-600", hoverBg: "group-hover:bg-blue-100", hoverBorder: "group-hover:border-blue-200" },
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", hoverBg: "group-hover:bg-emerald-100", hoverBorder: "group-hover:border-emerald-200" },
-    rose: { bg: "bg-rose-50", text: "text-rose-600", hoverBg: "group-hover:bg-rose-100", hoverBorder: "group-hover:border-rose-200" },
-    amber: { bg: "bg-amber-50", text: "text-amber-600", hoverBg: "group-hover:bg-amber-100", hoverBorder: "group-hover:border-amber-200" },
-    indigo: { bg: "bg-indigo-50", text: "text-indigo-600", hoverBg: "group-hover:bg-indigo-100", hoverBorder: "group-hover:border-indigo-200" },
+    purple: { bg: "bg-purple-500/10 backdrop-blur-md border-purple-200/30", text: "text-purple-600", hoverBg: "group-hover:bg-purple-500/20", hoverBorder: "group-hover:border-purple-300/50" },
+    blue: { bg: "bg-blue-500/10 backdrop-blur-md border-blue-200/30", text: "text-blue-600", hoverBg: "group-hover:bg-blue-500/20", hoverBorder: "group-hover:border-blue-300/50" },
+    emerald: { bg: "bg-emerald-500/10 backdrop-blur-md border-emerald-200/30", text: "text-emerald-600", hoverBg: "group-hover:bg-emerald-500/20", hoverBorder: "group-hover:border-emerald-300/50" },
+    rose: { bg: "bg-rose-500/10 backdrop-blur-md border-rose-200/30", text: "text-rose-600", hoverBg: "group-hover:bg-rose-500/20", hoverBorder: "group-hover:border-rose-300/50" },
+    amber: { bg: "bg-amber-500/10 backdrop-blur-md border-amber-200/30", text: "text-amber-600", hoverBg: "group-hover:bg-amber-500/20", hoverBorder: "group-hover:border-amber-300/50" },
+    indigo: { bg: "bg-indigo-500/10 backdrop-blur-md border-indigo-200/30", text: "text-indigo-600", hoverBg: "group-hover:bg-indigo-500/20", hoverBorder: "group-hover:border-indigo-300/50" },
 };
 
 export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureItemProps) {

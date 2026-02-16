@@ -199,12 +199,12 @@ export async function POST(req: NextRequest) {
                 await sendTelegramMessage(chatId, `Halo! Saya asisten keuangan kamu. 🚀\n\n🆔 **ID Telegram Kamu:** \`${chatId}\`\n(Copy ID ini dan paste di Menu Profil Website untuk menghubungkan akun)\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- \`/burn\` : Cek runway/ketahanan dana\n- \`/idle\` : Cek uang nganggur\n- \`/inflation [jumlah] [tahun]\` : Hitung efek inflasi\n- \`set goal [nama]\` : Set target utama\n- \`set rate [angka]\` : Set gaji per jam\n- \`/link\` : Cara menghubungkan akun`);
             } else {
                 // Fallback to Smart NLP
-                await sendTelegramMessage(chatId, "🔍 Menganalisa pesan kamu...");
+
                 const nlpParsed = await processNLP(text);
 
                 if (nlpParsed) {
                     if (nlpParsed.intent === "query") {
-                        await sendTelegramMessage(chatId, "🧠 Menghitung data keuangan kamu...");
+
 
                         // Fetch context data
                         const now = new Date();

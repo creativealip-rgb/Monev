@@ -818,6 +818,20 @@ export async function ensureSampleBills(userId: number): Promise<void> {
 
 // ============ Investments CRUD ============
 
+// Helper to get total assets
+export async function getAssetsValue(userId: number): Promise<{ totalGoals: number, totalInvestments: number }> {
+    const goalsList = await getGoals(userId);
+    const totalGoals = goalsList.reduce((acc, g) => acc + g.currentAmount, 0);
+
+    const investmentsList = await getInvestments(userId);
+    const totalInvestments = investmentsList.reduce((acc, i) => acc + (i.quantity * i.currentPrice), 0);
+
+    return {
+        totalGoals,
+        totalInvestments
+    };
+}
+
 export async function getInvestments(userId: number): Promise<Investment[]> {
     const db = getDb();
     return db.select().from(investments).where(eq(investments.userId, userId)).orderBy(desc(investments.createdAt)).all();

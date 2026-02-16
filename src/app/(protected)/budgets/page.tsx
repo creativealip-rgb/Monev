@@ -125,14 +125,14 @@ export default function BudgetsPage() {
     const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
 
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-28">
+        <div className="relative min-h-screen pb-24">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-6 bg-white border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
             >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
@@ -151,14 +151,13 @@ export default function BudgetsPage() {
                         <Plus size={22} />
                     </motion.button>
                 </div>
-                <p className="text-sm text-slate-500 ml-13">Kontrol pengeluaran agar tetap hemat. 💸</p>
             </motion.header>
 
             {/* Summary Card */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-5 bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl text-white"
+                className="mx-6 mt-6 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-blue-900/20"
             >
                 <p className="text-slate-300 text-xs mb-2">Budget Bulan Ini</p>
                 <div className="flex items-end justify-between mb-4">
@@ -238,7 +237,7 @@ export default function BudgetsPage() {
                                         key={b.id}
                                         whileHover={{ scale: 1.02 }}
                                         onClick={() => setDetailBudget(b)} // Open detail modal
-                                        className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group relative cursor-pointer hover:shadow-md transition-all"
+                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-md transition-all"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
                                             <div

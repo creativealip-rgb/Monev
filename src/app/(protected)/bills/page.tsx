@@ -205,9 +205,9 @@ export default function BillsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-6 bg-white border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white border-b border-slate-100"
             >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
@@ -226,7 +226,6 @@ export default function BillsPage() {
                         <Plus size={22} />
                     </motion.button>
                 </div>
-                <p className="text-sm text-slate-500 ml-13">Jangan sampai lupa bayar tagihan! 📋</p>
             </motion.header>
 
             {/* Summary Card */}

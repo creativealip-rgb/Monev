@@ -233,9 +233,9 @@ export default function TransactionsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-40 glass border-b border-slate-200/50 px-6 pt-12 pb-4"
+                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 pt-4 pb-4"
             >
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
@@ -259,22 +259,21 @@ export default function TransactionsPage() {
                         <Filter size={20} />
                     </motion.button>
                 </div>
+            </motion.header>
 
+            {/* Content */}
+            <div className="px-6">
                 {/* Search Bar */}
-                <div className="relative">
+                <div className="relative mb-6 mt-4">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
                         placeholder="Cari transaksi..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input-modern pl-11 pr-4 py-3.5 w-full"
+                        className="input-modern pl-11 pr-4 py-3.5 w-full shadow-sm"
                     />
                 </div>
-            </motion.header>
-
-            {/* Content */}
-            <div className="px-6">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -288,62 +287,64 @@ export default function TransactionsPage() {
                     </span>
                 </motion.div>
 
-                {loading ? (
-                    <SkeletonLoader />
-                ) : filteredTransactions.length === 0 ? (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center py-16 bg-white rounded-[2rem] border border-dashed border-slate-200"
-                    >
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search size={24} className="text-slate-300" />
-                        </div>
-                        <p className="text-slate-500 font-bold">
-                            {searchQuery ? "Tidak ada transaksi yang cocok" : "Belum ada transaksi"}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-1">
-                            {searchQuery ? "Coba ubah kata kunci pencarian" : "Transaksi akan muncul di sini"}
-                        </p>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key={`list-${filterCategory}-${filterType}-${searchQuery}`}
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="space-y-6"
-                    >
-                        {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
-                            <div key={date}>
-                                <h3 className="text-xs font-bold text-slate-400 mb-3 sticky top-32 bg-slate-50/80 backdrop-blur-sm py-2">
-                                    {date}
-                                </h3>
-                                <div className="space-y-3">
-
-                                    {dayTransactions.map((t) => (
-                                        <motion.div
-                                            key={t.id}
-                                            variants={itemVariants}
-                                            className="group"
-                                        >
-                                            <TransactionItem
-                                                transaction={t}
-                                                onClick={() => {
-                                                    setDetailTransaction(t);
-                                                }}
-                                            />
-                                        </motion.div>
-                                    ))}
-                                </div>
+                {
+                    loading ? (
+                        <SkeletonLoader />
+                    ) : filteredTransactions.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center py-16 bg-white rounded-[2rem] border border-dashed border-slate-200"
+                        >
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Search size={24} className="text-slate-300" />
                             </div>
-                        ))}
-                    </motion.div>
-                )}
-            </div>
+                            <p className="text-slate-500 font-bold">
+                                {searchQuery ? "Tidak ada transaksi yang cocok" : "Belum ada transaksi"}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-1">
+                                {searchQuery ? "Coba ubah kata kunci pencarian" : "Transaksi akan muncul di sini"}
+                            </p>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key={`list-${filterCategory}-${filterType}-${searchQuery}`}
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className="space-y-6"
+                        >
+                            {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
+                                <div key={date}>
+                                    <h3 className="text-xs font-bold text-slate-400 mb-3 sticky top-20 z-40 bg-slate-50/90 backdrop-blur-sm py-3 px-2 rounded-xl border border-slate-100/50 shadow-sm">
+                                        {date}
+                                    </h3>
+                                    <div className="space-y-3">
+
+                                        {dayTransactions.map((t) => (
+                                            <motion.div
+                                                key={t.id}
+                                                variants={itemVariants}
+                                                className="group"
+                                            >
+                                                <TransactionItem
+                                                    transaction={t}
+                                                    onClick={() => {
+                                                        setDetailTransaction(t);
+                                                    }}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+                    )
+                }
+            </div >
 
             {/* Filter Modal */}
-            <Portal>
+            < Portal >
                 <AnimatePresence>
                     {isFilterModalOpen && (
                         <>
@@ -452,11 +453,12 @@ export default function TransactionsPage() {
                         </>
                     )}
                 </AnimatePresence>
-            </Portal>
+            </Portal >
 
             {/* Detail Modal */}
-            <TransactionDetailModal
-                isOpen={!!detailTransaction}
+            < TransactionDetailModal
+                isOpen={!!detailTransaction
+                }
                 onClose={() => setDetailTransaction(null)}
                 transaction={detailTransaction}
                 onEdit={(t) => {
@@ -480,6 +482,6 @@ export default function TransactionsPage() {
                 onSuccess={handleEditSuccess}
                 transaction={editingTransaction}
             />
-        </div>
+        </div >
     );
 }

@@ -190,7 +190,7 @@ export default function ChatPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-40 glass border-b border-slate-200/50 px-4 pt-12 pb-4"
+                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-4 pt-4 pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

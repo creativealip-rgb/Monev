@@ -38,7 +38,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
             <Link
                 href={href}
                 className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 h-full pb-2 select-none relative",
+                    "flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative",
                     "transition-all duration-300"
                 )}
             >
@@ -55,7 +55,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                     )}
                 </AnimatePresence>
                 <div className={cn(
-                    "p-2 rounded-xl transition-all duration-300",
+                    "p-1.5 rounded-xl transition-all duration-300",
                     isActive ? "bg-blue-50" : "hover:bg-slate-50/50"
                 )}>
                     <Icon
@@ -80,27 +80,27 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[9999] pointer-events-none">
             <div className="w-full max-w-[500px] mx-auto pointer-events-auto">
-                <div className="glass border-t border-white/40 pb-safe pt-2 px-2 rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-                    <div className="flex items-end justify-between h-16 relative">
+                <div className="glass border-t border-white/40 pb-safe pt-1 px-2 rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+                    <div className="flex items-end justify-between h-14 relative">
                         {/* Left Items - Home & Riwayat */}
                         {leftLinks.map((link) => (
                             <NavLink key={link.href} {...link} />
                         ))}
 
                         {/* Center FAB */}
-                        <div className="flex-1 flex flex-col items-center justify-end pb-3 relative z-50">
+                        <div className="flex-1 flex flex-col items-center justify-end pb-1 relative z-50">
                             <motion.button
                                 onClick={handleFabClick}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.85 }}
                                 animate={isFabPressed ? { scale: 0.85 } : { scale: 1 }}
                                 className={cn(
-                                    "w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-shadow",
+                                    "w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-shadow",
                                     "bg-gradient-to-br from-blue-600 to-blue-700 text-white",
                                     "shadow-blue-600/40 hover:shadow-blue-600/60"
                                 )}
                             >
-                                <Plus size={28} strokeWidth={2.5} />
+                                <Plus size={24} strokeWidth={2.5} />
                             </motion.button>
                         </div>
 

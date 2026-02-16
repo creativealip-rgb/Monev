@@ -195,14 +195,14 @@ export default function InvestmentsPage() {
     const colorOptions = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
 
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-28">
+        <div className="relative min-h-screen pb-24">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-6 bg-white border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
             >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
@@ -221,14 +221,13 @@ export default function InvestmentsPage() {
                         <Plus size={22} />
                     </motion.button>
                 </div>
-                <p className="text-sm text-slate-500 ml-13">Pantau pertumbuhan asetmu! 📈</p>
             </motion.header>
 
             {/* Portfolio Summary */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-gradient-to-br from-emerald-800 to-teal-900 rounded-[2rem] text-white shadow-xl shadow-emerald-900/20"
+                className="mx-6 mt-6 p-6 bg-emerald-900/80 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-emerald-900/20"
             >
                 <p className="text-emerald-200 text-xs font-medium mb-1">Total Nilai Aset</p>
                 <h2 className="text-3xl font-bold mb-6">{loading ? "..." : formatCurrency(totalValue)}</h2>
@@ -287,7 +286,7 @@ export default function InvestmentsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: i * 0.05 }}
                                     onClick={() => openEditModal(inv)}
-                                    className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group"
+                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-3">

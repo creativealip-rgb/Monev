@@ -164,49 +164,58 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-28">
-            {/* Header */}
-            <motion.header
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="px-6 pt-12 pb-8 bg-gradient-to-b from-white to-slate-50 border-b border-slate-100"
-            >
-                {/* ... existing header content ... */}
-                <div className="flex items-center gap-3 mb-8">
+        <div className="relative min-h-screen pb-24">
+            {/* Premium Header Profile Card */}
+            <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 pb-12 pt-8 px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
+                {/* Abstract Background Shapes */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl mix-blend-overlay" />
+                    <div className="absolute top-1/2 -right-24 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl mix-blend-overlay" />
+                </div>
+
+                {/* Top Action Bar */}
+                <div className="relative flex items-center justify-between mb-8 z-10">
                     <Link
                         href="/"
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                        className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20"
                     >
                         <ChevronLeft size={20} strokeWidth={2.5} />
                     </Link>
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Profil Saya</h1>
+                    <h1 className="text-lg font-bold text-white tracking-wide opacity-90">Profil Saya</h1>
+                    <div className="w-10" /> {/* Spacer for balance */}
                 </div>
 
+                {/* Profile Info */}
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="flex flex-col items-center"
+                    className="flex flex-col items-center relative z-10"
                 >
-                    <div className="relative mb-4">
-                        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-xl shadow-blue-600/30 flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="relative mb-4 group">
+                        <div className="absolute inset-0 bg-white/20 rounded-[2rem] blur-xl group-hover:blur-2xl transition-all opacity-50" />
+                        <div className="relative w-28 h-28 rounded-[2rem] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-2 border-white/30 flex items-center justify-center text-white text-4xl font-bold shadow-2xl overflow-hidden">
                             {getInitials()}
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full" />
+                        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-[3px] border-indigo-700 flex items-center justify-center shadow-lg">
+                            <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
                         </div>
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900">
+
+                    <h2 className="text-2xl font-bold text-white mb-1">
                         {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Pengguna Baru"}
                     </h2>
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold">
-                            Free Tier
-                        </span>
-                        <span className="text-xs text-slate-400">@{user?.username || "username"}</span>
+
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-indigo-200 text-sm font-medium tracking-wide">@{user?.username || "username"}</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                        <span className="text-xs font-bold text-white tracking-wider uppercase">Free Tier</span>
                     </div>
                 </motion.div>
-            </motion.header>
+            </div>
 
             {/* Menu Items */}
             <motion.div
@@ -233,7 +242,7 @@ export default function ProfilePage() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleMenuClick(item.id)}
-                            className="w-full p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm group hover:border-blue-200 hover:shadow-md transition-all"
+                            className="w-full p-4 card-clean flex items-center justify-between group hover:border-blue-300/50 hover:shadow-md transition-all"
                         >
                             <div className="flex items-center gap-4">
                                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
@@ -254,7 +263,7 @@ export default function ProfilePage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => serverSignOut()}
-                    className="w-full p-4 bg-white rounded-2xl border border-rose-100 flex items-center gap-4 shadow-sm hover:bg-rose-50 hover:border-rose-200 transition-all mt-6"
+                    className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6"
                 >
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
                         <LogOut size={20} strokeWidth={2} />

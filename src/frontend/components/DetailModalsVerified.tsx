@@ -35,7 +35,9 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalCardStyle: React.CSSProperties = {
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backdropFilter: 'blur(24px)',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
     width: '100%',
     maxWidth: '28rem',
     borderRadius: '1.5rem',
@@ -201,7 +203,7 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
                         </div>
 
                         <div className="space-y-4">
-                            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl">
+                            <div className="p-5 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-white/10 text-white shadow-xl">
                                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block mb-1">Kategori</span>
                                 <h3 className="text-2xl font-bold mb-4">{budget.category}</h3>
 

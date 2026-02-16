@@ -77,7 +77,7 @@ function CategoryPieChart({ data, title }: { data: { name: string; amount: numbe
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-blue-500/5 mt-4"
+            className="card-clean p-6 mt-4"
         >
             <h3 className="text-center font-bold text-slate-900 mb-6">{title}</h3>
 
@@ -266,14 +266,14 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-28">
+        <div className="relative min-h-screen pb-24">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-40 glass border-b border-slate-200/50"
+                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
             >
-                <div className="flex items-center gap-3 px-6 py-4 pt-12">
+                <div className="flex items-center gap-3 px-6 pt-4 pb-4">
                     <Link
                         href="/"
                         className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
@@ -307,9 +307,9 @@ export default function AnalyticsPage() {
                         <motion.div
                             variants={itemVariants}
                             className={cn(
-                                "p-6 rounded-[2rem] border text-white relative overflow-hidden",
-                                data.health.runway < 3 ? "bg-rose-500 border-rose-400" :
-                                    data.health.runway < 6 ? "bg-orange-500 border-orange-400" : "bg-blue-600 border-blue-500"
+                                "p-6 rounded-[2rem] border text-white relative overflow-hidden backdrop-blur-xl shadow-xl",
+                                data.health.runway < 3 ? "bg-rose-500/80 border-rose-400/30 shadow-rose-500/20" :
+                                    data.health.runway < 6 ? "bg-orange-500/80 border-orange-400/30 shadow-orange-500/20" : "bg-blue-600/80 border-blue-500/30 shadow-blue-600/20"
                             )}
                         >
                             <div className="relative z-10">
@@ -335,15 +335,15 @@ export default function AnalyticsPage() {
                         {data.health.idleCash > 100000 && (
                             <motion.div
                                 variants={itemVariants}
-                                className="p-6 rounded-[2rem] border border-emerald-100 bg-emerald-50 relative overflow-hidden"
+                                className="p-6 rounded-[2rem] border border-white/10 bg-emerald-600/80 backdrop-blur-xl text-white relative overflow-hidden shadow-xl shadow-emerald-500/20"
                             >
                                 <div className="relative z-10">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Sparkles size={18} className="text-emerald-600" />
-                                        <h3 className="text-xs font-bold uppercase tracking-widest text-emerald-600">Idle Cash Optimizer</h3>
+                                        <Sparkles size={18} className="text-white/90" />
+                                        <h3 className="text-xs font-bold uppercase tracking-widest text-white/90">Idle Cash Optimizer</h3>
                                     </div>
-                                    <p className="text-3xl font-black text-emerald-900">{formatRp(data.health.idleCash).replace(",00", "")}</p>
-                                    <p className="text-xs mt-2 text-emerald-700 font-medium">
+                                    <p className="text-3xl font-black text-white">{formatRp(data.health.idleCash).replace(",00", "")}</p>
+                                    <p className="text-xs mt-2 text-white/90 font-medium">
                                         Uang "nganggur" yang bisa diinvestasikan agar tidak tergerus inflasi. 📈
                                     </p>
                                 </div>
@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
                 {/* Summary Card */}
                 <motion.div
                     variants={itemVariants}
-                    className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 text-white shadow-2xl shadow-slate-900/20"
+                    className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-white shadow-2xl shadow-indigo-500/20"
                 >
                     <h3 className="font-semibold text-xs mb-4 text-slate-400 uppercase tracking-widest">Ringkasan Bulan Ini</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -434,7 +434,7 @@ export default function AnalyticsPage() {
                                     key={index}
                                     variants={itemVariants}
                                     whileHover={{ scale: 1.02 }}
-                                    className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm card-lift"
+                                    className="card-clean p-4"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", color.bg, color.text)}>

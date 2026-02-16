@@ -109,8 +109,8 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
         <div
             onClick={onClick}
             className={cn(
-                "relative flex items-center p-4 bg-white rounded-2xl border border-slate-100",
-                "hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer",
+                "relative flex items-center p-4 card-clean",
+                "hover:border-blue-300/50 hover:shadow-lg hover:shadow-blue-500/10 cursor-pointer",
                 "transition-all duration-300"
             )}>
             {/* Icon Container with Gradient */}
