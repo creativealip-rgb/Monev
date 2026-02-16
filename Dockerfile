@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -26,6 +26,7 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+RUN npm rebuild better-sqlite3
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
@@ -65,5 +66,6 @@ EXPOSE 3000
 ENV PORT 3000
 # Default database location for Docker
 ENV DATABASE_URL "/app/data/sqlite.db"
+ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]

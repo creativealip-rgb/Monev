@@ -6,8 +6,17 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 const nextConfig: NextConfig = {
   /* config options here */
-  turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "api.qrserver.com",
+      },
+    ],
+  },
+  serverExternalPackages: ["better-sqlite3"],
   output: "standalone",
+  turbopack: {},
 };
 
 export default withPWA(nextConfig);

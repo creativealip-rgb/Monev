@@ -2,22 +2,35 @@ version: '3.8'
 
 services:
   monev:
-    container_name: monev
+    container_name: monev-app
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
+    restart: always
     ports:
       - "3000:3000"
     environment:
       - DATABASE_URL=/app/data/sqlite.db
       - NODE_ENV=production
-      # Add other secrets here or in Dokploy UI
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      # - AUTH_SECRET=${AUTH_SECRET}
+      - PORT=3000
     volumes:
       - monev-data:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.monev.rule=Host(`monevapp.web.id`) || Host(`www.monevapp.web.id`)"
+      - "traefik.http.routers.monev.entrypoints=websecure"
+      - "traefik.http.routers.monev.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.monev-http.rule=Host(`monevapp.web.id`) || Host(`www.monevapp.web.id`)"
+      - "traefik.http.routers.monev-http.entrypoints=web"
+      - "traefik.http.routers.monev-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.monev.loadbalancer.server.port=3000"
+    networks:
+      - dokploy-network
 
 volumes:
   monev-data:
+
+
+networks:
+  dokploy-network:
+    external: true
