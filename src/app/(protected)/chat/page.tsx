@@ -190,25 +190,25 @@ export default function ChatPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-4 pt-4 pb-4"
+                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
-                            <ArrowLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
                         <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                                <Bot className="text-white" size={22} />
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                                <Bot className="text-white" size={16} />
                             </div>
                             <div>
-                                <h1 className="font-bold text-slate-900">Monev AI</h1>
+                                <h1 className="text-sm font-bold text-slate-900 leading-tight">Monev AI</h1>
                                 <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                    <span className="text-xs text-slate-500">Online</span>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span className="text-[10px] font-medium text-slate-500">Online</span>
                                 </div>
                             </div>
                         </div>
@@ -222,9 +222,9 @@ export default function ChatPage() {
                                 }
                             }
                         }}
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"
+                        className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"
                     >
-                        <MoreVertical size={20} />
+                        <MoreVertical size={16} />
                     </button>
                 </div>
             </motion.header>

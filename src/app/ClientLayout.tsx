@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { useEffect, useState } from "react";
 import { BottomNav } from "@/frontend/components/BottomNav";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { NativeNotificationService } from "@/components/NativeNotificationService";
@@ -11,6 +12,22 @@ export default function ClientLayout({
     children: React.ReactNode;
 }) {
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+
+    useEffect(() => {
+        // Apply is-native class if running on Capacitor (native app)
+        const platform = Capacitor.getPlatform();
+        const isNative = platform === 'ios' || platform === 'android';
+
+        if (isNative) {
+            document.documentElement.classList.add("is-native");
+            document.body.classList.add("is-native");
+            console.log("Platform: Native (" + platform + ")");
+        } else {
+            document.documentElement.classList.remove("is-native");
+            document.body.classList.remove("is-native");
+            console.log("Platform: Web");
+        }
+    }, []);
 
     return (
         <>

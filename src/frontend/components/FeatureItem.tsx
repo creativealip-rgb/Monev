@@ -23,11 +23,11 @@ export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureIte
     const colors = colorClasses[color] || colorClasses.blue;
 
     return (
-        <motion.button
+        <motion.div
             onClick={onClick}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex flex-col items-center gap-3 group"
+            className="flex flex-col items-center gap-3 group cursor-pointer"
         >
             <div className={cn(
                 "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300",
@@ -42,9 +42,9 @@ export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureIte
                     {icon}
                 </div>
             </div>
-            <span className="text-[11px] font-semibold text-slate-600 text-center leading-tight max-w-[80px] group-hover:text-slate-900 transition-colors">
+            <span className="text-[10px] font-bold text-slate-500 text-center leading-tight max-w-[80px] group-hover:text-slate-900 transition-colors">
                 {label}
             </span>
-        </motion.button>
+        </motion.div>
     );
 }

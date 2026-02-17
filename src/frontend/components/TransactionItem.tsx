@@ -1,7 +1,9 @@
 import { format } from "date-fns";
+import { id } from "date-fns/locale";
 import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase } from "lucide-react";
 import { Transaction } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
+import { useState, useEffect } from "react";
 
 const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, gradient: string }> = {
     // Indonesian category names from database
@@ -100,6 +102,9 @@ interface TransactionItemProps {
 }
 
 export function TransactionItem({ transaction, onClick }: TransactionItemProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     const style = CATEGORY_STYLES[transaction.category] || CATEGORY_STYLES.Default;
     const isExpense = transaction.type === "expense";
     const isIncome = transaction.type === "income";
@@ -127,7 +132,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
 
             {/* Content */}
             <div className="flex-1 min-w-0 overflow-hidden mr-4">
-                <h4 className="font-semibold text-slate-900 text-sm leading-tight line-clamp-1 break-all">
+                <h4 className="font-bold text-slate-900 text-[13px] leading-tight line-clamp-1 break-all">
                     {transaction.description || "Tanpa Deskripsi"}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
@@ -139,7 +144,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
                         {(() => {
                             try {
                                 const date = new Date(transaction.created_at);
-                                return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm");
+                                return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm", { locale: id });
                             } catch (e) {
                                 return "N/A";
                             }
@@ -151,10 +156,10 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             {/* Amount */}
             <div className="text-right flex-shrink-0">
                 <p className={cn(
-                    "font-semibold text-sm tracking-tight whitespace-nowrap tabular-nums",
+                    "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
                     isIncome ? "text-emerald-600" : isExpense ? "text-slate-900" : "text-slate-600"
                 )}>
-                    {isIncome ? "+" : isExpense ? "−" : ""} {formatCurrency(transaction.amount)}
+                    {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
                 </p>
                 {transaction.is_verified && (
                     <div className="flex items-center justify-end gap-1 mt-1">

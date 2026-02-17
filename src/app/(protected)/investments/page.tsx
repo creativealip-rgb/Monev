@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Edit3, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Edit3, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
@@ -200,25 +200,25 @@ export default function InvestmentsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 glass border-b border-slate-200/50"
+                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
                         >
-                            <ChevronLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Investasi</h1>
+                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Investasi</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={openAddModal}
-                        className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-all"
+                        className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-all"
                     >
-                        <Plus size={22} />
+                        <Plus size={18} />
                     </motion.button>
                 </div>
             </motion.header>

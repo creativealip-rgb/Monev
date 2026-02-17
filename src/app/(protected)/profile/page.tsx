@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, Settings, CreditCard, LogOut, Bell, Shield, Moon, Wallet, X, Check, User as UserIcon, MessageCircle } from "lucide-react";
+import { ChevronLeft, Settings, CreditCard, LogOut, Bell, Shield, Moon, Wallet, X, Check, User as UserIcon, MessageCircle, Smartphone, Crown } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -14,6 +14,7 @@ const menuItems = [
     { id: "notifications", icon: Bell, label: "Notifikasi", color: "purple", hasArrow: true },
     { id: "integrations", icon: MessageCircle, label: "Integrasi Bot", color: "indigo", hasArrow: true },
     { id: "security", icon: Shield, label: "Keamanan", color: "amber", hasArrow: true },
+    { id: "download", icon: Smartphone, label: "Download Aplikasi Android", color: "sky", hasArrow: true, isDownload: true },
 ];
 
 const containerVariants = {
@@ -167,7 +168,7 @@ export default function ProfilePage() {
     return (
         <div className="relative min-h-screen pb-24">
             {/* Premium Header Profile Card */}
-            <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 pb-12 pt-8 px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
+            <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 pb-10 pt-safe px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
                 {/* Abstract Background Shapes */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl mix-blend-overlay" />
@@ -175,15 +176,15 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Top Action Bar */}
-                <div className="relative flex items-center justify-between mb-8 z-10">
+                <div className="relative flex items-center justify-between mt-4 mb-6 z-10">
                     <Link
                         href="/"
-                        className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20"
+                        className="w-7 h-7 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20"
                     >
-                        <ChevronLeft size={20} strokeWidth={2.5} />
+                        <ChevronLeft size={16} strokeWidth={2.5} />
                     </Link>
-                    <h1 className="text-lg font-bold text-white tracking-wide opacity-90">Profil Saya</h1>
-                    <div className="w-10" /> {/* Spacer for balance */}
+                    <h1 className="text-sm font-bold text-white/90 tracking-tight">Profil Saya</h1>
+                    <div className="w-7" /> {/* Spacer for balance */}
                 </div>
 
                 {/* Profile Info */}
@@ -193,27 +194,26 @@ export default function ProfilePage() {
                     transition={{ delay: 0.1 }}
                     className="flex flex-col items-center relative z-10"
                 >
-                    <div className="relative mb-4 group">
-                        <div className="absolute inset-0 bg-white/20 rounded-[2rem] blur-xl group-hover:blur-2xl transition-all opacity-50" />
-                        <div className="relative w-28 h-28 rounded-[2rem] bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border-2 border-white/30 flex items-center justify-center text-white text-4xl font-bold shadow-2xl overflow-hidden">
+                    <div className="relative mb-3">
+                        <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-3xl font-bold shadow-xl overflow-hidden">
                             {getInitials()}
                         </div>
-                        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-[3px] border-indigo-700 flex items-center justify-center shadow-lg">
-                            <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-[2.5px] border-indigo-700 flex items-center justify-center shadow-lg">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                         </div>
                     </div>
 
-                    <h2 className="text-2xl font-bold text-white mb-1">
+                    <h2 className="text-lg font-bold tracking-tight text-white mb-0.5">
                         {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Pengguna Baru"}
                     </h2>
 
-                    <div className="flex items-center gap-2 mb-4">
-                        <span className="text-indigo-200 text-sm font-medium tracking-wide">@{user?.username || "username"}</span>
-                    </div>
+                    <span className="text-indigo-200/80 text-[11px] font-bold tracking-widest uppercase mb-4">
+                        @{user?.username || "username"}
+                    </span>
 
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md">
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-                        <span className="text-xs font-bold text-white tracking-wider uppercase">Free Tier</span>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm">
+                        <Crown size={10} className="text-amber-400" />
+                        <span className="text-[10px] font-bold text-white tracking-widest uppercase">Free Tier</span>
                     </div>
                 </motion.div>
             </div>
@@ -233,8 +233,34 @@ export default function ProfilePage() {
                         purple: { bg: "bg-purple-50", text: "text-purple-600" },
                         amber: { bg: "bg-amber-50", text: "text-amber-600" },
                         indigo: { bg: "bg-indigo-50", text: "text-indigo-600" },
+                        sky: { bg: "bg-sky-50", text: "text-sky-600" },
                     };
                     const color = colors[item.color];
+
+                    if (item.id === "download") {
+                        return (
+                            <motion.a
+                                key={index}
+                                href="/monev-app.apk"
+                                download="monev-app.apk"
+                                variants={itemVariants}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
+                                        <Icon size={18} strokeWidth={2.5} />
+                                    </div>
+                                    <span className="font-bold text-[13px] text-slate-700 tracking-tight">{item.label}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 uppercase tracking-tighter">APK</span>
+                                    <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />
+                                </div>
+                            </motion.a>
+                        );
+                    }
 
                     return (
                         <motion.button
@@ -247,12 +273,12 @@ export default function ProfilePage() {
                         >
                             <div className="flex items-center gap-4">
                                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
-                                    <Icon size={20} strokeWidth={2} />
+                                    <Icon size={18} strokeWidth={2.5} />
                                 </div>
-                                <span className="font-semibold text-slate-800">{item.label}</span>
+                                <span className="font-bold text-[13px] text-slate-700 tracking-tight">{item.label}</span>
                             </div>
                             {item.hasArrow && (
-                                <ChevronLeft size={18} className="text-slate-300 rotate-180 group-hover:text-blue-400 transition-colors" />
+                                <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-400 transition-colors" />
                             )}
                         </motion.button>
                     );
@@ -267,9 +293,9 @@ export default function ProfilePage() {
                     className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6"
                 >
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
-                        <LogOut size={20} strokeWidth={2} />
+                        <LogOut size={18} strokeWidth={2.5} />
                     </div>
-                    <span className="font-semibold text-rose-500">Keluar</span>
+                    <span className="font-bold text-[13px] text-rose-500 tracking-tight">Keluar</span>
                 </motion.button>
             </motion.div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { StatsCard } from "@/frontend/components/StatsCard";
-import { ChevronLeft, TrendingUp, Wallet, PieChart, ArrowUpRight, Loader2, Sparkles, Activity, AlertTriangle, CheckCircle } from "lucide-react";
+import { TrendingUp, ArrowUpRight, Wallet, ArrowLeft, Loader2, Sparkles, Activity, AlertTriangle, CheckCircle, PieChart } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -49,7 +49,7 @@ function AIInsights({ content }: { content: string }) {
                     <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
                         <Sparkles size={18} className="text-blue-600" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">Saran AI</h3>
+                    <h3 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Saran AI</h3>
                 </div>
 
                 <div className="relative">
@@ -59,7 +59,7 @@ function AIInsights({ content }: { content: string }) {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Powered by Monev AI</span>
+                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.15em]">Powered by Monev AI</span>
                     <Link href="/chat" className="text-[10px] font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-widest">
                         Tanya Lebih Lanjut →
                     </Link>
@@ -79,7 +79,7 @@ function CategoryPieChart({ data, title }: { data: { name: string; amount: numbe
             animate={{ opacity: 1, scale: 1 }}
             className="card-clean p-6 mt-4"
         >
-            <h3 className="text-center font-bold text-slate-900 mb-6">{title}</h3>
+            <h3 className="text-center text-[13px] font-bold text-slate-400 uppercase tracking-wider mb-6">{title}</h3>
 
             <div className="flex flex-col md:flex-row items-center gap-8">
                 {/* SVG Donut */}
@@ -271,16 +271,16 @@ export default function AnalyticsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
+                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
             >
-                <div className="flex items-center gap-3 px-6 pt-4 pb-4">
+                <div className="flex items-center gap-3">
                     <Link
                         href="/"
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                        className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                     >
-                        <ChevronLeft size={20} strokeWidth={2.5} />
+                        <ArrowLeft size={16} strokeWidth={2.5} />
                     </Link>
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Analitik</h1>
+                    <h1 className="text-sm font-bold text-slate-900 tracking-tight">Analitik</h1>
                 </div>
             </motion.header>
 

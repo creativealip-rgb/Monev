@@ -18,11 +18,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-    themeColor: "#7c3aed",
+    themeColor: "#eff6ff",
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -31,8 +32,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="id">
-            <body className={inter.className}>
+        <html lang="id" suppressHydrationWarning>
+            <body className={inter.className} suppressHydrationWarning>
                 <Providers>
                     <script
                         dangerouslySetInnerHTML={{

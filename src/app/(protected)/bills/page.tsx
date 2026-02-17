@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, Edit3 } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, Edit3 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -42,6 +42,96 @@ function getStatusInfo(bill: Bill) {
         return { label: `${daysUntilDue} hari lagi`, color: "amber", badge: "bg-amber-50 text-amber-600 border-amber-200" };
     }
     return { label: `Tgl ${bill.dueDate}`, color: "slate", badge: "bg-slate-50 text-slate-500 border-slate-200" };
+}
+
+function BillItem({
+    bill,
+    index,
+    onDelete,
+    onToggle
+}: {
+    bill: Bill;
+    index: number;
+    onDelete: (id: number) => void;
+    onToggle: (id: number, e: React.MouseEvent) => void;
+}) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    const status = getStatusInfo(bill);
+
+    return (
+        <motion.div
+            key={bill.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.06 }}
+            className={cn(
+                "bg-white p-5 rounded-2xl border shadow-sm transition-all group",
+                bill.isPaid
+                    ? "border-emerald-100 bg-emerald-50/30"
+                    : "border-slate-100 hover:shadow-md"
+            )}
+        >
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={(e) => onToggle(bill.id, e)}
+                    className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
+                        bill.isPaid
+                            ? "bg-emerald-100 text-emerald-600"
+                            : "bg-slate-50 hover:bg-indigo-50"
+                    )}
+                    style={!bill.isPaid ? { backgroundColor: bill.color + "15" } : {}}
+                >
+                    {bill.isPaid ? (
+                        <Check size={22} strokeWidth={3} />
+                    ) : (
+                        <BillIcon name={bill.icon} color={bill.color} />
+                    )}
+                </button>
+                <div className="flex-1 min-w-0 pr-4">
+                    <p className={cn(
+                        "font-bold text-[15px] leading-tight transition-all",
+                        bill.isPaid ? "text-slate-400 line-through" : "text-slate-900"
+                    )}>
+                        {bill.name}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <span className={cn(
+                            "text-[10px] font-bold px-2 py-0.5 rounded-lg border shadow-sm",
+                            status.badge
+                        )}>
+                            {!mounted ? "..." : status.label}
+                        </span>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                            <span className="w-1 h-1 rounded-full bg-slate-300" />
+                            {bill.frequency === "monthly" ? "Bulanan" : bill.frequency === "weekly" ? "Mingguan" : "Tahunan"}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end justify-center shrink-0">
+                    <p className={cn(
+                        "font-medium text-[15px] tracking-tight tabular-nums",
+                        bill.isPaid ? "text-slate-300" : "text-slate-900"
+                    )}>
+                        {!mounted ? "..." : formatCurrency(bill.amount)}
+                    </p>
+                    <AnimatePresence>
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => onDelete(bill.id)}
+                            className="mt-2 text-[10px] font-bold text-rose-400 hover:text-rose-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <Trash2 size={10} />
+                            Hapus
+                        </motion.button>
+                    </AnimatePresence>
+                </div>
+            </div>
+        </motion.div>
+    );
 }
 
 export default function BillsPage() {
@@ -205,25 +295,25 @@ export default function BillsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 bg-white border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-100"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
                         >
-                            <ChevronLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Tagihan</h1>
+                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Tagihan</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsAddModalOpen(true)}
-                        className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition-all"
+                        className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition-all"
                     >
-                        <Plus size={22} />
+                        <Plus size={18} />
                     </motion.button>
                 </div>
             </motion.header>
@@ -235,18 +325,18 @@ export default function BillsPage() {
                 className="mx-6 mt-6 p-5 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl text-white"
             >
                 <p className="text-indigo-300 text-xs mb-2">Tagihan Bulan Ini</p>
-                <div className="flex items-end justify-between mb-4">
-                    <div>
-                        <p className="text-3xl font-bold">{loading ? "..." : formatCurrency(totalBills)}</p>
-                        <p className="text-indigo-400 text-xs">
+                <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 mb-4">
+                    <div className="min-w-fit">
+                        <p className="text-3xl font-bold tracking-tight">{loading ? "..." : formatCurrency(totalBills)}</p>
+                        <p className="text-indigo-400 text-[10px] font-medium uppercase tracking-wider">
                             {loading ? "..." : `${paidCount}/${bills.length} sudah dibayar`}
                         </p>
                     </div>
-                    <div className="text-right">
-                        <p className="text-2xl font-bold text-emerald-400">
+                    <div className="text-right min-w-fit flex flex-col items-end">
+                        <p className="text-xl font-bold text-emerald-400 leading-none">
                             {loading ? "..." : formatCurrency(totalPaid)}
                         </p>
-                        <p className="text-indigo-400 text-xs">lunas</p>
+                        <p className="text-indigo-400 text-[10px] font-medium uppercase tracking-wider">lunas</p>
                     </div>
                 </div>
                 <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
@@ -307,79 +397,8 @@ export default function BillsPage() {
                 ) : (
                     <div className="space-y-3">
                         {filteredBills.map((bill, i) => {
-                            const status = getStatusInfo(bill);
                             return (
-                                <motion.div
-                                    key={bill.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.4, delay: i * 0.06 }}
-                                    className={cn(
-                                        "bg-white p-5 rounded-2xl border shadow-sm transition-all group",
-                                        bill.isPaid
-                                            ? "border-emerald-100 bg-emerald-50/30"
-                                            : "border-slate-100 hover:shadow-md"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        {/* Toggle button */}
-                                        <button
-                                            onClick={(e) => handleTogglePaid(bill.id, e)}
-                                            className={cn(
-                                                "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
-                                                bill.isPaid
-                                                    ? "bg-emerald-100 text-emerald-600"
-                                                    : "bg-slate-50 hover:bg-indigo-50"
-                                            )}
-                                            style={!bill.isPaid ? { backgroundColor: bill.color + "15" } : {}}
-                                        >
-                                            {bill.isPaid ? (
-                                                <Check size={22} strokeWidth={3} />
-                                            ) : (
-                                                <BillIcon name={bill.icon} color={bill.color} />
-                                            )}
-                                        </button>
-
-                                        {/* Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <p className={cn(
-                                                "font-semibold text-sm",
-                                                bill.isPaid ? "text-slate-400 line-through" : "text-slate-800"
-                                            )}>
-                                                {bill.name}
-                                            </p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className={cn(
-                                                    "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                                                    status.badge
-                                                )}>
-                                                    {status.label}
-                                                </span>
-                                                <span className="text-[10px] text-slate-400">
-                                                    {bill.frequency === "monthly" ? "Bulanan" : bill.frequency === "weekly" ? "Mingguan" : "Tahunan"}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Amount & Actions */}
-                                        <div className="flex items-center gap-2">
-                                            <div className="text-right">
-                                                <p className={cn(
-                                                    "font-bold text-sm",
-                                                    bill.isPaid ? "text-slate-400" : "text-slate-900"
-                                                )}>
-                                                    {formatCurrency(bill.amount)}
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDelete(bill.id)}
-                                                className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                                <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} />
                             );
                         })}
                     </div>

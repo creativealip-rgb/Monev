@@ -283,20 +283,20 @@ const itemVariants = {
 export default function FiturPage() {
     return (
         <div className="relative min-h-screen pb-28">
-            {/* Header */}
+            {/* Standardized Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 pt-4 pb-4"
+                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
             >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 pt-2">
                     <Link
                         href="/"
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                        className="w-7 h-7 rounded-lg bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
                     >
-                        <ArrowLeft size={20} strokeWidth={2.5} />
+                        <ArrowLeft size={16} strokeWidth={2.5} />
                     </Link>
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Semua Fitur</h1>
+                    <h1 className="text-sm font-bold text-slate-900 tracking-tight">Semua Fitur</h1>
                 </div>
             </motion.header>
 
@@ -324,26 +324,26 @@ export default function FiturPage() {
                                         <motion.div
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
-                                            className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-200 hover:shadow-md transition-all"
+                                            className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md flex items-center gap-4 cursor-pointer hover:border-blue-200 transition-all"
                                         >
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
-                                                <Icon className={`text-${feature.color}-600`} size={24} strokeWidth={2} />
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
+                                                <Icon className={`text-${feature.color}-600`} size={18} strokeWidth={2.5} />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-slate-900">{feature.title}</h3>
+                                                    <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">{feature.title}</h3>
                                                     {feature.status === "ready" && (
-                                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[10px] font-bold rounded-full">
+                                                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
                                                             Ready
                                                         </span>
                                                     )}
                                                     {feature.status === "coming" && (
-                                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
+                                                        <span className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-200 tracking-tighter uppercase">
                                                             Soon
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-slate-500 mt-0.5">{feature.desc}</p>
+                                                <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">{feature.desc}</p>
                                             </div>
                                         </motion.div>
                                     </Link>

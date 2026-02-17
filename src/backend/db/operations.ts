@@ -31,15 +31,15 @@ export interface GetTransactionsOptions {
 
 export async function getTransactions(userId: number, limit = 50, offset = 0, search?: string): Promise<Transaction[]> {
     const db = getDb();
-    
+
     const conditions = [eq(transactions.userId, userId)];
-    
+
     if (search) {
         conditions.push(
             sql`(${transactions.description} LIKE ${'%' + search + '%'} OR ${transactions.merchantName} LIKE ${'%' + search + '%'})`
         );
     }
-    
+
     return db.select()
         .from(transactions)
         .where(and(...conditions))
@@ -52,9 +52,9 @@ export async function getTransactions(userId: number, limit = 50, offset = 0, se
 // Get total transaction count (for pagination)
 export async function getTransactionsCount(userId: number, search?: string): Promise<number> {
     const db = getDb();
-    
+
     let query = db.select({ count: sql<number>`COUNT(*)` }).from(transactions).where(eq(transactions.userId, userId));
-    
+
     if (search) {
         query = db.select({ count: sql<number>`COUNT(*)` })
             .from(transactions)
@@ -63,7 +63,7 @@ export async function getTransactionsCount(userId: number, search?: string): Pro
                 sql`(${transactions.description} LIKE ${'%' + search + '%'} OR ${transactions.merchantName} LIKE ${'%' + search + '%'})`
             ));
     }
-    
+
     const result = await query.get();
     return result?.count || 0;
 }
@@ -90,7 +90,7 @@ export async function createTransaction(userId: number, data: {
     description: string;
     merchantName?: string;
     categoryId: number;
-    type: "expense" | "income";
+    type: "expense" | "income" | "transfer";
     paymentMethod?: string;
     date: Date;
 }): Promise<Transaction> {
@@ -389,7 +389,6 @@ export async function removeGoal(userId: number, id: number): Promise<Goal | und
     // Check if this goal is set as primaryGoalId in userSettings
     // Need to strictly user scope this too
     await db.update(userSettings)
-        .set({ primaryGoalId: null })
         .where(and(eq(userSettings.primaryGoalId, id), eq(userSettings.userId, userId)));
 
     return db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId))).returning().get();
@@ -406,6 +405,33 @@ export async function getRecentTransactionsByCategory(userId: number, categoryId
         .orderBy(desc(transactions.date))
         .limit(limit)
         .all();
+}
+
+/**
+ * Find a transaction that matches the amount but has opposite type
+ * within a specific time window (default 5 minutes).
+ */
+export async function findRecentMatchingTransaction(
+    userId: number,
+    amount: number,
+    type: "expense" | "income",
+    windowMs: number = 300000 // 5 minutes
+): Promise<Transaction | undefined> {
+    const db = getDb();
+    const oppositeType = type === "expense" ? "income" : "expense";
+    const now = new Date();
+    const startTime = new Date(now.getTime() - windowMs);
+
+    return db.select()
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, oppositeType),
+            eq(transactions.amount, amount),
+            gte(transactions.date, startTime)
+        ))
+        .orderBy(desc(transactions.date))
+        .get();
 }
 
 // Users

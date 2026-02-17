@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
-import { Filter, Search, ChevronLeft, X, Check, Loader2 } from "lucide-react";
+import { Filter, Search, ArrowLeft, X, Check, Loader2 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -59,7 +59,7 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    
+
     // Pagination state
     const [pagination, setPagination] = useState({
         total: 0,
@@ -148,7 +148,7 @@ export default function TransactionsPage() {
     const fetchMoreTransactions = useCallback(async (offset: number, limit: number) => {
         const transResponse = await fetch(`/api/transactions?offset=${offset}&limit=${limit}&search=${searchQuery}`);
         const transResult = await transResponse.json();
-        
+
         if (transResult.success) {
             const mappedData = transResult.data.map(mapTransaction);
             return {
@@ -162,7 +162,7 @@ export default function TransactionsPage() {
     async function loadData(reset = false) {
         try {
             setLoading(true);
-            
+
             // Fetch categories first and WAIT for it to complete
             let currentCategories = categories;
             if (currentCategories.length === 0) {
@@ -198,13 +198,13 @@ export default function TransactionsPage() {
                     created_at: t.date,
                     is_verified: t.isVerified,
                 }));
-                
+
                 if (reset) {
                     setTransactions(mappedTransactions);
                 } else {
                     setTransactions(prev => [...prev, ...mappedTransactions]);
                 }
-                
+
                 setPagination(transResult.pagination);
             }
         } catch (error) {
@@ -297,30 +297,30 @@ export default function TransactionsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 pt-4 pb-4"
+                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
-                            <ChevronLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Riwayat</h1>
+                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Riwayat</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsFilterModalOpen(true)}
                         className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                            "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
                             (filterCategory !== "all" || filterType !== "all")
                                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
                                 : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600"
                         )}
                     >
-                        <Filter size={20} />
+                        <Filter size={16} />
                     </motion.button>
                 </div>
             </motion.header>
@@ -405,7 +405,7 @@ export default function TransactionsPage() {
                         </motion.div>
                     )
                 }
-                
+
                 {/* Load More Button for Infinite Scroll - Outside the ternary */}
                 {!loading && pagination.hasMore && filteredTransactions.length > 0 && (
                     <div className="text-center py-6">
@@ -417,7 +417,7 @@ export default function TransactionsPage() {
                         </button>
                     </div>
                 )}
-                
+
                 {loading && filteredTransactions.length > 0 && (
                     <div className="flex items-center justify-center gap-2 py-6 text-slate-500">
                         <Loader2 size={20} className="animate-spin" />

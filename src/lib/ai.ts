@@ -23,6 +23,7 @@ export const CATEGORIES = [
     "Investasi",
     "Gaji",
     "Freelance",
+    "Transfer",
     "Lainnya"
 ];
 
@@ -127,9 +128,9 @@ export async function processOCR(input: Buffer | string): Promise<AIResult> {
                     role: "system",
                     content: `Anda adalah asisten AI yang mengekstrak informasi transaksi keuangan dari gambar receipt (struk belanja) atau screenshot checkout (keranjang belanja/halaman pembayaran). 
                     
-Extrahak informasi berikut dari gambar:
-- type: "receipt" (jika sudah dibayar/ada bukti transfer) atau "checkout" (jika masih berupa keranjang belanja/menunggu pembayaran)
-- transactionType: "expense" (pengeluaran) atau "income" (pemasukan, misal transfer masuk/gaji)
+Extrak informasi berikut dari gambar:
+- type: "receipt" (jika sudah dibayar/ada bukti transfer) atau "checkout" (jika masih berupa keranjang belanja/menunggu pembayaran) atau "transfer" (jika berupa mutasi/kirim uang antar bank/e-wallet)
+- transactionType: "expense" (pengeluaran), "income" (pemasukan), atau "transfer" (internal move)
 - merchantName: Nama toko/merchant (jika ada)
 - amount: Jumlah nominal transaksi (angka saja, tanpa Rupiah)
 - description: Deskripsi transaksi
@@ -201,10 +202,10 @@ export async function processVoice(audioBuffer: Buffer): Promise<{ transcription
                     role: "system",
                     content: `Anda adalah asisten AI yang mengekstrak informasi transaksi keuangan dari voice note.
                     
-Ekstrak informasi berikut dari teks:
-- merchantName: Nama toko/merchant (jika ada)
+Extrak informasi berikut dari teks:
+- merchantName: Nama toko/merchant atau tujuan transfer (jika ada)
 - amount: Jumlah nominal transaksi (angka saja)
-- transactionType: "expense" (pengeluaran) atau "income" (pemasukan, misal gajian/transfer masuk)
+- transactionType: "expense" (pengeluaran), "income" (pemasukan), atau "transfer" (pindah dana antar akun)
 - description: Deskripsi transaksi
 - date: Tanggal transaksi (format ISO YYYY-MM-DD). PENTING: Jika tidak disebutkan tahun, gunakan tahun sekarang (${new Date().getFullYear()}). Jika tanggal terlihat lama, gunakan tanggal hari ini (${new Date().toISOString().split('T')[0]}).
 
@@ -530,10 +531,9 @@ Tentukan intent:
 2. "debt": Jika user menyebutkan pinjaman, utang, atau bayarin orang lain (e.g., "pinjamkan Budi 50rb", "utang ke Ani 20rb", "bayarin makan Siti 30rb").
 3. "query": Jika user bertanya tentang saldo, pengeluaran, pemasukan, atau target goal.
 
-Jika user bertanya hal yang sama sekali tidak berhubungan dengan keuangan, tetap kategorikan sebagai "query".
-
 Untuk "transaction":
-- Ekstrak 'amount', 'description', 'transactionType' (expense/income), 'category', dan 'paymentMethod' (cash/transfer/qris - default "qris" untuk jajan, "transfer" untuk gaji/besar, "cash" jika disebut tunai).
+- Ekstrak 'amount', 'description', 'transactionType' (expense/income/transfer), 'category', dan 'paymentMethod' (cash/transfer/qris - default "qris" untuk jajan, "transfer" untuk gaji/besar/pindah dana).
+- PENTING: Jika konteksnya adalah memindahkan uang sendiri (contoh: "pindah dana ke BCA", "top up DANA", "tarik tunai ke kantong"), gunakan transactionType "transfer" dan category "Transfer".
 - PENTING: Pilih kategori yang paling sesuai dari daftar berikut:
 ${CATEGORIES.map(c => `- ${c}`).join("\n")}
 - Jika user membeli barang fisik (seperti sepatu, baju, elektronik), gunakan kategori "Belanja".
@@ -1089,6 +1089,8 @@ Tugas Anda:
    - description: Ringkasan singkat transaksi (misal: "Transfer ke BCA", "Bayar di Alfamart").
    - category: Pilih kategori yang paling sesuai dari daftar di bawah.
    - date: Gunakan format ISO YYYY-MM-DD. Gunakan hari ini (${new Date().toISOString().split('T')[0]}) jika tidak ada tanggal spesifik.
+
+PENTING: JANGAN gunakan kategori "Lainnya" kecuali benar-benar tidak ada pilihan lain yang masuk akal. Usahakan untuk mengelompokkan ke kategori yang ada (misal: belanja di Shopee/Tokopedia masuk "Belanja", makan di warung masuk "Makan & Minuman").
 
 Kategori yang tersedia:
 ${CATEGORIES.map(c => `- ${c}`).join("\n")}

@@ -1,4 +1,4 @@
-import { createTransaction, getUserSettings, getGoalById, getMonthlyStats, createScheduledMessage } from '@/backend/db/operations';
+import { createTransaction, getUserSettings, getGoalById, getMonthlyStats, createScheduledMessage, findRecentMatchingTransaction, updateTransaction, getCategories } from '@/backend/db/operations';
 import { getPsychologicalImpact } from '@/lib/ai';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { format } from 'date-fns';
@@ -10,7 +10,7 @@ interface TransactionData {
     merchantName?: string;
     categoryId: number;
     categoryName: string;
-    type: 'expense' | 'income';
+    type: 'expense' | 'income' | 'transfer';
     date: Date;
     paymentMethod: string;
 }
@@ -23,7 +23,38 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
     const formattedDate = format(transaction.date, "dd MMM yyyy", { locale: id });
     console.log(`Transaction saved via ${source}:`, transaction.id);
 
-    let message = `✅ Berhasil dicatat!\n\n🛒: ${transaction.description}\n💰: Rp ${transaction.amount.toLocaleString('id-ID')}\n📂: ${categoryName}\n📅: ${formattedDate}\n🏷️: ${transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}`;
+    // --- TRANSFER BALANCER LOGIC ---
+    let isTransfer = data.type === 'transfer' || data.categoryName === 'Transfer';
+    let matchingTrans = await findRecentMatchingTransaction(userId, data.amount, data.type as any);
+
+    if (matchingTrans && !isTransfer) {
+        console.log(`[Balancer] Match found for ${transaction.amount}: ${matchingTrans.id}. Converting to Transfer.`);
+        isTransfer = true;
+
+        // Upgrade both to transfer
+        const categories = await getCategories();
+        const transferCat = categories.find(c => c.name === 'Transfer');
+
+        if (transferCat) {
+            await updateTransaction(userId, Number(transaction.id), {
+                type: 'transfer',
+                categoryId: transferCat.id
+            });
+            await updateTransaction(userId, Number(matchingTrans.id), {
+                type: 'transfer',
+                categoryId: transferCat.id
+            });
+            // Update local object for message rendering
+            (transaction as any).type = 'transfer';
+        }
+    }
+
+    let message = `✅ Berhasil dicatat!\n\n🛒: ${transaction.description}\n💰: Rp ${transaction.amount.toLocaleString('id-ID')}\n📂: ${isTransfer ? 'Transfer' : categoryName}\n📅: ${formattedDate}\n🏷️: ${isTransfer ? 'Pindah Saldo (Transfer)' : (transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}`;
+
+    if (isTransfer) {
+        message += `\n\n🔄 **TRANSFER TERDETEKSI!**\nSistem mendeteksi ini sebagai pemindahan saldo antar akun. Transaksi ini tidak dihitung sebagai jajan ya! 😉`;
+    }
+
     if (source === 'notification') {
         message = `📱 **NOTIFIKASI HP DICATAT**\n\n${message}\n\n*Dicatat otomatis*`;
     }
@@ -63,6 +94,11 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
     // Proactive Split Bill
     if (transaction.type === 'expense' && categoryName === "Makan & Minuman" && transaction.amount > 500000) {
         message += `\n\n💸 **SPLIT BILL CHECK**\nHabis Rp ${transaction.amount.toLocaleString('id-ID')} buat makan? 😲\nIni traktir atau patungan? Kalau patungan, langsung ketik command:\n\`/remind [Nama] [Jumlah]\` biar nggak lupa nagih!`;
+    }
+
+    // High-Spending Alert (General Expense)
+    if (transaction.type === 'expense' && transaction.amount >= 2000000) {
+        message += `\n\n🚨 **KHILAF WARNING!** 🚨\n\nWaduh Bos, baru saja belanja Rp ${transaction.amount.toLocaleString('id-ID')}? 😱\nIngat, dompet jangan dipaksa kerja rodi. Coba cek anggaran bulan ini dulu ya, jangan sampai akhir bulan makan promag! 😉`;
     }
 
     // Stock Opname Scheduler

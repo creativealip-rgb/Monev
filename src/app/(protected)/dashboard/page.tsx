@@ -166,27 +166,27 @@ export default function Home() {
 
     return (
         <div className="relative min-h-screen pb-24">
-            {/* Header */}
-            <header className="px-6 pt-12 pb-6">
-                <div className="flex items-center justify-between">
-                    <Link href="/profile" className="flex items-center gap-4 group active:scale-95 transition-transform">
+            {/* Standardized Sticky Header (Integrated pt-safe) */}
+            <header className="sticky top-0 z-[100] w-full pt-safe bg-slate-50/95 backdrop-blur-md px-6 pb-4 border-b border-slate-100/50">
+                <div className="pt-2 flex items-center justify-between">
+                    <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 p-[2px] shadow-lg shadow-blue-600/10"
+                            className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 p-[2px] shadow-lg shadow-blue-600/10"
                         >
                             <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {userName === "Pengguna" ? (
-                                    <User size={24} className="text-blue-600" />
+                                    <User size={18} className="text-blue-600" />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-50 flex items-center justify-center text-xl font-bold text-blue-700">
+                                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-50 flex items-center justify-center text-base font-bold text-blue-700">
                                         {userName.charAt(0)}
                                     </div>
                                 )}
                             </div>
                         </motion.div>
                         <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5">{formattedDate}</p>
-                            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{formattedDate}</p>
+                            <h1 className="text-sm font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
                                 Hello, {userName.split(" ")[0]}! 👋
                             </h1>
                         </div>
@@ -194,10 +194,10 @@ export default function Home() {
                     <motion.button
                         whileHover={{ scale: 1.1, rotate: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        className="relative w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all"
+                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all"
                     >
-                        <Bell size={22} strokeWidth={2.5} />
-                        <span className="absolute top-3 right-3.5 w-2 h-2 bg-rose-500 rounded-full border border-white animate-pulse" />
+                        <Bell size={18} strokeWidth={2.5} />
+                        <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white animate-pulse" />
                     </motion.button>
                 </div>
             </header>
@@ -241,8 +241,8 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <h2 className="text-3xl font-semibold tracking-tight mb-8 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
-                            {loading ? "Loading..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
+                        <h2 className="text-2xl font-bold tracking-tight mb-8 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
+                            {!mounted ? "Loading..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
                         </h2>
                     </div>
 
@@ -254,8 +254,8 @@ export default function Home() {
                                 </div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Income</p>
                             </div>
-                            <p className="font-semibold text-sm text-emerald-400 tabular-nums">
-                                + {loading ? "..." : formatCurrency(stats.income).replace("Rp", "")}
+                            <p className="font-bold text-[13px] text-emerald-400 tabular-nums">
+                                + {!mounted ? "..." : formatCurrency(stats.income).replace("Rp", "")}
                             </p>
                         </div>
 
@@ -266,8 +266,8 @@ export default function Home() {
                                 </div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expense</p>
                             </div>
-                            <p className="font-semibold text-sm text-rose-400 tabular-nums">
-                                − {loading ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
+                            <p className="font-bold text-[13px] text-rose-400 tabular-nums">
+                                − {!mounted ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
                             </p>
                         </div>
                     </div>
@@ -282,7 +282,7 @@ export default function Home() {
                 className="px-6 mb-8"
             >
                 <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-sm font-bold text-slate-900">Fitur Andalan</h2>
+                    <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Fitur Andalan</h2>
                     <Link href="/fitur" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
                         Lihat Semua
                         <ChevronRight size={14} />
@@ -313,7 +313,7 @@ export default function Home() {
                 className="px-6"
             >
                 <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-sm font-bold text-slate-900">Riwayat Terbaru</h2>
+                    <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Riwayat Terakhir</h2>
                     <Link href="/transactions" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
                         Lihat Semua
                     </Link>
@@ -382,7 +382,7 @@ export default function Home() {
                         <div className="text-center mb-6 relative z-10">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
                             <h3 className="text-3xl font-black text-slate-900 tracking-tight tabular-nums">
-                                {formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
+                                {!mounted ? "..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
                             </h3>
                         </div>
 
@@ -418,7 +418,7 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <p className="text-lg font-bold text-slate-800 tabular-nums">
-                                    {formatCurrency(stats.balance)}
+                                    {!mounted ? "..." : formatCurrency(stats.balance)}
                                 </p>
                             </div>
 
@@ -432,7 +432,7 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <p className="text-lg font-bold text-slate-800 tabular-nums">
-                                    {formatCurrency(stats.totalGoals || 0)}
+                                    {!mounted ? "..." : formatCurrency(stats.totalGoals || 0)}
                                 </p>
                             </div>
 
@@ -446,7 +446,7 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <p className="text-base font-bold text-slate-900 tabular-nums">
-                                    {formatCurrency(stats.totalInvestments || 0)}
+                                    {!mounted ? "..." : formatCurrency(stats.totalInvestments || 0)}
                                 </p>
                             </div>
                         </div>

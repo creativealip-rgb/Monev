@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, ShieldAlert, ChevronLeft } from "lucide-react";
+import { Plus, ShieldAlert, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -134,25 +134,25 @@ export default function BudgetsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 glass border-b border-slate-200/50"
+                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
-                            <ChevronLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Anggaran Bulanan</h1>
+                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Anggaran Bulanan</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsBudgetModalOpen(true)}
-                        className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-all"
+                        className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-all"
                     >
-                        <Plus size={22} />
+                        <Plus size={18} />
                     </motion.button>
                 </div>
             </motion.header>
@@ -163,7 +163,7 @@ export default function BudgetsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mx-6 mt-6 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-white shadow-xl shadow-blue-900/10"
             >
-                <p className="text-slate-300 text-xs mb-2">Budget Bulan Ini</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Budget Bulan Ini</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
                         <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent)}</p>
@@ -201,7 +201,7 @@ export default function BudgetsPage() {
                             <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
                                 <ShieldAlert size={16} className="text-orange-500" />
                             </div>
-                            <h2 className="text-sm font-bold text-slate-900">Budget Bulanan</h2>
+                            <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Budget Bulanan</h2>
                         </div>
                         <span className="text-xs text-slate-500">{budgets.length} Kategori</span>
                     </div>
@@ -251,12 +251,12 @@ export default function BudgetsPage() {
                                                 {getCategoryIcon(b.category)}
                                             </div>
                                             <div className="flex-1">
-                                                <span className="font-semibold text-slate-800 text-sm">{b.category}</span>
+                                                <span className="font-bold text-slate-800 text-[13px]">{b.category}</span>
                                                 <p className="text-xs text-slate-400 tabular-nums">Limit: {formatCurrency(b.limit)}</p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
-                                                    "font-semibold text-sm block tabular-nums",
+                                                    "font-bold text-[13px] block tabular-nums",
                                                     isDanger ? "text-rose-600" : "text-slate-900"
                                                 )}>
                                                     {formatCurrency(b.spent)}

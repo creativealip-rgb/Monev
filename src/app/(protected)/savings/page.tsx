@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, TrendingUp, ChevronLeft, PiggyBank, Target } from "lucide-react";
+import { Plus, TrendingUp, ArrowLeft, PiggyBank, Target } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -108,25 +108,25 @@ export default function SavingsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-4 pb-4 glass border-b border-slate-100"
+                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-100"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
                         >
-                            <ChevronLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Tabungan & Goals</h1>
+                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Tabungan & Goals</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsGoalModalOpen(true)}
-                        className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-all"
+                        className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-all"
                     >
-                        <Plus size={22} />
+                        <Plus size={18} />
                     </motion.button>
                 </div>
             </motion.header>
@@ -189,26 +189,18 @@ export default function SavingsPage() {
                     <div className="space-y-4 animate-pulse">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0" />
-                                    <div className="flex-1 space-y-3">
-                                        <div className="flex justify-between">
-                                            <div className="h-4 w-28 bg-slate-100 rounded-full" />
-                                            <div className="h-4 w-10 bg-slate-100 rounded-full" />
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <div className="space-y-1">
-                                                <div className="h-3 w-16 bg-slate-50 rounded-full" />
-                                                <div className="h-4 w-24 bg-slate-100 rounded-full" />
-                                            </div>
-                                            <div className="space-y-1 flex flex-col items-end">
-                                                <div className="h-3 w-12 bg-slate-50 rounded-full" />
-                                                <div className="h-3 w-20 bg-slate-100 rounded-full" />
-                                            </div>
-                                        </div>
-                                        <div className="w-full h-2.5 bg-slate-50 rounded-full" />
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex-shrink-0" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <div className="h-4 w-28 bg-slate-100 rounded-full" />
+                                        <div className="h-3 w-20 bg-slate-50 rounded-full" />
+                                    </div>
+                                    <div className="space-y-1.5 flex flex-col items-end">
+                                        <div className="h-4 w-24 bg-slate-100 rounded-full" />
+                                        <div className="h-3 w-10 bg-slate-50 rounded-full" />
                                     </div>
                                 </div>
+                                <div className="w-full h-2 bg-slate-100 rounded-full" />
                             </div>
                         ))}
                     </div>
@@ -239,10 +231,10 @@ export default function SavingsPage() {
                                 onClick={() => setDetailGoal(g)}
                                 className="card-clean p-5 cursor-pointer group hover:shadow-lg hover:shadow-slate-200/40"
                             >
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3 mb-3">
                                     {/* Icon Container */}
                                     <div
-                                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 transition-transform group-hover:rotate-12"
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-transform group-hover:rotate-12"
                                         style={{ backgroundColor: g.color + "15" }}
                                     >
                                         <span style={{ color: g.color }}>{g.icon}</span>
@@ -250,50 +242,40 @@ export default function SavingsPage() {
 
                                     {/* Content Area */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <h3 className="font-bold text-slate-900 text-base truncate pr-2 tracking-tight">{g.name}</h3>
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-slate-900 tabular-nums">{Math.round(g.percentage)}%</span>
-                                            </div>
-                                        </div>
+                                        <span className="font-bold text-slate-800 text-[13px] block truncate">{g.name}</span>
+                                        <p className="text-xs text-slate-400 tabular-nums">Target: {formatCurrency(g.target)}</p>
+                                    </div>
 
-                                        <div className="flex items-end justify-between mb-3">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">Terkumpul</span>
-                                                <span className="font-bold text-sm tabular-nums" style={{ color: g.color }}>
-                                                    {formatCurrency(g.saved)}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-0.5">Target</span>
-                                                <span className="text-xs font-semibold text-slate-500 tabular-nums">
-                                                    {formatCurrency(g.target)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Progressive Progress Bar */}
-                                        <div className="w-full h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${g.percentage}%` }}
-                                                transition={{ duration: 1, delay: i * 0.1 }}
-                                                className="h-full rounded-full shadow-[0_0_10px_rgba(0,0,0,0.1)]"
-                                                style={{ backgroundColor: g.color }}
-                                            />
-                                        </div>
-
-                                        {/* Deadline Info if exists */}
-                                        {g.deadline && (
-                                            <div className="mt-3 flex items-center gap-1.5 opacity-60">
-                                                <div className="w-1 h-1 rounded-full bg-slate-400"></div>
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                    Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                                                </span>
-                                            </div>
-                                        )}
+                                    <div className="text-right pr-2">
+                                        <span className="font-bold text-[13px] block text-slate-900 tabular-nums">
+                                            {formatCurrency(g.saved)}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 tabular-nums">
+                                            {Math.round(g.percentage)}%
+                                        </span>
                                     </div>
                                 </div>
+
+                                {/* Progressive Progress Bar */}
+                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${g.percentage}%` }}
+                                        transition={{ duration: 1, delay: i * 0.1 }}
+                                        className="h-full rounded-full"
+                                        style={{ backgroundColor: g.color }}
+                                    />
+                                </div>
+
+                                {/* Deadline Info if exists */}
+                                {g.deadline && (
+                                    <div className="mt-3 flex items-center gap-1.5 opacity-60">
+                                        <div className="w-1 h-1 rounded-full bg-slate-400"></div>
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                            Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                )}
                             </motion.div>
                         ))}
                     </div>

@@ -6,7 +6,7 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
             {/* Navbar */}
-            <nav className="px-6 py-6 flex items-center justify-between max-w-7xl mx-auto w-full">
+            <nav className="px-6 pt-safe pb-10 flex items-center justify-between max-w-7xl mx-auto w-full">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">M</div>
                     <span className="text-xl font-bold text-slate-900">Monev</span>
@@ -22,7 +22,7 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section */}
-            <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-4xl mx-auto mt-10 mb-20">
+            <main className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-4xl mx-auto mt-32 mb-20">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold mb-6 border border-blue-100">
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -92,7 +92,7 @@ export default function LandingPage() {
 
             {/* Footer */}
             <footer className="py-8 text-center text-slate-400 text-sm border-t border-slate-100 bg-slate-50">
-                &copy; {new Date().getFullYear()} Monev SaaS. All rights reserved.
+                &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> Monev SaaS. All rights reserved.
             </footer>
         </div>
     );
