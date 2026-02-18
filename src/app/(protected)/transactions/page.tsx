@@ -4,26 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
+import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
+import { Portal } from "@/frontend/components/Portal";
 import { Filter, Search, ArrowLeft, X, Check, Loader2 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-
 import { Transaction } from "@/types";
-import { createPortal } from "react-dom";
-import { InfiniteScrollList, ListSkeleton } from "@/frontend/components/InfiniteScrollList";
-
-// Portal helper to render outside the main layout container
-function Portal({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
-    return mounted ? createPortal(children, document.body) : null;
-}
 
 interface Category {
     id: number;
@@ -59,6 +48,7 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const toast = useToast();
 
     // Pagination state
     const [pagination, setPagination] = useState({
@@ -225,12 +215,13 @@ export default function TransactionsPage() {
 
             if (response.ok) {
                 setTransactions(transactions.filter(t => t.id !== id));
+                toast.success("Transaksi dihapus");
             } else {
-                alert("Gagal menghapus transaksi");
+                toast.error("Gagal menghapus", "Coba lagi nanti");
             }
         } catch (error) {
             console.error("Error deleting:", error);
-            alert("Gagal menghapus transaksi");
+            toast.error("Gagal menghapus", "Terjadi kesalahan");
         } finally {
             setDeletingId(null);
         }
@@ -242,72 +233,28 @@ export default function TransactionsPage() {
     }
 
     function handleEditSuccess() {
-        loadData(); // Reload data after edit
+        loadData();
         setIsEditModalOpen(false);
         setEditingTransaction(null);
+        toast.success("Transaksi diperbarui");
     }
 
-    // Skeleton loading component
-    const SkeletonLoader = () => (
-        <div className="space-y-6 animate-pulse">
-            {/* Date skeleton */}
-            <div>
-                <div className="h-3 w-24 bg-slate-200 rounded-full mb-4" />
-                <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-slate-100" />
-                                <div className="flex-1 space-y-2">
-                                    <div className="h-4 w-32 bg-slate-100 rounded-full" />
-                                    <div className="h-3 w-20 bg-slate-50 rounded-full" />
-                                </div>
-                                <div className="h-5 w-24 bg-slate-100 rounded-full" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            {/* Second date group skeleton */}
-            <div>
-                <div className="h-3 w-20 bg-slate-200 rounded-full mb-4" />
-                <div className="space-y-3">
-                    {[4, 5].map(i => (
-                        <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-slate-100" />
-                                <div className="flex-1 space-y-2">
-                                    <div className="h-4 w-28 bg-slate-100 rounded-full" />
-                                    <div className="h-3 w-16 bg-slate-50 rounded-full" />
-                                </div>
-                                <div className="h-5 w-20 bg-slate-100 rounded-full" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-
-    // ... (removed redundant logic now handled by useMemo above)
-
     return (
-        <div className="relative min-h-screen bg-slate-50 pb-28">
-            {/* Sticky Header */}
+        <div className="relative min-h-screen bg-sky-50 dark:bg-slate-950 pb-28">
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
+                className="sticky top-0 z-50 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50 px-6 pt-safe pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Riwayat</h1>
+                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Riwayat</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -316,8 +263,8 @@ export default function TransactionsPage() {
                         className={cn(
                             "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
                             (filterCategory !== "all" || filterType !== "all")
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
-                                : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600"
+                                ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
                         )}
                     >
                         <Filter size={16} />
@@ -325,11 +272,9 @@ export default function TransactionsPage() {
                 </div>
             </motion.header>
 
-            {/* Content */}
             <div className="px-6">
-                {/* Search Bar */}
                 <div className="relative mb-6 mt-4">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
                     <input
                         type="text"
                         placeholder="Cari transaksi..."
@@ -343,33 +288,23 @@ export default function TransactionsPage() {
                     animate={{ opacity: 1 }}
                     className="flex items-center justify-between mb-4"
                 >
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                         {searchQuery ? "Hasil Pencarian" : "Semua Transaksi"}
                     </p>
-                    <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
                         {loading ? "..." : `${filteredTransactions.length} Transaksi`}
                     </span>
                 </motion.div>
 
                 {
                     loading ? (
-                        <SkeletonLoader />
+                        <TransactionListSkeleton count={5} />
                     ) : filteredTransactions.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-16 bg-white rounded-[2rem] border border-dashed border-slate-200"
-                        >
-                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Search size={24} className="text-slate-300" />
-                            </div>
-                            <p className="text-slate-500 font-bold">
-                                {searchQuery ? "Tidak ada transaksi yang cocok" : "Belum ada transaksi"}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1">
-                                {searchQuery ? "Coba ubah kata kunci pencarian" : "Transaksi akan muncul di sini"}
-                            </p>
-                        </motion.div>
+                        searchQuery ? (
+                            <NoSearchResultsEmpty query={searchQuery} />
+                        ) : (
+                            <NoTransactionsEmpty />
+                        )
                     ) : (
                         <motion.div
                             key={`list-${filterCategory}-${filterType}-${searchQuery}`}
@@ -380,7 +315,7 @@ export default function TransactionsPage() {
                         >
                             {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
                                 <div key={date}>
-                                    <h3 className="text-xs font-bold text-slate-400 mb-3 py-1 px-2 uppercase tracking-widest">
+                                    <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-3 py-1 px-2 uppercase tracking-widest">
                                         {date}
                                     </h3>
                                     <div className="space-y-3">
@@ -406,12 +341,11 @@ export default function TransactionsPage() {
                     )
                 }
 
-                {/* Load More Button for Infinite Scroll - Outside the ternary */}
                 {!loading && pagination.hasMore && filteredTransactions.length > 0 && (
                     <div className="text-center py-6">
                         <button
                             onClick={() => loadData(false)}
-                            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors"
+                            className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-colors"
                         >
                             Muat Lebih Banyak
                         </button>
@@ -419,14 +353,13 @@ export default function TransactionsPage() {
                 )}
 
                 {loading && filteredTransactions.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 py-6 text-slate-500">
+                    <div className="flex items-center justify-center gap-2 py-6 text-slate-500 dark:text-slate-400">
                         <Loader2 size={20} className="animate-spin" />
                         <span>Memuat...</span>
                     </div>
                 )}
             </div >
 
-            {/* Filter Modal */}
             < Portal >
                 <AnimatePresence>
                     {isFilterModalOpen && (
@@ -436,28 +369,27 @@ export default function TransactionsPage() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={() => setIsFilterModalOpen(false)}
-                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
                             />
                             <motion.div
                                 initial={{ opacity: 0, y: "100%" }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: "100%" }}
-                                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px]"
+                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px]"
                             >
                                 <div className="flex items-center justify-between mb-8">
-                                    <h2 className="text-xl font-bold text-slate-900">Filter Transaksi</h2>
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Filter Transaksi</h2>
                                     <button
                                         onClick={() => setIsFilterModalOpen(false)}
-                                        className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
+                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
                                     >
                                         <X size={20} />
                                     </button>
                                 </div>
 
                                 <div className="space-y-8">
-                                    {/* Type Filter */}
                                     <div>
-                                        <p className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Tipe Transaksi</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Tipe Transaksi</p>
                                         <div className="flex gap-3">
                                             {[
                                                 { id: "all", label: "Semua" },
@@ -470,8 +402,8 @@ export default function TransactionsPage() {
                                                     className={cn(
                                                         "flex-1 py-3 px-4 rounded-2xl text-sm font-semibold transition-all border-2",
                                                         filterType === type.id
-                                                            ? "bg-blue-50 border-blue-600 text-blue-600"
-                                                            : "bg-white border-slate-100 text-slate-600 hover:border-slate-200"
+                                                            ? "bg-sky-50 dark:bg-sky-900/50 border-sky-500 text-sky-600 dark:text-sky-400"
+                                                            : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
                                                     )}
                                                 >
                                                     {type.label}
@@ -480,17 +412,16 @@ export default function TransactionsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Category Filter */}
                                     <div>
-                                        <p className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Kategori</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Kategori</p>
                                         <div className="flex flex-wrap gap-2">
                                             <button
                                                 onClick={() => setFilterCategory("all")}
                                                 className={cn(
                                                     "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2",
                                                     filterCategory === "all"
-                                                        ? "bg-blue-600 border-blue-600 text-white"
-                                                        : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                                                        ? "bg-sky-500 border-sky-500 text-white"
+                                                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
                                                 )}
                                             >
                                                 Semua
@@ -502,8 +433,8 @@ export default function TransactionsPage() {
                                                     className={cn(
                                                         "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 flex items-center gap-2",
                                                         filterCategory === cat.id
-                                                            ? "bg-blue-600 border-blue-600 text-white"
-                                                            : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                                                            ? "bg-sky-500 border-sky-500 text-white"
+                                                            : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
                                                     )}
                                                 >
                                                     {filterCategory === cat.id && <Check size={12} />}
@@ -513,20 +444,19 @@ export default function TransactionsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Actions */}
                                     <div className="flex gap-4 pt-4">
                                         <button
                                             onClick={() => {
                                                 setFilterCategory("all");
                                                 setFilterType("all");
                                             }}
-                                            className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all"
+                                            className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                                         >
                                             Reset Filter
                                         </button>
                                         <button
                                             onClick={() => setIsFilterModalOpen(false)}
-                                            className="flex-[2] py-4 px-6 rounded-2xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all"
+                                            className="flex-[2] py-4 px-6 rounded-2xl text-sm font-bold text-white bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-500/25 transition-all"
                                         >
                                             Terapkan Filter
                                         </button>

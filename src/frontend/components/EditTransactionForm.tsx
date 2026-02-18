@@ -205,7 +205,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                     disabled={!amount}
                                     className={cn(
                                         "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                        amount ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-300"
+                                        amount ? "bg-sky-500 hover:bg-sky-600" : "bg-slate-300"
                                     )}
                                 >
                                     Lanjut
@@ -228,8 +228,8 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                                 className={cn(
                                                     "p-4 rounded-2xl border-2 transition-all text-left",
                                                     isSelected
-                                                        ? "border-blue-500 bg-blue-50"
-                                                        : "border-transparent bg-slate-50 hover:border-blue-300"
+                                                        ? "border-sky-500 bg-sky-50"
+                                                        : "border-transparent bg-slate-50 hover:border-sky-300"
                                                 )}
                                             >
                                                 <div
@@ -258,7 +258,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Contoh: Makan siang di warteg"
-                                        className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500"
                                         autoFocus
                                     />
                                 </div>
@@ -277,7 +277,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                     disabled={loading || !description}
                                     className={cn(
                                         "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                        loading || !description ? "bg-slate-300" : "bg-blue-600 hover:bg-blue-700"
+                                        loading || !description ? "bg-slate-300" : "bg-sky-500 hover:bg-sky-600"
                                     )}
                                 >
                                     {loading ? "Menyimpan..." : "Simpan Perubahan"}

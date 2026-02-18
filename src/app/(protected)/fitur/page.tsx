@@ -287,12 +287,12 @@ export default function FiturPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
+                className="sticky top-0 z-50 bg-[#F8FAFC]/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
             >
                 <div className="flex items-center gap-3 pt-2">
                     <Link
                         href="/"
-                        className="w-7 h-7 rounded-lg bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
+                        className="w-7 h-7 rounded-lg bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95"
                     >
                         <ArrowLeft size={16} strokeWidth={2.5} />
                     </Link>
@@ -324,7 +324,7 @@ export default function FiturPage() {
                                         <motion.div
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
-                                            className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md flex items-center gap-4 cursor-pointer hover:border-blue-200 transition-all"
+                                            className="card-clean p-3 flex items-center gap-4 cursor-pointer hover:border-emerald-200 transition-all"
                                         >
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
                                                 <Icon className={`text-${feature.color}-600`} size={18} strokeWidth={2.5} />

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
+import { ErrorEmpty } from "@/frontend/components/UI";
 
 interface Allocation {
     name: string;
@@ -60,7 +61,7 @@ function AIInsights({ content }: { content: string }) {
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.15em]">Powered by Monev AI</span>
-                    <Link href="/chat" className="text-[10px] font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-widest">
+                    <Link href="/chat" className="text-[10px] font-bold text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">
                         Tanya Lebih Lanjut →
                     </Link>
                 </div>
@@ -166,6 +167,7 @@ const iconMap: Record<string, any> = {
 export default function AnalyticsPage() {
     const [data, setData] = useState<AnalysisData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<"expense" | "income" | null>(null);
 
     useEffect(() => {
@@ -176,6 +178,7 @@ export default function AnalyticsPage() {
                 setData(json);
             } catch (error) {
                 console.error("Failed to fetch analytics:", error);
+                setError("Gagal memuat data analitik");
             } finally {
                 setIsLoading(false);
             }
@@ -257,10 +260,14 @@ export default function AnalyticsPage() {
         );
     }
 
-    if (!data) {
+    if (!data || error) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <p className="text-slate-500 font-medium">Gagal memuat data analitik. 😅</p>
+                <ErrorEmpty 
+                    title="Gagal memuat data" 
+                    description={error || "Data analitik tidak tersedia"}
+                    onRetry={() => window.location.reload()}
+                />
             </div>
         );
     }
@@ -276,7 +283,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center gap-3">
                     <Link
                         href="/"
-                        className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                        className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-sky-50 hover:text-sky-600 transition-all"
                     >
                         <ArrowLeft size={16} strokeWidth={2.5} />
                     </Link>
@@ -309,7 +316,7 @@ export default function AnalyticsPage() {
                             className={cn(
                                 "p-6 rounded-[2rem] border text-white relative overflow-hidden backdrop-blur-xl shadow-xl",
                                 data.health.runway < 3 ? "bg-rose-500/80 border-rose-400/30 shadow-rose-500/20" :
-                                    data.health.runway < 6 ? "bg-orange-500/80 border-orange-400/30 shadow-orange-500/20" : "bg-blue-600/80 border-blue-500/30 shadow-blue-600/20"
+                                    data.health.runway < 6 ? "bg-orange-500/80 border-orange-400/30 shadow-orange-500/20" : "bg-sky-500/80 border-sky-400/30 shadow-sky-500/20"
                             )}
                         >
                             <div className="relative z-10">
@@ -417,7 +424,7 @@ export default function AnalyticsPage() {
                 <motion.section variants={itemVariants}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-sm font-bold text-slate-900">Alokasi Dana (Rule 50/30/20)</h2>
-                        <button className="text-xs font-semibold text-blue-600">Ideal vs Aktual</button>
+                        <button className="text-xs font-semibold text-sky-600">Ideal vs Aktual</button>
                     </div>
 
                     <div className="space-y-3">

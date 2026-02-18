@@ -12,9 +12,9 @@ interface StatsCardProps {
 const TYPE_CONFIG = {
     balance: {
         icon: Wallet,
-        bgColor: "bg-gradient-to-br from-blue-600 to-blue-700",
+        bgColor: "bg-gradient-to-br from-sky-500 to-sky-600",
         iconColor: "text-white",
-        labelColor: "text-blue-100",
+        labelColor: "text-sky-100",
         amountColor: "text-white"
     },
     income: {

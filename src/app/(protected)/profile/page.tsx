@@ -1,12 +1,13 @@
 "use client";
 
-import { ChevronLeft, Settings, CreditCard, LogOut, Bell, Shield, Moon, Wallet, X, Check, User as UserIcon, MessageCircle, Smartphone, Crown } from "lucide-react";
+import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check, User as UserIcon, MessageCircle, Smartphone, Crown } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { fetchProfileData, updateProfile, updateFinancialSettings, updateSecuritySettings, disconnectTelegram } from "./actions";
 import { serverSignOut } from "@/app/actions/auth";
 import { cn } from "@/frontend/lib/utils";
+import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 
 const menuItems = [
     { id: "account", icon: UserIcon, label: "Pengaturan Akun", color: "blue", hasArrow: true },
@@ -168,11 +169,11 @@ export default function ProfilePage() {
     return (
         <div className="relative min-h-screen pb-24">
             {/* Premium Header Profile Card */}
-            <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 pb-10 pt-safe px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
+            <div className="relative bg-gradient-to-br from-sky-500 via-sky-600 to-cyan-700 pb-10 pt-safe px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
                 {/* Abstract Background Shapes */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl mix-blend-overlay" />
-                    <div className="absolute top-1/2 -right-24 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl mix-blend-overlay" />
+                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-sky-400/30 rounded-full blur-3xl mix-blend-overlay" />
+                    <div className="absolute top-1/2 -right-24 w-64 h-64 bg-cyan-400/30 rounded-full blur-3xl mix-blend-overlay" />
                 </div>
 
                 {/* Top Action Bar */}
@@ -198,7 +199,7 @@ export default function ProfilePage() {
                         <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-3xl font-bold shadow-xl overflow-hidden">
                             {getInitials()}
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-[2.5px] border-indigo-700 flex items-center justify-center shadow-lg">
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-[2.5px] border-sky-600 flex items-center justify-center shadow-lg">
                             <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                         </div>
                     </div>
@@ -225,6 +226,23 @@ export default function ProfilePage() {
                 animate="visible"
                 className="px-6 pt-6 space-y-3"
             >
+                {/* Theme Toggle Card */}
+                <motion.div
+                    variants={itemVariants}
+                    className="card-clean p-4 flex items-center justify-between"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                            <Moon size={20} className="text-slate-600 dark:text-slate-300" />
+                        </div>
+                        <div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">Mode Gelap</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p>
+                        </div>
+                    </div>
+                    <ThemeToggleSwitch />
+                </motion.div>
+
                 {menuItems.map((item, index) => {
                     const Icon = item.icon;
                     const colors: Record<string, { bg: string; text: string }> = {
@@ -269,7 +287,7 @@ export default function ProfilePage() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleMenuClick(item.id)}
-                            className="w-full p-4 card-clean flex items-center justify-between group hover:border-blue-300/50 hover:shadow-md transition-all"
+                            className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all"
                         >
                             <div className="flex items-center gap-4">
                                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
@@ -278,7 +296,7 @@ export default function ProfilePage() {
                                 <span className="font-bold text-[13px] text-slate-700 tracking-tight">{item.label}</span>
                             </div>
                             {item.hasArrow && (
-                                <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-400 transition-colors" />
+                                <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />
                             )}
                         </motion.button>
                     );
@@ -379,7 +397,7 @@ export default function ProfilePage() {
                                     </div>
                                     <button
                                         onClick={handleSaveProfile}
-                                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
+                                        className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
                                     >
                                         <Check size={18} />
                                         Simpan Perubahan

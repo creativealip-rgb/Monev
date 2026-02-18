@@ -1,11 +1,11 @@
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
 import { SecurityProvider } from "@/components/SecurityProvider";
 import { Providers } from "@/components/Providers";
 import { Metadata, Viewport } from "next";
 
-const inter = Inter({ subsets: ["latin"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "Monev - Agentic Finance",
@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="id" suppressHydrationWarning>
-            <body className={inter.className} suppressHydrationWarning>
+            <body className={jakarta.className} suppressHydrationWarning>
                 <Providers>
                     <script
                         dangerouslySetInnerHTML={{

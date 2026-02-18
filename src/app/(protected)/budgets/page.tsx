@@ -8,6 +8,7 @@ import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
+import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { Budget } from "@/types";
 
 interface Category {
@@ -54,6 +55,7 @@ export default function BudgetsPage() {
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
     const [detailBudget, setDetailBudget] = useState<Budget | null>(null);
     const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+    const toast = useToast();
 
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
@@ -111,12 +113,13 @@ export default function BudgetsPage() {
 
             if (response.ok) {
                 setBudgets(budgets.filter(b => b.id !== id));
+                toast.success("Budget dihapus");
             } else {
-                alert("Gagal menghapus budget");
+                toast.error("Gagal menghapus", "Coba lagi nanti");
             }
         } catch (error) {
             console.error("Error deleting budget:", error);
-            alert("Gagal menghapus budget");
+            toast.error("Gagal menghapus", "Terjadi kesalahan");
         }
     }
 
@@ -129,49 +132,47 @@ export default function BudgetsPage() {
     const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
 
     return (
-        <div className="relative min-h-screen pb-24">
-            {/* Header */}
+        <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50"
+                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Anggaran Bulanan</h1>
+                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Anggaran Bulanan</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsBudgetModalOpen(true)}
-                        className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-all"
+                        className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900 transition-all"
                     >
                         <Plus size={18} />
                     </motion.button>
                 </div>
             </motion.header>
 
-            {/* Summary Card */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-5 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-white shadow-xl shadow-blue-900/10"
+                className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Budget Bulan Ini</p>
+                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Budget Bulan Ini</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
                         <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent)}</p>
-                        <p className="text-slate-400 text-xs tabular-nums">dari {formatCurrency(totalBudget)}</p>
+                        <p className="text-white/60 text-xs tabular-nums">dari {formatCurrency(totalBudget)}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
-                        <p className="text-slate-400 text-xs">terpakai</p>
+                        <p className="text-white/60 text-xs">terpakai</p>
                     </div>
                 </div>
                 <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
@@ -194,42 +195,25 @@ export default function BudgetsPage() {
                 animate="visible"
                 className="p-6 space-y-8"
             >
-                {/* Monthly Budgets */}
                 <motion.section variants={itemVariants}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
-                                <ShieldAlert size={16} className="text-orange-500" />
+                            <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+                                <ShieldAlert size={16} className="text-orange-500 dark:text-orange-400" />
                             </div>
-                            <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Budget Bulanan</h2>
+                            <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Budget Bulanan</h2>
                         </div>
-                        <span className="text-xs text-slate-500">{budgets.length} Kategori</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{budgets.length} Kategori</span>
                     </div>
 
                     {loading ? (
-                        <div className="space-y-4 animate-pulse">
+                        <div className="space-y-4">
                             {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-100" />
-                                        <div className="flex-1 space-y-1.5">
-                                            <div className="h-4 w-28 bg-slate-100 rounded-full" />
-                                            <div className="h-3 w-20 bg-slate-50 rounded-full" />
-                                        </div>
-                                        <div className="space-y-1.5 flex flex-col items-end">
-                                            <div className="h-4 w-24 bg-slate-100 rounded-full" />
-                                            <div className="h-3 w-10 bg-slate-50 rounded-full" />
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-2 bg-slate-100 rounded-full" />
-                                </div>
+                                <BudgetCardSkeleton key={i} />
                             ))}
                         </div>
                     ) : budgets.length === 0 ? (
-                        <div className="text-center py-8 bg-white rounded-2xl border border-slate-100">
-                            <p className="text-slate-500">Belum ada budget</p>
-                            <p className="text-xs text-slate-400 mt-1">Tambah budget untuk mulai tracking</p>
-                        </div>
+                        <NoBudgetsEmpty onAddNew={() => setIsBudgetModalOpen(true)} />
                     ) : (
                         <div className="space-y-4">
                             {budgets.map((b, i) => {
@@ -240,8 +224,8 @@ export default function BudgetsPage() {
                                     <motion.div
                                         key={b.id}
                                         whileHover={{ scale: 1.02 }}
-                                        onClick={() => setDetailBudget(b)} // Open detail modal
-                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-slate-200/40 transition-all"
+                                        onClick={() => setDetailBudget(b)}
+                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20 transition-all"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
                                             <div
@@ -251,36 +235,36 @@ export default function BudgetsPage() {
                                                 {getCategoryIcon(b.category)}
                                             </div>
                                             <div className="flex-1">
-                                                <span className="font-bold text-slate-800 text-[13px]">{b.category}</span>
-                                                <p className="text-xs text-slate-400 tabular-nums">Limit: {formatCurrency(b.limit)}</p>
+                                                <span className="font-bold text-slate-800 dark:text-white text-[13px]">{b.category}</span>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">Limit: {formatCurrency(b.limit)}</p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
                                                     "font-bold text-[13px] block tabular-nums",
-                                                    isDanger ? "text-rose-600" : "text-slate-900"
+                                                    isDanger ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
                                                 )}>
                                                     {formatCurrency(b.spent)}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 tabular-nums">
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
                                                     {Math.round(b.percentage)}%
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${b.percentage}%` }}
                                                 transition={{ duration: 1, delay: i * 0.1 }}
                                                 className={cn(
                                                     "h-full rounded-full",
-                                                    isDanger ? "bg-rose-500" : isWarning ? "bg-amber-500" : "bg-emerald-500"
+                                                    isDanger ? "bg-rose-500" : isWarning ? "bg-amber-500" : "bg-sky-500"
                                                 )}
                                             />
                                         </div>
 
                                         {isDanger && (
-                                            <p className="text-[10px] font-semibold text-rose-500 mt-2 flex items-center gap-1">
+                                            <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 mt-2 flex items-center gap-1">
                                                 ⚠️ Hampir habis
                                             </p>
                                         )}
@@ -299,6 +283,7 @@ export default function BudgetsPage() {
                 onSuccess={() => {
                     loadData();
                     setIsBudgetModalOpen(false);
+                    toast.success("Budget ditambahkan");
                 }}
                 categories={categories}
                 month={currentMonth}
@@ -328,6 +313,7 @@ export default function BudgetsPage() {
                     onSuccess={() => {
                         loadData();
                         setEditingBudget(null);
+                        toast.success("Budget diperbarui");
                     }}
                     budget={editingBudget}
                 />

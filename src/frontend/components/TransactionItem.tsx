@@ -115,12 +115,11 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             onClick={onClick}
             className={cn(
                 "relative flex items-center p-4 card-clean",
-                "hover:border-blue-300/50 hover:shadow-lg hover:shadow-slate-200/40 cursor-pointer",
+                "hover:border-sky-300/30 hover:shadow-xl hover:shadow-sky-500/5 cursor-pointer",
                 "transition-all duration-300"
             )}>
-            {/* Icon Container with Gradient */}
             <div className={cn(
-                "relative w-12 h-12 rounded-xl flex items-center justify-center mr-4 overflow-hidden flex-shrink-0",
+                "relative w-12 h-12 rounded-2xl flex items-center justify-center mr-4 overflow-hidden flex-shrink-0",
                 style.color
             )}>
                 <div className={cn(
@@ -130,17 +129,16 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
                 <Icon size={22} strokeWidth={2} className="relative z-10" />
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0 overflow-hidden mr-4">
-                <h4 className="font-bold text-slate-900 text-[13px] leading-tight line-clamp-1 break-all">
+                <h4 className="font-bold text-slate-900 dark:text-white text-[13px] leading-tight line-clamp-1 break-all">
                     {transaction.description || "Tanpa Deskripsi"}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[11px] font-medium text-slate-500 truncate">
+                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
                         {transaction.category || "Lainnya"}
                     </span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
-                    <span className="text-[11px] font-medium text-slate-400 flex-shrink-0">
+                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 flex-shrink-0">
                         {(() => {
                             try {
                                 const date = new Date(transaction.created_at);
@@ -153,18 +151,17 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
                 </div>
             </div>
 
-            {/* Amount */}
             <div className="text-right flex-shrink-0">
                 <p className={cn(
                     "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
-                    isIncome ? "text-emerald-600" : isExpense ? "text-slate-900" : "text-slate-600"
+                    isIncome ? "text-emerald-600 dark:text-emerald-400" : isExpense ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"
                 )}>
                     {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
                 </p>
                 {transaction.is_verified && (
                     <div className="flex items-center justify-end gap-1 mt-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-medium text-slate-400">Verified</span>
+                        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Verified</span>
                     </div>
                 )}
             </div>

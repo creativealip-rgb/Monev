@@ -4,13 +4,16 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FeatureItem } from "@/frontend/components/FeatureItem";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
+import { TransferModal } from "@/frontend/components/TransferModal";
+import { ThemeSelector } from "@/frontend/components/ThemeSelector";
+import { useHeroTheme } from "@/frontend/lib/hero-theme";
+import { TransactionListSkeleton, NoTransactionsEmpty, useToast } from "@/frontend/components/UI";
 import {
     Sparkles,
     PieChart,
     PiggyBank,
     Receipt,
     TrendingUp,
-    Crown,
     Bell,
     User,
     ChevronRight,
@@ -18,8 +21,7 @@ import {
     ArrowDownRight,
     Wallet,
     X,
-    Coins,
-    CreditCard
+    ArrowRightLeft
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -50,7 +52,7 @@ interface Category {
 
 const mainFeatures = [
     { label: "Monev AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
-    { label: "Analisa", icon: <PieChart size={24} />, color: "blue", href: "/analytics" },
+    { label: "Analitik", icon: <PieChart size={24} />, color: "sky", href: "/analytics" },
     { label: "Anggaran", icon: <Wallet size={24} />, color: "orange", href: "/budgets" },
     { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/savings" },
     { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
@@ -70,6 +72,98 @@ const itemVariants = {
     visible: { opacity: 1, y: 0 }
 };
 
+interface HeroBalanceCardProps {
+    stats: { income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number };
+    mounted: boolean;
+    onBalanceClick: () => void;
+    onTransferClick: () => void;
+}
+
+function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick }: HeroBalanceCardProps) {
+    const { themeConfig } = useHeroTheme();
+
+    return (
+        <div className={cn(
+            "relative overflow-hidden rounded-[32px] shadow-2xl border border-white/10 text-white p-6",
+            "bg-gradient-to-br",
+            themeConfig.gradient,
+            themeConfig.shadowColor
+        )}>
+            <div className={cn("absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -mr-20 -mt-20 opacity-60", themeConfig.glowColor)} />
+            <div className={cn("absolute bottom-0 left-0 w-48 h-48 rounded-full blur-2xl -ml-10 -mb-10 opacity-40", themeConfig.bgEffect)} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-12 opacity-20" />
+
+            <div
+                className="relative z-10 cursor-pointer group"
+                onClick={onBalanceClick}
+            >
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <p className="text-white/70 text-xs font-medium group-hover:text-white transition-colors">Total Balance</p>
+                        <ChevronRight size={14} className="text-white/50 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ThemeSelector />
+                        <div className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-full",
+                            (stats.growth || 0) >= 0 ? "bg-emerald-500/20" : "bg-rose-500/20"
+                        )}>
+                            <div className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                (stats.growth || 0) >= 0 ? "bg-emerald-400" : "bg-rose-400"
+                            )} />
+                            <span className={cn(
+                                "text-[10px] font-semibold",
+                                (stats.growth || 0) >= 0 ? "text-emerald-300" : "text-rose-300"
+                            )}>
+                                {(stats.growth || 0) >= 0 ? "+" : ""}{(stats.growth || 0).toFixed(1)}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 className="text-3xl font-bold tracking-tight mb-6 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
+                    {!mounted ? "Loading..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
+                </h2>
+            </div>
+
+            <div className="flex gap-3">
+                <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                            <ArrowUpRight size={14} className="text-emerald-300" />
+                        </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Income</p>
+                    </div>
+                    <p className="font-bold text-[13px] text-emerald-300 tabular-nums">
+                        + {!mounted ? "..." : formatCurrency(stats.income).replace("Rp", "")}
+                    </p>
+                </div>
+
+                <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
+                            <ArrowDownRight size={14} className="text-rose-300" />
+                        </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Expense</p>
+                    </div>
+                    <p className="font-bold text-[13px] text-rose-300 tabular-nums">
+                        − {!mounted ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
+                    </p>
+                </div>
+            </div>
+
+            <button
+                onClick={onTransferClick}
+                className="mt-4 w-full py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-sm hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+            >
+                <ArrowRightLeft size={16} />
+                Transfer Saldo
+            </button>
+        </div>
+    );
+}
+
 export default function Home() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number }>({ income: 0, expense: 0, balance: 0 });
@@ -77,6 +171,8 @@ export default function Home() {
     const [mounted, setMounted] = useState(false);
     const [userName, setUserName] = useState("Pengguna");
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const toast = useToast();
 
     const today = new Date();
     const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
@@ -165,28 +261,27 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="relative min-h-screen pb-24">
-            {/* Standardized Sticky Header (Integrated pt-safe) */}
-            <header className="sticky top-0 z-[100] w-full pt-safe bg-slate-50/95 backdrop-blur-md px-6 pb-4 border-b border-slate-100/50">
+        <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+            <header className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50">
                 <div className="pt-2 flex items-center justify-between">
                     <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 p-[2px] shadow-lg shadow-blue-600/10"
+                            className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20"
                         >
-                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                            <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                                 {userName === "Pengguna" ? (
-                                    <User size={18} className="text-blue-600" />
+                                    <User size={18} className="text-sky-600 dark:text-sky-400" />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-50 flex items-center justify-center text-base font-bold text-blue-700">
+                                    <div className="w-full h-full bg-gradient-to-br from-sky-100 to-cyan-50 dark:from-sky-900 dark:to-cyan-900 flex items-center justify-center text-base font-bold text-sky-700 dark:text-sky-300">
                                         {userName.charAt(0)}
                                     </div>
                                 )}
                             </div>
                         </motion.div>
                         <div>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{formattedDate}</p>
-                            <h1 className="text-sm font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+                            <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{formattedDate}</p>
+                            <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                                 Hello, {userName.split(" ")[0]}! 👋
                             </h1>
                         </div>
@@ -194,7 +289,7 @@ export default function Home() {
                     <motion.button
                         whileHover={{ scale: 1.1, rotate: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all"
+                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-xl hover:shadow-sky-200/50 dark:hover:shadow-sky-900/50 transition-all"
                     >
                         <Bell size={18} strokeWidth={2.5} />
                         <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white animate-pulse" />
@@ -207,74 +302,16 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 }}
-                className="px-6 mb-8"
+                className="px-6 pt-4 mb-6"
             >
-                <div className="relative overflow-hidden rounded-2xl bg-slate-900 shadow-2xl shadow-indigo-500/10 border border-white/10 text-white p-6">
-                    {/* Background Effects */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl -mr-20 -mt-20 opacity-50" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-600/20 rounded-full blur-2xl -ml-10 -mb-10 opacity-50" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-12 opacity-30" />
-
-                    <div
-                        className="relative z-10 cursor-pointer group"
-                        onClick={() => setShowBalanceDetail(true)}
-                    >
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <p className="text-slate-300 text-xs font-medium group-hover:text-white transition-colors">Total Balance</p>
-                                <ChevronRight size={14} className="text-slate-400 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
-                            </div>
-                            <div className={cn(
-                                "flex items-center gap-1 px-2 py-1 rounded-full",
-                                (stats.growth || 0) >= 0 ? "bg-emerald-500/20" : "bg-rose-500/20"
-                            )}>
-                                <div className={cn(
-                                    "w-1.5 h-1.5 rounded-full",
-                                    (stats.growth || 0) >= 0 ? "bg-emerald-400" : "bg-rose-400"
-                                )} />
-                                <span className={cn(
-                                    "text-[10px] font-semibold",
-                                    (stats.growth || 0) >= 0 ? "text-emerald-400" : "text-rose-400"
-                                )}>
-                                    {(stats.growth || 0) >= 0 ? "+" : ""}{(stats.growth || 0).toFixed(1)}%
-                                </span>
-                            </div>
-                        </div>
-
-                        <h2 className="text-2xl font-bold tracking-tight mb-8 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
-                            {!mounted ? "Loading..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
-                        </h2>
-                    </div>
-
-                    <div className="flex gap-3">
-                        <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                    <ArrowUpRight size={14} className="text-emerald-400" />
-                                </div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Income</p>
-                            </div>
-                            <p className="font-bold text-[13px] text-emerald-400 tabular-nums">
-                                + {!mounted ? "..." : formatCurrency(stats.income).replace("Rp", "")}
-                            </p>
-                        </div>
-
-                        <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                                    <ArrowDownRight size={14} className="text-rose-400" />
-                                </div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expense</p>
-                            </div>
-                            <p className="font-bold text-[13px] text-rose-400 tabular-nums">
-                                − {!mounted ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <HeroBalanceCard
+                    stats={stats}
+                    mounted={mounted}
+                    onBalanceClick={() => setShowBalanceDetail(true)}
+                    onTransferClick={() => setShowTransferModal(true)}
+                />
             </motion.section>
 
-            {/* Features Grid */}
             <motion.section
                 initial="hidden"
                 animate="visible"
@@ -282,8 +319,8 @@ export default function Home() {
                 className="px-6 mb-8"
             >
                 <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Fitur Andalan</h2>
-                    <Link href="/fitur" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+                    <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Fitur Andalan</h2>
+                    <Link href="/fitur" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1">
                         Lihat Semua
                         <ChevronRight size={14} />
                     </Link>
@@ -305,7 +342,6 @@ export default function Home() {
                 </motion.div>
             </motion.section>
 
-            {/* Recent Transactions */}
             <motion.section
                 initial="hidden"
                 animate="visible"
@@ -313,33 +349,17 @@ export default function Home() {
                 className="px-6"
             >
                 <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Riwayat Terakhir</h2>
-                    <Link href="/transactions" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                    <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Riwayat Terakhir</h2>
+                    <Link href="/transactions" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
                         Lihat Semua
                     </Link>
                 </motion.div>
 
                 <motion.div variants={itemVariants} className="space-y-3">
                     {loading ? (
-                        <div className="space-y-3 animate-pulse">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="h-4 w-28 bg-slate-100 rounded-full" />
-                                            <div className="h-3 w-16 bg-slate-50 rounded-full" />
-                                        </div>
-                                        <div className="h-5 w-20 bg-slate-100 rounded-full" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <TransactionListSkeleton count={3} />
                     ) : transactions.length === 0 ? (
-                        <div className="text-center py-8 glass-card border-dashed border-slate-300/50">
-                            <p className="text-slate-500 font-bold">Belum ada transaksi</p>
-                            <p className="text-xs text-slate-400 mt-1">Transaksi akan muncul di sini</p>
-                        </div>
+                        <NoTransactionsEmpty />
                     ) : (
                         transactions.map((t) => (
                             <TransactionItem key={t.id} transaction={t} />
@@ -350,54 +370,50 @@ export default function Home() {
 
 
 
-            {/* Balance Detail Modal */}
             {showBalanceDetail && mounted && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-md"
+                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-md dark:bg-slate-950/80"
                         onClick={() => setShowBalanceDetail(false)}
                     />
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-[92%] max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-2xl overflow-hidden z-10 shadow-slate-200/50"
+                        className="relative w-[92%] max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 shadow-2xl overflow-hidden z-10 shadow-sky-200/30 dark:shadow-sky-900/20"
                     >
-                        {/* Clean Backdrop Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 to-white/10 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-sky-50/40 to-white/10 dark:from-sky-950/40 dark:to-slate-900/10 pointer-events-none" />
 
-                        {/* Modal Header & Close */}
                         <div className="flex justify-end mb-2 relative z-10">
                             <button
                                 onClick={() => setShowBalanceDetail(false)}
-                                className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
+                                className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all"
                             >
                                 <X size={16} />
                             </button>
                         </div>
 
                         <div className="text-center mb-6 relative z-10">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
-                            <h3 className="text-3xl font-black text-slate-900 tracking-tight tabular-nums">
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
+                            <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
                                 {!mounted ? "..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
                             </h3>
                         </div>
 
-                        {/* Distribution Bar */}
                         <div className="mb-8 relative z-10 px-1">
-                            <div className="w-full h-2.5 bg-slate-100 rounded-full flex overflow-hidden ring-4 ring-slate-50">
+                            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full flex overflow-hidden ring-4 ring-sky-50 dark:ring-slate-800">
                                 {(() => {
                                     const total = stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0);
-                                    if (total <= 0) return <div className="w-full bg-slate-200/50 h-full" />;
+                                    if (total <= 0) return <div className="w-full bg-slate-200/50 dark:bg-slate-700 h-full" />;
                                     const p1 = (stats.balance / total) * 100;
                                     const p2 = ((stats.totalGoals || 0) / total) * 100;
                                     const p3 = ((stats.totalInvestments || 0) / total) * 100;
                                     return (
                                         <>
-                                            <div className="h-full bg-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.3)]" style={{ width: `${p1}%` }} />
+                                            <div className="h-full bg-sky-500 shadow-[0_0_12px_rgba(14,165,233,0.4)]" style={{ width: `${p1}%` }} />
                                             <div className="h-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]" style={{ width: `${p2}%` }} />
                                             <div className="h-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]" style={{ width: `${p3}%` }} />
                                         </>
@@ -406,46 +422,42 @@ export default function Home() {
                             </div>
                         </div>
 
-                        {/* Minimalist Breakdown List */}
                         <div className="space-y-7 relative z-10 px-2">
-                            {/* Saldo Aktif */}
                             <div className="flex items-center justify-between group transition-all">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-4 h-4 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)] border-2 border-white" />
+                                    <div className="w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] border-2 border-white dark:border-slate-900" />
                                     <div>
-                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Saldo Aktif</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Liquid assets</p>
+                                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Saldo Aktif</p>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Liquid assets</p>
                                     </div>
                                 </div>
-                                <p className="text-lg font-bold text-slate-800 tabular-nums">
+                                <p className="text-lg font-bold text-slate-800 dark:text-white tabular-nums">
                                     {!mounted ? "..." : formatCurrency(stats.balance)}
                                 </p>
                             </div>
 
-                            {/* Tabungan Goals */}
                             <div className="flex items-center justify-between group transition-all">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-2 border-white" />
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-2 border-white dark:border-slate-900" />
                                     <div>
-                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tabungan Goals</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Future plans</p>
+                                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tabungan Goals</p>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Future plans</p>
                                     </div>
                                 </div>
-                                <p className="text-lg font-bold text-slate-800 tabular-nums">
+                                <p className="text-lg font-bold text-slate-800 dark:text-white tabular-nums">
                                     {!mounted ? "..." : formatCurrency(stats.totalGoals || 0)}
                                 </p>
                             </div>
 
-                            {/* Investasi */}
                             <div className="flex items-center justify-between group transition-all">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] border-2 border-white" />
+                                    <div className="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] border-2 border-white dark:border-slate-900" />
                                     <div>
-                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Investasi</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Growth assets</p>
+                                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Investasi</p>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Growth assets</p>
                                     </div>
                                 </div>
-                                <p className="text-base font-bold text-slate-900 tabular-nums">
+                                <p className="text-base font-bold text-slate-900 dark:text-white tabular-nums">
                                     {!mounted ? "..." : formatCurrency(stats.totalInvestments || 0)}
                                 </p>
                             </div>
@@ -454,6 +466,16 @@ export default function Home() {
                 </div>,
                 document.body
             )}
+
+            <TransferModal
+                isOpen={showTransferModal}
+                onClose={() => setShowTransferModal(false)}
+                onSuccess={() => {
+                    window.dispatchEvent(new CustomEvent("transactionAdded"));
+                    toast.success("Transfer berhasil", "Saldo telah ditransfer");
+                }}
+                currentBalance={stats.balance}
+            />
 
         </div>
     );

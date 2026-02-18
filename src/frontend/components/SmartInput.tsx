@@ -367,8 +367,8 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                     exit={{ opacity: 0 }}
                                     className="py-16 text-center"
                                 >
-                                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
-                                        <Loader2 className="text-blue-500 animate-spin" size={28} />
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sky-50 flex items-center justify-center">
+                                        <Loader2 className="text-sky-500 animate-spin" size={28} />
                                     </div>
                                     <p className="font-semibold text-slate-700">Memproses dengan AI...</p>
                                     <p className="text-xs text-slate-400 mt-1">
@@ -439,7 +439,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                             }}
                                             disabled={saving}
                                             type="button"
-                                            className="flex-1 py-3 rounded-xl bg-blue-600 font-medium text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-blue-400"
+                                            className="flex-1 py-3 rounded-xl bg-sky-500 font-medium text-white hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:bg-sky-300"
                                         >
                                             {saving ? (
                                                 <>

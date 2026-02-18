@@ -29,13 +29,15 @@ export const users = sqliteTable("users", {
 
 export const transactions = sqliteTable("transactions", {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: integer("user_id").references(() => users.id).notNull(), // New: SaaS Isolation
+    userId: integer("user_id").references(() => users.id).notNull(),
     amount: real("amount").notNull(),
     description: text("description").notNull(),
     merchantName: text("merchant_name"),
     categoryId: integer("category_id").references(() => categories.id),
     type: text("type", { enum: ["expense", "income", "transfer"] }).notNull().default("expense"),
     paymentMethod: text("payment_method").default("cash"),
+    destinationType: text("destination_type", { enum: ["goal", "investment", "bill"] }),
+    destinationId: integer("destination_id"),
     date: integer("date", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     isVerified: integer("is_verified", { mode: "boolean" }).notNull().default(false),
     isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),

@@ -172,15 +172,14 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
 
                 {/* Container */}
                 <div className="min-h-screen max-w-[500px] mx-auto bg-slate-50/40 backdrop-blur-xl shadow-2xl shadow-blue-900/10">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-10">
+                    <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
                     <button
                         onClick={step === "type" ? handleClose : () => setStep(step === "amount" ? "type" : step === "category" ? "amount" : "category")}
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600"
+                        className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400"
                     >
                         {step === "type" ? <X size={20} /> : <ArrowLeft size={20} />}
                     </button>
-                    <h2 className="text-lg font-bold text-slate-900">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                         {step === "type" && "Tipe Transaksi"}
                         {step === "amount" && "Nominal"}
                         {step === "category" && "Kategori"}
@@ -189,55 +188,52 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                     <div className="w-10" />
                 </div>
 
-                {/* Content */}
                 <div className="p-6">
                     {error && (
-                        <div className="mb-4 p-3 bg-rose-50 text-rose-600 rounded-xl text-sm">
+                        <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm">
                             {error}
                         </div>
                     )}
 
-                    {/* Step 1: Select Type */}
                     {step === "type" && (
                         <div className="space-y-4">
-                            <p className="text-slate-500 text-center mb-6">Pilih tipe transaksi</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-center mb-6">Pilih tipe transaksi</p>
                             <button
                                 onClick={() => handleTypeSelect("expense")}
-                                className="w-full p-6 rounded-2xl bg-rose-50 border-2 border-rose-100 hover:border-rose-300 transition-all"
+                                className="w-full p-6 rounded-2xl bg-rose-50 dark:bg-rose-900/30 border-2 border-rose-100 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-600 transition-all"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 rounded-xl bg-rose-500 flex items-center justify-center">
                                         <TrendingUp className="text-white" size={28} />
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-bold text-slate-900 text-lg">Pengeluaran</h3>
-                                        <p className="text-slate-500 text-sm">Catat pengeluaran harian</p>
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">Pengeluaran</h3>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm">Catat pengeluaran harian</p>
                                     </div>
                                 </div>
                             </button>
                             <button
                                 onClick={() => handleTypeSelect("income")}
-                                className="w-full p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-100 hover:border-emerald-300 transition-all"
+                                className="w-full p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-100 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-600 transition-all"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 rounded-xl bg-emerald-500 flex items-center justify-center">
                                         <Wallet className="text-white" size={28} />
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-bold text-slate-900 text-lg">Pemasukan</h3>
-                                        <p className="text-slate-500 text-sm">Catat pemasukan/gaji</p>
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">Pemasukan</h3>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm">Catat pemasukan/gaji</p>
                                     </div>
                                 </div>
                             </button>
                         </div>
                     )}
 
-                    {/* Step 2: Enter Amount */}
                     {step === "amount" && (
                         <div className="space-y-6">
                             <div className="text-center py-8">
-                                <p className="text-slate-400 text-sm mb-2">Nominal</p>
-                                <div className="text-5xl font-bold text-slate-900">
+                                <p className="text-slate-400 dark:text-slate-500 text-sm mb-2">Nominal</p>
+                                <div className="text-5xl font-bold text-slate-900 dark:text-white">
                                     {amount ? formatCurrency(parseFloat(amount)) : "Rp 0"}
                                 </div>
                             </div>
@@ -246,7 +242,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0"
-                                className="w-full text-center text-3xl font-bold p-4 bg-slate-50 rounded-2xl border-none outline-none"
+                                className="w-full text-center text-3xl font-bold p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none"
                                 autoFocus
                             />
                             <button
@@ -254,7 +250,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 disabled={!amount}
                                 className={cn(
                                     "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                    amount ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-300"
+                                    amount ? "bg-sky-500 hover:bg-sky-600" : "bg-slate-300 dark:bg-slate-700"
                                 )}
                             >
                                 Lanjut
@@ -262,10 +258,9 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                         </div>
                     )}
 
-                    {/* Step 3: Select Category */}
                     {step === "category" && (
                         <div className="space-y-4">
-                            <p className="text-slate-500 mb-4">Pilih kategori</p>
+                            <p className="text-slate-500 dark:text-slate-400 mb-4">Pilih kategori</p>
                             <div className="grid grid-cols-2 gap-3">
                                 {categories.map((cat) => {
                                     const Icon = categoryIcons[cat.icon] || Wallet;
@@ -273,7 +268,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                         <button
                                             key={cat.id}
                                             onClick={() => handleCategorySelect(cat.id)}
-                                            className="p-4 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-blue-300 transition-all text-left"
+                                            className="p-4 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-sky-300 transition-all text-left"
                                         >
                                             <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center" style={{ backgroundColor: cat.color + "20" }}>
                                                 <Icon size={20} style={{ color: cat.color }} />
@@ -298,7 +293,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Contoh: Makan siang di warteg"
-                                    className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500"
                                     autoFocus
                                 />
                             </div>
@@ -323,7 +318,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 disabled={loading || !description}
                                 className={cn(
                                     "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                    loading || !description ? "bg-slate-300" : "bg-blue-600 hover:bg-blue-700"
+                                    loading || !description ? "bg-slate-300" : "bg-sky-500 hover:bg-sky-600"
                                 )}
                             >
                                 {loading ? "Menyimpan..." : "Simpan Transaksi"}

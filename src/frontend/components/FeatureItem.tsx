@@ -11,12 +11,14 @@ interface FeatureItemProps {
 }
 
 const colorClasses: Record<string, { bg: string; text: string; hoverBg: string; hoverBorder: string }> = {
-    purple: { bg: "bg-purple-500/10 backdrop-blur-md border-purple-200/30", text: "text-purple-600", hoverBg: "group-hover:bg-purple-500/20", hoverBorder: "group-hover:border-purple-300/50" },
-    blue: { bg: "bg-blue-500/10 backdrop-blur-md border-blue-200/30", text: "text-blue-600", hoverBg: "group-hover:bg-blue-500/20", hoverBorder: "group-hover:border-blue-300/50" },
-    emerald: { bg: "bg-emerald-500/10 backdrop-blur-md border-emerald-200/30", text: "text-emerald-600", hoverBg: "group-hover:bg-emerald-500/20", hoverBorder: "group-hover:border-emerald-300/50" },
-    rose: { bg: "bg-rose-500/10 backdrop-blur-md border-rose-200/30", text: "text-rose-600", hoverBg: "group-hover:bg-rose-500/20", hoverBorder: "group-hover:border-rose-300/50" },
-    amber: { bg: "bg-amber-500/10 backdrop-blur-md border-amber-200/30", text: "text-amber-600", hoverBg: "group-hover:bg-amber-500/20", hoverBorder: "group-hover:border-amber-300/50" },
-    indigo: { bg: "bg-indigo-500/10 backdrop-blur-md border-indigo-200/30", text: "text-indigo-600", hoverBg: "group-hover:bg-indigo-500/20", hoverBorder: "group-hover:border-indigo-300/50" },
+    purple: { bg: "bg-purple-50 dark:bg-purple-900/30", text: "text-purple-500 dark:text-purple-400", hoverBg: "group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50", hoverBorder: "group-hover:border-purple-200 dark:group-hover:border-purple-700" },
+    sky: { bg: "bg-sky-50 dark:bg-sky-900/30", text: "text-sky-500 dark:text-sky-400", hoverBg: "group-hover:bg-sky-100 dark:group-hover:bg-sky-900/50", hoverBorder: "group-hover:border-sky-200 dark:group-hover:border-sky-700" },
+    blue: { bg: "bg-blue-50 dark:bg-blue-900/30", text: "text-blue-500 dark:text-blue-400", hoverBg: "group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50", hoverBorder: "group-hover:border-blue-200 dark:group-hover:border-blue-700" },
+    emerald: { bg: "bg-emerald-50 dark:bg-emerald-900/30", text: "text-emerald-500 dark:text-emerald-400", hoverBg: "group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50", hoverBorder: "group-hover:border-emerald-200 dark:group-hover:border-emerald-700" },
+    rose: { bg: "bg-rose-50 dark:bg-rose-900/30", text: "text-rose-500 dark:text-rose-400", hoverBg: "group-hover:bg-rose-100 dark:group-hover:bg-rose-900/50", hoverBorder: "group-hover:border-rose-200 dark:group-hover:border-rose-700" },
+    amber: { bg: "bg-amber-50 dark:bg-amber-900/30", text: "text-amber-500 dark:text-amber-400", hoverBg: "group-hover:bg-amber-100 dark:group-hover:bg-amber-900/50", hoverBorder: "group-hover:border-amber-200 dark:group-hover:border-amber-700" },
+    indigo: { bg: "bg-indigo-50 dark:bg-indigo-900/30", text: "text-indigo-500 dark:text-indigo-400", hoverBg: "group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50", hoverBorder: "group-hover:border-indigo-200 dark:group-hover:border-indigo-700" },
+    orange: { bg: "bg-orange-50 dark:bg-orange-900/30", text: "text-orange-500 dark:text-orange-400", hoverBg: "group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50", hoverBorder: "group-hover:border-orange-200 dark:group-hover:border-orange-700" },
 };
 
 export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureItemProps) {
@@ -30,19 +32,19 @@ export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureIte
             className="flex flex-col items-center gap-3 group cursor-pointer"
         >
             <div className={cn(
-                "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300",
-                "border shadow-sm",
+                "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300",
+                "border border-transparent shadow-sm",
                 colors.bg,
                 colors.hoverBg,
                 colors.hoverBorder,
-                "group-hover:shadow-lg",
-                "group-active:scale-95"
+                "group-hover:shadow-md",
+                "group-active:scale-90"
             )}>
-                <div className={cn("transform group-hover:scale-110 transition-transform duration-300", colors.text)}>
+                <div className={cn("transform transition-transform duration-300 group-hover:scale-110", colors.text)}>
                     {icon}
                 </div>
             </div>
-            <span className="text-[10px] font-bold text-slate-500 text-center leading-tight max-w-[80px] group-hover:text-slate-900 transition-colors">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 text-center leading-tight max-w-[80px] group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                 {label}
             </span>
         </motion.div>

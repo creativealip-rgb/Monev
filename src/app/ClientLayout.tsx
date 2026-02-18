@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 import { BottomNav } from "@/frontend/components/BottomNav";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { NativeNotificationService } from "@/components/NativeNotificationService";
+import { HeroThemeProvider } from "@/frontend/lib/hero-theme";
+import { ThemeProvider } from "@/frontend/lib/theme-context";
+import { ToastProvider } from "@/frontend/components/Toast";
 
 export default function ClientLayout({
     children,
@@ -14,7 +17,6 @@ export default function ClientLayout({
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
     useEffect(() => {
-        // Apply is-native class if running on Capacitor (native app)
         const platform = Capacitor.getPlatform();
         const isNative = platform === 'ios' || platform === 'android';
 
@@ -30,23 +32,27 @@ export default function ClientLayout({
     }, []);
 
     return (
-        <>
-            <NativeNotificationService />
-            <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-100">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-200/30 via-transparent to-transparent" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-200/30 via-transparent to-transparent" />
-            </div>
+        <HeroThemeProvider>
+            <ThemeProvider>
+                <ToastProvider>
+                    <NativeNotificationService />
+                    <div className="fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-200/30 via-transparent to-transparent dark:from-sky-900/30" />
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-cyan-200/30 via-transparent to-transparent dark:from-indigo-900/30" />
+                    </div>
 
-            <main className="min-h-screen max-w-[500px] mx-auto bg-slate-50/40 backdrop-blur-xl shadow-2xl shadow-blue-900/10 pb-24 relative">
-                {children}
-            </main>
+                    <main className="min-h-screen max-w-[500px] mx-auto bg-background/80 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-black/20 pb-24 relative">
+                        {children}
+                    </main>
 
-            <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />
-            <AddTransactionSheet
-                isOpen={isAddSheetOpen}
-                onClose={() => setIsAddSheetOpen(false)}
-                onSuccess={() => window.location.reload()}
-            />
-        </>
+                    <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />
+                    <AddTransactionSheet
+                        isOpen={isAddSheetOpen}
+                        onClose={() => setIsAddSheetOpen(false)}
+                        onSuccess={() => window.location.reload()}
+                    />
+                </ToastProvider>
+            </ThemeProvider>
+        </HeroThemeProvider>
     );
 }

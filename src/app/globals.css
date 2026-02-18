@@ -9,7 +9,9 @@
 @layer base {
   :root {
     /* Modern Financial Color System */
-    --background: 0 0% 98%;
+    /* Sky Blue & Cyan Theme */
+    --background: 204 100% 97%;
+    /* Sky 50 - Soft blue tint */
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -18,19 +20,20 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Deep Navy Blue */
-    --primary: 222 83% 25%;
+    /* Primary: Sky Blue */
+    --primary: 199 89% 48%;
     --primary-foreground: 210 40% 98%;
 
-    /* Secondary: Soft Blue */
-    --secondary: 210 40% 96%;
+    /* Secondary: Cyan Accent */
+    --secondary: 187 94% 53%;
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 199 100% 95%;
+    /* Very light sky */
+    --accent-foreground: 199 89% 48%;
 
     /* Destructive: Soft Red */
     --destructive: 0 84% 60%;
@@ -38,9 +41,9 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 222 83% 25%;
+    --ring: 199 89% 48%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
     /* Custom Colors */
     --success: 142 76% 36%;
@@ -52,6 +55,51 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
   }
+
+  /* Dark Mode */
+  .dark {
+    --background: 222 47% 11%;
+    /* Slate 900 */
+    --foreground: 210 40% 98%;
+
+    --card: 217 33% 17%;
+    /* Slate 800 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary: Sky Blue (brighter in dark mode) */
+    --primary: 199 89% 55%;
+    --primary-foreground: 222 47% 11%;
+
+    /* Secondary: Cyan */
+    --secondary: 187 94% 60%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 25%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 199 89% 55%;
+
+    /* Custom Colors Dark */
+    --success: 142 76% 45%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 222 47% 11%;
+
+    --info: 199 89% 55%;
+    --info-foreground: 210 40% 98%;
+  }
 }
 
 @layer base {
@@ -60,14 +108,25 @@
   }
 
   body {
-    @apply bg-slate-50 text-foreground antialiased relative overflow-x-hidden;
-    background-image:
-      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.04) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(30, 64, 175, 0.02) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.02) 0px, transparent 50%);
+    @apply bg-background text-foreground antialiased relative overflow-x-hidden;
     background-attachment: fixed;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  body:not(.dark) {
+    background-image:
+      radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(34, 211, 238, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(2, 132, 199, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(56, 189, 248, 0.04) 0px, transparent 50%);
+  }
+
+  body.dark {
+    background-image:
+      radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(34, 211, 238, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
   }
 }
 
@@ -86,7 +145,7 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   }
 
   .gradient-success {
@@ -107,7 +166,7 @@
   }
 
   .text-gradient-primary {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-cyan-500;
   }
 
   /* Smooth Scrollbar */
@@ -251,7 +310,7 @@
 /* Component Classes */
 @layer components {
   .card-clean {
-    @apply bg-white/60 backdrop-blur-2xl border border-white/40 shadow-xl shadow-slate-200/40 rounded-2xl transition-all duration-300;
+    @apply bg-white/60 backdrop-blur-2xl border border-white/40 shadow-xl shadow-slate-200/40 rounded-3xl transition-all duration-300;
   }
 
   .card-clean:hover {
@@ -259,7 +318,7 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 border border-transparent;
+    @apply bg-gradient-to-r from-sky-500 to-sky-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-sky-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 border border-transparent;
   }
 
   .btn-secondary {

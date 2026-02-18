@@ -145,27 +145,24 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed bottom-0 left-0 right-0 z-[10001] max-w-[500px] mx-auto"
                     >
-                        <div className="bg-white rounded-t-3xl shadow-2xl overflow-hidden">
-                            {/* Handle bar */}
+                        <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
                             <div className="flex justify-center pt-3 pb-2">
-                                <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+                                <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
                             </div>
 
-                            {/* Header */}
                             <div className="flex items-center justify-between px-6 pb-4">
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900">Tambah Transaksi</h2>
-                                    <p className="text-xs text-slate-500">Pilih cara input</p>
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Tambah Transaksi</h2>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Pilih cara input</p>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+                                    className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                                 >
                                     <X size={18} />
                                 </button>
                             </div>
 
-                            {/* Action Grid */}
                             <div className="px-6 pb-6 space-y-3">
                                 {actions.map((action) => {
                                     const Icon = action.icon;
@@ -178,8 +175,8 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                             onClick={() => handleAction(action.id)}
                                             className={cn(
                                                 "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all",
-                                                "border-slate-100 hover:border-slate-200 hover:shadow-md",
-                                                "bg-white"
+                                                "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 hover:shadow-md",
+                                                "bg-white dark:bg-slate-800"
                                             )}
                                         >
                                             <div className={cn(
@@ -189,28 +186,27 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                 <Icon className={colors.text} size={24} strokeWidth={2} />
                                             </div>
                                             <div className="flex-1 text-left">
-                                                <h3 className="font-semibold text-slate-900">{action.label}</h3>
-                                                <p className="text-xs text-slate-500">{action.description}</p>
+                                                <h3 className="font-semibold text-slate-900 dark:text-white">{action.label}</h3>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{action.description}</p>
                                             </div>
                                             <div className={cn(
                                                 "w-8 h-8 rounded-full flex items-center justify-center",
-                                                "bg-slate-50 group-hover:bg-slate-100"
+                                                "bg-slate-50 dark:bg-slate-700 group-hover:bg-slate-100"
                                             )}>
-                                                <Sparkles size={14} className="text-slate-400" />
+                                                <Sparkles size={14} className="text-slate-400 dark:text-slate-500" />
                                             </div>
                                         </motion.button>
                                     );
                                 })}
                             </div>
 
-                            {/* Recent Templates Hint */}
-                            <div className="px-6 pb-8 pt-2 border-t border-slate-100">
-                                <p className="text-xs text-slate-400 mb-3">Template cepat:</p>
+                            <div className="px-6 pb-8 pt-2 border-t border-slate-100 dark:border-slate-700">
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">Template cepat:</p>
                                 <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                                    {["☕ Kopi", "🍜 Makan", "🚕 Transport", "📱 Pulsa"].map((template) => (
+                                    {["Kopi", "Makan", "Transport", "Pulsa"].map((template) => (
                                         <button
                                             key={template}
-                                            className="px-3 py-1.5 bg-slate-50 rounded-full text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors whitespace-nowrap"
+                                            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-full text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/50 hover:text-sky-600 dark:hover:text-sky-400 transition-colors whitespace-nowrap"
                                         >
                                             {template}
                                         </button>

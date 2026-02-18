@@ -386,9 +386,8 @@ export async function updateGoalProgress(userId: number, id: number, amount: num
 export async function removeGoal(userId: number, id: number): Promise<Goal | undefined> {
     const db = getDb();
 
-    // Check if this goal is set as primaryGoalId in userSettings
-    // Need to strictly user scope this too
     await db.update(userSettings)
+        .set({ primaryGoalId: null })
         .where(and(eq(userSettings.primaryGoalId, id), eq(userSettings.userId, userId)));
 
     return db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId))).returning().get();
@@ -1012,4 +1011,93 @@ export async function addChatMessage(userId: number, role: "user" | "assistant",
         role,
         content
     }).returning().get();
+}
+
+export async function transferToGoal(userId: number, goalId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+    const db = getDb();
+
+    const goal = await getGoalById(userId, goalId);
+    if (!goal) return undefined;
+
+    const newAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
+    await db.update(goals)
+        .set({ currentAmount: newAmount })
+        .where(and(eq(goals.id, goalId), eq(goals.userId, userId)));
+
+    const cats = db.select().from(categories).all();
+    const tabunganCat = cats.find((c: Category) => c.name === "Tabungan");
+
+    const transaction = await db.insert(transactions).values({
+        userId,
+        amount,
+        description: description || `Transfer ke ${goal.name}`,
+        type: "transfer",
+        categoryId: tabunganCat?.id,
+        destinationType: "goal",
+        destinationId: goalId,
+        paymentMethod: "saldo_aktif",
+        date: new Date(),
+        isVerified: true,
+    }).returning().get();
+
+    return transaction;
+}
+
+export async function transferToInvestment(userId: number, investmentId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+    const db = getDb();
+
+    const investment = await getInvestmentById(userId, investmentId);
+    if (!investment) return undefined;
+
+    const newQuantity = investment.quantity + (amount / investment.avgBuyPrice);
+    await db.update(investments)
+        .set({ quantity: newQuantity, updatedAt: new Date() })
+        .where(and(eq(investments.id, investmentId), eq(investments.userId, userId)));
+
+    const cats = db.select().from(categories).all();
+    const investasiCat = cats.find((c: Category) => c.name === "Investasi");
+
+    const transaction = await db.insert(transactions).values({
+        userId,
+        amount,
+        description: description || `Buy ${investment.name}`,
+        type: "transfer",
+        categoryId: investasiCat?.id,
+        destinationType: "investment",
+        destinationId: investmentId,
+        paymentMethod: "saldo_aktif",
+        date: new Date(),
+        isVerified: true,
+    }).returning().get();
+
+    return transaction;
+}
+
+export async function payBill(userId: number, billId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+    const db = getDb();
+
+    const bill = await getBillById(userId, billId);
+    if (!bill) return undefined;
+
+    await db.update(bills)
+        .set({ isPaid: true, lastPaidAt: new Date() })
+        .where(and(eq(bills.id, billId), eq(bills.userId, userId)));
+
+    const cats = db.select().from(categories).all();
+    const tagihanCat = cats.find((c: Category) => c.name === "Tagihan");
+
+    const transaction = await db.insert(transactions).values({
+        userId,
+        amount,
+        description: description || `Bayar ${bill.name}`,
+        type: "expense",
+        categoryId: tagihanCat?.id,
+        destinationType: "bill",
+        destinationId: billId,
+        paymentMethod: "saldo_aktif",
+        date: new Date(),
+        isVerified: true,
+    }).returning().get();
+
+    return transaction;
 }

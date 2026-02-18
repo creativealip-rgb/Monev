@@ -6,25 +6,16 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Investment } from "@/types";
-import { createPortal } from "react-dom";
+import { Portal } from "@/frontend/components/Portal";
+import { NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
 
-// Portal helper
-function Portal({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
-    return mounted ? createPortal(children, document.body) : null;
-}
-
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase
 };
 
 function AssetIcon({ name, color, size = 20 }: { name: string; color: string; size?: number }) {
     const Icon = iconMap[name] || TrendingUp;
-    return <Icon size={size} style={{ color }} />;
+    return <Icon size={size} color={color} />;
 }
 
 export default function InvestmentsPage() {
@@ -33,6 +24,7 @@ export default function InvestmentsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
+    const toast = useToast();
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -112,9 +104,11 @@ export default function InvestmentsPage() {
             if (result.success) {
                 await loadData();
                 closeModals();
+                toast.success(selectedAsset ? "Investasi diperbarui" : "Investasi ditambahkan");
             }
         } catch (error) {
             console.error("Error saving investment:", error);
+            toast.error("Gagal menyimpan investasi");
         } finally {
             setIsSubmitting(false);
         }
@@ -128,9 +122,11 @@ export default function InvestmentsPage() {
             if (result.success) {
                 setInvestments(prev => prev.filter(i => i.id !== id));
                 closeModals();
+                toast.success("Investasi dihapus");
             }
         } catch (error) {
             console.error("Error deleting investment:", error);
+            toast.error("Gagal menghapus");
         }
     }
 
@@ -195,50 +191,48 @@ export default function InvestmentsPage() {
     const colorOptions = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
 
     return (
-        <div className="relative min-h-screen pb-24">
-            {/* Header */}
+        <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50"
+                className="sticky top-0 z-50 px-6 pt-safe pb-4 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 tracking-tight">Investasi</h1>
+                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Investasi</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={openAddModal}
-                        className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition-all"
+                        className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900 transition-all"
                     >
                         <Plus size={18} />
                     </motion.button>
                 </div>
             </motion.header>
 
-            {/* Portfolio Summary */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-emerald-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-white shadow-xl shadow-emerald-900/10"
+                className="mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
-                <p className="text-emerald-200 text-xs font-medium mb-1">Total Nilai Aset</p>
+                <p className="text-cyan-200 text-xs font-medium mb-1">Total Nilai Aset</p>
                 <h2 className="text-2xl font-bold mb-6 tabular-nums">{loading ? "..." : formatCurrency(totalValue)}</h2>
 
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                     <div>
-                        <p className="text-emerald-200 text-[10px] uppercase tracking-wider mb-1">Modal Awal</p>
+                        <p className="text-cyan-200 text-[10px] uppercase tracking-wider mb-1">Modal Awal</p>
                         <p className="font-medium tabular-nums">{loading ? "..." : formatCurrency(totalCost)}</p>
                     </div>
                     <div>
-                        <p className="text-emerald-200 text-[10px] uppercase tracking-wider mb-1">Keuntungan</p>
+                        <p className="text-cyan-200 text-[10px] uppercase tracking-wider mb-1">Keuntungan</p>
                         <div className={cn(
                             "flex items-center gap-1 font-semibold tabular-nums",
                             totalProfit >= 0 ? "text-emerald-300" : "text-rose-300"
@@ -256,21 +250,17 @@ export default function InvestmentsPage() {
                 </div>
             </motion.div>
 
-            {/* Asset List */}
             <div className="px-6 mt-8">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Daftar Aset</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">Daftar Aset</h3>
 
                 {loading ? (
-                    <div className="space-y-4 animate-pulse">
+                    <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 h-24" />
+                            <div key={i} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 h-24 animate-pulse" />
                         ))}
                     </div>
                 ) : investments.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
-                        <p className="text-slate-500 font-bold">Belum ada investasi</p>
-                        <p className="text-xs text-slate-400 mt-1">Mulai catat aset investasi pertamamu</p>
-                    </div>
+                    <NoInvestmentsEmpty onAddNew={() => setIsAddModalOpen(true)} />
                 ) : (
                     <div className="space-y-3">
                         {investments.map((inv, i) => {
@@ -286,7 +276,7 @@ export default function InvestmentsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: i * 0.05 }}
                                     onClick={() => openEditModal(inv)}
-                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-slate-200/40 transition-all active:scale-[0.98]"
+                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20 transition-all active:scale-[0.98]"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-3">
@@ -297,25 +287,25 @@ export default function InvestmentsPage() {
                                                 <AssetIcon name={inv.icon} color="#fff" size={20} />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-900">{inv.name}</h4>
-                                                <p className="text-xs text-slate-400 capitalize">{inv.type} • {inv.platform || "Manual"}</p>
+                                                <h4 className="font-bold text-slate-900 dark:text-white">{inv.name}</h4>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{inv.type} • {inv.platform || "Manual"}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-semibold text-slate-900 tabular-nums">{formatCurrency(value)}</p>
+                                            <p className="font-semibold text-slate-900 dark:text-white tabular-nums">{formatCurrency(value)}</p>
                                             <div className={cn(
                                                 "text-xs font-medium flex items-center justify-end gap-1 tabular-nums",
-                                                isProfit ? "text-emerald-600" : "text-rose-500"
+                                                isProfit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400"
                                             )}>
                                                 {isProfit ? "+" : ""}{formatCurrency(profit)} ({profitPct.toFixed(1)}%)
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                                        <div className="text-xs text-slate-400">
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-700">
+                                        <div className="text-xs text-slate-400 dark:text-slate-500">
                                             {inv.quantity.toLocaleString('id-ID')} @ {formatCurrency(inv.currentPrice)}
                                         </div>
-                                        <div className="text-xs text-slate-400 tabular-nums">
+                                        <div className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
                                             Modal: {formatCurrency(inv.avgBuyPrice)}
                                         </div>
                                     </div>
@@ -326,7 +316,6 @@ export default function InvestmentsPage() {
                 )}
             </div>
 
-            {/* Modal Form */}
             <Portal>
                 <AnimatePresence>
                     {(isAddModalOpen || isEditModalOpen) && (
@@ -336,53 +325,52 @@ export default function InvestmentsPage() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={closeModals}
-                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
                             />
                             <motion.div
                                 initial={{ opacity: 0, y: "100%" }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: "100%" }}
-                                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto"
+                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             >
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-slate-900">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                                         {isEditModalOpen ? "Edit Aset" : "Tambah Aset"}
                                     </h2>
                                     {isEditModalOpen && selectedAsset && (
                                         <button
                                             onClick={() => handleDelete(selectedAsset.id)}
-                                            className="ml-auto mr-4 text-rose-500 hover:bg-rose-50 p-2 rounded-full transition-colors"
+                                            className="ml-auto mr-4 text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/50 p-2 rounded-full transition-colors"
                                         >
                                             <Trash2 size={20} />
                                         </button>
                                     )}
                                     <button
                                         onClick={closeModals}
-                                        className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
+                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
                                     >
                                         <X size={20} />
                                     </button>
                                 </div>
 
                                 <div className="space-y-5">
-                                    {/* Name & Type */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Nama Aset</label>
+                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Nama Aset</label>
                                             <input
                                                 type="text"
                                                 value={formName}
                                                 onChange={(e) => setFormName(e.target.value)}
                                                 placeholder="BTC, BBCA, Emas"
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Tipe</label>
+                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Tipe</label>
                                             <select
                                                 value={formType}
                                                 onChange={(e) => setFormType(e.target.value as any)}
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:outline-none transition-colors text-sm bg-white"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             >
                                                 {typeOptions.map(t => (
                                                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -391,58 +379,55 @@ export default function InvestmentsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Quantity & Platform */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Jumlah (Unit)</label>
+                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Jumlah (Unit)</label>
                                             <input
                                                 type="number"
                                                 step="any"
                                                 value={formQuantity}
                                                 onChange={(e) => setFormQuantity(e.target.value)}
                                                 placeholder="0.00"
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Platform</label>
+                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Platform</label>
                                             <input
                                                 type="text"
                                                 value={formPlatform}
                                                 onChange={(e) => setFormPlatform(e.target.value)}
                                                 placeholder="Bibit, Ajaib..."
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Prices */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Harga Beli (Avg)</label>
+                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Harga Beli (Avg)</label>
                                             <input
                                                 type="number"
                                                 value={formBuyPrice}
                                                 onChange={(e) => setFormBuyPrice(e.target.value)}
                                                 placeholder="Rp 0"
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Harga Sekarang</label>
+                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Harga Sekarang</label>
                                             <input
                                                 type="number"
                                                 value={formCurrentPrice}
                                                 onChange={(e) => setFormCurrentPrice(e.target.value)}
                                                 placeholder="Rp 0"
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Icon & Color */}
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 block">Ikon & Warna</label>
+                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Ikon & Warna</label>
                                         <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                                             {iconOptions.map(opt => (
                                                 <button
@@ -451,11 +436,11 @@ export default function InvestmentsPage() {
                                                     className={cn(
                                                         "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all",
                                                         formIcon === opt.name
-                                                            ? "border-emerald-500 bg-emerald-50 text-emerald-600"
-                                                            : "border-slate-100 text-slate-500"
+                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400"
+                                                            : "border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400"
                                                     )}
                                                 >
-                                                    <AssetIcon name={opt.name} color={formIcon === opt.name ? "#10b981" : "#94a3b8"} size={16} />
+                                                    <AssetIcon name={opt.name} color={formIcon === opt.name ? "#0ea5e9" : "#94a3b8"} size={16} />
                                                     {opt.label}
                                                 </button>
                                             ))}
@@ -467,7 +452,7 @@ export default function InvestmentsPage() {
                                                     onClick={() => setFormColor(c)}
                                                     className={cn(
                                                         "w-8 h-8 rounded-full transition-all flex-shrink-0",
-                                                        formColor === c ? "ring-2 ring-offset-2 ring-emerald-500 scale-110" : ""
+                                                        formColor === c ? "ring-2 ring-offset-2 ring-sky-500 scale-110 dark:ring-offset-slate-900" : ""
                                                     )}
                                                     style={{ backgroundColor: c }}
                                                 />
@@ -475,15 +460,14 @@ export default function InvestmentsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Submit */}
                                     <button
                                         onClick={handleSubmit}
                                         disabled={!formName || !formQuantity || !formBuyPrice || !formCurrentPrice || isSubmitting}
                                         className={cn(
                                             "w-full py-4 rounded-2xl text-sm font-bold transition-all mt-4",
                                             formName && formQuantity
-                                                ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/25"
-                                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                                ? "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/25"
+                                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                         )}
                                     >
                                         {isSubmitting ? "Menyimpan..." : (isEditModalOpen ? "Simpan Perubahan" : "Tambah Aset")}
