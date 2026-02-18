@@ -90,64 +90,64 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
+                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Tambah Budget</h2>
-                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <X size={20} />
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Budget</h2>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <X size={16} />
                         </button>
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-2xl text-sm font-medium flex items-center gap-2">
+                        <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-[13px] font-medium flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                             {error}
                         </div>
                     )}
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3 block pl-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
                                 Pilih Kategori
                             </label>
-                            <div className="flex gap-3 overflow-x-auto pb-4 -mx-2 px-2 custom-scrollbar">
+                            <div className="flex gap-2 overflow-x-auto pb-3 -mx-1 px-1">
                                 {expenseCategories.map((cat) => (
                                     <button
                                         key={cat.id}
                                         onClick={() => setSelectedCategory(cat.id)}
                                         className={cn(
-                                            "flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl border-2 transition-all",
+                                            "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-all",
                                             selectedCategory === cat.id
-                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 shadow-sm"
+                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300"
                                                 : "border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-sky-200 dark:hover:border-sky-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                                         )}
                                     >
                                         <span
-                                            className="text-lg w-6 h-6 flex items-center justify-center rounded-full"
+                                            className="w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
                                             style={{ backgroundColor: cat.color + "20" }}
                                         >
                                             <span style={{ color: cat.color }}>●</span>
                                         </span>
-                                        <span className="text-sm font-bold whitespace-nowrap">{cat.name}</span>
+                                        <span className="text-[13px] font-bold whitespace-nowrap">{cat.name}</span>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
                                 Target Budget (Bulanan)
                             </label>
                             <div className="relative">
-                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold">Rp</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                 <input
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0"
-                                    className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-lg font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 />
                             </div>
                         </div>
@@ -156,7 +156,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                             onClick={handleSubmit}
                             disabled={loading}
                             className={cn(
-                                "w-full py-4 rounded-2xl text-sm font-bold transition-all mt-4",
+                                "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                 loading
                                     ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                     : "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/30 active:scale-[0.98]"
@@ -258,98 +258,98 @@ export function AddGoalForm({ isOpen, onClose, onSuccess }: AddGoalFormProps) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
+                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Tambah Goal</h2>
-                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <X size={20} />
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Goal</h2>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <X size={16} />
                         </button>
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-2xl text-sm font-medium flex items-center gap-2">
+                        <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-[13px] font-medium flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                             {error}
                         </div>
                     )}
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Nama Goal</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Nama Goal</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Contoh: MacBook Pro"
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3 block pl-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
                                 Pilih Icon
                             </label>
-                            <div className="flex gap-3 overflow-x-auto pb-4 -mx-2 px-2 custom-scrollbar">
+                            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
                                 {goalIcons.map((item) => (
                                     <button
                                         key={item.icon}
                                         onClick={() => setSelectedIcon(item)}
                                         className={cn(
-                                            "flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl border-2 transition-all",
+                                            "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-all",
                                             selectedIcon.icon === item.icon
-                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 shadow-sm"
+                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300"
                                                 : "border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-sky-200 dark:hover:border-sky-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                                         )}
                                     >
                                         <div
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                            className="w-6 h-6 rounded-lg flex items-center justify-center"
                                             style={{ backgroundColor: item.color + "20" }}
                                         >
                                             <span style={{ color: item.color }}>●</span>
                                         </div>
-                                        <span className="text-sm font-bold whitespace-nowrap">{item.label}</span>
+                                        <span className="text-[13px] font-bold whitespace-nowrap">{item.label}</span>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Target Amount</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Target Amount</label>
                             <div className="relative">
-                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold">Rp</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                 <input
                                     type="number"
                                     value={targetAmount}
                                     onChange={(e) => setTargetAmount(e.target.value)}
                                     placeholder="0"
-                                    className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-lg font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Tabungan Awal</label>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Tabungan Awal</label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-xs">Rp</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-[10px]">Rp</span>
                                     <input
                                         type="number"
                                         value={currentAmount}
                                         onChange={(e) => setCurrentAmount(e.target.value)}
                                         placeholder="0"
-                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                                        className="w-full pl-8 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Deadline</label>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Deadline</label>
                                 <input
                                     type="date"
                                     value={deadline}
                                     onChange={(e) => setDeadline(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -358,7 +358,7 @@ export function AddGoalForm({ isOpen, onClose, onSuccess }: AddGoalFormProps) {
                             onClick={handleSubmit}
                             disabled={loading}
                             className={cn(
-                                "w-full py-4 rounded-2xl text-sm font-bold transition-all mt-4",
+                                "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                 loading
                                     ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                     : "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/30 active:scale-[0.98]"
@@ -437,36 +437,36 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
+                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Budget: {budget.category}</h2>
-                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <X size={20} />
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Edit Budget: {budget.category}</h2>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <X size={16} />
                         </button>
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-2xl text-sm font-medium flex items-center gap-2">
+                        <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-[13px] font-medium flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                             {error}
                         </div>
                     )}
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
                                 Limit Baru
                             </label>
                             <div className="relative">
-                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold">Rp</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                 <input
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0"
-                                    className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-lg font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 />
                             </div>
                         </div>
@@ -475,7 +475,7 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                             onClick={handleSubmit}
                             disabled={loading}
                             className={cn(
-                                "w-full py-4 rounded-2xl text-sm font-bold transition-all mt-4",
+                                "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                 loading
                                     ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                     : "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/30 active:scale-[0.98]"
@@ -563,95 +563,95 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
+                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Goal</h2>
-                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <X size={20} />
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Edit Goal</h2>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <X size={16} />
                         </button>
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-2xl text-sm font-medium flex items-center gap-2">
+                        <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-[13px] font-medium flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                             {error}
                         </div>
                     )}
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Nama Goal</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Nama Goal</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3 block pl-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
                                 Pilih Icon
                             </label>
-                            <div className="flex gap-3 overflow-x-auto pb-4 -mx-2 px-2 custom-scrollbar">
+                            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
                                 {goalIcons.map((item) => (
                                     <button
                                         key={item.icon}
                                         onClick={() => setSelectedIcon(item)}
                                         className={cn(
-                                            "flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl border-2 transition-all",
+                                            "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-all",
                                             selectedIcon.icon === item.icon
-                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 shadow-sm"
+                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300"
                                                 : "border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-sky-200 dark:hover:border-sky-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                                         )}
                                     >
                                         <div
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                            className="w-6 h-6 rounded-lg flex items-center justify-center"
                                             style={{ backgroundColor: item.color + "20" }}
                                         >
                                             <span style={{ color: item.color }}>●</span>
                                         </div>
-                                        <span className="text-sm font-bold whitespace-nowrap">{item.label}</span>
+                                        <span className="text-[13px] font-bold whitespace-nowrap">{item.label}</span>
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Target Amount</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Target Amount</label>
                             <div className="relative">
-                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold">Rp</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                 <input
                                     type="number"
                                     value={targetAmount}
                                     onChange={(e) => setTargetAmount(e.target.value)}
-                                    className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-lg font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Tabungan Saat Ini</label>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Tabungan Saat Ini</label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-xs">Rp</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-[10px]">Rp</span>
                                     <input
                                         type="number"
                                         value={currentAmount}
                                         onChange={(e) => setCurrentAmount(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                                        className="w-full pl-8 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block pl-1">Deadline</label>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Deadline</label>
                                 <input
                                     type="date"
                                     value={deadline}
                                     onChange={(e) => setDeadline(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-sm font-medium text-slate-900 dark:text-white"
+                                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -660,7 +660,7 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                             onClick={handleSubmit}
                             disabled={loading}
                             className={cn(
-                                "w-full py-4 rounded-2xl text-sm font-bold transition-all mt-4",
+                                "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                 loading
                                     ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                     : "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/30 active:scale-[0.98]"

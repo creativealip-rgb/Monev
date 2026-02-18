@@ -30,28 +30,28 @@ interface EmptyStateProps {
 
 const variantConfig = {
     default: {
-        iconBg: "bg-slate-100",
-        iconColor: "text-slate-400",
-        titleColor: "text-slate-700",
-        descColor: "text-slate-500"
+        iconBg: "bg-slate-100 dark:bg-slate-800",
+        iconColor: "text-slate-400 dark:text-slate-500",
+        titleColor: "text-slate-700 dark:text-slate-200",
+        descColor: "text-slate-500 dark:text-slate-400"
     },
     search: {
-        iconBg: "bg-sky-50",
-        iconColor: "text-sky-500",
-        titleColor: "text-slate-700",
-        descColor: "text-slate-500"
+        iconBg: "bg-sky-50 dark:bg-sky-900/30",
+        iconColor: "text-sky-500 dark:text-sky-400",
+        titleColor: "text-slate-700 dark:text-slate-200",
+        descColor: "text-slate-500 dark:text-slate-400"
     },
     error: {
-        iconBg: "bg-rose-50",
-        iconColor: "text-rose-500",
-        titleColor: "text-slate-700",
-        descColor: "text-slate-500"
+        iconBg: "bg-rose-50 dark:bg-rose-900/30",
+        iconColor: "text-rose-500 dark:text-rose-400",
+        titleColor: "text-slate-700 dark:text-slate-200",
+        descColor: "text-slate-500 dark:text-slate-400"
     },
     success: {
-        iconBg: "bg-emerald-50",
-        iconColor: "text-emerald-500",
-        titleColor: "text-slate-700",
-        descColor: "text-slate-500"
+        iconBg: "bg-emerald-50 dark:bg-emerald-900/30",
+        iconColor: "text-emerald-500 dark:text-emerald-400",
+        titleColor: "text-slate-700 dark:text-slate-200",
+        descColor: "text-slate-500 dark:text-slate-400"
     }
 };
 

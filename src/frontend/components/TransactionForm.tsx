@@ -164,14 +164,12 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="fixed inset-0 z-[10001] overflow-y-auto"
             >
-                {/* Background */}
-                <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-100">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-200/30 via-transparent to-transparent" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-200/30 via-transparent to-transparent" />
+                <div className="fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-200/30 via-transparent to-transparent dark:from-sky-900/20" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-cyan-200/30 via-transparent to-transparent dark:from-cyan-900/20" />
                 </div>
 
-                {/* Container */}
-                <div className="min-h-screen max-w-[500px] mx-auto bg-slate-50/40 backdrop-blur-xl shadow-2xl shadow-blue-900/10">
+                <div className="min-h-screen max-w-[500px] mx-auto bg-sky-50/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-slate-950/30">
                     <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
                     <button
                         onClick={step === "type" ? handleClose : () => setStep(step === "amount" ? "type" : step === "category" ? "amount" : "category")}
@@ -268,12 +266,12 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                         <button
                                             key={cat.id}
                                             onClick={() => handleCategorySelect(cat.id)}
-                                            className="p-4 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-sky-300 transition-all text-left"
+                                            className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent hover:border-sky-300 dark:hover:border-sky-600 transition-all text-left"
                                         >
                                             <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center" style={{ backgroundColor: cat.color + "20" }}>
                                                 <Icon size={20} style={{ color: cat.color }} />
                                             </div>
-                                            <p className="font-semibold text-slate-900 text-sm">{cat.name}</p>
+                                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{cat.name}</p>
                                         </button>
                                     );
                                 })}
@@ -281,11 +279,10 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                         </div>
                     )}
 
-                    {/* Step 4: Details */}
                     {step === "details" && (
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Deskripsi
                                 </label>
                                 <input
@@ -293,22 +290,22 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Contoh: Makan siang di warteg"
-                                    className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500"
+                                    className="w-full p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500"
                                     autoFocus
                                 />
                             </div>
-                            <div className="bg-slate-50 p-4 rounded-2xl space-y-2">
+                            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Nominal</span>
-                                    <span className="font-semibold">{formatCurrency(parseFloat(amount))}</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Nominal</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(parseFloat(amount))}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Kategori</span>
-                                    <span className="font-semibold">{categories.find(c => c.id === selectedCategory)?.name}</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Kategori</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{categories.find(c => c.id === selectedCategory)?.name}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Tipe</span>
-                                    <span className={cn("font-semibold", transactionType === "expense" ? "text-rose-600" : "text-emerald-600")}>
+                                    <span className="text-slate-500 dark:text-slate-400">Tipe</span>
+                                    <span className={cn("font-semibold", transactionType === "expense" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
                                         {transactionType === "expense" ? "Pengeluaran" : "Pemasukan"}
                                     </span>
                                 </div>
@@ -318,7 +315,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 disabled={loading || !description}
                                 className={cn(
                                     "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                    loading || !description ? "bg-slate-300" : "bg-sky-500 hover:bg-sky-600"
+                                    loading || !description ? "bg-slate-300 dark:bg-slate-700" : "bg-sky-500 hover:bg-sky-600"
                                 )}
                             >
                                 {loading ? "Menyimpan..." : "Simpan Transaksi"}
