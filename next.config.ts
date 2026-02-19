@@ -16,7 +16,9 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["better-sqlite3"],
   output: "standalone",
-  turbopack: {},
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 export default withPWA(nextConfig);
