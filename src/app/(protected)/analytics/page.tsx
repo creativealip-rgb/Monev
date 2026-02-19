@@ -170,19 +170,22 @@ export default function AnalyticsPage() {
     const [error, setError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<"expense" | "income" | null>(null);
 
+    const fetchData = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await fetch("/api/analytics");
+            const json = await res.json();
+            setData(json);
+        } catch (error) {
+            console.error("Failed to fetch analytics:", error);
+            setError("Gagal memuat data analitik");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await fetch("/api/analytics");
-                const json = await res.json();
-                setData(json);
-            } catch (error) {
-                console.error("Failed to fetch analytics:", error);
-                setError("Gagal memuat data analitik");
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchData();
     }, []);
 
@@ -266,7 +269,7 @@ export default function AnalyticsPage() {
                 <ErrorEmpty 
                     title="Gagal memuat data" 
                     description={error || "Data analitik tidak tersedia"}
-                    onRetry={() => window.location.reload()}
+                    onRetry={fetchData}
                 />
             </div>
         );

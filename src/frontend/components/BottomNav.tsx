@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, NotebookTabs, Wallet, Plus, PiggyBank } from "lucide-react";
+import { Home, NotebookTabs, BarChart3, Plus, User } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -18,8 +18,8 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const links = [
         { href: "/", label: "Home", icon: Home },
         { href: "/transactions", label: "Riwayat", icon: NotebookTabs },
-        { href: "/budgets", label: "Budget", icon: Wallet },
-        { href: "/savings", label: "Tabungan", icon: PiggyBank },
+        { href: "/analytics", label: "Statistik", icon: BarChart3 },
+        { href: "/profile", label: "Profile", icon: User },
     ];
 
     // Split links: first 2 on left, last 2 on right

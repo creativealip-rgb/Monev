@@ -556,19 +556,10 @@ export async function unlinkTelegramAccount(userId: number): Promise<void> {
 }
 
 // User Settings
-export async function getUserSettings(userId: number): Promise<UserSettings> {
+export async function getUserSettings(userId: number): Promise<UserSettings | undefined> {
     const db = getDb();
     let settings = db.select().from(userSettings).where(eq(userSettings.userId, userId)).get();
-
-    if (!settings) {
-        // Create default settings if not exists
-        settings = db.insert(userSettings).values({
-            userId,
-            hourlyRate: 50000,
-        }).returning().get();
-    }
-
-    return settings;
+    return settings; // Return settings or undefined if not found
 }
 
 export async function updateUserSettings(userId: number, data: Partial<UserSettings>): Promise<UserSettings> {
@@ -1013,13 +1004,18 @@ export async function addChatMessage(userId: number, role: "user" | "assistant",
     }).returning().get();
 }
 
+const ADMIN_FEE_PERCENTAGE = 0.02; // 2% admin fee
+
 export async function transferToGoal(userId: number, goalId: number, amount: number, description?: string): Promise<Transaction | undefined> {
     const db = getDb();
 
     const goal = await getGoalById(userId, goalId);
     if (!goal) return undefined;
 
-    const newAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
+    const fee = amount * ADMIN_FEE_PERCENTAGE;
+    const netAmount = amount - fee;
+    const newAmount = Math.min(goal.currentAmount + netAmount, goal.targetAmount);
+    
     await db.update(goals)
         .set({ currentAmount: newAmount })
         .where(and(eq(goals.id, goalId), eq(goals.userId, userId)));
@@ -1030,12 +1026,13 @@ export async function transferToGoal(userId: number, goalId: number, amount: num
     const transaction = await db.insert(transactions).values({
         userId,
         amount,
-        description: description || `Transfer ke ${goal.name}`,
+        description: description || `Transfer ke ${goal.name} (Fee: ${fee.toLocaleString('id-ID')})`,
         type: "transfer",
         categoryId: tabunganCat?.id,
         destinationType: "goal",
         destinationId: goalId,
         paymentMethod: "saldo_aktif",
+        fee,
         date: new Date(),
         isVerified: true,
     }).returning().get();
@@ -1049,7 +1046,10 @@ export async function transferToInvestment(userId: number, investmentId: number,
     const investment = await getInvestmentById(userId, investmentId);
     if (!investment) return undefined;
 
-    const newQuantity = investment.quantity + (amount / investment.avgBuyPrice);
+    const fee = amount * ADMIN_FEE_PERCENTAGE;
+    const netAmount = amount - fee;
+    const newQuantity = investment.quantity + (netAmount / investment.avgBuyPrice);
+    
     await db.update(investments)
         .set({ quantity: newQuantity, updatedAt: new Date() })
         .where(and(eq(investments.id, investmentId), eq(investments.userId, userId)));
@@ -1060,12 +1060,13 @@ export async function transferToInvestment(userId: number, investmentId: number,
     const transaction = await db.insert(transactions).values({
         userId,
         amount,
-        description: description || `Buy ${investment.name}`,
+        description: description || `Buy ${investment.name} (Fee: ${fee.toLocaleString('id-ID')})`,
         type: "transfer",
         categoryId: investasiCat?.id,
         destinationType: "investment",
         destinationId: investmentId,
         paymentMethod: "saldo_aktif",
+        fee,
         date: new Date(),
         isVerified: true,
     }).returning().get();
@@ -1098,6 +1099,386 @@ export async function payBill(userId: number, billId: number, amount: number, de
         date: new Date(),
         isVerified: true,
     }).returning().get();
+    return transaction;
+}
+
+// ============ Advanced Analytics Functions ============
+
+export async function getMonthlyComparison(userId: number, months: number = 6) {
+    const db = getDb();
+    const now = new Date();
+    const comparisons = [];
+
+    for (let i = 0; i < months; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const stats = await getMonthlyStats(userId, date.getFullYear(), date.getMonth() + 1);
+        comparisons.push({
+            month: date.getMonth() + 1,
+            year: date.getFullYear(),
+            monthName: date.toLocaleString('id-ID', { month: 'short' }),
+            income: stats.income,
+            expense: stats.expense,
+            balance: stats.balance
+        });
+    }
+
+    return comparisons.reverse();
+}
+
+export async function getTopSpendingCategories(userId: number, year: number, month: number, limit: number = 5) {
+    const db = getDb();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const results = await db.select({
+        categoryId: transactions.categoryId,
+        categoryName: categories.name,
+        categoryColor: categories.color,
+        categoryIcon: categories.icon,
+        totalAmount: sql<number>`SUM(${transactions.amount})`.as('totalAmount'),
+        transactionCount: sql<number>`COUNT(*)`.as('transactionCount')
+    })
+        .from(transactions)
+        .innerJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, 'expense'),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .groupBy(transactions.categoryId)
+        .orderBy(sql`totalAmount DESC`)
+        .limit(limit)
+        .all();
+
+    // Get previous month for trend comparison
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    const prevStartDate = new Date(prevYear, prevMonth - 1, 1);
+    const prevEndDate = new Date(prevYear, prevMonth, 0, 23, 59, 59, 999);
+
+    const prevResults = await db.select({
+        categoryId: transactions.categoryId,
+        totalAmount: sql<number>`SUM(${transactions.amount})`.as('totalAmount')
+    })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, 'expense'),
+            gte(transactions.date, prevStartDate),
+            lte(transactions.date, prevEndDate)
+        ))
+        .groupBy(transactions.categoryId)
+        .all();
+
+    const prevMap = new Map(prevResults.map(r => [r.categoryId, r.totalAmount]));
+
+    return results.map(r => {
+        const prevAmount = prevMap.get(r.categoryId) || 0;
+        const change = prevAmount > 0 ? ((r.totalAmount - prevAmount) / prevAmount) * 100 : 0;
+        return {
+            ...r,
+            change,
+            isIncrease: change > 0
+        };
+    });
+}
+
+export async function getSpendingPatterns(userId: number, year: number, month: number) {
+    const db = getDb();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // Daily spending for heatmap
+    const dailySpending = await db.select({
+        date: sql<string>`strftime('%Y-%m-%d', ${transactions.date} / 1000, 'unixepoch')`.as('date'),
+        dayOfWeek: sql<number>`CAST(strftime('%w', ${transactions.date} / 1000, 'unixepoch') AS INTEGER)`.as('dayOfWeek'),
+        dayOfMonth: sql<number>`CAST(strftime('%d', ${transactions.date} / 1000, 'unixepoch') AS INTEGER)`.as('dayOfMonth'),
+        totalAmount: sql<number>`SUM(${transactions.amount})`.as('totalAmount'),
+        transactionCount: sql<number>`COUNT(*)`.as('transactionCount')
+    })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, 'expense'),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .groupBy(sql`date`)
+        .all();
+
+    // Find highest spending day
+    const maxSpending = dailySpending.length > 0
+        ? dailySpending.reduce((max, day) => day.totalAmount > max.totalAmount ? day : max, dailySpending[0])
+        : null;
+
+    // Average daily spending
+    const avgDaily = dailySpending.length > 0
+        ? dailySpending.reduce((sum, day) => sum + day.totalAmount, 0) / dailySpending.length
+        : 0;
+
+    // Detect anomalies (days with spending > 2x average)
+    const anomalies = dailySpending.filter(day => day.totalAmount > avgDaily * 2);
+
+    return {
+        dailySpending,
+        highestSpendingDay: maxSpending,
+        averageDailySpending: avgDaily,
+        anomalies,
+        totalSpendingDays: dailySpending.length
+    };
+}
+
+export async function getGoalsProgress(userId: number) {
+    const db = getDb();
+    const goalsList = await getGoals(userId);
+
+    const now = new Date();
+
+    return goalsList.map(goal => {
+        const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+        let estimatedDays = null;
+
+        if (goal.deadline && progress < 100) {
+            const deadline = new Date(goal.deadline);
+            const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            const amountLeft = goal.targetAmount - goal.currentAmount;
+
+            // Simple estimation based on linear progress
+            const daysSinceStart = Math.ceil((now.getTime() - new Date(goal.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+            const monthlyProgress = daysSinceStart > 0 ? (goal.currentAmount / daysSinceStart) * 30 : 0;
+
+            if (monthlyProgress > 0) {
+                estimatedDays = Math.ceil(amountLeft / (monthlyProgress / 30));
+            }
+        }
+
+        return {
+            ...goal,
+            progress,
+            estimatedDays,
+            amountLeft: Math.max(0, goal.targetAmount - goal.currentAmount)
+        };
+    });
+}
+
+export async function calculateFinancialHealthScore(userId: number) {
+    const db = getDb();
+    const now = new Date();
+
+    // Get last 3 months data for scoring
+    const monthlyData = [];
+    for (let i = 0; i < 3; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const stats = await getMonthlyStats(userId, date.getFullYear(), date.getMonth() + 1);
+        monthlyData.push(stats);
+    }
+
+    const avgIncome = monthlyData.reduce((sum, m) => sum + m.income, 0) / monthlyData.length;
+    const avgExpense = monthlyData.reduce((sum, m) => sum + m.expense, 0) / monthlyData.length;
+    const currentBalance = monthlyData[0]?.balance || 0;
+
+    // Calculate scores (each 0-100)
+    let scores = {
+        savingsRate: 0,
+        expenseControl: 0,
+        balanceHealth: 0,
+        consistency: 0
+    };
+
+    // Savings rate score (ideal: 20%+)
+    if (avgIncome > 0) {
+        const savingsRate = ((avgIncome - avgExpense) / avgIncome) * 100;
+        scores.savingsRate = Math.min(100, Math.max(0, (savingsRate / 20) * 100));
+    }
+
+    // Expense control score (expense should be < 80% of income)
+    if (avgIncome > 0) {
+        const expenseRatio = avgExpense / avgIncome;
+        scores.expenseControl = Math.min(100, Math.max(0, (1 - expenseRatio) * 100));
+    }
+
+    // Balance health score (should have 3+ months of expenses saved)
+    if (avgExpense > 0) {
+        const monthsOfExpenses = currentBalance / avgExpense;
+        scores.balanceHealth = Math.min(100, (monthsOfExpenses / 3) * 100);
+    }
+
+    // Consistency score (low variance in savings)
+    if (monthlyData.length >= 2) {
+        const savings = monthlyData.map(m => m.income - m.expense);
+        const avgSavings = savings.reduce((sum, s) => sum + s, 0) / savings.length;
+        const variance = savings.reduce((sum, s) => sum + Math.pow(s - avgSavings, 2), 0) / savings.length;
+        const stdDev = Math.sqrt(variance);
+
+        // Lower standard deviation = higher consistency
+        scores.consistency = Math.max(0, 100 - (stdDev / Math.abs(avgSavings || 1)) * 50);
+    }
+
+    const totalScore = Math.round((scores.savingsRate + scores.expenseControl + scores.balanceHealth + scores.consistency) / 4);
+
+    let status = 'poor';
+    let message = 'Perlu perbaikan';
+    if (totalScore >= 80) {
+        status = 'excellent';
+        message = 'Sangat sehat';
+    } else if (totalScore >= 60) {
+        status = 'good';
+        message = 'Cukup baik';
+    } else if (totalScore >= 40) {
+        status = 'fair';
+        message = 'Perhatian diperlukan';
+    }
+
+    return {
+        totalScore,
+        status,
+        message,
+        breakdown: scores,
+        recommendations: generateRecommendations(scores, avgIncome, avgExpense)
+    };
+}
+
+function generateRecommendations(scores: any, avgIncome: number, avgExpense: number) {
+    const recommendations = [];
+
+    if (scores.savingsRate < 50) {
+        recommendations.push('Tingkatkan tabungan minimal 20% dari pendapatan');
+    }
+
+    if (scores.expenseControl < 50) {
+        recommendations.push('Kurangi pengeluaran, idealnya < 80% dari pendapatan');
+    }
+
+    if (scores.balanceHealth < 50) {
+        recommendations.push('Bangun emergency fund minimal 3 bulan pengeluaran');
+    }
+
+    if (scores.consistency < 50) {
+        recommendations.push('Usahakan pengeluaran lebih konsisten tiap bulan');
+    }
+
+    if (recommendations.length === 0) {
+        recommendations.push('Pertahankan kebiasaan keuangan yang baik!');
+    }
+
+    return recommendations;
+}
+
+export async function getCashflowPrediction(userId: number) {
+    const db = getDb();
+    const now = new Date();
+
+    // Get last 6 months for trend
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const stats = await getMonthlyStats(userId, date.getFullYear(), date.getMonth() + 1);
+        monthlyData.push(stats);
+    }
+
+    // Simple linear projection
+    const balances = monthlyData.map(m => m.balance);
+    const avgBalance = balances.reduce((sum, b) => sum + b, 0) / balances.length;
+
+    // Project next 3 months
+    const projections = [];
+    let projectedBalance = monthlyData[monthlyData.length - 1].balance;
+
+    for (let i = 1; i <= 3; i++) {
+        projectedBalance += avgBalance;
+        projections.push({
+            month: now.getMonth() + 1 + i,
+            year: now.getFullYear(),
+            projectedBalance: Math.round(projectedBalance)
+        });
+    }
+
+    return {
+        historical: monthlyData,
+        projections,
+        trend: avgBalance >= 0 ? 'positive' : 'negative'
+    };
+}
+
+
+export async function withdrawFromGoal(userId: number, goalId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+    const db = getDb();
+
+    const goal = await getGoalById(userId, goalId);
+    if (!goal) return undefined;
+
+    // Check if goal has enough balance
+    if (goal.currentAmount < amount) {
+        throw new Error("Insufficient goal balance");
+    }
+
+    const fee = amount * ADMIN_FEE_PERCENTAGE;
+    const newAmount = goal.currentAmount - amount;
+
+    await db.update(goals)
+        .set({ currentAmount: newAmount })
+        .where(and(eq(goals.id, goalId), eq(goals.userId, userId)));
+
+    const cats = db.select().from(categories).all();
+    const tabunganCat = cats.find((c: Category) => c.name === "Tabungan");
+
+    const transaction = await db.insert(transactions).values({
+        userId,
+        amount,
+        description: description || `Withdraw dari ${goal.name} (Fee: ${fee.toLocaleString('id-ID')})`,
+        type: "withdraw",
+        categoryId: tabunganCat?.id,
+        sourceType: "goal",
+        sourceId: goalId,
+        paymentMethod: "saldo_aktif",
+        fee,
+        date: new Date(),
+        isVerified: true,
+    }).returning().get();
 
     return transaction;
 }
+
+export async function withdrawFromInvestment(userId: number, investmentId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+    const db = getDb();
+
+    const investment = await getInvestmentById(userId, investmentId);
+    if (!investment) return undefined;
+
+    // Calculate max withdrawable amount based on current value
+    const currentValue = investment.quantity * investment.currentPrice;
+    if (currentValue < amount) {
+        throw new Error("Insufficient investment value");
+    }
+
+    const fee = amount * ADMIN_FEE_PERCENTAGE;
+    const sellQuantity = amount / investment.currentPrice;
+    const newQuantity = investment.quantity - sellQuantity;
+
+    await db.update(investments)
+        .set({ quantity: newQuantity, updatedAt: new Date() })
+        .where(and(eq(investments.id, investmentId), eq(investments.userId, userId)));
+
+    const cats = db.select().from(categories).all();
+    const investasiCat = cats.find((c: Category) => c.name === "Investasi");
+
+    const transaction = await db.insert(transactions).values({
+        userId,
+        amount,
+        description: description || `Sell ${investment.name} (Fee: ${fee.toLocaleString('id-ID')})`,
+        type: "withdraw",
+        categoryId: investasiCat?.id,
+        sourceType: "investment",
+        sourceId: investmentId,
+        paymentMethod: "saldo_aktif",
+        fee,
+        date: new Date(),
+        isVerified: true,
+    }).returning().get();
+
+    return transaction;
+}
+

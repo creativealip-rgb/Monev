@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, TrendingUp, ArrowLeft, PiggyBank, Target } from "lucide-react";
+import { Plus, TrendingUp, ArrowLeft, Target } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -136,34 +136,30 @@ export default function SavingsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/20 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
-                <div className="flex items-start justify-between mb-4">
+                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Total Tabungan</p>
+                <div className="flex items-end justify-between mb-4">
                     <div>
-                        <p className="text-cyan-200 text-xs font-bold uppercase tracking-widest mb-1">Total Tabungan</p>
-                        <p className="text-3xl font-bold tabular-nums">{formatCurrency(totalSaved)}</p>
+                        <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSaved)}</p>
+                        <p className="text-white/60 text-xs tabular-nums">dari {goals.length} goals</p>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                        <PiggyBank size={24} className="text-white" />
+                    <div className="text-right">
+                        <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
+                        <p className="text-white/60 text-xs">tercapai</p>
                     </div>
                 </div>
-
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-cyan-200 uppercase tracking-wider">Progress Impian</span>
-                        <span>{Math.round(totalPercentage)}%</span>
-                    </div>
-                    <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${totalPercentage}%` }}
-                            transition={{ duration: 1.2, ease: "easeOut" }}
-                            className="h-full bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)]"
-                        />
-                    </div>
-                    <p className="text-[10px] text-cyan-200 text-center font-medium italic">
-                        "Sedikit demi sedikit, lama-lama jadi bukit."
-                    </p>
+                <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${totalPercentage}%` }}
+                        transition={{ duration: 1 }}
+                        className={cn(
+                            "h-full rounded-full",
+                            totalPercentage > 90 ? "bg-emerald-400" :
+                                totalPercentage > 75 ? "bg-emerald-400" : "bg-emerald-400"
+                        )}
+                    />
                 </div>
             </motion.div>
 
@@ -171,19 +167,18 @@ export default function SavingsPage() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="p-6 space-y-6"
+                className="p-6 space-y-8"
             >
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
-                            <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
+                <motion.section variants={itemVariants}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
+                            </div>
+                            <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Daftar Impian</h2>
                         </div>
-                        <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Daftar Impian</h2>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{goals.length} Goals</span>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full uppercase tracking-widest">
-                        {goals.length} Goals
-                    </span>
-                </div>
 
                 {loading ? (
                     <div className="space-y-4">
@@ -194,63 +189,65 @@ export default function SavingsPage() {
                 ) : goals.length === 0 ? (
                     <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
                 ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                        {goals.map((g, i) => (
-                            <motion.div
-                                key={g.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4, delay: i * 0.08 }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setDetailGoal(g)}
-                                className="card-clean p-5 cursor-pointer group hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20"
-                            >
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div
-                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-transform group-hover:rotate-12"
-                                        style={{ backgroundColor: g.color + "20" }}
-                                    >
-                                        <span style={{ color: g.color }}>{g.icon}</span>
+                    <div className="space-y-4">
+                        {goals.map((g, i) => {
+                            const isCompleted = g.percentage >= 100;
+                            const isNearComplete = g.percentage >= 75;
+
+                            return (
+                                <motion.div
+                                    key={g.id}
+                                    whileHover={{ scale: 1.02 }}
+                                    onClick={() => setDetailGoal(g)}
+                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-emerald-200/40 dark:hover:shadow-emerald-900/20 transition-all"
+                                >
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div
+                                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                                            style={{ backgroundColor: g.color + "20" }}
+                                        >
+                                            <span style={{ color: g.color }}>{g.icon}</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="font-bold text-slate-800 dark:text-white text-[13px]">{g.name}</span>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">Target: {formatCurrency(g.target)}</p>
+                                        </div>
+                                        <div className="text-right pr-2">
+                                            <span className={cn(
+                                                "font-bold text-[13px] block tabular-nums",
+                                                isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
+                                            )}>
+                                                {formatCurrency(g.saved)}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
+                                                {Math.round(g.percentage)}%
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div className="flex-1 min-w-0">
-                                        <span className="font-bold text-slate-800 dark:text-white text-[13px] block truncate">{g.name}</span>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">Target: {formatCurrency(g.target)}</p>
+                                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${g.percentage}%` }}
+                                            transition={{ duration: 1, delay: i * 0.1 }}
+                                            className={cn(
+                                                "h-full rounded-full",
+                                                isCompleted ? "bg-emerald-500" : isNearComplete ? "bg-sky-500" : "bg-sky-500"
+                                            )}
+                                        />
                                     </div>
 
-                                    <div className="text-right pr-2">
-                                        <span className="font-bold text-[13px] block text-slate-900 dark:text-white tabular-nums">
-                                            {formatCurrency(g.saved)}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
-                                            {Math.round(g.percentage)}%
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${g.percentage}%` }}
-                                        transition={{ duration: 1, delay: i * 0.1 }}
-                                        className="h-full rounded-full"
-                                        style={{ backgroundColor: g.color }}
-                                    />
-                                </div>
-
-                                {g.deadline && (
-                                    <div className="mt-3 flex items-center gap-1.5 opacity-60">
-                                        <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500"></div>
-                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    {g.deadline && (
+                                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-2 flex items-center gap-1">
                                             Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                                        </span>
-                                    </div>
-                                )}
-                            </motion.div>
-                        ))}
+                                        </p>
+                                    )}
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 )}
+                </motion.section>
             </motion.div>
 
             <motion.div
@@ -266,7 +263,7 @@ export default function SavingsPage() {
                             <h4 className="text-xs font-black uppercase tracking-widest text-sky-400">Tips Nabung</h4>
                         </div>
                         <p className="text-sm font-medium leading-relaxed text-slate-300 dark:text-slate-400">
-                            "Menyisihkan uang di awal bulan lebih efektif daripada menabung sisa pengeluaran di akhir bulan."
+                            &ldquo;Menyisihkan uang di awal bulan lebih efektif daripada menabung sisa pengeluaran di akhir bulan.&rdquo;
                         </p>
                     </div>
                 </div>

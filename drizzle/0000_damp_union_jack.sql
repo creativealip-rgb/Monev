@@ -38,6 +38,15 @@ CREATE TABLE `categories` (
 	`created_at` integer NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE `chat_history` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` integer NOT NULL,
+	`role` text NOT NULL,
+	`content` text NOT NULL,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `debts` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`user_id` integer NOT NULL,
@@ -111,6 +120,8 @@ CREATE TABLE `transactions` (
 	`category_id` integer,
 	`type` text DEFAULT 'expense' NOT NULL,
 	`payment_method` text DEFAULT 'cash',
+	`destination_type` text,
+	`destination_id` integer,
 	`date` integer NOT NULL,
 	`is_verified` integer DEFAULT false NOT NULL,
 	`is_recurring` integer DEFAULT false NOT NULL,
@@ -126,6 +137,7 @@ CREATE TABLE `user_settings` (
 	`primary_goal_id` integer,
 	`security_pin` text,
 	`is_app_lock_enabled` integer DEFAULT false NOT NULL,
+	`hide_balance` integer DEFAULT false NOT NULL,
 	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`primary_goal_id`) REFERENCES `goals`(`id`) ON UPDATE no action ON DELETE no action

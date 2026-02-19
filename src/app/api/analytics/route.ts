@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getAnalysisData, getFinancialHealthMetrics } from "@/backend/db/operations";
+import {
+    getAnalysisData,
+    getFinancialHealthMetrics,
+    getMonthlyComparison,
+    getTopSpendingCategories,
+    getSpendingPatterns,
+    getGoalsProgress,
+    calculateFinancialHealthScore,
+    getCashflowPrediction,
+    getBudgets
+} from "@/backend/db/operations";
 import { getFinancialInsights } from "@/lib/ai";
 
 export async function GET(req: NextRequest) {
@@ -14,22 +24,88 @@ export async function GET(req: NextRequest) {
         const month = parseInt(searchParams.get("month") || (now.getMonth() + 1).toString());
         const year = parseInt(searchParams.get("year") || now.getFullYear().toString());
 
-        const data = await getAnalysisData(userId, year, month);
-        const health = await getFinancialHealthMetrics(userId);
+        // Run all analytics in parallel
+        const [
+            basicAnalysis,
+            health,
+            monthlyComparison,
+            topCategories,
+            spendingPatterns,
+            goalsProgress,
+            healthScore,
+            cashflowPrediction,
+            budgets
+        ] = await Promise.all([
+            getAnalysisData(userId, year, month),
+            getFinancialHealthMetrics(userId),
+            getMonthlyComparison(userId, 6),
+            getTopSpendingCategories(userId, year, month, 5),
+            getSpendingPatterns(userId, year, month),
+            getGoalsProgress(userId),
+            calculateFinancialHealthScore(userId),
+            getCashflowPrediction(userId),
+            getBudgets(userId, month, year)
+        ]);
 
         // Generate AI insights based on the analysis data
-        const insights = await getFinancialInsights(data);
+        const insights = await getFinancialInsights(basicAnalysis);
+
+        // Calculate additional metrics
+        const avgDailySpending = spendingPatterns.averageDailySpending;
+        const savingsRate = basicAnalysis.income > 0 
+            ? ((basicAnalysis.income - basicAnalysis.expense) / basicAnalysis.income) * 100 
+            : 0;
+
+        // Budget alerts
+        const budgetAlerts = budgets
+            .filter(b => b.percentage > 80)
+            .map(b => ({
+                category: b.category,
+                spent: b.spent,
+                limit: b.limit,
+                percentage: b.percentage,
+                isOver: b.percentage > 100
+            }));
 
         return NextResponse.json({
-            ...data,
+            // Basic analysis
+            income: basicAnalysis.income,
+            expense: basicAnalysis.expense,
+            balance: basicAnalysis.balance,
+            allocations: basicAnalysis.allocations,
+            categoryBreakdown: basicAnalysis.categoryBreakdown,
+
+            // New analytics
+            monthlyComparison,
+            topCategories,
+            spendingPatterns,
+            goalsProgress,
+            healthScore,
+            cashflowPrediction,
+            budgetAlerts,
+
+            // Legacy health metrics
             health,
-            insights
+
+            // AI insights
+            insights,
+
+            // Summary stats
+            summary: {
+                avgDailySpending,
+                savingsRate: Math.round(savingsRate),
+                highestSpendingDay: spendingPatterns.highestSpendingDay,
+                anomaliesCount: spendingPatterns.anomalies.length,
+                goalsCount: goalsProgress.length,
+                completedGoals: goalsProgress.filter(g => g.progress >= 100).length
+            }
         });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Analytics API Error:", error);
         return NextResponse.json({
             error: "Internal Server Error",
-            details: error.message
+            details: errorMessage
         }, { status: 500 });
     }
 }

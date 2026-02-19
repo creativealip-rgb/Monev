@@ -220,8 +220,9 @@ export default function ChatPage() {
                         onClick={() => {
                             if (confirm("Hapus semua riwayat chat?")) {
                                 if (session?.user?.id) {
-                                    localStorage.removeItem(`monev_chat_history_${session.user.id}`);
-                                    window.location.reload();
+                                    const storageKey = `monev_chat_history_${session.user.id}`;
+                                    localStorage.removeItem(storageKey);
+                                    initializeChat(storageKey); // Reset chat state without page reload
                                 }
                             }
                         }}

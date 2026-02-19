@@ -16,6 +16,8 @@ import {
     getGoals,
     getAllUsers
 } from "@/backend/db/operations";
+import { getDb } from "@/backend/db"; // New: Import getDb
+import { userSettings } from "@/backend/db/schema"; // New: Import userSettings schema
 
 // --- Fetch Data ---
 
@@ -26,8 +28,23 @@ export async function fetchProfileData() {
     }
     const userId = parseInt(session.user.id);
 
-    const user = await getUserById(userId);
-    const settings = await getUserSettings(userId);
+    const user = await getUserById(userId); // Ensure user exists
+    if (!user) {
+        console.error(`User with ID ${userId} not found but session exists. This should not happen.`);
+        // Potentially, log out the user or redirect to a page to create an account.
+        return null;
+    }
+
+    let settings = await getUserSettings(userId);
+    if (!settings) {
+        // Create default settings if they don't exist for a valid user
+        const db = getDb();
+        settings = await db.insert(userSettings).values({
+            userId,
+            hourlyRate: 50000,
+            hideBalance: false, // Ensure default for hideBalance
+        }).returning().get();
+    }
     const goals = await getGoals(userId);
 
     // Return safe settings (without securityPin) and a flag indicating if PIN exists
@@ -39,6 +56,7 @@ export async function fetchProfileData() {
             hourlyRate: settings.hourlyRate,
             primaryGoalId: settings.primaryGoalId,
             isAppLockEnabled: settings.isAppLockEnabled,
+            hideBalance: settings.hideBalance, // Ensure hideBalance is included
             updatedAt: settings.updatedAt,
             hasPin: !!settings.securityPin // Only return boolean flag, not the actual PIN
         },
@@ -126,13 +144,16 @@ export async function updateFinancialSettings(formData: FormData) {
 
     const hourlyRate = formData.get("hourlyRate");
     const primaryGoalId = formData.get("primaryGoalId");
+    const hideBalance = formData.get("hideBalance"); // New: Get hideBalance from form
 
     await updateUserSettings(userId, {
         hourlyRate: hourlyRate ? parseFloat(hourlyRate.toString()) : undefined,
-        primaryGoalId: primaryGoalId ? parseInt(primaryGoalId.toString()) : null
+        primaryGoalId: primaryGoalId ? parseInt(primaryGoalId.toString()) : null,
+        hideBalance: hideBalance === "true" // New: Convert to boolean
     });
 
     revalidatePath("/profile");
+    revalidatePath("/dashboard"); // Revalidate dashboard as well
     return { success: true };
 }
 

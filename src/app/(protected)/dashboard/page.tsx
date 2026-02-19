@@ -21,7 +21,9 @@ import {
     ArrowDownRight,
     Wallet,
     X,
-    ArrowRightLeft
+    ArrowRightLeft,
+    Eye,
+    EyeOff
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -77,9 +79,11 @@ interface HeroBalanceCardProps {
     mounted: boolean;
     onBalanceClick: () => void;
     onTransferClick: () => void;
+    hideBalance: boolean;
+    onToggleHideBalance: () => void;
 }
 
-function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick }: HeroBalanceCardProps) {
+function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hideBalance, onToggleHideBalance }: HeroBalanceCardProps) {
     const { themeConfig } = useHeroTheme();
 
     return (
@@ -103,7 +107,23 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick }: He
                         <ChevronRight size={14} className="text-white/50 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
                     </div>
                     <div className="flex items-center gap-2">
-                        <ThemeSelector />
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <ThemeSelector />
+                        </div>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleHideBalance();
+                            }}
+                            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                            title={hideBalance ? "Tampilkan saldo" : "Sembunyikan saldo"}
+                        >
+                            {hideBalance ? (
+                                <EyeOff size={14} className="text-white/70" />
+                            ) : (
+                                <Eye size={14} className="text-white/70" />
+                            )}
+                        </button>
                         <div className={cn(
                             "flex items-center gap-1 px-2 py-1 rounded-full",
                             (stats.growth || 0) >= 0 ? "bg-emerald-500/20" : "bg-rose-500/20"
@@ -123,7 +143,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick }: He
                 </div>
 
                 <h2 className="text-3xl font-bold tracking-tight mb-6 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
-                    {!mounted ? "Loading..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
+                    {!mounted ? "Loading..." : hideBalance ? "******" : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
                 </h2>
             </div>
 
@@ -131,24 +151,24 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick }: He
                 <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                            <ArrowUpRight size={14} className="text-emerald-300" />
+                            <ArrowDownRight size={14} className="text-emerald-300" />
                         </div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Income</p>
                     </div>
                     <p className="font-bold text-[13px] text-emerald-300 tabular-nums">
-                        + {!mounted ? "..." : formatCurrency(stats.income).replace("Rp", "")}
+                        + {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.income).replace("Rp", "")}
                     </p>
                 </div>
 
                 <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                            <ArrowDownRight size={14} className="text-rose-300" />
+                            <ArrowUpRight size={14} className="text-rose-300" />
                         </div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Expense</p>
                     </div>
                     <p className="font-bold text-[13px] text-rose-300 tabular-nums">
-                        − {!mounted ? "..." : formatCurrency(stats.expense).replace("Rp", "")}
+                        − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense).replace("Rp", "")}
                     </p>
                 </div>
             </div>
@@ -172,7 +192,23 @@ export default function Home() {
     const [userName, setUserName] = useState("Pengguna");
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
+    const [hideBalance, setHideBalance] = useState(false);
     const toast = useToast();
+
+    // Load hideBalance from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem("hideBalance");
+        if (saved !== null) {
+            setHideBalance(saved === "true");
+        }
+    }, []);
+
+    // Toggle handler with persistence
+    const handleToggleHideBalance = () => {
+        const newValue = !hideBalance;
+        setHideBalance(newValue);
+        localStorage.setItem("hideBalance", String(newValue));
+    };
 
     const today = new Date();
     const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
@@ -203,6 +239,12 @@ export default function Home() {
                     const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
                     setUserName(fullName || "Pengguna");
                 }
+                // Only set hideBalance from profile if not already set from localStorage
+                const localSaved = localStorage.getItem("hideBalance");
+                if (localSaved === null && profileData?.settings?.hideBalance !== undefined) {
+                    setHideBalance(profileData.settings.hideBalance);
+                }
+
 
                 // Process stats
                 const statsResult = await statsResponse.json();
@@ -309,6 +351,8 @@ export default function Home() {
                     mounted={mounted}
                     onBalanceClick={() => setShowBalanceDetail(true)}
                     onTransferClick={() => setShowTransferModal(true)}
+                    hideBalance={hideBalance}
+                    onToggleHideBalance={handleToggleHideBalance}
                 />
             </motion.section>
 

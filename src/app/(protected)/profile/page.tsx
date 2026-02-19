@@ -8,6 +8,7 @@ import { fetchProfileData, updateProfile, updateFinancialSettings, updateSecurit
 import { serverSignOut } from "@/app/actions/auth";
 import { cn } from "@/frontend/lib/utils";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
+import { useToast } from "@/frontend/components/UI";
 
 const menuItems = [
     { id: "account", icon: UserIcon, label: "Pengaturan Akun", color: "blue", hasArrow: true },
@@ -36,6 +37,7 @@ export default function ProfilePage() {
     const [settings, setSettings] = useState<any>(null);
     const [goals, setGoals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
 
     // Modals
     const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | null>(null);
@@ -83,14 +85,14 @@ export default function ProfilePage() {
                     hourlyRate: data.settings.hourlyRate?.toString() || "",
                     primaryGoalId: data.settings.primaryGoalId?.toString() || "",
                     // Don't load existing PIN for security - user must enter new one
-                    securityPin: "",
-                    isAppLockEnabled: data.settings.isAppLockEnabled || false
-                }));
-            }
-
-            setLoading(false);
-        } catch (error) {
-            console.error("Failed to load profile data:", error);
+                                securityPin: "",
+                                isAppLockEnabled: data.settings.isAppLockEnabled || false,
+                                hideBalance: data.settings.hideBalance || false // New: Load hideBalance setting
+                            }));
+                        }
+                    
+                        setLoading(false);
+                    } catch (error) {            console.error("Failed to load profile data:", error);
             setLoading(false);
         }
     };
@@ -115,10 +117,10 @@ export default function ProfilePage() {
 
         if (result.success) {
             setActiveModal(null);
-            alert("Berhasil menghubungkan akun Telegram!");
-            window.location.reload(); // Force reload to ensure fresh data
+            toast.success("Berhasil", "Profil berhasil disimpan!");
+            loadData(); // Refresh data without page reload
         } else {
-            alert(result.message || "Gagal menyimpan profil.");
+            toast.error("Gagal", result.message || "Gagal menyimpan profil.");
         }
     };
 
@@ -126,19 +128,21 @@ export default function ProfilePage() {
         const form = new FormData();
         form.append("hourlyRate", formData.hourlyRate);
         form.append("primaryGoalId", formData.primaryGoalId);
+        form.append("hideBalance", String(formData.hideBalance)); // New: Append hideBalance
 
         await updateFinancialSettings(form);
+        toast.success("Berhasil", "Pengaturan keuangan berhasil disimpan!");
         setActiveModal(null);
         loadData(); // Refresh
     };
 
     const handleSaveSecurity = async () => {
         if (formData.isAppLockEnabled && !formData.securityPin) {
-            alert("Harap atur PIN sebelum mengaktifkan App Lock.");
+            toast.error("Validasi", "Harap atur PIN sebelum mengaktifkan App Lock.");
             return;
         }
         if (formData.securityPin && formData.securityPin.length !== 6) {
-            alert("PIN harus 6 digit angka.");
+            toast.error("Validasi", "PIN harus 6 digit angka.");
             return;
         }
 
@@ -147,6 +151,7 @@ export default function ProfilePage() {
         form.append("isAppLockEnabled", String(formData.isAppLockEnabled));
 
         await updateSecuritySettings(form);
+        toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
         setActiveModal(null);
         loadData();
     };
@@ -438,10 +443,10 @@ export default function ProfilePage() {
                                                         if (confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram?")) {
                                                             const result = await disconnectTelegram();
                                                             if (result.success) {
-                                                                alert("Berhasil memutuskan koneksi.");
-                                                                window.location.reload();
+                                                                toast.success("Berhasil", "Koneksi Telegram berhasil diputuskan.");
+                                                                loadData(); // Refresh data without page reload
                                                             } else {
-                                                                alert(result.message || "Gagal memutuskan koneksi.");
+                                                                toast.error("Gagal", result.message || "Gagal memutuskan koneksi.");
                                                             }
                                                         }
                                                     }}
@@ -587,6 +592,18 @@ export default function ProfilePage() {
                                                 <option key={goal.id} value={goal.id}>{goal.name}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                    {/* New: Hide Balance Toggle */}
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                        <span className="font-medium text-slate-700 text-sm">Sembunyikan Saldo</span>
+                                        <button
+                                            onClick={() => setFormData({ ...formData, hideBalance: !formData.hideBalance })}
+                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.hideBalance ? "bg-emerald-500" : "bg-slate-300"}`}
+                                        >
+                                            <span
+                                                className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out ${formData.hideBalance ? "translate-x-6" : "translate-x-0"}`}
+                                            />
+                                        </button>
                                     </div>
                                     <button
                                         onClick={handleSaveSettings}

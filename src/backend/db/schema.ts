@@ -34,10 +34,13 @@ export const transactions = sqliteTable("transactions", {
     description: text("description").notNull(),
     merchantName: text("merchant_name"),
     categoryId: integer("category_id").references(() => categories.id),
-    type: text("type", { enum: ["expense", "income", "transfer"] }).notNull().default("expense"),
+    type: text("type", { enum: ["expense", "income", "transfer", "withdraw"] }).notNull().default("expense"),
     paymentMethod: text("payment_method").default("cash"),
     destinationType: text("destination_type", { enum: ["goal", "investment", "bill"] }),
     destinationId: integer("destination_id"),
+    sourceType: text("source_type", { enum: ["goal", "investment"] }),
+    sourceId: integer("source_id"),
+    fee: real("fee").default(0),
     date: integer("date", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     isVerified: integer("is_verified", { mode: "boolean" }).notNull().default(false),
     isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
@@ -82,6 +85,7 @@ export const userSettings = sqliteTable("user_settings", {
     primaryGoalId: integer("primary_goal_id").references(() => goals.id),
     securityPin: text("security_pin"),
     isAppLockEnabled: integer("is_app_lock_enabled", { mode: "boolean" }).notNull().default(false),
+    hideBalance: integer("hide_balance", { mode: "boolean" }).notNull().default(false), // New: Hide balance on dashboard
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 

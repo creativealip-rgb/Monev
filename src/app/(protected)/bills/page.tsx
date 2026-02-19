@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, Edit3 } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -12,6 +12,19 @@ import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     Receipt, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle,
+};
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
 };
 
 function BillIcon({ name, color, size = 20 }: { name: string; color: string; size?: number }) {
@@ -50,6 +63,9 @@ function BillItem({
     useEffect(() => setMounted(true), []);
 
     const status = getStatusInfo(bill);
+    const today = new Date().getDate();
+    const daysLeft = bill.dueDate - today;
+    const isOverdue = daysLeft < 0 && !bill.isPaid;
 
     return (
         <motion.div
@@ -57,70 +73,86 @@ function BillItem({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.06 }}
+            whileHover={{ scale: 1.02 }}
             className={cn(
-                "bg-white dark:bg-slate-800 p-5 rounded-2xl border shadow-sm transition-all group",
+                "card-clean p-5 group relative cursor-pointer transition-all",
                 bill.isPaid
-                    ? "border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-emerald-900/20"
-                    : "border-slate-100 dark:border-slate-700 hover:shadow-md"
+                    ? "bg-emerald-50/30 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50"
+                    : "hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20"
             )}
         >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 mb-3">
                 <button
                     onClick={(e) => onToggle(bill.id, e)}
                     className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
+                        "w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-all",
                         bill.isPaid
                             ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-50 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600"
+                            : "bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-900/30"
                     )}
                     style={!bill.isPaid ? { backgroundColor: bill.color + "20" } : {}}
                 >
                     {bill.isPaid ? (
-                        <Check size={22} strokeWidth={3} />
+                        <Check size={20} strokeWidth={3} />
                     ) : (
-                        <BillIcon name={bill.icon} color={bill.color} />
+                        <BillIcon name={bill.icon} color={bill.color} size={18} />
                     )}
                 </button>
-                <div className="flex-1 min-w-0 pr-4">
-                    <p className={cn(
-                        "font-bold text-[15px] leading-tight transition-all",
-                        bill.isPaid ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-900 dark:text-white"
+                <div className="flex-1">
+                    <span className={cn(
+                        "font-bold text-slate-800 dark:text-white text-[13px] block transition-all",
+                        bill.isPaid ? "text-slate-400 dark:text-slate-500 line-through" : ""
                     )}>
                         {bill.name}
+                    </span>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                        {bill.frequency === "monthly" ? "Bulanan" : bill.frequency === "weekly" ? "Mingguan" : "Tahunan"}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        <span className={cn(
-                            "text-[10px] font-bold px-2 py-0.5 rounded-lg border shadow-sm",
-                            status.badge
-                        )}>
-                            {!mounted ? "..." : status.label}
-                        </span>
-                        <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-                            {bill.frequency === "monthly" ? "Bulanan" : bill.frequency === "weekly" ? "Mingguan" : "Tahunan"}
-                        </div>
-                    </div>
                 </div>
-                <div className="flex flex-col items-end justify-center shrink-0">
-                    <p className={cn(
-                        "font-medium text-[15px] tracking-tight tabular-nums",
-                        bill.isPaid ? "text-slate-300 dark:text-slate-600" : "text-slate-900 dark:text-white"
+                <div className="text-right pr-2">
+                    <span className={cn(
+                        "font-bold text-[13px] block tabular-nums",
+                        bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
                     )}>
-                        {!mounted ? "..." : formatCurrency(bill.amount)}
-                    </p>
-                    <AnimatePresence>
-                        <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => onDelete(bill.id)}
-                            className="mt-2 text-[10px] font-bold text-rose-400 dark:text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <Trash2 size={10} />
-                            Hapus
-                        </motion.button>
-                    </AnimatePresence>
+                        {formatCurrency(bill.amount)}
+                    </span>
+                    <span className={cn(
+                        "text-[10px] tabular-nums",
+                        isOverdue ? "text-rose-500 font-semibold" : "text-slate-400 dark:text-slate-500"
+                    )}>
+                        {!mounted ? "..." : status.label}
+                    </span>
                 </div>
             </div>
+
+            {/* Days remaining bar */}
+            {!bill.isPaid && (
+                <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.max(0, Math.min(100, (daysLeft / 30) * 100))}%` }}
+                        transition={{ duration: 1, delay: index * 0.1 }}
+                        className={cn(
+                            "h-full rounded-full",
+                            isOverdue ? "bg-rose-500" : daysLeft <= 3 ? "bg-amber-500" : "bg-sky-500"
+                        )}
+                    />
+                </div>
+            )}
+
+            {bill.isPaid && (
+                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
+                    <Check size={12} /> Lunas
+                </p>
+            )}
+
+            {/* Delete button - positioned absolute top-right */}
+            <button
+                onClick={() => onDelete(bill.id)}
+                className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center"
+            >
+                <Trash2 size={14} />
+            </button>
         </motion.div>
     );
 }
@@ -296,21 +328,17 @@ export default function BillsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
-                <p className="text-cyan-200 text-xs mb-2">Tagihan Bulan Ini</p>
-                <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 mb-4">
-                    <div className="min-w-fit">
-                        <p className="text-3xl font-bold tracking-tight">{loading ? "..." : formatCurrency(totalBills)}</p>
-                        <p className="text-cyan-200 text-[10px] font-medium uppercase tracking-wider">
-                            {loading ? "..." : `${paidCount}/${bills.length} sudah dibayar`}
-                        </p>
+                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Tagihan Bulan Ini</p>
+                <div className="flex items-end justify-between mb-4">
+                    <div>
+                        <p className="text-2xl font-bold tabular-nums">{loading ? "..." : formatCurrency(totalUnpaid)}</p>
+                        <p className="text-white/60 text-xs tabular-nums">{loading ? "..." : `${bills.length - paidCount} belum dibayar`}</p>
                     </div>
-                    <div className="text-right min-w-fit flex flex-col items-end">
-                        <p className="text-xl font-bold text-emerald-300 leading-none">
-                            {loading ? "..." : formatCurrency(totalPaid)}
-                        </p>
-                        <p className="text-cyan-200 text-[10px] font-medium uppercase tracking-wider">lunas</p>
+                    <div className="text-right">
+                        <p className="text-xl font-bold tabular-nums text-emerald-300">{loading ? "..." : `${Math.round(totalBills > 0 ? (totalPaid / totalBills) * 100 : 0)}%`}</p>
+                        <p className="text-white/60 text-xs">terbayar</p>
                     </div>
                 </div>
                 <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
@@ -321,33 +349,43 @@ export default function BillsPage() {
                         className="h-full rounded-full bg-emerald-400"
                     />
                 </div>
-                {!loading && totalUnpaid > 0 && (
-                    <p className="text-xs text-amber-300 mt-2 font-semibold">
-                        ⚠️ Sisa {formatCurrency(totalUnpaid)} belum dibayar
-                    </p>
-                )}
             </motion.div>
 
-            <div className="px-6 mt-6 mb-4">
-                <div className="flex gap-2">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                "flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border-2",
-                                activeTab === tab.id
-                                    ? "bg-sky-50 dark:bg-sky-900/50 border-sky-500 text-sky-600 dark:text-sky-400"
-                                    : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
-                            )}
-                        >
-                            {tab.label} ({loading ? "..." : tab.count})
-                        </button>
-                    ))}
-                </div>
-            </div>
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="p-6 space-y-8"
+            >
+                <motion.section variants={itemVariants}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
+                                <Receipt size={16} className="text-rose-500 dark:text-rose-400" />
+                            </div>
+                            <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Daftar Tagihan</h2>
+                        </div>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{filteredBills.length} Tagihan</span>
+                    </div>
 
-            <div className="px-6">
+                    <div className="flex gap-2 mb-4">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    "py-2 px-3 rounded-xl text-xs font-bold transition-all",
+                                    activeTab === tab.id
+                                        ? "bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400"
+                                        : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                )}
+                            >
+                                {tab.label} ({loading ? "..." : tab.count})
+                            </button>
+                        ))}
+                    </div>
+
+                    <div>
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3, 4].map(i => (
@@ -372,7 +410,7 @@ export default function BillsPage() {
                         </motion.div>
                     )
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {filteredBills.map((bill, i) => {
                             return (
                                 <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} />
@@ -380,7 +418,9 @@ export default function BillsPage() {
                         })}
                     </div>
                 )}
-            </div>
+                    </div>
+                </motion.section>
+            </motion.div>
 
             <Portal>
                 <AnimatePresence>

@@ -49,7 +49,10 @@ export default function ClientLayout({
                     <AddTransactionSheet
                         isOpen={isAddSheetOpen}
                         onClose={() => setIsAddSheetOpen(false)}
-                        onSuccess={() => window.location.reload()}
+                        onSuccess={() => {
+                            // Dispatch custom event to notify all pages to refresh their data
+                            window.dispatchEvent(new CustomEvent("transactionAdded"));
+                        }}
                     />
                 </ToastProvider>
             </ThemeProvider>
