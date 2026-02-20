@@ -125,6 +125,16 @@ Download the latest APK from `/monev-app.apk` in the running app (Profile > Down
 - **Testing:** Vitest
 - **Mobile:** Capacitor (Android)
 
+## 📖 Documentation
+
+| Document | Isi |
+|----------|-----|
+| [FEATURES.md](docs/FEATURES.md) | Katalog semua fitur (15 area) |
+| [API.md](docs/API.md) | API reference (31 endpoints) |
+| [DATABASE.md](docs/DATABASE.md) | Schema database (13 tabel + ER diagram) |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Tech stack, folder structure, design patterns |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Guide deploy (dev, Docker, Dokploy, Android APK) |
+
 ## 📄 License
 
 MIT

@@ -119,7 +119,7 @@ export default function NotificationGuidePage() {
     return (
         <div className="relative min-h-screen bg-white pb-28">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 pt-4 pb-4">
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 pt-safe pb-4">
                 <div className="flex items-center gap-4">
                     <Link
                         href="/fitur"
@@ -164,8 +164,8 @@ export default function NotificationGuidePage() {
                                         setActiveStep(1);
                                     }}
                                     className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all ${isActive
-                                            ? "bg-white text-slate-900 shadow-sm shadow-slate-200"
-                                            : "text-slate-500 hover:bg-white/50"
+                                        ? "bg-white text-slate-900 shadow-sm shadow-slate-200"
+                                        : "text-slate-500 hover:bg-white/50"
                                         }`}
                                 >
                                     <Icon size={18} className={isActive ? `text-${app.color}-500` : "text-slate-400"} />

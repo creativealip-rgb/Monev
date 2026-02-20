@@ -364,23 +364,39 @@
 
 @layer base {
   :root {
-    --safe-area-top: 1rem;
-    --safe-area-bottom: 1rem;
+    --safe-area-top: 0px;
+    --safe-area-bottom: 0px;
     --safe-mask-bg: transparent;
   }
 
   .is-native {
-    --safe-area-top: max(3rem, env(safe-area-inset-top));
-    --safe-area-bottom: max(2.5rem, env(safe-area-inset-bottom));
+    --safe-area-top: env(safe-area-inset-top, 24px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 16px);
     --safe-mask-bg: rgba(248, 250, 252, 0.95);
+  }
+
+  .dark .is-native {
+    --safe-mask-bg: rgba(15, 23, 42, 0.95);
   }
 }
 
-/* Base Utility Classes */
+/* Safe Area Utility Classes */
 .pb-safe {
   padding-bottom: var(--safe-area-bottom);
 }
 
 .pt-safe {
   padding-top: var(--safe-area-top);
+}
+
+/* Native status bar spacer — only visible on native */
+.native-status-bar-spacer {
+  height: 0px;
+}
+.is-native .native-status-bar-spacer {
+  height: var(--safe-area-top);
+  background: var(--safe-mask-bg);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }

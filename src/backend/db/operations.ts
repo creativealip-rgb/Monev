@@ -251,7 +251,7 @@ export async function getCategoryStats(userId: number, year: number, month: numb
 }
 
 // Budgets
-export async function getBudgets(userId: number, month: number, year: number): Promise<Array<Budget & { category: Category; spent: number }>> {
+export async function getBudgets(userId: number, month: number, year: number): Promise<Array<Budget & { category: Category; spent: number; percentage: number }>> {
     const db = getDb();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
@@ -288,11 +288,16 @@ export async function getBudgets(userId: number, month: number, year: number): P
     const spentMap = new Map(spentByCategory.map(s => [s.categoryId, s.total || 0]));
 
     // Map budgets with spent amounts
-    const result = budgetsWithCategories.map((item) => ({
-        ...item.budget,
-        category: item.category,
-        spent: spentMap.get(item.budget.categoryId) || 0,
-    }));
+    const result = budgetsWithCategories.map((item) => {
+        const spent = spentMap.get(item.budget.categoryId) || 0;
+        const percentage = item.budget.amount > 0 ? (spent / item.budget.amount) * 100 : 0;
+        return {
+            ...item.budget,
+            category: item.category,
+            spent,
+            percentage,
+        };
+    });
 
     return result;
 }

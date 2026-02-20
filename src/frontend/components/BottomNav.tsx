@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, NotebookTabs, BarChart3, Plus, User } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useI18n } from "@/frontend/lib/i18n-context";
+import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
@@ -16,6 +17,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const pathname = usePathname();
     const [isFabPressed, setIsFabPressed] = useState(false);
     const { t } = useI18n();
+    const haptics = useHaptics();
 
     const links = [
         { href: "/", label: t("nav.dashboard"), icon: Home },
@@ -31,6 +33,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const handleFabClick = () => {
         setIsFabPressed(true);
         setTimeout(() => setIsFabPressed(false), 150);
+        haptics.medium();
         onFabClick?.();
     };
 
@@ -39,6 +42,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
         return (
             <Link
                 href={href}
+                onClick={() => haptics.tap()}
                 className={cn(
                     "flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative",
                     "transition-all duration-300"

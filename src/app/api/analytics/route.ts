@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
             .map(b => ({
                 category: b.category,
                 spent: b.spent,
-                limit: b.limit,
+                limit: b.amount,
                 percentage: b.percentage,
                 isOver: b.percentage > 100
             }));

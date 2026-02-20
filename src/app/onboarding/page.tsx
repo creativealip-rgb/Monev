@@ -10,7 +10,9 @@ import { FeatureCarousel } from "./components/FeatureCarousel";
 import { QuickSetup } from "./components/QuickSetup";
 import { InitialBalanceScreen } from "./components/InitialBalanceScreen";
 
-export default function OnboardingPage() {
+import { Suspense } from "react";
+
+function OnboardingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const {
@@ -115,5 +117,17 @@ export default function OnboardingPage() {
                 )}
             </AnimatePresence>
         </MobileContainer>
+    );
+}
+
+export default function OnboardingPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500" />
+            </div>
+        }>
+            <OnboardingContent />
+        </Suspense>
     );
 }

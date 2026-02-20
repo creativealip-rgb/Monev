@@ -64,7 +64,7 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
         try {
             const settings = await getUserSettings(userId);
             let primaryGoal = undefined;
-            if (settings.primaryGoalId) {
+            if (settings?.primaryGoalId) {
                 primaryGoal = await getGoalById(userId, settings.primaryGoalId);
             }
 
@@ -72,7 +72,7 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
             const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
             const monthlySaving = stats.balance > 0 ? stats.balance : (stats.income * 0.2) || 1000000;
 
-            const impact = await getPsychologicalImpact(transaction.amount, settings.hourlyRate, primaryGoal, monthlySaving);
+            const impact = await getPsychologicalImpact(transaction.amount, settings?.hourlyRate || 50000, primaryGoal, monthlySaving);
             message += `\n\n${impact}`;
         } catch (pError) {
             console.error("Psychological Calculation Error:", pError);

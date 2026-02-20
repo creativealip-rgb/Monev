@@ -72,19 +72,19 @@ export function NotificationListenerService() {
                 const { NotificationsListener } = await import("capacitor-notifications-listener");
 
                 // Request permission
-                const permResult = await NotificationsListener.requestPermission();
-                if (!permResult.granted) {
+                const permResult = await NotificationsListener.requestPermission() as any;
+                if (permResult && permResult.granted === false) {
                     console.log("[NotificationListener] Permission not granted");
                     return;
                 }
 
                 // Start listening
-                await NotificationsListener.startListening();
+                await NotificationsListener.startListening({} as any);
                 console.log("[NotificationListener] Started listening for notifications");
 
                 // Add listener for new notifications
-                const listener = await NotificationsListener.addListener(
-                    "notificationReceived",
+                const listener = await (NotificationsListener as any).addListener(
+                    "notificationReceivedEvent",
                     async (notification: { title?: string; body?: string; package?: string }) => {
                         const { title, body, package: pkg } = notification;
                         const text = `${title || ""} ${body || ""}`.trim();

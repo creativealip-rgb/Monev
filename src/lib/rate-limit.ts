@@ -82,3 +82,28 @@ export function rateLimit(
 
     return null;
 }
+
+/**
+ * Rate limiter for PIN verification attempts.
+ * Limits to 5 attempts per 15-minute window.
+ */
+export function checkPinRateLimit(key: string): { allowed: boolean; resetTime: number; remaining: number } {
+    const maxAttempts = 5;
+    const windowMs = 15 * 60 * 1000; // 15 minutes
+    const now = Date.now();
+    const entry = rateLimitStore.get(`pin:${key}`);
+
+    if (!entry || now > entry.resetTime) {
+        rateLimitStore.set(`pin:${key}`, { count: 1, resetTime: now + windowMs });
+        return { allowed: true, resetTime: now + windowMs, remaining: maxAttempts - 1 };
+    }
+
+    entry.count++;
+
+    if (entry.count > maxAttempts) {
+        return { allowed: false, resetTime: entry.resetTime, remaining: 0 };
+    }
+
+    return { allowed: true, resetTime: entry.resetTime, remaining: maxAttempts - entry.count };
+}
+
