@@ -12,6 +12,8 @@ function getOpenAIClient() {
     } as any);
 }
 
+const AI_MODEL = "gpt-4o";
+
 export const CATEGORIES = [
     "Makan & Minuman",
     "Transportasi",
@@ -122,7 +124,7 @@ export async function processOCR(input: Buffer | string): Promise<AIResult> {
             : `data:image/jpeg;base64,${input.toString("base64")}`;
 
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -196,7 +198,7 @@ export async function processVoice(audioBuffer: Buffer): Promise<{ transcription
         text = transcription.text;
 
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -323,7 +325,7 @@ export async function categorizeTransaction(merchantName: string | null, descrip
         const openai = getOpenAIClient();
 
         const pass1 = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -362,7 +364,7 @@ Jawab dalam format JSON saja:
         }
 
         const pass2 = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -520,7 +522,7 @@ export async function processNLP(text: string): Promise<NLPResult | null> {
     try {
         const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -608,7 +610,7 @@ export async function askFinanceAgent(
     try {
         const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -1025,7 +1027,7 @@ export async function getFinancialInsights(data: {
     try {
         const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",
@@ -1074,7 +1076,7 @@ export async function processNotification(content: string, source: string): Prom
     try {
         const openai = getOpenAIClient();
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: AI_MODEL,
             messages: [
                 {
                     role: "system",

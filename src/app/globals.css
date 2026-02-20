@@ -364,14 +364,14 @@
 
 @layer base {
   :root {
-    --safe-area-top: 0px;
-    --safe-area-bottom: 0px;
+    --safe-area-top: max(env(safe-area-inset-top, 0px), 24px);
+    --safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 24px);
     --safe-mask-bg: transparent;
   }
 
   .is-native {
-    --safe-area-top: env(safe-area-inset-top, 24px);
-    --safe-area-bottom: env(safe-area-inset-bottom, 16px);
+    --safe-area-top: env(safe-area-inset-top, 44px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 34px);
     --safe-mask-bg: rgba(248, 250, 252, 0.95);
   }
 
@@ -393,6 +393,7 @@
 .native-status-bar-spacer {
   height: 0px;
 }
+
 .is-native .native-status-bar-spacer {
   height: var(--safe-area-top);
   background: var(--safe-mask-bg);
