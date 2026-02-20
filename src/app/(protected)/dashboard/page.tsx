@@ -236,8 +236,10 @@ export default function Home() {
 
                 // Process profile data
                 if (profileData?.user) {
+                    // Try firstName + lastName first, then fall back to name
                     const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
-                    setUserName(fullName || "Pengguna");
+                    const displayName = fullName || profileData.user.name || "Pengguna";
+                    setUserName(displayName);
                 }
                 // Only set hideBalance from profile if not already set from localStorage
                 const localSaved = localStorage.getItem("hideBalance");

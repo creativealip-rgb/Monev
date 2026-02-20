@@ -2,7 +2,7 @@
 
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
-import { upsertUser } from "@/backend/db/operations"; // Needed for registration
+
 import bcrypt from "bcryptjs";
 import { users } from "@/backend/db/schema";
 import { getDb } from "@/backend/db";
@@ -37,9 +37,18 @@ export async function register(prevState: { error?: string }, formData: FormData
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (!email || !password || !name) {
-        return { error: "Missing fields" };
+    if (!email || !password || !name || !confirmPassword) {
+        return { error: "Semua field wajib diisi" };
+    }
+
+    if (password !== confirmPassword) {
+        return { error: "Password dan konfirmasi password tidak cocok" };
+    }
+
+    if (password.length < 6) {
+        return { error: "Password minimal 6 karakter" };
     }
 
     const db = getDb();
@@ -47,21 +56,15 @@ export async function register(prevState: { error?: string }, formData: FormData
     // Check if user exists
     const existingUser = await db.select().from(users).where(eq(users.email, email)).get();
     if (existingUser) {
-        return { error: "User already exists" };
+        return { error: "Email sudah terdaftar" };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const existingTelegramIdUser = await db.select().from(users).where(eq(users.telegramId, Math.floor(Math.random() * 1000000000))).get(); // Wait, this logic for tg id is bad.
-
-    // For now, allow null telegramId (since schema update removed unique or made it optional?)
-    // Let me check if telegramId is nullable.
-    // If schema says telegramId int unique, it might be non-nullable?
-    // It should be nullable.
-    // Let's assume nullable.
 
     try {
         await db.insert(users).values({
             name,
+            firstName: name, // Also set firstName for dashboard display
             email,
             password: hashedPassword,
             username: email.split("@")[0],
@@ -69,7 +72,7 @@ export async function register(prevState: { error?: string }, formData: FormData
         });
     } catch (e) {
         console.error("Registration error:", e);
-        return { error: "Failed to create user" };
+        return { error: "Gagal membuat akun. Silakan coba lagi." };
     }
 
     redirect("/login");
@@ -77,4 +80,15 @@ export async function register(prevState: { error?: string }, formData: FormData
 
 export async function serverSignOut() {
     await signOut({ redirectTo: "/login" });
+}
+
+export async function signInWithGoogle() {
+    try {
+        await signIn("google", { redirectTo: "/dashboard" });
+    } catch (error) {
+        if (error instanceof AuthError) {
+            return "Gagal login dengan Google. Silakan coba lagi.";
+        }
+        throw error;
+    }
 }

@@ -36,7 +36,7 @@ const categoryIcons: Record<string, typeof Wallet> = {
 };
 
 export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormProps) {
-    const [step, setStep] = useState<"type" | "amount" | "category" | "details">("type");
+    const [step, setStep] = useState<"input" | "category" | "details">("input");
     const [transactionType, setTransactionType] = useState<"expense" | "income">("expense");
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
@@ -45,7 +45,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Load categories when opening
+    // Load categories when type changes
     const loadCategories = async (type: "expense" | "income") => {
         try {
             const response = await fetch("/api/categories");
@@ -57,6 +57,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
             console.error("Error loading categories:", err);
         }
     };
+
+    // Load categories on mount and when type changes
+    useEffect(() => {
+        if (isOpen) {
+            loadCategories(transactionType);
+        }
+    }, [isOpen, transactionType]);
 
     // Listen for smart input data
     useEffect(() => {
@@ -79,13 +86,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         return () => window.removeEventListener("smartInputData", handleSmartInput as EventListener);
     }, [categories]);
 
-    const handleTypeSelect = async (type: "expense" | "income") => {
-        setTransactionType(type);
-        await loadCategories(type);
-        setStep("amount");
-    };
-
-    const handleAmountSubmit = () => {
+    const handleNextFromInput = () => {
         if (!amount || parseFloat(amount) <= 0) {
             setError("Masukkan nominal yang valid");
             return;
@@ -126,10 +127,11 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
             
             if (result.success) {
                 // Reset form
-                setStep("type");
+                setStep("input");
                 setAmount("");
                 setDescription("");
                 setSelectedCategory(null);
+                setTransactionType("expense");
                 
                 onSuccess?.();
                 onClose();
@@ -145,10 +147,11 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     };
 
     const handleClose = () => {
-        setStep("type");
+        setStep("input");
         setAmount("");
         setDescription("");
         setSelectedCategory(null);
+        setTransactionType("expense");
         setError(null);
         onClose();
     };
@@ -171,158 +174,180 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
 
                 <div className="min-h-screen max-w-[500px] mx-auto bg-sky-50/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-slate-950/30">
                     <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
-                    <button
-                        onClick={step === "type" ? handleClose : () => setStep(step === "amount" ? "type" : step === "category" ? "amount" : "category")}
-                        className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400"
-                    >
-                        {step === "type" ? <X size={20} /> : <ArrowLeft size={20} />}
-                    </button>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                        {step === "type" && "Tipe Transaksi"}
-                        {step === "amount" && "Nominal"}
-                        {step === "category" && "Kategori"}
-                        {step === "details" && "Detail"}
-                    </h2>
-                    <div className="w-10" />
-                </div>
+                        <button
+                            onClick={step === "input" ? handleClose : () => setStep(step === "category" ? "input" : "category")}
+                            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400"
+                        >
+                            {step === "input" ? <X size={20} /> : <ArrowLeft size={20} />}
+                        </button>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                            {step === "input" && "Transaksi Baru"}
+                            {step === "category" && "Pilih Kategori"}
+                            {step === "details" && "Detail"}
+                        </h2>
+                        <div className="w-10" />
+                    </div>
 
-                <div className="p-6">
-                    {error && (
-                        <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    {step === "type" && (
-                        <div className="space-y-4">
-                            <p className="text-slate-500 dark:text-slate-400 text-center mb-6">Pilih tipe transaksi</p>
-                            <button
-                                onClick={() => handleTypeSelect("expense")}
-                                className="w-full p-6 rounded-2xl bg-rose-50 dark:bg-rose-900/30 border-2 border-rose-100 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-600 transition-all"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-xl bg-rose-500 flex items-center justify-center">
-                                        <TrendingUp className="text-white" size={28} />
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">Pengeluaran</h3>
-                                        <p className="text-slate-500 dark:text-slate-400 text-sm">Catat pengeluaran harian</p>
-                                    </div>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => handleTypeSelect("income")}
-                                className="w-full p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-100 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-600 transition-all"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-xl bg-emerald-500 flex items-center justify-center">
-                                        <Wallet className="text-white" size={28} />
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">Pemasukan</h3>
-                                        <p className="text-slate-500 dark:text-slate-400 text-sm">Catat pemasukan/gaji</p>
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
-                    )}
-
-                    {step === "amount" && (
-                        <div className="space-y-6">
-                            <div className="text-center py-8">
-                                <p className="text-slate-400 dark:text-slate-500 text-sm mb-2">Nominal</p>
-                                <div className="text-5xl font-bold text-slate-900 dark:text-white">
-                                    {amount ? formatCurrency(parseFloat(amount)) : "Rp 0"}
-                                </div>
+                    <div className="p-6">
+                        {error && (
+                            <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm">
+                                {error}
                             </div>
-                            <input
-                                type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                placeholder="0"
-                                className="w-full text-center text-3xl font-bold p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none"
-                                autoFocus
-                            />
-                            <button
-                                onClick={handleAmountSubmit}
-                                disabled={!amount}
-                                className={cn(
-                                    "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                    amount ? "bg-sky-500 hover:bg-sky-600" : "bg-slate-300 dark:bg-slate-700"
-                                )}
-                            >
-                                Lanjut
-                            </button>
-                        </div>
-                    )}
+                        )}
 
-                    {step === "category" && (
-                        <div className="space-y-4">
-                            <p className="text-slate-500 dark:text-slate-400 mb-4">Pilih kategori</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                {categories.map((cat) => {
-                                    const Icon = categoryIcons[cat.icon] || Wallet;
-                                    return (
-                                        <button
-                                            key={cat.id}
-                                            onClick={() => handleCategorySelect(cat.id)}
-                                            className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent hover:border-sky-300 dark:hover:border-sky-600 transition-all text-left"
-                                        >
-                                            <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center" style={{ backgroundColor: cat.color + "20" }}>
-                                                <Icon size={20} style={{ color: cat.color }} />
-                                            </div>
-                                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{cat.name}</p>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                        {step === "input" && (
+                            <div className="space-y-6">
+                                {/* Type Toggle */}
+                                <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                    <button
+                                        onClick={() => setTransactionType("expense")}
+                                        className={cn(
+                                            "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all",
+                                            transactionType === "expense"
+                                                ? "bg-rose-500 text-white shadow-sm"
+                                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                                        )}
+                                    >
+                                        <TrendingUp size={18} />
+                                        Pengeluaran
+                                    </button>
+                                    <button
+                                        onClick={() => setTransactionType("income")}
+                                        className={cn(
+                                            "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all",
+                                            transactionType === "income"
+                                                ? "bg-emerald-500 text-white shadow-sm"
+                                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                                        )}
+                                    >
+                                        <Wallet size={18} />
+                                        Pemasukan
+                                    </button>
+                                </div>
 
-                    {step === "details" && (
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Deskripsi
-                                </label>
+                                {/* Amount Display */}
+                                <div className="text-center py-6">
+                                    <p className="text-slate-400 dark:text-slate-500 text-sm mb-2">Nominal</p>
+                                    <div className="text-5xl font-bold text-slate-900 dark:text-white">
+                                        {amount ? formatCurrency(parseFloat(amount)) : "Rp 0"}
+                                    </div>
+                                </div>
+
+                                {/* Amount Input */}
                                 <input
-                                    type="text"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Contoh: Makan siang di warteg"
-                                    className="w-full p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500"
+                                    type="number"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="0"
+                                    className="w-full text-center text-3xl font-bold p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none"
                                     autoFocus
                                 />
+
+                                <button
+                                    onClick={handleNextFromInput}
+                                    disabled={!amount}
+                                    className={cn(
+                                        "w-full py-4 rounded-2xl font-bold text-white transition-all",
+                                        amount 
+                                            ? transactionType === "expense" 
+                                                ? "bg-rose-500 hover:bg-rose-600" 
+                                                : "bg-emerald-500 hover:bg-emerald-600"
+                                            : "bg-slate-300 dark:bg-slate-700"
+                                    )}
+                                >
+                                    Lanjut
+                                </button>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500 dark:text-slate-400">Nominal</span>
-                                    <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(parseFloat(amount))}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500 dark:text-slate-400">Kategori</span>
-                                    <span className="font-semibold text-slate-900 dark:text-white">{categories.find(c => c.id === selectedCategory)?.name}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500 dark:text-slate-400">Tipe</span>
-                                    <span className={cn("font-semibold", transactionType === "expense" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
-                                        {transactionType === "expense" ? "Pengeluaran" : "Pemasukan"}
+                        )}
+
+                        {step === "category" && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <p className="text-slate-500 dark:text-slate-400">Pilih kategori</p>
+                                    <span className={cn(
+                                        "text-sm font-semibold px-3 py-1 rounded-full",
+                                        transactionType === "expense" 
+                                            ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                                            : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                                    )}>
+                                        {formatCurrency(parseFloat(amount))}
                                     </span>
                                 </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map((cat) => {
+                                        const Icon = categoryIcons[cat.icon] || Wallet;
+                                        return (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => handleCategorySelect(cat.id)}
+                                                className={cn(
+                                                    "p-4 rounded-2xl border-2 transition-all text-left",
+                                                    selectedCategory === cat.id
+                                                        ? transactionType === "expense"
+                                                            ? "border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20"
+                                                            : "border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
+                                                        : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-300 dark:hover:border-slate-600"
+                                                )}
+                                            >
+                                                <div className="w-10 h-10 rounded-xl mb-2 flex items-center justify-center" style={{ backgroundColor: cat.color + "20" }}>
+                                                    <Icon size={20} style={{ color: cat.color }} />
+                                                </div>
+                                                <p className="font-semibold text-slate-900 dark:text-white text-sm">{cat.name}</p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={loading || !description}
-                                className={cn(
-                                    "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                    loading || !description ? "bg-slate-300 dark:bg-slate-700" : "bg-sky-500 hover:bg-sky-600"
-                                )}
-                            >
-                                {loading ? "Menyimpan..." : "Simpan Transaksi"}
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        )}
+
+                        {step === "details" && (
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Deskripsi
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Contoh: Makan siang di warteg"
+                                        className="w-full p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500"
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500 dark:text-slate-400">Nominal</span>
+                                        <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(parseFloat(amount))}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500 dark:text-slate-400">Kategori</span>
+                                        <span className="font-semibold text-slate-900 dark:text-white">{categories.find(c => c.id === selectedCategory)?.name}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500 dark:text-slate-400">Tipe</span>
+                                        <span className={cn("font-semibold", transactionType === "expense" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
+                                            {transactionType === "expense" ? "Pengeluaran" : "Pemasukan"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={loading || !description}
+                                    className={cn(
+                                        "w-full py-4 rounded-2xl font-bold text-white transition-all",
+                                        loading || !description 
+                                            ? "bg-slate-300 dark:bg-slate-700" 
+                                            : transactionType === "expense"
+                                                ? "bg-rose-500 hover:bg-rose-600"
+                                                : "bg-emerald-500 hover:bg-emerald-600"
+                                    )}
+                                >
+                                    {loading ? "Menyimpan..." : "Simpan Transaksi"}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </motion.div>
         </AnimatePresence>

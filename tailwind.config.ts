@@ -50,8 +50,13 @@ const config: Config = {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                "forest-green": "#0C4A44",
+                "lime-accent": "#BEF264",
             },
             borderRadius: {
+                xl: "calc(var(--radius) + 4px)",
+                "2xl": "calc(var(--radius) + 8px)",
+                "3xl": "calc(var(--radius) + 12px)",
                 lg: "var(--radius)",
                 md: "calc(var(--radius) - 2px)",
                 sm: "calc(var(--radius) - 4px)",

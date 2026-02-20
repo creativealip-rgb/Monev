@@ -182,10 +182,11 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl p-6 max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
+                    className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    {/* Sticky Header */}
+                    <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                             {mode === "transfer" ? "Transfer Saldo" : "Withdraw Dana"}
                         </h2>
@@ -194,145 +195,143 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                         </button>
                     </div>
 
-                    {/* Mode Toggle */}
-                    <div className="flex gap-1 mb-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                        <button
-                            onClick={() => setMode("transfer")}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
-                                mode === "transfer"
-                                    ? "bg-white dark:bg-slate-700 text-sky-600 shadow-sm"
-                                    : "text-slate-500 hover:text-slate-700"
-                            )}
-                        >
-                            <ArrowRightLeft size={16} />
-                            Transfer
-                        </button>
-                        <button
-                            onClick={() => setMode("withdraw")}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
-                                mode === "withdraw"
-                                    ? "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm"
-                                    : "text-slate-500 hover:text-slate-700"
-                            )}
-                        >
-                            <ArrowLeftRight size={16} />
-                            Withdraw
-                        </button>
-                    </div>
-
-                    {/* Balance Display */}
-                    <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                        <Wallet size={18} className="text-slate-500 dark:text-slate-400" />
-                        <span className="text-sm text-slate-600 dark:text-slate-400">{getBalanceLabel()}:</span>
-                        <span className={cn(
-                            "text-sm font-bold",
-                            mode === "transfer" ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600 dark:text-sky-400"
-                        )}>
-                            {formatCurrency(getBalanceValue())}
-                        </span>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2 sticky top-0 bg-white dark:bg-slate-900 z-10">
-                        {tabs.map((tab) => (
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto px-6 py-4">
+                        {/* Mode Toggle */}
+                        <div className="flex gap-1 mb-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
                             <button
-                                key={tab.id}
-                                onClick={() => {
-                                    setActiveTab(tab.id);
-                                    setSelectedDestination(null);
-                                }}
+                                onClick={() => setMode("transfer")}
                                 className={cn(
-                                    "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                                    activeTab === tab.id
-                                        ? mode === "transfer" ? "bg-sky-500 text-white" : "bg-emerald-500 text-white"
-                                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                    "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
+                                    mode === "transfer"
+                                        ? "bg-white dark:bg-slate-700 text-sky-600 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700"
                                 )}
                             >
-                                <tab.icon size={16} />
-                                {tab.label}
+                                <ArrowRightLeft size={16} />
+                                Transfer
                             </button>
-                        ))}
-                    </div>
+                            <button
+                                onClick={() => setMode("withdraw")}
+                                className={cn(
+                                    "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
+                                    mode === "withdraw"
+                                        ? "bg-white dark:bg-slate-700 text-emerald-600 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700"
+                                )}
+                            >
+                                <ArrowLeftRight size={16} />
+                                Withdraw
+                            </button>
+                        </div>
 
-                    {/* Content Container - Flex Column with Scrollable List */}
-                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                        {/* Balance Display */}
+                        <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                            <Wallet size={18} className="text-slate-500 dark:text-slate-400" />
+                            <span className="text-sm text-slate-600 dark:text-slate-400">{getBalanceLabel()}:</span>
+                            <span className={cn(
+                                "text-sm font-bold",
+                                mode === "transfer" ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600 dark:text-sky-400"
+                            )}>
+                                {formatCurrency(getBalanceValue())}
+                            </span>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setActiveTab(tab.id);
+                                        setSelectedDestination(null);
+                                    }}
+                                    className={cn(
+                                        "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                                        activeTab === tab.id
+                                            ? mode === "transfer" ? "bg-sky-500 text-white" : "bg-emerald-500 text-white"
+                                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                    )}
+                                >
+                                    <tab.icon size={16} />
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Destination List */}
                         {fetching ? (
-                            <div className="flex items-center justify-center py-8 flex-1">
+                            <div className="flex items-center justify-center py-8">
                                 <Loader2 className="animate-spin text-slate-400" size={24} />
                             </div>
                         ) : (
-                            <>
-                                {/* Scrollable List */}
-                                <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pb-2">
-                                    {getCurrentItems().length === 0 ? (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-                                            Tidak ada {activeTab === "goal" ? "tabungan" : activeTab === "investment" ? "investasi" : "tagihan"} {mode === "withdraw" ? "dengan saldo" : "aktif"}
-                                        </p>
-                                    ) : (
-                                        getCurrentItems().map((item) => (
-                                            <button
-                                                key={item.id}
-                                                onClick={() => setSelectedDestination(item)}
-                                                className={cn(
-                                                    "w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left",
-                                                    selectedDestination?.id === item.id
-                                                        ? mode === "transfer"
-                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/30"
-                                                            : "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
-                                                        : "border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                                                )}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    {item.icon && (
-                                                        <div
-                                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                                                            style={{ backgroundColor: (item.color || "#3b82f6") + "20" }}
-                                                        >
-                                                            <span>{item.icon}</span>
-                                                        </div>
-                                                    )}
-                                                    <div>
-                                                        <p className="font-medium text-slate-900 dark:text-white">{item.name}</p>
-                                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                            {mode === "transfer" ? (
-                                                                activeTab === "goal" && item.targetAmount
-                                                                    ? `${formatCurrency(item.currentAmount || 0)} / ${formatCurrency(item.targetAmount)}`
-                                                                    : activeTab === "investment" && item.currentPrice
-                                                                    ? `${item.quantity} unit @ ${formatCurrency(item.currentPrice)}`
-                                                                    : item.amount
-                                                                    ? formatCurrency(item.amount)
-                                                                    : ""
-                                                            ) : (
-                                                                activeTab === "goal"
-                                                                    ? `Saldo: ${formatCurrency(item.currentAmount || 0)}`
-                                                                    : activeTab === "investment"
-                                                                    ? `${item.quantity} unit = ${formatCurrency(item.currentValue || 0)}`
-                                                                    : ""
-                                                            )}
-                                                        </p>
+                            <div className="space-y-2">
+                                {getCurrentItems().length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
+                                        Tidak ada {activeTab === "goal" ? "tabungan" : activeTab === "investment" ? "investasi" : "tagihan"} {mode === "withdraw" ? "dengan saldo" : "aktif"}
+                                    </p>
+                                ) : (
+                                    getCurrentItems().map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setSelectedDestination(item)}
+                                            className={cn(
+                                                "w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left",
+                                                selectedDestination?.id === item.id
+                                                    ? mode === "transfer"
+                                                        ? "border-sky-500 bg-sky-50 dark:bg-sky-900/30"
+                                                        : "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
+                                                    : "border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                {item.icon && (
+                                                    <div
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
+                                                        style={{ backgroundColor: (item.color || "#3b82f6") + "20" }}
+                                                    >
+                                                        <span>{item.icon}</span>
                                                     </div>
+                                                )}
+                                                <div>
+                                                    <p className="font-medium text-slate-900 dark:text-white">{item.name}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                        {mode === "transfer" ? (
+                                                            activeTab === "goal" && item.targetAmount
+                                                                ? `${formatCurrency(item.currentAmount || 0)} / ${formatCurrency(item.targetAmount)}`
+                                                                : activeTab === "investment" && item.currentPrice
+                                                                ? `${item.quantity} unit @ ${formatCurrency(item.currentPrice)}`
+                                                                : item.amount
+                                                                ? formatCurrency(item.amount)
+                                                                : ""
+                                                        ) : (
+                                                            activeTab === "goal"
+                                                                ? `Saldo: ${formatCurrency(item.currentAmount || 0)}`
+                                                                : activeTab === "investment"
+                                                                ? `${item.quantity} unit = ${formatCurrency(item.currentValue || 0)}`
+                                                                : ""
+                                                        )}
+                                                    </p>
                                                 </div>
-                                                {mode === "transfer" && activeTab === "goal" && item.targetAmount && (
-                                                    <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-emerald-500 rounded-full"
-                                                            style={{ width: `${Math.min(((item.currentAmount || 0) / item.targetAmount) * 100, 100)}%` }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            </>
+                                            </div>
+                                            {mode === "transfer" && activeTab === "goal" && item.targetAmount && (
+                                                <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-emerald-500 rounded-full"
+                                                        style={{ width: `${Math.min(((item.currentAmount || 0) / item.targetAmount) * 100, 100)}%` }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))
+                                )}
+                            </div>
                         )}
                     </div>
 
                     {/* Sticky Detail Form at Bottom */}
                     {selectedDestination && !fetching && (
-                        <div className="sticky bottom-0 bg-white dark:bg-slate-900 pt-4 border-t border-slate-200 dark:border-slate-700 mt-2">
+                        <div className="shrink-0 bg-white dark:bg-slate-900 p-6 pt-4 border-t border-slate-200 dark:border-slate-700">
                             <div className="space-y-3">
                                 <div>
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">

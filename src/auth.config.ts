@@ -11,6 +11,9 @@ export const authConfig = {
                 nextUrl.pathname === '/' ||
                 nextUrl.pathname === '/login' ||
                 nextUrl.pathname === '/register' ||
+                nextUrl.pathname === '/onboarding' ||
+                nextUrl.pathname === '/dashboard' ||
+                nextUrl.pathname.startsWith('/api/auth/') ||
                 nextUrl.pathname === '/manifest.json' ||
                 nextUrl.pathname === '/icon.svg' ||
                 nextUrl.pathname === '/sw.js' ||
@@ -21,7 +24,7 @@ export const authConfig = {
                 nextUrl.pathname.endsWith('.ico');
 
             if (isPublic) {
-                if (isLoggedIn && (nextUrl.pathname === '/' || nextUrl.pathname === '/login' || nextUrl.pathname === '/register')) {
+                if (isLoggedIn && (nextUrl.pathname === '/' || nextUrl.pathname === '/login' || nextUrl.pathname === '/register' || nextUrl.pathname === '/onboarding')) {
                     return Response.redirect(new URL('/dashboard', nextUrl));
                 }
                 return true;

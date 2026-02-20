@@ -206,47 +206,11 @@ export async function getCategoryStats(userId: number, year: number, month: numb
     }));
 }
 
-// Ensure sample budgets exist
-async function ensureSampleBudgets(userId: number, month: number, year: number) {
-    const db = getDb();
-
-    const existingBudgets = await db.select()
-        .from(budgets)
-        .where(and(
-            eq(budgets.userId, userId),
-            eq(budgets.month, month),
-            eq(budgets.year, year)
-        ))
-        .all();
-
-    if (existingBudgets.length >= 3) return;
-
-    const allCategories = await db.select().from(categories).all();
-    const getCatId = (name: string) => allCategories.find(c => c.name === name)?.id;
-
-    const sampleBudgets = [
-        { userId, categoryId: getCatId("Makan & Minuman")!, amount: 2500000, month, year },
-        { userId, categoryId: getCatId("Transportasi")!, amount: 1000000, month, year },
-        { userId, categoryId: getCatId("Hiburan")!, amount: 800000, month, year },
-    ];
-
-    for (const budget of sampleBudgets) {
-        if (!budget.categoryId) continue;
-        const exists = existingBudgets.some(b => b.categoryId === budget.categoryId);
-        if (!exists) {
-            await db.insert(budgets).values(budget);
-        }
-    }
-}
-
 // Budgets
 export async function getBudgets(userId: number, month: number, year: number): Promise<Array<Budget & { category: Category; spent: number }>> {
     const db = getDb();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-    // Ensure sample budgets exist for current month
-    await ensureSampleBudgets(userId, month, year);
 
     const budgetsWithCategories = await db.select({
         budget: budgets,
@@ -314,25 +278,8 @@ export async function deleteBudget(userId: number, id: number): Promise<void> {
     await db.delete(budgets).where(and(eq(budgets.id, id), eq(budgets.userId, userId)));
 }
 
-// Ensure sample goals exist
-async function ensureSampleGoals(userId: number) {
-    const db = getDb();
-
-    const existingGoals = await db.select().from(goals).where(eq(goals.userId, userId)).all();
-    if (existingGoals.length >= 1) return; // Reduce sample spam
-
-    const sampleGoals = [
-        { userId, name: "Dana Darurat", targetAmount: 10000000, currentAmount: 2000000, deadline: new Date("2026-12-31"), icon: "🛡️", color: "#22c55e" },
-    ];
-
-    for (const goal of sampleGoals) {
-        await db.insert(goals).values(goal);
-    }
-}
-
 // Goals - Full CRUD operations
 export async function getGoals(userId: number): Promise<Goal[]> {
-    await ensureSampleGoals(userId);
     const db = getDb();
     return db.select().from(goals).where(eq(goals.userId, userId)).all();
 }
