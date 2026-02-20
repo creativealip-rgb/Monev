@@ -364,8 +364,8 @@
 
 @layer base {
   :root {
-    --safe-area-top: max(env(safe-area-inset-top, 0px), 24px);
-    --safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 24px);
+    --safe-area-top: max(env(safe-area-inset-top, 0px), 16px);
+    --safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     --safe-mask-bg: transparent;
   }
 
@@ -380,13 +380,16 @@
   }
 }
 
-/* Safe Area Utility Classes */
-.pb-safe {
-  padding-bottom: var(--safe-area-bottom);
-}
+@layer utilities {
 
-.pt-safe {
-  padding-top: var(--safe-area-top);
+  /* Safe Area Utility Classes */
+  .pb-safe {
+    padding-bottom: var(--safe-area-bottom);
+  }
+
+  .pt-safe {
+    padding-top: var(--safe-area-top);
+  }
 }
 
 /* Native status bar spacer — only visible on native */

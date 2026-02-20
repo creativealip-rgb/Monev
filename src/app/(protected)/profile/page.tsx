@@ -198,7 +198,7 @@ export default function ProfilePage() {
     return (
         <div className="relative min-h-screen pb-24">
             {/* Premium Header Profile Card */}
-            <div className="relative bg-gradient-to-br from-sky-500 via-sky-600 to-cyan-700 pb-10 pt-safe pt-5 px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
+            <div className="relative bg-gradient-to-br from-sky-500 via-sky-600 to-cyan-700 pb-10 pt-safe pt-3 px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
                 {/* Abstract Background Shapes */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-sky-400/30 rounded-full blur-3xl mix-blend-overlay" />

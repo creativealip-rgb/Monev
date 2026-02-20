@@ -330,7 +330,7 @@ export default function Home() {
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
-                <header className="sticky top-0 z-[100] w-full pt-safe pt-5 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50">
+                <header className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50">
                     <div className="pt-2 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">

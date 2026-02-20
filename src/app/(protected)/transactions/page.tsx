@@ -242,7 +242,7 @@ export default function TransactionsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50 px-6 pt-safe pt-5 pb-4"
+                className="sticky top-0 z-50 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50 px-6 pt-safe pt-3 pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
