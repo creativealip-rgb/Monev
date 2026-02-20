@@ -88,8 +88,8 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
 
     return (
         <div className={cn(
-            "card-clean relative overflow-hidden rounded-[32px] border border-white/10 text-white p-6",
-            "bg-gradient-to-br transition-all duration-300",
+            "card-clean relative overflow-hidden rounded-[32px] border border-white/10 text-white p-6 cursor-pointer",
+            "bg-gradient-to-br transition-all duration-300 hover:scale-[1.01] hover:-translate-y-1 hover:brightness-110 hover:shadow-2xl hover:shadow-sky-500/10",
             themeConfig.gradient,
             themeConfig.shadowColor
         )}>

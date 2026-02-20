@@ -410,7 +410,7 @@ function FinancialHealthScore({ healthData }: { healthData: any }) {
 
 function StatsCard({ title, value, icon, subtitle, trend }: any) {
     return (
-        <motion.div className="card-clean p-4 flex flex-col justify-center flex-1">
+        <motion.div className="card-clean p-4 flex flex-col justify-center flex-1 cursor-pointer transition-all duration-300">
             <div className="flex items-center gap-2 mb-2">
                 {icon}
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{title}</span>

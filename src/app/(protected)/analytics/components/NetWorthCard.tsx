@@ -23,7 +23,7 @@ export function NetWorthCard({ balance, investments, goals, isLoading = false }:
     }
 
     return (
-        <div className="card-clean p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900">
+        <div className="card-clean p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:brightness-110 hover:shadow-2xl hover:shadow-sky-500/10">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Net Worth</span>
                 <button

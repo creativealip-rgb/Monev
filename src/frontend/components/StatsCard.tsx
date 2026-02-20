@@ -41,7 +41,7 @@ export function StatsCard({ label, amount, type, trend, className }: StatsCardPr
 
     return (
         <div className={cn(
-            "card-clean relative overflow-hidden p-5 cursor-pointer group",
+            "card-clean relative overflow-hidden p-5 cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:brightness-110 hover:shadow-xl",
             config.bgColor,
             className
         )}>
