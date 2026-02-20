@@ -32,17 +32,15 @@ export async function apiFetch(input: string | URL | Request, init?: RequestInit
         const response = await fetch(url, init);
         return response;
     } catch (error: any) {
-        console.error("❌ [apiFetch] FAILED TO FETCH:", {
-            url,
-            error: error.message,
-            stack: error.stack
-        });
+        console.error(`❌ [apiFetch] FAILED TO FETCH: ${url}`);
+        console.error(`Detailed Error: ${error.message}`);
 
         // Rethrow with more context if it's a type error (often network/CORS)
         if (error instanceof TypeError && error.message === "Failed to fetch") {
             throw new Error(
                 `Network Error: Gagal menghubungi API di ${url}. ` +
-                `Pastikan server VPS aktif dan tidak terblocek oleh CORS/SSL.`
+                `Ini biasanya disebabkan oleh CORS block atau VPS belum mengizinkan koneksi luar. ` +
+                `Pastikan server VPS sudah di-update dengan patch CORS terbaru.`
             );
         }
         throw error;
