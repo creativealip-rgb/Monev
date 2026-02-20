@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface FormErrors {
     email?: string;
@@ -147,7 +148,7 @@ export default function LoginPage() {
         setIsGuestLoading(true);
         try {
             // Call the guest login API
-            const response = await fetch("/api/auth/guest", {
+            const response = await apiFetch("/api/auth/guest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ initialBalance: 0 }),

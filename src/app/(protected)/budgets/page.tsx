@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
@@ -80,8 +81,8 @@ export default function BudgetsPage() {
 
             // Optimized: Fetch categories and budgets in parallel
             const [catsResponse, budgetsResponse] = await Promise.all([
-                fetch("/api/categories"),
-                fetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`)
+                apiFetch("/api/categories"),
+                apiFetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`)
             ]);
 
             const [catsResult, budgetsResult] = await Promise.all([

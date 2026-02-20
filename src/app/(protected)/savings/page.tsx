@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { AddGoalForm, EditGoalForm } from "@/frontend/components/BudgetForms";
 import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
@@ -68,14 +69,14 @@ export default function SavingsPage() {
             setLoading(true);
 
             // Fetch categories for reference
-            const catsResponse = await fetch("/api/categories");
+            const catsResponse = await apiFetch("/api/categories");
             const catsResult = await catsResponse.json();
             if (catsResult.success) {
                 setCategories(catsResult.data);
             }
 
             // Fetch goals
-            const goalsResponse = await fetch("/api/goals");
+            const goalsResponse = await apiFetch("/api/goals");
             const goalsResult = await goalsResponse.json();
 
             if (goalsResult.success) {

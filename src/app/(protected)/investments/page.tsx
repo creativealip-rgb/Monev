@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Investment } from "@/types";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { Portal } from "@/frontend/components/Portal";
 import { NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
 
@@ -56,7 +57,7 @@ export default function InvestmentsPage() {
     async function loadData() {
         setLoading(true);
         try {
-            const res = await fetch("/api/investments");
+            const res = await apiFetch("/api/investments");
             const result = await res.json();
             if (result.success) {
                 setInvestments(result.data);
@@ -87,13 +88,13 @@ export default function InvestmentsPage() {
 
             let res;
             if (selectedAsset) {
-                res = await fetch(`/api/investments/${selectedAsset.id}`, {
+                res = await apiFetch(`/api/investments/${selectedAsset.id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                 });
             } else {
-                res = await fetch("/api/investments", {
+                res = await apiFetch("/api/investments", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
@@ -117,7 +118,7 @@ export default function InvestmentsPage() {
     async function handleDelete(id: number) {
         if (!confirm("Yakin mau hapus aset investasi ini?")) return;
         try {
-            const res = await fetch(`/api/investments/${id}`, { method: "DELETE" });
+            const res = await apiFetch(`/api/investments/${id}`, { method: "DELETE" });
             const result = await res.json();
             if (result.success) {
                 setInvestments(prev => prev.filter(i => i.id !== id));

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 import {
     PieChart, Wallet, TrendingUp, AlertTriangle, ArrowRight,
     Target, CreditCard, Calendar, Activity, Zap, Brain,
@@ -122,7 +123,7 @@ export default function AnalyticsPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await fetch(`/api/analytics?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`);
+            const res = await apiFetch(`/api/analytics?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`);
             if (!res.ok) throw new Error("Gagal memuat data");
             const jsonData = await res.json();
             setData(jsonData);

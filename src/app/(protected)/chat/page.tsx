@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { useToast, ErrorEmpty } from "@/frontend/components/UI";
 import { cn } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { useSession } from "next-auth/react";
 
 interface Message {
@@ -133,7 +134,7 @@ export default function ChatPage() {
         }));
 
         try {
-            const response = await fetch("/api/chat", {
+            const response = await apiFetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

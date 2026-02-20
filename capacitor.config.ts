@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
     },
   },
   server: {
-    url: 'https://emmalynn-unstiffened-elvera.ngrok-free.dev',
+    url: 'http://52.64.169.254:3000',
     cleartext: true
   }
 };

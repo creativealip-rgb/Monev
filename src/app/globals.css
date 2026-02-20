@@ -370,8 +370,8 @@
   }
 
   .is-native {
-    --safe-area-top: env(safe-area-inset-top, 44px);
-    --safe-area-bottom: env(safe-area-inset-bottom, 34px);
+    --safe-area-top: env(safe-area-inset-top, 24px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 20px);
     --safe-mask-bg: rgba(248, 250, 252, 0.95);
   }
 

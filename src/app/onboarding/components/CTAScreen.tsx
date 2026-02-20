@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { UserPlus, LogIn, Sparkles, Loader2, Wallet, ArrowRight } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { authenticate } from "@/app/actions/auth";
 
 interface CTAScreenProps {
@@ -21,7 +22,7 @@ export function CTAScreen({ initialBalance, currency, onRegister, onLogin, onGue
         setLoading("guest");
         try {
             // Call the guest login API with initial balance
-            const response = await fetch("/api/auth/guest", {
+            const response = await apiFetch("/api/auth/guest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

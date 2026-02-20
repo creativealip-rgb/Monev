@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
@@ -204,7 +205,7 @@ export default function BillsPage() {
     async function loadSubscriptions() {
         try {
             setSubsLoading(true);
-            const res = await fetch("/api/subscriptions");
+            const res = await apiFetch("/api/subscriptions");
             const result = await res.json();
             if (result.success) {
                 setSubscriptions(result.data);
@@ -219,7 +220,7 @@ export default function BillsPage() {
     async function loadBills() {
         try {
             setLoading(true);
-            const res = await fetch("/api/bills");
+            const res = await apiFetch("/api/bills");
             const result = await res.json();
             if (result.success) {
                 setBills(result.data);

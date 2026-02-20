@@ -6,6 +6,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 const nextConfig: NextConfig = {
   /* config options here */
+
+  serverExternalPackages: ["better-sqlite3"],
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -14,8 +17,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["better-sqlite3"],
-  output: "standalone",
   turbopack: {
     root: __dirname,
   },

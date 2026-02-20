@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Transaction } from "@/types";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface Category {
     id: number;
@@ -134,7 +135,7 @@ export default function TransactionsPage() {
 
     // Fetch more transactions for infinite scroll
     const fetchMoreTransactions = useCallback(async (offset: number, limit: number) => {
-        const transResponse = await fetch(`/api/transactions?offset=${offset}&limit=${limit}&search=${searchQuery}`);
+        const transResponse = await apiFetch(`/api/transactions?offset=${offset}&limit=${limit}&search=${searchQuery}`);
         const transResult = await transResponse.json();
 
         if (transResult.success) {

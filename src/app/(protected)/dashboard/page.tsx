@@ -39,6 +39,7 @@ import { cn } from "@/frontend/lib/utils";
 import { UserTier } from "@/lib/tier-gate";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
@@ -224,9 +225,9 @@ export default function Home() {
                 catsResponse
             ] = await Promise.all([
                 fetchProfileData(),
-                fetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
-                fetch("/api/transactions"),
-                fetch("/api/categories")
+                apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
+                apiFetch("/api/transactions"),
+                apiFetch("/api/categories")
             ]);
 
             // Process profile data
