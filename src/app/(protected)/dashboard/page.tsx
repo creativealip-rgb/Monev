@@ -88,8 +88,8 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
 
     return (
         <div className={cn(
-            "relative overflow-hidden rounded-[32px] shadow-2xl border border-white/10 text-white p-6",
-            "bg-gradient-to-br",
+            "card-clean relative overflow-hidden rounded-[32px] border border-white/10 text-white p-6",
+            "bg-gradient-to-br transition-all duration-300",
             themeConfig.gradient,
             themeConfig.shadowColor
         )}>
@@ -324,8 +324,8 @@ export default function Home() {
                             </div>
                         </motion.div>
                         <div>
-                            <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{formattedDate}</p>
-                            <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">{formattedDate}</p>
+                            <h1 className="text-sm font-bold text-foreground tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                                 Hello, {userName.split(" ")[0]}! 👋
                             </h1>
                         </div>
@@ -333,7 +333,7 @@ export default function Home() {
                     <motion.button
                         whileHover={{ scale: 1.1, rotate: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-xl hover:shadow-sky-200/50 dark:hover:shadow-sky-900/50 transition-all"
+                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-muted-foreground hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-xl hover:shadow-sky-200/50 dark:hover:shadow-sky-900/50 transition-all"
                     >
                         <Bell size={18} strokeWidth={2.5} />
                         <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white animate-pulse" />
@@ -365,7 +365,7 @@ export default function Home() {
                 className="px-6 mb-8"
             >
                 <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Fitur Andalan</h2>
+                    <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Fitur Andalan</h2>
                     <Link href="/fitur" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1">
                         Lihat Semua
                         <ChevronRight size={14} />
@@ -395,7 +395,7 @@ export default function Home() {
                 className="px-6"
             >
                 <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                    <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Riwayat Terakhir</h2>
+                    <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Riwayat Terakhir</h2>
                     <Link href="/transactions" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
                         Lihat Semua
                     </Link>
@@ -436,15 +436,15 @@ export default function Home() {
                         <div className="flex justify-end mb-2 relative z-10">
                             <button
                                 onClick={() => setShowBalanceDetail(false)}
-                                className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all"
+                                className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
                             >
                                 <X size={16} />
                             </button>
                         </div>
 
                         <div className="text-center mb-6 relative z-10">
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
-                            <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
+                            <h3 className="text-3xl font-black text-foreground tracking-tight tabular-nums">
                                 {!mounted ? "..." : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
                             </h3>
                         </div>
@@ -473,11 +473,11 @@ export default function Home() {
                                 <div className="flex items-center gap-5">
                                     <div className="w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] border-2 border-white dark:border-slate-900" />
                                     <div>
-                                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Saldo Aktif</p>
-                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Liquid assets</p>
+                                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Saldo Aktif</p>
+                                        <p className="text-[10px] text-muted-foreground font-medium">Liquid assets</p>
                                     </div>
                                 </div>
-                                <p className="text-lg font-bold text-slate-800 dark:text-white tabular-nums">
+                                <p className="text-lg font-bold text-foreground tabular-nums">
                                     {!mounted ? "..." : formatCurrency(stats.balance)}
                                 </p>
                             </div>
@@ -486,11 +486,11 @@ export default function Home() {
                                 <div className="flex items-center gap-5">
                                     <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-2 border-white dark:border-slate-900" />
                                     <div>
-                                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tabungan Goals</p>
-                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Future plans</p>
+                                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Tabungan Goals</p>
+                                        <p className="text-[10px] text-muted-foreground font-medium">Future plans</p>
                                     </div>
                                 </div>
-                                <p className="text-lg font-bold text-slate-800 dark:text-white tabular-nums">
+                                <p className="text-lg font-bold text-foreground tabular-nums">
                                     {!mounted ? "..." : formatCurrency(stats.totalGoals || 0)}
                                 </p>
                             </div>
@@ -499,11 +499,11 @@ export default function Home() {
                                 <div className="flex items-center gap-5">
                                     <div className="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] border-2 border-white dark:border-slate-900" />
                                     <div>
-                                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Investasi</p>
-                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Growth assets</p>
+                                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Investasi</p>
+                                        <p className="text-[10px] text-muted-foreground font-medium">Growth assets</p>
                                     </div>
                                 </div>
-                                <p className="text-base font-bold text-slate-900 dark:text-white tabular-nums">
+                                <p className="text-base font-bold text-foreground tabular-nums">
                                     {!mounted ? "..." : formatCurrency(stats.totalInvestments || 0)}
                                 </p>
                             </div>

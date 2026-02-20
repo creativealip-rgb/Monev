@@ -274,7 +274,7 @@ export default function TransactionsPage() {
 
             <div className="px-6">
                 <div className="relative mb-6 mt-4">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <input
                         type="text"
                         placeholder="Cari transaksi..."
@@ -288,7 +288,7 @@ export default function TransactionsPage() {
                     animate={{ opacity: 1 }}
                     className="flex items-center justify-between mb-4"
                 >
-                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                         {searchQuery ? "Hasil Pencarian" : "Semua Transaksi"}
                     </p>
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
@@ -315,7 +315,7 @@ export default function TransactionsPage() {
                         >
                             {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
                                 <div key={date}>
-                                    <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-3 py-1 px-2 uppercase tracking-widest">
+                                    <h3 className="text-xs font-bold text-muted-foreground mb-3 py-1 px-2 uppercase tracking-widest">
                                         {date}
                                     </h3>
                                     <div className="space-y-3">
@@ -353,7 +353,7 @@ export default function TransactionsPage() {
                 )}
 
                 {loading && filteredTransactions.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 py-6 text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
                         <Loader2 size={20} className="animate-spin" />
                         <span>Memuat...</span>
                     </div>
@@ -378,7 +378,7 @@ export default function TransactionsPage() {
                                 className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px]"
                             >
                                 <div className="flex items-center justify-between mb-8">
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Filter Transaksi</h2>
+                                    <h2 className="text-xl font-bold text-foreground">Filter Transaksi</h2>
                                     <button
                                         onClick={() => setIsFilterModalOpen(false)}
                                         className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
@@ -389,7 +389,7 @@ export default function TransactionsPage() {
 
                                 <div className="space-y-8">
                                     <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Tipe Transaksi</p>
+                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Tipe Transaksi</p>
                                         <div className="flex gap-3">
                                             {[
                                                 { id: "all", label: "Semua" },
@@ -413,7 +413,7 @@ export default function TransactionsPage() {
                                     </div>
 
                                     <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Kategori</p>
+                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Kategori</p>
                                         <div className="flex flex-wrap gap-2">
                                             <button
                                                 onClick={() => setFilterCategory("all")}
@@ -450,7 +450,7 @@ export default function TransactionsPage() {
                                                 setFilterCategory("all");
                                                 setFilterType("all");
                                             }}
-                                            className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                                            className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                                         >
                                             Reset Filter
                                         </button>

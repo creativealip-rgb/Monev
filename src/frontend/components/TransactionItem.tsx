@@ -9,88 +9,88 @@ const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, grad
     // Indonesian category names from database
     "Makan & Minuman": {
         icon: Utensils,
-        color: "bg-orange-100 text-orange-600",
+        color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
         gradient: "from-orange-500 to-amber-500"
     },
     "Transportasi": {
         icon: Car,
-        color: "bg-blue-100 text-blue-600",
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
         gradient: "from-blue-500 to-indigo-500"
     },
     "Hiburan": {
         icon: Gamepad2,
-        color: "bg-purple-100 text-purple-600",
+        color: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
         gradient: "from-purple-500 to-pink-500"
     },
     "Belanja": {
         icon: ShoppingBag,
-        color: "bg-pink-100 text-pink-600",
+        color: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
         gradient: "from-pink-500 to-rose-500"
     },
     "Kesehatan": {
         icon: Heart,
-        color: "bg-green-100 text-green-600",
+        color: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
         gradient: "from-green-500 to-emerald-500"
     },
     "Pendidikan": {
         icon: BookOpen,
-        color: "bg-teal-100 text-teal-600",
+        color: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
         gradient: "from-teal-500 to-cyan-500"
     },
     "Tagihan": {
         icon: Receipt,
-        color: "bg-red-100 text-red-600",
+        color: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
         gradient: "from-red-500 to-rose-500"
     },
     "Investasi": {
         icon: TrendingUp,
-        color: "bg-emerald-100 text-emerald-600",
+        color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
         gradient: "from-emerald-500 to-teal-500"
     },
     "Gaji": {
         icon: Briefcase,
-        color: "bg-emerald-100 text-emerald-600",
+        color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
         gradient: "from-emerald-500 to-green-500"
     },
     "Freelance": {
         icon: Briefcase,
-        color: "bg-violet-100 text-violet-600",
+        color: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
         gradient: "from-violet-500 to-purple-500"
     },
     "Lainnya": {
         icon: CreditCard,
-        color: "bg-slate-100 text-slate-600",
+        color: "bg-muted text-muted-foreground",
         gradient: "from-slate-500 to-slate-400"
     },
     // Fallback for English names
     Food: {
         icon: Coffee,
-        color: "bg-orange-100 text-orange-600",
+        color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
         gradient: "from-orange-500 to-amber-500"
     },
     Shopping: {
         icon: ShoppingBag,
-        color: "bg-blue-100 text-blue-600",
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
         gradient: "from-blue-500 to-indigo-500"
     },
     Utilities: {
         icon: Zap,
-        color: "bg-yellow-100 text-yellow-600",
+        color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
         gradient: "from-yellow-500 to-orange-500"
     },
     Transport: {
         icon: ArrowRight,
-        color: "bg-purple-100 text-purple-600",
+        color: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
         gradient: "from-purple-500 to-pink-500"
     },
     Income: {
         icon: TrendingUp,
-        color: "bg-emerald-100 text-emerald-600",
+        color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
         gradient: "from-emerald-500 to-teal-500"
     },
     Default: {
         icon: CreditCard,
-        color: "bg-slate-100 text-slate-600",
+        color: "bg-muted text-muted-foreground",
         gradient: "from-slate-500 to-slate-400"
     },
 };
@@ -114,8 +114,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
         <div
             onClick={onClick}
             className={cn(
-                "relative flex items-center p-4 card-clean",
-                "hover:border-sky-300/30 hover:shadow-xl hover:shadow-sky-500/5 cursor-pointer",
+                "relative flex items-center p-4 card-clean cursor-pointer",
                 "transition-all duration-300"
             )}>
             <div className={cn(
@@ -130,15 +129,15 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             </div>
 
             <div className="flex-1 min-w-0 overflow-hidden mr-4">
-                <h4 className="font-bold text-slate-900 dark:text-white text-[13px] leading-tight line-clamp-1 break-all">
+                <h4 className="font-bold text-foreground text-[13px] leading-tight line-clamp-1 break-all">
                     {transaction.description || "Tanpa Deskripsi"}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                    <span className="text-[11px] font-medium text-muted-foreground truncate">
                         {transaction.category || "Lainnya"}
                     </span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0" />
-                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 flex-shrink-0">
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30 flex-shrink-0" />
+                    <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0">
                         {(() => {
                             try {
                                 const date = new Date(transaction.created_at);
@@ -154,14 +153,14 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
             <div className="text-right flex-shrink-0">
                 <p className={cn(
                     "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
-                    isIncome ? "text-emerald-600 dark:text-emerald-400" : isExpense ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"
+                    isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
                 )}>
                     {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
                 </p>
                 {transaction.is_verified && (
                     <div className="flex items-center justify-end gap-1 mt-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Verified</span>
+                        <span className="text-[10px] font-medium text-muted-foreground">Verified</span>
                     </div>
                 )}
             </div>

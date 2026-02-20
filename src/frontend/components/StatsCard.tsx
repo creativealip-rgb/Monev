@@ -19,17 +19,17 @@ const TYPE_CONFIG = {
     },
     income: {
         icon: ArrowUpRight,
-        bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100/50",
-        iconColor: "text-emerald-600",
-        labelColor: "text-emerald-600/70",
-        amountColor: "text-emerald-700"
+        bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/50 dark:border dark:border-emerald-900/50",
+        iconColor: "text-emerald-600 dark:text-emerald-400",
+        labelColor: "text-emerald-600/70 dark:text-emerald-400/70",
+        amountColor: "text-emerald-700 dark:text-emerald-300"
     },
     expense: {
         icon: ArrowDownRight,
-        bgColor: "bg-gradient-to-br from-rose-50 to-rose-100/50",
-        iconColor: "text-rose-600",
-        labelColor: "text-rose-600/70",
-        amountColor: "text-rose-700"
+        bgColor: "bg-gradient-to-br from-rose-50 to-rose-100/50 dark:from-rose-950/50 dark:to-rose-900/50 dark:border dark:border-rose-900/50",
+        iconColor: "text-rose-600 dark:text-rose-400",
+        labelColor: "text-rose-600/70 dark:text-rose-400/70",
+        amountColor: "text-rose-700 dark:text-rose-300"
     },
 };
 
@@ -41,8 +41,7 @@ export function StatsCard({ label, amount, type, trend, className }: StatsCardPr
 
     return (
         <div className={cn(
-            "relative overflow-hidden rounded-2xl p-5 transition-all duration-300",
-            "hover:shadow-lg hover:scale-[1.02] cursor-pointer group",
+            "card-clean relative overflow-hidden p-5 cursor-pointer group",
             config.bgColor,
             className
         )}>
@@ -53,7 +52,7 @@ export function StatsCard({ label, amount, type, trend, className }: StatsCardPr
             <div className="relative flex items-start justify-between mb-4">
                 <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center",
-                    type === "balance" ? "bg-white/20" : "bg-white shadow-sm"
+                    type === "balance" ? "bg-white/20" : "bg-white shadow-sm dark:bg-white/10 dark:shadow-none"
                 )}>
                     <Icon size={20} className={config.iconColor} strokeWidth={2.5} />
                 </div>
@@ -67,8 +66,8 @@ export function StatsCard({ label, amount, type, trend, className }: StatsCardPr
                 {trend !== undefined && type !== "balance" && (
                     <div className={cn(
                         "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold",
-                        isPositiveTrend ? "bg-emerald-100 text-emerald-700" :
-                            isNegativeTrend ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
+                        isPositiveTrend ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400" :
+                            isNegativeTrend ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400" : "bg-muted text-muted-foreground"
                     )}>
                         {isPositiveTrend ? <TrendingUp size={10} /> :
                             isNegativeTrend ? <TrendingDown size={10} /> : null}

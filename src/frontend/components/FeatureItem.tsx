@@ -44,7 +44,7 @@ export function FeatureItem({ label, icon, onClick, color = "blue" }: FeatureIte
                     {icon}
                 </div>
             </div>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 text-center leading-tight max-w-[80px] group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            <span className="text-[11px] font-semibold text-muted-foreground text-center leading-tight max-w-[80px] group-hover:text-foreground transition-colors">
                 {label}
             </span>
         </motion.div>

@@ -85,14 +85,15 @@ export default function ProfilePage() {
                     hourlyRate: data.settings.hourlyRate?.toString() || "",
                     primaryGoalId: data.settings.primaryGoalId?.toString() || "",
                     // Don't load existing PIN for security - user must enter new one
-                                securityPin: "",
-                                isAppLockEnabled: data.settings.isAppLockEnabled || false,
-                                hideBalance: data.settings.hideBalance || false // New: Load hideBalance setting
-                            }));
-                        }
-                    
-                        setLoading(false);
-                    } catch (error) {            console.error("Failed to load profile data:", error);
+                    securityPin: "",
+                    isAppLockEnabled: data.settings.isAppLockEnabled || false,
+                    hideBalance: data.settings.hideBalance || false // New: Load hideBalance setting
+                }));
+            }
+
+            setLoading(false);
+        } catch (error) {
+            console.error("Failed to load profile data:", error);
             setLoading(false);
         }
     };
@@ -275,7 +276,7 @@ export default function ProfilePage() {
                                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
                                         <Icon size={18} strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-bold text-[13px] text-slate-700 tracking-tight">{item.label}</span>
+                                    <span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 uppercase tracking-tighter">APK</span>
@@ -298,7 +299,7 @@ export default function ProfilePage() {
                                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
                                     <Icon size={18} strokeWidth={2.5} />
                                 </div>
-                                <span className="font-bold text-[13px] text-slate-700 tracking-tight">{item.label}</span>
+                                <span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</span>
                             </div>
                             {item.hasArrow && (
                                 <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />
@@ -318,7 +319,7 @@ export default function ProfilePage() {
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
                         <LogOut size={18} strokeWidth={2.5} />
                     </div>
-                    <span className="font-bold text-[13px] text-rose-500 tracking-tight">Keluar</span>
+                    <span className="font-bold text-[13px] text-rose-500 dark:text-rose-400 tracking-tight">Keluar</span>
                 </motion.button>
             </motion.div>
 

@@ -81,7 +81,7 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
             className="px-6 mb-8"
         >
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">
+                <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
                     Tagihan Mendekati
                 </h2>
                 <Link

@@ -146,7 +146,7 @@ export default function BudgetsPage() {
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Anggaran Bulanan</h1>
+                        <h1 className="text-sm font-bold text-foreground tracking-tight">Anggaran Bulanan</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -201,9 +201,9 @@ export default function BudgetsPage() {
                             <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
                                 <ShieldAlert size={16} className="text-orange-500 dark:text-orange-400" />
                             </div>
-                            <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Budget Bulanan</h2>
+                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Budget Bulanan</h2>
                         </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{budgets.length} Kategori</span>
+                        <span className="text-xs text-muted-foreground">{budgets.length} Kategori</span>
                     </div>
 
                     {loading ? (
@@ -235,17 +235,17 @@ export default function BudgetsPage() {
                                                 {getCategoryIcon(b.category)}
                                             </div>
                                             <div className="flex-1">
-                                                <span className="font-bold text-slate-800 dark:text-white text-[13px]">{b.category}</span>
-                                                <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">Limit: {formatCurrency(b.limit)}</p>
+                                                <span className="font-bold text-foreground text-[13px]">{b.category}</span>
+                                                <p className="text-xs text-muted-foreground tabular-nums">Limit: {formatCurrency(b.limit)}</p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
                                                     "font-bold text-[13px] block tabular-nums",
-                                                    isDanger ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
+                                                    isDanger ? "text-rose-600 dark:text-rose-400" : "text-foreground"
                                                 )}>
                                                     {formatCurrency(b.spent)}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
+                                                <span className="text-[10px] text-muted-foreground tabular-nums">
                                                     {Math.round(b.percentage)}%
                                                 </span>
                                             </div>

@@ -120,7 +120,7 @@ export default function SavingsPage() {
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tabungan & Goals</h1>
+                        <h1 className="text-sm font-bold text-foreground tracking-tight">Tabungan & Goals</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -175,78 +175,78 @@ export default function SavingsPage() {
                             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                 <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
                             </div>
-                            <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Daftar Impian</h2>
+                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Daftar Impian</h2>
                         </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{goals.length} Goals</span>
+                        <span className="text-xs text-muted-foreground">{goals.length} Goals</span>
                     </div>
 
-                {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <GoalCardSkeleton key={i} />
-                        ))}
-                    </div>
-                ) : goals.length === 0 ? (
-                    <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
-                ) : (
-                    <div className="space-y-4">
-                        {goals.map((g, i) => {
-                            const isCompleted = g.percentage >= 100;
-                            const isNearComplete = g.percentage >= 75;
+                    {loading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <GoalCardSkeleton key={i} />
+                            ))}
+                        </div>
+                    ) : goals.length === 0 ? (
+                        <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
+                    ) : (
+                        <div className="space-y-4">
+                            {goals.map((g, i) => {
+                                const isCompleted = g.percentage >= 100;
+                                const isNearComplete = g.percentage >= 75;
 
-                            return (
-                                <motion.div
-                                    key={g.id}
-                                    whileHover={{ scale: 1.02 }}
-                                    onClick={() => setDetailGoal(g)}
-                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-emerald-200/40 dark:hover:shadow-emerald-900/20 transition-all"
-                                >
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div
-                                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                                            style={{ backgroundColor: g.color + "20" }}
-                                        >
-                                            <span style={{ color: g.color }}>{g.icon}</span>
+                                return (
+                                    <motion.div
+                                        key={g.id}
+                                        whileHover={{ scale: 1.02 }}
+                                        onClick={() => setDetailGoal(g)}
+                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-emerald-200/40 dark:hover:shadow-emerald-900/20 transition-all"
+                                    >
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                                                style={{ backgroundColor: g.color + "20" }}
+                                            >
+                                                <span style={{ color: g.color }}>{g.icon}</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <span className="font-bold text-foreground text-[13px]">{g.name}</span>
+                                                <p className="text-xs text-muted-foreground tabular-nums">Target: {formatCurrency(g.target)}</p>
+                                            </div>
+                                            <div className="text-right pr-2">
+                                                <span className={cn(
+                                                    "font-bold text-[13px] block tabular-nums",
+                                                    isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                                                )}>
+                                                    {formatCurrency(g.saved)}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                                    {Math.round(g.percentage)}%
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <span className="font-bold text-slate-800 dark:text-white text-[13px]">{g.name}</span>
-                                            <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">Target: {formatCurrency(g.target)}</p>
-                                        </div>
-                                        <div className="text-right pr-2">
-                                            <span className={cn(
-                                                "font-bold text-[13px] block tabular-nums",
-                                                isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
-                                            )}>
-                                                {formatCurrency(g.saved)}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
-                                                {Math.round(g.percentage)}%
-                                            </span>
-                                        </div>
-                                    </div>
 
-                                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${g.percentage}%` }}
-                                            transition={{ duration: 1, delay: i * 0.1 }}
-                                            className={cn(
-                                                "h-full rounded-full",
-                                                isCompleted ? "bg-emerald-500" : isNearComplete ? "bg-sky-500" : "bg-sky-500"
-                                            )}
-                                        />
-                                    </div>
+                                        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${g.percentage}%` }}
+                                                transition={{ duration: 1, delay: i * 0.1 }}
+                                                className={cn(
+                                                    "h-full rounded-full",
+                                                    isCompleted ? "bg-emerald-500" : isNearComplete ? "bg-sky-500" : "bg-sky-500"
+                                                )}
+                                            />
+                                        </div>
 
-                                    {g.deadline && (
-                                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-2 flex items-center gap-1">
-                                            Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                                        </p>
-                                    )}
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                )}
+                                        {g.deadline && (
+                                            <p className="text-[10px] font-semibold text-muted-foreground mt-2 flex items-center gap-1">
+                                                Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+                                            </p>
+                                        )}
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </motion.section>
             </motion.div>
 

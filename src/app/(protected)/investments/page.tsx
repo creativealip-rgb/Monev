@@ -205,7 +205,7 @@ export default function InvestmentsPage() {
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Investasi</h1>
+                        <h1 className="text-sm font-bold text-foreground tracking-tight">Investasi</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -251,7 +251,7 @@ export default function InvestmentsPage() {
             </motion.div>
 
             <div className="px-6 mt-8">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">Daftar Aset</h3>
+                <h3 className="text-sm font-bold text-foreground mb-4">Daftar Aset</h3>
 
                 {loading ? (
                     <div className="space-y-4">
@@ -287,12 +287,12 @@ export default function InvestmentsPage() {
                                                 <AssetIcon name={inv.icon} color="#fff" size={20} />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-900 dark:text-white">{inv.name}</h4>
-                                                <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{inv.type} • {inv.platform || "Manual"}</p>
+                                                <h4 className="font-bold text-foreground">{inv.name}</h4>
+                                                <p className="text-xs text-muted-foreground capitalize">{inv.type} • {inv.platform || "Manual"}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-semibold text-slate-900 dark:text-white tabular-nums">{formatCurrency(value)}</p>
+                                            <p className="font-semibold text-foreground tabular-nums">{formatCurrency(value)}</p>
                                             <div className={cn(
                                                 "text-xs font-medium flex items-center justify-end gap-1 tabular-nums",
                                                 isProfit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400"
@@ -302,10 +302,10 @@ export default function InvestmentsPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-700">
-                                        <div className="text-xs text-slate-400 dark:text-slate-500">
+                                        <div className="text-xs text-muted-foreground">
                                             {inv.quantity.toLocaleString('id-ID')} @ {formatCurrency(inv.currentPrice)}
                                         </div>
-                                        <div className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                                        <div className="text-xs text-muted-foreground tabular-nums">
                                             Modal: {formatCurrency(inv.avgBuyPrice)}
                                         </div>
                                     </div>
@@ -334,7 +334,7 @@ export default function InvestmentsPage() {
                                 className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             >
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                                    <h2 className="text-xl font-bold text-foreground">
                                         {isEditModalOpen ? "Edit Aset" : "Tambah Aset"}
                                     </h2>
                                     {isEditModalOpen && selectedAsset && (
@@ -356,7 +356,7 @@ export default function InvestmentsPage() {
                                 <div className="space-y-5">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Nama Aset</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Aset</label>
                                             <input
                                                 type="text"
                                                 value={formName}
@@ -366,7 +366,7 @@ export default function InvestmentsPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Tipe</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Tipe</label>
                                             <select
                                                 value={formType}
                                                 onChange={(e) => setFormType(e.target.value as any)}
@@ -381,7 +381,7 @@ export default function InvestmentsPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Jumlah (Unit)</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Unit)</label>
                                             <input
                                                 type="number"
                                                 step="any"
@@ -392,7 +392,7 @@ export default function InvestmentsPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Platform</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Platform</label>
                                             <input
                                                 type="text"
                                                 value={formPlatform}
@@ -405,7 +405,7 @@ export default function InvestmentsPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Harga Beli (Avg)</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Harga Beli (Avg)</label>
                                             <input
                                                 type="number"
                                                 value={formBuyPrice}
@@ -415,7 +415,7 @@ export default function InvestmentsPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Harga Sekarang</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Harga Sekarang</label>
                                             <input
                                                 type="number"
                                                 value={formCurrentPrice}
@@ -427,7 +427,7 @@ export default function InvestmentsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Ikon & Warna</label>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Ikon & Warna</label>
                                         <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                                             {iconOptions.map(opt => (
                                                 <button
@@ -437,7 +437,7 @@ export default function InvestmentsPage() {
                                                         "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all",
                                                         formIcon === opt.name
                                                             ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400"
-                                                            : "border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400"
+                                                            : "border-slate-100 dark:border-slate-700 text-muted-foreground"
                                                     )}
                                                 >
                                                     <AssetIcon name={opt.name} color={formIcon === opt.name ? "#0ea5e9" : "#94a3b8"} size={16} />

@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { 
-    Inbox, 
-    Search, 
-    Wallet, 
-    TrendingUp, 
-    PiggyBank, 
+import {
+    Inbox,
+    Search,
+    Wallet,
+    TrendingUp,
+    PiggyBank,
     Receipt,
     FileText,
     CreditCard,
@@ -31,27 +31,27 @@ interface EmptyStateProps {
 const variantConfig = {
     default: {
         iconBg: "bg-slate-100 dark:bg-slate-800",
-        iconColor: "text-slate-400 dark:text-slate-500",
-        titleColor: "text-slate-700 dark:text-slate-200",
-        descColor: "text-slate-500 dark:text-slate-400"
+        iconColor: "text-muted-foreground",
+        titleColor: "text-foreground",
+        descColor: "text-muted-foreground"
     },
     search: {
         iconBg: "bg-sky-50 dark:bg-sky-900/30",
         iconColor: "text-sky-500 dark:text-sky-400",
-        titleColor: "text-slate-700 dark:text-slate-200",
-        descColor: "text-slate-500 dark:text-slate-400"
+        titleColor: "text-foreground",
+        descColor: "text-muted-foreground"
     },
     error: {
         iconBg: "bg-rose-50 dark:bg-rose-900/30",
         iconColor: "text-rose-500 dark:text-rose-400",
-        titleColor: "text-slate-700 dark:text-slate-200",
-        descColor: "text-slate-500 dark:text-slate-400"
+        titleColor: "text-foreground",
+        descColor: "text-muted-foreground"
     },
     success: {
         iconBg: "bg-emerald-50 dark:bg-emerald-900/30",
         iconColor: "text-emerald-500 dark:text-emerald-400",
-        titleColor: "text-slate-700 dark:text-slate-200",
-        descColor: "text-slate-500 dark:text-slate-400"
+        titleColor: "text-foreground",
+        descColor: "text-muted-foreground"
     }
 };
 
@@ -64,7 +64,7 @@ export function EmptyState({
     className
 }: EmptyStateProps) {
     const config = variantConfig[variant];
-    
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -89,17 +89,17 @@ export function EmptyState({
                     <Inbox className={cn("w-10 h-10", config.iconColor)} strokeWidth={1.5} />
                 )}
             </motion.div>
-            
+
             <h3 className={cn("text-lg font-bold mb-2", config.titleColor)}>
                 {title}
             </h3>
-            
+
             {description && (
                 <p className={cn("text-sm max-w-xs mb-6", config.descColor)}>
                     {description}
                 </p>
             )}
-            
+
             {action && (
                 <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -203,14 +203,14 @@ export function OfflineEmpty({ onRetry }: { onRetry?: () => void }) {
     );
 }
 
-export function ErrorEmpty({ 
-    title = "Terjadi kesalahan", 
+export function ErrorEmpty({
+    title = "Terjadi kesalahan",
     description = "Gagal memuat data. Silakan coba lagi.",
-    onRetry 
-}: { 
-    title?: string; 
+    onRetry
+}: {
+    title?: string;
     description?: string;
-    onRetry?: () => void 
+    onRetry?: () => void
 }) {
     return (
         <EmptyState

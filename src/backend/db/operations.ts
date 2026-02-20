@@ -167,6 +167,50 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
     };
 }
 
+export async function getDailyTransactionStats(userId: number, year: number, month: number): Promise<Array<{ date: string; count: number; total: number }>> {
+    const db = getDb();
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // Group by date (YYYY-MM-DD)
+    // SQLite: strftime('%Y-%m-%d', date / 1000, 'unixepoch') if stored as timestamp,
+    // but Drizzle stores Date as ms timestamp integer usually or text depending on config.
+    // Based on schema inspection earlier (not fully shown but standard Drizzle/SQLite), dates are likely integers (timestamps).
+    // Let's assume standard behavior. If dates are strings, simple substring works. 
+    // SAFEST CROSS-COMPATIBLE WAY in Drizzle+SQLite usually involves sql snippets.
+
+    const entries = await db.select({
+        date: transactions.date,
+        amount: transactions.amount,
+        type: transactions.type
+    })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense"),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .all();
+
+    // Aggregate in JS to avoid complex SQLite date formatting compatibility issues
+    const stats: Record<string, { count: number; total: number }> = {};
+
+    entries.forEach(t => {
+        const dateStr = new Date(t.date).toISOString().split('T')[0];
+        if (!stats[dateStr]) {
+            stats[dateStr] = { count: 0, total: 0 };
+        }
+        stats[dateStr].count++;
+        stats[dateStr].total += t.amount;
+    });
+
+    return Object.entries(stats).map(([date, data]) => ({
+        date,
+        ...data
+    })).sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function getCategoryStats(userId: number, year: number, month: number): Promise<Array<{
     categoryId: number;
     categoryName: string;
@@ -962,7 +1006,7 @@ export async function transferToGoal(userId: number, goalId: number, amount: num
     const fee = amount * ADMIN_FEE_PERCENTAGE;
     const netAmount = amount - fee;
     const newAmount = Math.min(goal.currentAmount + netAmount, goal.targetAmount);
-    
+
     await db.update(goals)
         .set({ currentAmount: newAmount })
         .where(and(eq(goals.id, goalId), eq(goals.userId, userId)));
@@ -996,7 +1040,7 @@ export async function transferToInvestment(userId: number, investmentId: number,
     const fee = amount * ADMIN_FEE_PERCENTAGE;
     const netAmount = amount - fee;
     const newQuantity = investment.quantity + (netAmount / investment.avgBuyPrice);
-    
+
     await db.update(investments)
         .set({ quantity: newQuantity, updatedAt: new Date() })
         .where(and(eq(investments.id, investmentId), eq(investments.userId, userId)));
@@ -1427,5 +1471,15 @@ export async function withdrawFromInvestment(userId: number, investmentId: numbe
     }).returning().get();
 
     return transaction;
+}
+
+export async function getTotalInvestmentsValue(userId: number): Promise<number> {
+    const db = getDb();
+    const result = await db
+        .select({ total: sql<number>`SUM(${investments.quantity} * ${investments.currentPrice})` })
+        .from(investments)
+        .where(eq(investments.userId, userId))
+        .get();
+    return result?.total || 0;
 }
 

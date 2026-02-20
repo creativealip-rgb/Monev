@@ -310,11 +310,15 @@
 /* Component Classes */
 @layer components {
   .card-clean {
-    @apply bg-white/60 backdrop-blur-2xl border border-white/40 shadow-xl shadow-slate-200/40 rounded-3xl transition-all duration-300;
+    @apply bg-white/60 dark:bg-slate-900 border border-white/40 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none rounded-3xl transition-all duration-300;
   }
 
   .card-clean:hover {
     @apply bg-white/80 border-white/60 shadow-2xl shadow-slate-200/60 -translate-y-1;
+  }
+
+  .dark .card-clean:hover {
+    @apply bg-slate-800/80 border-slate-700 shadow-2xl shadow-sky-500/10 -translate-y-1 scale-[1.01] backdrop-blur-3xl;
   }
 
   .btn-primary {

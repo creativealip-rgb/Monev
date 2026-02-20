@@ -56,20 +56,20 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                 </AnimatePresence>
                 <div className={cn(
                     "p-1.5 rounded-xl transition-all duration-300",
-                    isActive ? "bg-sky-50 dark:bg-sky-900/50" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
+                    isActive ? "bg-sky-50 dark:bg-sky-900/50" : "hover:bg-muted/50"
                 )}>
                     <Icon
                         size={22}
                         className={cn(
                             "transition-all duration-300",
-                            isActive ? "text-sky-500 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"
+                            isActive ? "text-sky-500 dark:text-sky-400" : "text-muted-foreground"
                         )}
                         strokeWidth={isActive ? 2.5 : 2}
                     />
                 </div>
                 <span className={cn(
                     "text-[10px] font-semibold tracking-tight transition-colors duration-300",
-                    isActive ? "text-sky-500 dark:text-sky-400" : "text-slate-500 dark:text-slate-400"
+                    isActive ? "text-sky-500 dark:text-sky-400" : "text-muted-foreground"
                 )}>
                     {label}
                 </span>

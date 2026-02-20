@@ -9,7 +9,9 @@ import {
     getGoalsProgress,
     calculateFinancialHealthScore,
     getCashflowPrediction,
-    getBudgets
+    getBudgets,
+    getDailyTransactionStats,
+    getTotalInvestmentsValue
 } from "@/backend/db/operations";
 import { getFinancialInsights } from "@/lib/ai";
 
@@ -34,7 +36,9 @@ export async function GET(req: NextRequest) {
             goalsProgress,
             healthScore,
             cashflowPrediction,
-            budgets
+            budgets,
+            dailyStats,
+            totalInvestments
         ] = await Promise.all([
             getAnalysisData(userId, year, month),
             getFinancialHealthMetrics(userId),
@@ -44,7 +48,9 @@ export async function GET(req: NextRequest) {
             getGoalsProgress(userId),
             calculateFinancialHealthScore(userId),
             getCashflowPrediction(userId),
-            getBudgets(userId, month, year)
+            getBudgets(userId, month, year),
+            getDailyTransactionStats(userId, year, month),
+            getTotalInvestmentsValue(userId)
         ]);
 
         // Generate AI insights based on the analysis data
@@ -52,8 +58,8 @@ export async function GET(req: NextRequest) {
 
         // Calculate additional metrics
         const avgDailySpending = spendingPatterns.averageDailySpending;
-        const savingsRate = basicAnalysis.income > 0 
-            ? ((basicAnalysis.income - basicAnalysis.expense) / basicAnalysis.income) * 100 
+        const savingsRate = basicAnalysis.income > 0
+            ? ((basicAnalysis.income - basicAnalysis.expense) / basicAnalysis.income) * 100
             : 0;
 
         // Budget alerts
@@ -83,6 +89,8 @@ export async function GET(req: NextRequest) {
             healthScore,
             cashflowPrediction,
             budgetAlerts,
+            dailyStats,
+            totalInvestments,
 
             // Legacy health metrics
             health,

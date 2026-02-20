@@ -45,7 +45,7 @@ function getStatusInfo(bill: Bill) {
     if (daysUntilDue <= 3) {
         return { label: `${daysUntilDue} hari lagi`, color: "amber", badge: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" };
     }
-    return { label: `Tgl ${bill.dueDate}`, color: "slate", badge: "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700" };
+    return { label: `Tgl ${bill.dueDate}`, color: "slate", badge: "bg-slate-50 dark:bg-slate-800 text-muted-foreground border-slate-200 dark:border-slate-700" };
 }
 
 function BillItem({
@@ -100,25 +100,25 @@ function BillItem({
                 </button>
                 <div className="flex-1">
                     <span className={cn(
-                        "font-bold text-slate-800 dark:text-white text-[13px] block transition-all",
-                        bill.isPaid ? "text-slate-400 dark:text-slate-500 line-through" : ""
+                        "font-bold text-foreground text-[13px] block transition-all",
+                        bill.isPaid ? "text-muted-foreground line-through" : ""
                     )}>
                         {bill.name}
                     </span>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                    <p className="text-xs text-muted-foreground tabular-nums">
                         {bill.frequency === "monthly" ? "Bulanan" : bill.frequency === "weekly" ? "Mingguan" : "Tahunan"}
                     </p>
                 </div>
                 <div className="text-right pr-2">
                     <span className={cn(
                         "font-bold text-[13px] block tabular-nums",
-                        bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
+                        bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
                     )}>
                         {formatCurrency(bill.amount)}
                     </span>
                     <span className={cn(
                         "text-[10px] tabular-nums",
-                        isOverdue ? "text-rose-500 font-semibold" : "text-slate-400 dark:text-slate-500"
+                        isOverdue ? "text-rose-500 font-semibold" : "text-muted-foreground"
                     )}>
                         {!mounted ? "..." : status.label}
                     </span>
@@ -312,7 +312,7 @@ export default function BillsPage() {
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tagihan</h1>
+                        <h1 className="text-sm font-bold text-foreground tracking-tight">Tagihan</h1>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -363,9 +363,9 @@ export default function BillsPage() {
                             <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
                                 <Receipt size={16} className="text-rose-500 dark:text-rose-400" />
                             </div>
-                            <h2 className="text-[13px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Daftar Tagihan</h2>
+                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Daftar Tagihan</h2>
                         </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{filteredBills.length} Tagihan</span>
+                        <span className="text-xs text-muted-foreground">{filteredBills.length} Tagihan</span>
                     </div>
 
                     <div className="flex gap-2 mb-4">
@@ -377,7 +377,7 @@ export default function BillsPage() {
                                     "py-2 px-3 rounded-xl text-xs font-bold transition-all",
                                     activeTab === tab.id
                                         ? "bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400"
-                                        : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                        : "bg-white dark:bg-slate-800 text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-700"
                                 )}
                             >
                                 {tab.label} ({loading ? "..." : tab.count})
@@ -386,38 +386,38 @@ export default function BillsPage() {
                     </div>
 
                     <div>
-                {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <BillCardSkeleton key={i} />
-                        ))}
-                    </div>
-                ) : filteredBills.length === 0 ? (
-                    activeTab === "all" ? (
-                        <NoBillsEmpty onAddNew={() => setIsAddModalOpen(true)} />
-                    ) : (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-16 bg-white dark:bg-slate-800 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-700"
-                        >
-                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Receipt size={24} className="text-slate-300 dark:text-slate-500" />
+                        {loading ? (
+                            <div className="space-y-4">
+                                {[1, 2, 3, 4].map(i => (
+                                    <BillCardSkeleton key={i} />
+                                ))}
                             </div>
-                            <p className="text-slate-500 dark:text-slate-400 font-bold">
-                                {activeTab === "paid" ? "Belum ada yang lunas" : "Semua sudah lunas! 🎉"}
-                            </p>
-                        </motion.div>
-                    )
-                ) : (
-                    <div className="space-y-4">
-                        {filteredBills.map((bill, i) => {
-                            return (
-                                <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} />
-                            );
-                        })}
-                    </div>
-                )}
+                        ) : filteredBills.length === 0 ? (
+                            activeTab === "all" ? (
+                                <NoBillsEmpty onAddNew={() => setIsAddModalOpen(true)} />
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-center py-16 bg-white dark:bg-slate-800 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-700"
+                                >
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Receipt size={24} className="text-slate-300 dark:text-slate-500" />
+                                    </div>
+                                    <p className="text-muted-foreground font-bold">
+                                        {activeTab === "paid" ? "Belum ada yang lunas" : "Semua sudah lunas! 🎉"}
+                                    </p>
+                                </motion.div>
+                            )
+                        ) : (
+                            <div className="space-y-4">
+                                {filteredBills.map((bill, i) => {
+                                    return (
+                                        <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} />
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </motion.section>
             </motion.div>
@@ -440,7 +440,7 @@ export default function BillsPage() {
                                 className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[85vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             >
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Tambah Tagihan</h2>
+                                    <h2 className="text-xl font-bold text-foreground">Tambah Tagihan</h2>
                                     <button
                                         onClick={() => setIsAddModalOpen(false)}
                                         className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
@@ -451,7 +451,7 @@ export default function BillsPage() {
 
                                 <div className="space-y-5">
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Nama Tagihan</label>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Tagihan</label>
                                         <input
                                             type="text"
                                             value={formName}
@@ -462,7 +462,7 @@ export default function BillsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
                                         <input
                                             type="number"
                                             value={formAmount}
@@ -474,7 +474,7 @@ export default function BillsPage() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Jatuh Tempo</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jatuh Tempo</label>
                                             <select
                                                 value={formDueDate}
                                                 onChange={(e) => setFormDueDate(e.target.value)}
@@ -486,7 +486,7 @@ export default function BillsPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Frekuensi</label>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Frekuensi</label>
                                             <select
                                                 value={formFrequency}
                                                 onChange={(e) => setFormFrequency(e.target.value as any)}
@@ -500,7 +500,7 @@ export default function BillsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Ikon</label>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Ikon</label>
                                         <div className="flex gap-2 flex-wrap">
                                             {iconOptions.map(opt => (
                                                 <button
@@ -510,7 +510,7 @@ export default function BillsPage() {
                                                         "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all",
                                                         formIcon === opt.name
                                                             ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400"
-                                                            : "border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400"
+                                                            : "border-slate-100 dark:border-slate-700 text-muted-foreground"
                                                     )}
                                                 >
                                                     <BillIcon name={opt.name} color={formIcon === opt.name ? "#0ea5e9" : "#94a3b8"} size={16} />
@@ -521,7 +521,7 @@ export default function BillsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Warna</label>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Warna</label>
                                         <div className="flex gap-3">
                                             {colorOptions.map(c => (
                                                 <button
@@ -538,7 +538,7 @@ export default function BillsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 block">Catatan (Opsional)</label>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Catatan (Opsional)</label>
                                         <input
                                             type="text"
                                             value={formNotes}
@@ -553,9 +553,9 @@ export default function BillsPage() {
                                         disabled={!formName || !formAmount || isSubmitting}
                                         className={cn(
                                             "w-full py-4 rounded-2xl text-sm font-bold transition-all",
-                                                formName && formAmount
-                                                    ? "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/25"
-                                                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                                            formName && formAmount
+                                                ? "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/25"
+                                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                         )}
                                     >
                                         {isSubmitting ? "Menyimpan..." : "Simpan Tagihan"}
