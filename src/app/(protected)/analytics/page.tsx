@@ -5,15 +5,22 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import {
     PieChart, Wallet, TrendingUp, AlertTriangle, ArrowRight,
     Target, CreditCard, Calendar, Activity, Zap, Brain,
-    ChevronRight, Gauge, LayoutDashboard, History, Sparkles
+    ChevronRight, Gauge, LayoutDashboard, History, Sparkles,
+    ArrowLeft, Lock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
+import Link from "next/link";
 import { ErrorEmpty } from "@/frontend/components/EmptyState";
+import { useSession } from "next-auth/react";
+import { UserTier, hasFullAnalytics } from "@/lib/tier-gate";
+import { useToast } from "@/frontend/components/UI";
 
 // New Components
 import { NetWorthCard } from "./components/NetWorthCard";
 import { CalendarHeatmap } from "./components/CalendarHeatmap";
+import { MonthComparison } from "./components/MonthComparison";
+import { SpendingHeatmap } from "./components/SpendingHeatmap";
 import { AnalyticsTabs } from "./components/AnalyticsTabs";
 
 // Types
@@ -78,7 +85,9 @@ interface AnalyticsData {
     financialHealth: any; // Legacy
     dailyStats: DailyStat[];
     totalInvestments: number;
-    aiInsights: string[]; // Add AI insights
+    aiInsights: string[];
+    monthlyComparison?: Array<{ month: string; income: number; expense: number }>;
+    spendingPatterns?: { averageDailySpending: number; highestSpendingDay: string; anomalies: any[] };
 }
 
 export default function AnalyticsPage() {
@@ -87,11 +96,16 @@ export default function AnalyticsPage() {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const toast = useToast();
+    const canSeeFullAnalytics = hasFullAnalytics(userTier);
 
     const tabs = [
         { id: "overview", label: "Ringkasan" },
-        { id: "trends", label: "Tren" },
-        { id: "insights", label: "Insight" }
+        { id: "trends", label: "Tren", locked: !canSeeFullAnalytics },
+        { id: "insights", label: "Insight", locked: !canSeeFullAnalytics }
     ];
 
     const containerVariants = {
@@ -147,34 +161,68 @@ export default function AnalyticsPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
-            {/* Header Area */}
-            <div className="bg-white dark:bg-slate-950 sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800">
-                <div className="px-6 py-4 pt-12">
-                    <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl font-black text-foreground tracking-tight">Analitik</h1>
-
-                        {/* Month Selector */}
-                        <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full p-1">
-                            <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all">
-                                <ChevronRight className="rotate-180 w-4 h-4 text-muted-foreground" />
-                            </button>
-                            <span className="text-xs font-bold px-3 min-w-[100px] text-center text-foreground">
-                                {currentDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
-                            </span>
-                            <button onClick={() => changeMonth(1)} className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all">
-                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                        </div>
+            {/* Standardized Header */}
+            <motion.header
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe pb-4"
+            >
+                <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95"
+                        >
+                            <ArrowLeft size={16} strokeWidth={2.5} />
+                        </Link>
+                        <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">Statistik</h1>
                     </div>
 
-                    <NetWorthCard
-                        balance={data.balance}
-                        investments={data.totalInvestments || 0}
-                        goals={data.goalsProgress?.reduce((acc: any, g: any) => acc + g.currentAmount, 0) || 0}
-                    />
+                    {/* Month Selector Mini */}
+                    <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 shadow-sm">
+                        <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                            <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
+                        </button>
+                        <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
+                            {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
+                        </span>
+                        <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                        </button>
+                    </div>
+                </div>
+            </motion.header>
 
-                    <div className="mt-6">
-                        <AnalyticsTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+            <div className="p-6 space-y-6">
+                <NetWorthCard
+                    balance={data.balance}
+                    investments={data.totalInvestments || 0}
+                    goals={data.goalsProgress?.reduce((acc: any, g: any) => acc + g.currentAmount, 0) || 0}
+                />
+
+                <div className="sticky top-20 z-30 -mx-6 px-6 py-2 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm">
+                    <div className="flex gap-2 mb-2">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => {
+                                    if (tab.locked) {
+                                        toast.error("Fitur Terkunci", "Upgrade ke Kaya atau Sultan untuk akses fitur ini! 🚀");
+                                        return;
+                                    }
+                                    setActiveTab(tab.id);
+                                }}
+                                className={cn(
+                                    "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                                    activeTab === tab.id
+                                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                                        : "bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-800"
+                                )}
+                            >
+                                {tab.label}
+                                {tab.locked && <Lock size={10} className="opacity-60" />}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -261,8 +309,33 @@ function OverviewTab({ data, itemVariants }: { data: AnalyticsData, itemVariants
 }
 
 function TrendsTab({ data, itemVariants }: { data: AnalyticsData, itemVariants: any }) {
+    // Get current and previous month from monthlyComparison
+    const comparison = data.monthlyComparison || [];
+    const currentMonth = comparison.length > 0 ? comparison[comparison.length - 1] : null;
+    const previousMonth = comparison.length > 1 ? comparison[comparison.length - 2] : null;
+
     return (
         <div className="flex flex-col gap-6">
+            {/* Month Comparison */}
+            {currentMonth && previousMonth && (
+                <motion.div variants={itemVariants}>
+                    <MonthComparison
+                        currentIncome={currentMonth.income}
+                        currentExpense={currentMonth.expense}
+                        previousIncome={previousMonth.income}
+                        previousExpense={previousMonth.expense}
+                        currentMonthLabel={currentMonth.month}
+                        previousMonthLabel={previousMonth.month}
+                    />
+                </motion.div>
+            )}
+
+            {/* Spending Heatmap */}
+            <motion.div variants={itemVariants}>
+                <SpendingHeatmap data={data.dailyStats} />
+            </motion.div>
+
+            {/* Top Categories */}
             <motion.div variants={itemVariants} className="card-clean p-6">
                 <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider mb-6">Top Kategori Pengeluaran</h3>
                 <div className="space-y-5">
@@ -295,8 +368,6 @@ function TrendsTab({ data, itemVariants }: { data: AnalyticsData, itemVariants: 
                     )}
                 </div>
             </motion.div>
-
-            {/* Can add more charts here if available */}
         </div>
     );
 }

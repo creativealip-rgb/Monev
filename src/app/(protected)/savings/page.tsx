@@ -10,6 +10,9 @@ import { AddGoalForm, EditGoalForm } from "@/frontend/components/BudgetForms";
 import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
 import { Goal } from "@/types";
+import { useSession } from "next-auth/react";
+import { canCreateGoal, UserTier } from "@/lib/tier-gate";
+import { Zap } from "lucide-react";
 
 interface Category {
     id: number;
@@ -35,6 +38,10 @@ export default function SavingsPage() {
     const [goals, setGoals] = useState<Goal[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
 
     // Modals state
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -125,7 +132,13 @@ export default function SavingsPage() {
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => setIsGoalModalOpen(true)}
+                        onClick={() => {
+                            if (!canCreateGoal(goals.length, userTier)) {
+                                toast.error("Limit Goal tercapai", "Upgrade ke Kaya atau Sultan untuk menambah lebih banyak goals! 🚀");
+                                return;
+                            }
+                            setIsGoalModalOpen(true);
+                        }}
                         className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900 transition-all"
                     >
                         <Plus size={18} />
@@ -176,6 +189,12 @@ export default function SavingsPage() {
                                 <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
                             </div>
                             <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Daftar Impian</h2>
+                            {userTier === "miskin" && (
+                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                    <Zap size={10} className="text-slate-500" />
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase">Limit: 1</span>
+                                </div>
+                            )}
                         </div>
                         <span className="text-xs text-muted-foreground">{goals.length} Goals</span>
                     </div>

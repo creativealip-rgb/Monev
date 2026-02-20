@@ -6,7 +6,7 @@ import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
-import { Filter, Search, ArrowLeft, X, Check, Loader2 } from "lucide-react";
+import { Filter, Search, ArrowLeft, X, Check, Loader2, Download } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -101,9 +101,7 @@ export default function TransactionsPage() {
     }, [filteredTransactions]);
 
     useEffect(() => {
-        loadData(true);
-
-        // Listen for transaction added event
+        // Only set up listeners on mount
         const handleTransactionAdded = () => {
             loadData(true);
         };
@@ -256,19 +254,35 @@ export default function TransactionsPage() {
                         </Link>
                         <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Riwayat</h1>
                     </div>
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setIsFilterModalOpen(true)}
-                        className={cn(
-                            "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
-                            (filterCategory !== "all" || filterType !== "all")
-                                ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
-                        )}
-                    >
-                        <Filter size={16} />
-                    </motion.button>
+                    <div className="flex items-center gap-2">
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => {
+                                const a = document.createElement("a");
+                                a.href = "/api/transactions/export";
+                                a.download = "monev_transaksi.csv";
+                                a.click();
+                            }}
+                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
+                            title="Export CSV"
+                        >
+                            <Download size={15} />
+                        </motion.button>
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setIsFilterModalOpen(true)}
+                            className={cn(
+                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
+                                (filterCategory !== "all" || filterType !== "all")
+                                    ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
+                            )}
+                        >
+                            <Filter size={16} />
+                        </motion.button>
+                    </div>
                 </div>
             </motion.header>
 

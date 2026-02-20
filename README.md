@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Monev — Agentic Finance 💰
 
-## Getting Started
+Asisten keuangan pribadi berbasis AI. Catat transaksi, analisa pengeluaran, dan raih target keuanganmu dengan bantuan AI yang proaktif.
 
-First, run the development server:
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 💬 **AI Chat** | Tanya asisten AI tentang kondisi keuanganmu |
+| 📊 **Analytics** | Grafik pengeluaran, perbandingan bulanan, heatmap spending |
+| 🔔 **Smart Notifications** | Pengingat tagihan, daily recap, dan push notifications |
+| 💱 **Multi-Currency** | Support IDR, USD, EUR, SGD, MYR |
+| 🌐 **Multi-Language** | Indonesia & English |
+| 🎯 **Goal Tracking** | Target tabungan dan investasi |
+| 📱 **PWA + Android** | Install as app, offline support |
+| 🤖 **Telegram Bot** | Catat transaksi via Telegram |
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your credentials
+
+# Run database migrations
+npx drizzle-kit push
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔧 Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local` with the following:
 
-## Learn More
+```env
+# Auth
+AUTH_SECRET=your-secret-key
 
-To learn more about Next.js, take a look at the following resources:
+# Database
+DATABASE_URL=file:./sqlite.db
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# AI (OpenAI)
+OPENAI_API_KEY=sk-...
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Telegram Bot (optional)
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_WEBHOOK_URL=https://your-domain.com/api/telegram-webhook
 
-## Deploy on Vercel
+# Push Notifications (optional — generate with: npx web-push generate-vapid-keys)
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/
+│   ├── (protected)/    # Auth-required pages
+│   │   ├── analytics/  # Charts, heatmaps, trends
+│   │   ├── bills/      # Bill tracking & reminders
+│   │   ├── budgets/    # Budget management
+│   │   ├── chat/       # AI finance assistant
+│   │   ├── dashboard/  # Main dashboard
+│   │   ├── investments/# Portfolio tracking
+│   │   ├── profile/    # Settings & preferences
+│   │   ├── savings/    # Savings goals
+│   │   └── transactions/ # Transaction history
+│   ├── api/            # API routes (28 endpoints)
+│   └── onboarding/     # First-time setup wizard
+├── backend/
+│   └── db/             # Drizzle schema & operations
+├── components/         # Shared components
+├── frontend/
+│   ├── components/     # UI components
+│   ├── hooks/          # Custom React hooks
+│   └── lib/            # Utilities, i18n, currency
+└── lib/                # Server-side utilities
+```
+
+## 🧪 Testing
+
+```bash
+npm test               # Run all tests once
+npm run test:watch     # Watch mode
+```
+
+## 🐳 Docker
+
+```bash
+docker build -t monev .
+docker run -p 3000:3000 monev
+```
+
+Or with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+## 📱 Android APK
+
+Download the latest APK from `/monev-app.apk` in the running app (Profile > Download Aplikasi Android).
+
+## 🛠 Tech Stack
+
+- **Framework:** Next.js 16 + React 19
+- **Database:** SQLite via Drizzle ORM
+- **Auth:** NextAuth v5
+- **AI:** OpenAI SDK
+- **UI:** Tailwind CSS 4 + Framer Motion + Lucide Icons
+- **Testing:** Vitest
+- **Mobile:** Capacitor (Android)
+
+## 📄 License
+
+MIT

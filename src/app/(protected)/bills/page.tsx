@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -187,7 +187,34 @@ export default function BillsPage() {
 
     useEffect(() => {
         loadBills();
+        loadSubscriptions();
     }, []);
+
+    // Subscription detection
+    interface DetectedSub {
+        merchant: string;
+        amount: number;
+        frequency: number;
+        lastDate: string;
+    }
+    const [subscriptions, setSubscriptions] = useState<DetectedSub[]>([]);
+    const [subsLoading, setSubsLoading] = useState(false);
+    const [showSubs, setShowSubs] = useState(true);
+
+    async function loadSubscriptions() {
+        try {
+            setSubsLoading(true);
+            const res = await fetch("/api/subscriptions");
+            const result = await res.json();
+            if (result.success) {
+                setSubscriptions(result.data);
+            }
+        } catch (error) {
+            console.error("Error loading subscriptions:", error);
+        } finally {
+            setSubsLoading(false);
+        }
+    }
 
     async function loadBills() {
         try {
@@ -350,6 +377,73 @@ export default function BillsPage() {
                     />
                 </div>
             </motion.div>
+
+            {/* Detected Subscriptions Section */}
+            {(subscriptions.length > 0 || subsLoading) && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mx-6 mt-4"
+                >
+                    <button
+                        onClick={() => setShowSubs(!showSubs)}
+                        className="flex items-center justify-between w-full mb-3"
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                                <AlertTriangle size={14} className="text-amber-500 dark:text-amber-400" />
+                            </div>
+                            <h3 className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">
+                                Langganan Terdeteksi
+                            </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+                                {subsLoading ? "..." : subscriptions.length}
+                            </span>
+                            <RefreshCw
+                                size={13}
+                                className={cn("text-muted-foreground", subsLoading && "animate-spin")}
+                                onClick={(e) => { e.stopPropagation(); loadSubscriptions(); }}
+                            />
+                        </div>
+                    </button>
+
+                    <AnimatePresence>
+                        {showSubs && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden space-y-2"
+                            >
+                                {subsLoading ? (
+                                    <div className="p-4 text-center text-xs text-muted-foreground">Menganalisa pola transaksi...</div>
+                                ) : subscriptions.map((sub, i) => (
+                                    <motion.div
+                                        key={sub.merchant}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between"
+                                    >
+                                        <div>
+                                            <p className="text-[13px] font-bold text-foreground">{sub.merchant}</p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                {sub.frequency}x terdeteksi • Terakhir {new Date(sub.lastDate).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                                            </p>
+                                        </div>
+                                        <span className="text-[13px] font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+                                            {formatCurrency(sub.amount)}
+                                        </span>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+            )}
 
             <motion.div
                 variants={containerVariants}

@@ -28,17 +28,17 @@ export function CTAScreen({ initialBalance, currency, onRegister, onLogin, onGue
                     initialBalance: initialBalance,
                 }),
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success && result.credentials) {
                 // Sign in with the created credentials
                 const formData = new FormData();
                 formData.append("email", result.credentials.email);
                 formData.append("password", result.credentials.password);
-                
+
                 const authResult = await authenticate(undefined, formData);
-                
+
                 if (!authResult) {
                     // Success - redirect to dashboard
                     onGuest();
@@ -61,7 +61,7 @@ export function CTAScreen({ initialBalance, currency, onRegister, onLogin, onGue
     };
 
     return (
-        <div className="h-full flex flex-col bg-sky-50 dark:bg-slate-950">
+        <div className="flex-1 flex flex-col h-full bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <header className="sticky top-0 z-50 w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4">
                 <div className="pt-2 flex items-center justify-center">
@@ -80,23 +80,23 @@ export function CTAScreen({ initialBalance, currency, onRegister, onLogin, onGue
                 <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ 
+                    transition={{
                         type: "spring",
                         stiffness: 200,
                         damping: 15,
-                        delay: 0.1 
+                        delay: 0.1
                     }}
                     className="mb-8"
                 >
                     <motion.div
-                        animate={{ 
+                        animate={{
                             scale: [1, 1.05, 1],
                             rotate: [0, 5, -5, 0]
                         }}
-                        transition={{ 
-                            duration: 3, 
-                            repeat: Infinity, 
-                            ease: "easeInOut" 
+                        transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
                         }}
                         className="w-28 h-28 mx-auto bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-[32px] flex items-center justify-center shadow-2xl shadow-orange-500/30"
                     >

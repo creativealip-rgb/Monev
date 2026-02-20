@@ -23,7 +23,10 @@ import {
     X,
     ArrowRightLeft,
     Eye,
-    EyeOff
+    EyeOff,
+    Zap,
+    Crown,
+    Lock,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -33,6 +36,13 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { fetchProfileData } from "@/app/(protected)/profile/actions";
 import { cn } from "@/frontend/lib/utils";
+import { UserTier } from "@/lib/tier-gate";
+
+const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
+    miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
+    kaya: { label: "Kaya", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
+    sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
+};
 
 interface Transaction {
     id: string;
@@ -165,10 +175,10 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                         <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
                             <ArrowUpRight size={14} className="text-rose-300" />
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Expense</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Pengeluaran</p>
                     </div>
                     <p className="font-bold text-[13px] text-rose-300 tabular-nums">
-                        − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense).replace("Rp", "")}
+                        − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense + (stats as any).fees).replace("Rp", "")}
                     </p>
                 </div>
             </div>
@@ -189,7 +199,9 @@ export default function Home() {
     const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number }>({ income: 0, expense: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
-    const [userName, setUserName] = useState("Pengguna");
+    const [userName, setUserName] = useState<string | null>(null);
+    const [userTier, setUserTier] = useState<UserTier>("miskin");
+    const [userImage, setUserImage] = useState<string | null>(null);
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [hideBalance, setHideBalance] = useState(false);
@@ -238,8 +250,11 @@ export default function Home() {
                 if (profileData?.user) {
                     // Try firstName + lastName first, then fall back to name
                     const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
-                    const displayName = fullName || profileData.user.name || "Pengguna";
+                    const displayName = fullName || profileData.user.name || "Sultan";
                     setUserName(displayName);
+                    setUserImage(profileData.user.image || null);
+                    // @ts-ignore
+                    setUserTier(profileData.user.tier || "miskin");
                 }
                 // Only set hideBalance from profile if not already set from localStorage
                 const localSaved = localStorage.getItem("hideBalance");
@@ -308,32 +323,64 @@ export default function Home() {
         <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             <header className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50">
                 <div className="pt-2 flex items-center justify-between">
-                    <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20"
-                        >
-                            <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                                {userName === "Pengguna" ? (
-                                    <User size={18} className="text-sky-600 dark:text-sky-400" />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-sky-100 to-cyan-50 dark:from-sky-900 dark:to-cyan-900 flex items-center justify-center text-base font-bold text-sky-700 dark:text-sky-300">
-                                        {userName.charAt(0)}
-                                    </div>
-                                )}
+                    <div className="flex items-center gap-3">
+                        <Link href="/profile" className="flex items-center gap-3 group active:scale-95 transition-transform">
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20"
+                            >
+                                <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                                    {userImage ? (
+                                        <img src={userImage} alt={userName || "User"} className="w-full h-full object-cover" />
+                                    ) : !userName ? (
+                                        <div className="w-full h-full bg-slate-100 dark:bg-slate-800 animate-pulse flex items-center justify-center">
+                                            <div className="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-sky-100 to-cyan-50 dark:from-sky-900 dark:to-cyan-900 flex items-center justify-center text-base font-bold text-sky-700 dark:text-sky-300">
+                                            {userName.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                            <div className="flex flex-col">
+                                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">{formattedDate}</p>
+                                <h1 className="text-sm font-bold text-foreground tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                                    {!userName ? (
+                                        <span className="inline-block w-24 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md align-middle" />
+                                    ) : (
+                                        `Hello, ${userName.split(" ")[0]}! 👋`
+                                    )}
+                                </h1>
                             </div>
-                        </motion.div>
-                        <div>
-                            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">{formattedDate}</p>
-                            <h1 className="text-sm font-bold text-foreground tracking-tight group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                                Hello, {userName.split(" ")[0]}! 👋
-                            </h1>
+                        </Link>
+
+                        <div className="flex items-center gap-1.5 pt-4">
+                            <div className={cn(
+                                "px-1.5 py-0.5 rounded-md border flex items-center gap-1",
+                                TIER_STYLES[userTier].bg,
+                                TIER_STYLES[userTier].border
+                            )}>
+                                {(() => {
+                                    const Icon = TIER_STYLES[userTier].icon;
+                                    return <Icon size={8} className={TIER_STYLES[userTier].color} />;
+                                })()}
+                                <span className={cn("text-[8px] font-black uppercase tracking-tighter", TIER_STYLES[userTier].color)}>
+                                    {TIER_STYLES[userTier].label}
+                                </span>
+                            </div>
+                            <Link
+                                href="/fitur/upgrade"
+                                className="text-[8px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-0.5 border-l border-slate-200 dark:border-slate-800 pl-1.5"
+                            >
+                                Ganti Paket <ChevronRight size={8} />
+                            </Link>
                         </div>
-                    </Link>
+                    </div>
                     <motion.button
                         whileHover={{ scale: 1.1, rotate: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-muted-foreground hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-xl hover:shadow-sky-200/50 dark:hover:shadow-sky-900/50 transition-all"
+                        className="relative w-8 h-8 rounded-full glass-card flex items-center justify-center text-muted-foreground dark:text-sky-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-xl hover:shadow-sky-200/50 dark:hover:shadow-sky-900/50 transition-all"
                     >
                         <Bell size={18} strokeWidth={2.5} />
                         <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white animate-pulse" />
@@ -376,15 +423,29 @@ export default function Home() {
                     variants={itemVariants}
                     className="grid grid-cols-3 gap-y-8 gap-x-4 justify-items-center"
                 >
-                    {mainFeatures.map((feature) => (
-                        <Link key={feature.label} href={feature.href}>
-                            <FeatureItem
-                                label={feature.label}
-                                icon={feature.icon}
-                                color={feature.color}
-                            />
-                        </Link>
-                    ))}
+                    {mainFeatures.map((feature) => {
+                        const isPremium = ["Anggaran", "Tagihan", "Investasi"].includes(feature.label);
+                        const isLocked = userTier === "miskin" && isPremium;
+
+                        return (
+                            <Link
+                                key={feature.label}
+                                href={feature.href}
+                                className="relative group"
+                            >
+                                <FeatureItem
+                                    label={feature.label}
+                                    icon={feature.icon}
+                                    color={feature.color}
+                                />
+                                {isLocked && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                                        <Lock size={10} className="text-slate-400" />
+                                    </div>
+                                )}
+                            </Link>
+                        );
+                    })}
                 </motion.div>
             </motion.section>
 

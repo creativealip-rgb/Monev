@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, NotebookTabs, BarChart3, Plus, User } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import { useI18n } from "@/frontend/lib/i18n-context";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
@@ -14,12 +15,13 @@ interface BottomNavProps {
 export function BottomNav({ onFabClick }: BottomNavProps) {
     const pathname = usePathname();
     const [isFabPressed, setIsFabPressed] = useState(false);
+    const { t } = useI18n();
 
     const links = [
-        { href: "/", label: "Home", icon: Home },
-        { href: "/transactions", label: "Riwayat", icon: NotebookTabs },
-        { href: "/analytics", label: "Statistik", icon: BarChart3 },
-        { href: "/profile", label: "Profile", icon: User },
+        { href: "/", label: t("nav.dashboard"), icon: Home },
+        { href: "/transactions", label: t("nav.transactions"), icon: NotebookTabs },
+        { href: "/analytics", label: t("nav.analytics"), icon: BarChart3 },
+        { href: "/profile", label: t("nav.profile"), icon: User },
     ];
 
     // Split links: first 2 on left, last 2 on right

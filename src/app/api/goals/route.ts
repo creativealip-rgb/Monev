@@ -54,6 +54,19 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
+        // Tier limit check
+        const currentGoals = await getGoals(userId);
+        // @ts-ignore
+        const userTier = session.user.tier || "miskin";
+
+        const { canCreateGoal } = await import("@/lib/tier-gate");
+        if (!canCreateGoal(currentGoals.length, userTier)) {
+            return NextResponse.json(
+                { success: false, error: `Batas maksimal goal untuk tier ${userTier} telah tercapai. Harap upgrade akun Anda.` },
+                { status: 403 }
+            );
+        }
+
         const goal = await createGoal(userId, {
             name: body.name,
             targetAmount: body.targetAmount,

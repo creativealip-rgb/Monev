@@ -10,7 +10,7 @@ interface InitialBalanceScreenProps {
     currency: string;
     initialBalance: number;
     onUpdate: (field: string, value: number) => void;
-    onNext: () => void;
+    onFinish: () => void;
     onPrev: () => void;
 }
 
@@ -18,19 +18,20 @@ export function InitialBalanceScreen({
     currency,
     initialBalance,
     onUpdate,
-    onNext,
+    onFinish,
     onPrev,
 }: InitialBalanceScreenProps) {
     const [inputValue, setInputValue] = useState(initialBalance === 0 ? "" : initialBalance.toString());
     const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/[^0-9]/g, "");
         setInputValue(value);
-        
+
         const numValue = parseInt(value, 10) || 0;
         onUpdate("initialBalance", numValue);
-        
+
         if (numValue > 1000000000000) {
             setError("Saldo terlalu besar");
         } else {
@@ -43,10 +44,12 @@ export function InitialBalanceScreen({
         return parseInt(value, 10).toLocaleString("id-ID");
     };
 
-    const handleNext = () => {
+    const handleFinish = async () => {
+        setIsSubmitting(true);
         const balance = parseInt(inputValue, 10) || 0;
         onUpdate("initialBalance", balance);
-        onNext();
+        await onFinish();
+        setIsSubmitting(false);
     };
 
     const presetAmounts = [
@@ -59,7 +62,7 @@ export function InitialBalanceScreen({
     ];
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="flex-1 flex flex-col h-full">
             {/* Header */}
             <header className="sticky top-0 z-50 w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4">
                 <div className="pt-2 flex items-center gap-4">
@@ -80,7 +83,7 @@ export function InitialBalanceScreen({
                 </div>
             </header>
 
-            {/* Content */}
+            {/* Content ... (rest of the code stays mostly the same until the button) */}
             <div className="flex-1 px-6 py-6 overflow-y-auto">
                 {/* Balance Card */}
                 <motion.div
@@ -92,7 +95,7 @@ export function InitialBalanceScreen({
                     <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-sky-500 to-cyan-600 p-6 text-white shadow-xl shadow-sky-500/20">
                         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 -mr-10 -mt-10" />
                         <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 -ml-8 -mb-8" />
-                        
+
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-2">
                                 <Wallet className="w-5 h-5 text-white/80" />
@@ -121,7 +124,7 @@ export function InitialBalanceScreen({
                         </div>
                         Masukkan Jumlah
                     </label>
-                    
+
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
                             {currency === "IDR" ? "Rp" : currency}
@@ -140,14 +143,14 @@ export function InitialBalanceScreen({
                             )}
                         />
                     </div>
-                    
+
                     {error && (
                         <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                             <Info className="w-4 h-4" />
                             {error}
                         </p>
                     )}
-                    
+
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
                         Saldo ini akan dicatat sebagai pemasukan pertama Anda
                     </p>
@@ -208,19 +211,25 @@ export function InitialBalanceScreen({
                 </motion.div>
             </div>
 
-            {/* Continue Button */}
+            {/* Finish Button */}
             <div className="sticky bottom-0 p-6 pb-8 bg-gradient-to-t from-sky-50 via-sky-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent">
                 <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    onClick={handleNext}
+                    onClick={handleFinish}
+                    disabled={isSubmitting}
                     className={cn(
-                        "w-full btn-primary py-4 text-base font-semibold rounded-2xl",
-                        "hover:shadow-xl hover:shadow-sky-500/30"
+                        "w-full btn-primary py-4 text-base font-semibold rounded-2xl flex items-center justify-center gap-2",
+                        "hover:shadow-xl hover:shadow-sky-500/30",
+                        isSubmitting && "opacity-80 cursor-not-allowed"
                     )}
                 >
-                    Lanjutkan
+                    {isSubmitting ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                        "Mulai Sekarang"
+                    )}
                 </motion.button>
             </div>
         </div>

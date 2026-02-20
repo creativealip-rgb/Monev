@@ -152,17 +152,17 @@ export default function LoginPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ initialBalance: 0 }),
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success && result.credentials) {
                 // Sign in with the created credentials
                 const submitFormData = new FormData();
                 submitFormData.append("email", result.credentials.email);
                 submitFormData.append("password", result.credentials.password);
-                
+
                 const authResult = await authenticate(undefined, submitFormData);
-                
+
                 if (!authResult) {
                     // Success - redirect to dashboard
                     router.push("/dashboard");
@@ -212,10 +212,6 @@ export default function LoginPage() {
                 setShake(true);
                 setTimeout(() => setShake(false), 500);
             }
-        } catch {
-            setErrors({ general: "An unexpected error occurred. Please try again." });
-            setShake(true);
-            setTimeout(() => setShake(false), 500);
         } finally {
             setIsPending(false);
         }

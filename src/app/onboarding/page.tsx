@@ -9,7 +9,6 @@ import { WelcomeScreen } from "./components/WelcomeScreen";
 import { FeatureCarousel } from "./components/FeatureCarousel";
 import { QuickSetup } from "./components/QuickSetup";
 import { InitialBalanceScreen } from "./components/InitialBalanceScreen";
-import { CTAScreen } from "./components/CTAScreen";
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -34,7 +33,7 @@ export default function OnboardingPage() {
         if (isHydrated && !shouldReset) {
             const hasCompleted = localStorage.getItem("monev_onboarding_complete");
             if (hasCompleted === "true") {
-                router.push("/login");
+                router.push("/dashboard");
             }
         }
     }, [isHydrated, router, shouldReset]);
@@ -42,13 +41,13 @@ export default function OnboardingPage() {
     // Handle completion
     useEffect(() => {
         if (isComplete) {
-            router.push("/login");
+            router.push("/dashboard");
         }
     }, [isComplete, router]);
 
     // Handle navigation based on current screen
     const handleNext = () => {
-        if (currentScreen < 4) {
+        if (currentScreen < 3) {
             nextScreen();
         }
     };
@@ -61,22 +60,6 @@ export default function OnboardingPage() {
 
     const handleSkip = () => {
         skipOnboarding();
-        router.push("/login");
-    };
-
-    const handleRegister = () => {
-        completeOnboarding();
-        router.push("/register");
-    };
-
-    const handleLogin = () => {
-        completeOnboarding();
-        router.push("/login");
-    };
-
-    const handleGuest = () => {
-        localStorage.setItem("monev_guest_mode", "true");
-        localStorage.setItem("monev_onboarding_complete", "true");
         router.push("/dashboard");
     };
 
@@ -126,18 +109,8 @@ export default function OnboardingPage() {
                         currency={formData.currency}
                         initialBalance={formData.initialBalance}
                         onUpdate={(field: string, value: number) => updateFormData(field as keyof typeof formData, value)}
-                        onNext={handleNext}
+                        onFinish={completeOnboarding}
                         onPrev={handlePrev}
-                    />
-                )}
-                {currentScreen === 4 && (
-                    <CTAScreen
-                        key="cta"
-                        initialBalance={formData.initialBalance}
-                        currency={formData.currency}
-                        onRegister={handleRegister}
-                        onLogin={handleLogin}
-                        onGuest={handleGuest}
                     />
                 )}
             </AnimatePresence>

@@ -1,11 +1,11 @@
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory } from "./schema";
-import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory } from "./schema";
+import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory, coupons } from "./schema";
+import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory, Coupon } from "./schema";
 import { eq, and, desc, sql, gte, lte, like, or } from "drizzle-orm";
 import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
 
 // Re-export types
-export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory };
+export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory, Coupon };
 
 // Categories (Global for now)
 export async function getCategories(): Promise<Category[]> {
@@ -133,25 +133,25 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // Get income transactions with SQL date filtering
+    // Get income transactions (plus withdrawals from assets)
     const incomeResult = await db
         .select({ total: sql<number>`SUM(amount)` })
         .from(transactions)
         .where(and(
             eq(transactions.userId, userId),
-            eq(transactions.type, "income"),
+            or(eq(transactions.type, "income"), eq(transactions.type, "withdraw")), // Include withdrawals
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
         ))
         .get();
 
-    // Get expense transactions with SQL date filtering
+    // Get expense transactions (plus transfers to assets)
     const expenseResult = await db
         .select({ total: sql<number>`SUM(amount)` })
         .from(transactions)
         .where(and(
             eq(transactions.userId, userId),
-            eq(transactions.type, "expense"),
+            or(eq(transactions.type, "expense"), eq(transactions.type, "transfer")), // Include transfers
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
         ))
@@ -1481,5 +1481,60 @@ export async function getTotalInvestmentsValue(userId: number): Promise<number> 
         .where(eq(investments.userId, userId))
         .get();
     return result?.total || 0;
+}
+
+// ============ AI Chat History & Limits ============
+
+export async function logAIChat(userId: number, role: "user" | "assistant", content: string): Promise<ChatHistory> {
+    const db = getDb();
+    return db.insert(chatHistory).values({
+        userId,
+        role,
+        content,
+    }).returning().get();
+}
+
+export async function getDailyAICount(userId: number): Promise<number> {
+    const db = getDb();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const result = db.select({ count: sql<number>`COUNT(*)` })
+        .from(chatHistory)
+        .where(and(
+            eq(chatHistory.userId, userId),
+            eq(chatHistory.role, "user"), // Count user messages as "usages"
+            gte(chatHistory.createdAt, today)
+        ))
+        .get();
+
+    return result?.count || 0;
+}
+
+// ============ Coupons & Upgrades ============
+
+export async function getCouponByCode(code: string): Promise<Coupon | undefined> {
+    const db = getDb();
+    return db.select().from(coupons).where(eq(coupons.code, code)).get();
+}
+
+export async function useCoupon(couponId: number, userId: number, tier: "kaya" | "sultan"): Promise<void> {
+    const db = getDb();
+
+    // Mark coupon as used
+    db.update(coupons)
+        .set({
+            isUsed: true,
+            usedBy: userId,
+            usedAt: new Date()
+        })
+        .where(eq(coupons.id, couponId))
+        .run();
+
+    // Upgrade user tier
+    db.update(users)
+        .set({ tier: tier })
+        .where(eq(users.id, userId))
+        .run();
 }
 

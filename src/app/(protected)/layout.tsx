@@ -1,14 +1,21 @@
 import ClientLayout from "../ClientLayout";
 import { SecurityProvider } from "@/components/SecurityProvider";
+import { OnboardingGuard } from "@/app/components/OnboardingGuard";
+import { fetchProfileData } from "@/app/(protected)/profile/actions";
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const data = await fetchProfileData();
+    const hasCompletedOnboarding = data?.settings?.hasCompletedOnboarding ?? false;
+
     return (
         <SecurityProvider>
-            <ClientLayout>{children}</ClientLayout>
+            <OnboardingGuard serverStatus={hasCompletedOnboarding}>
+                <ClientLayout>{children}</ClientLayout>
+            </OnboardingGuard>
         </SecurityProvider>
     );
 }

@@ -1,14 +1,29 @@
 "use client";
 
-import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check, User as UserIcon, MessageCircle, Smartphone, Crown } from "lucide-react";
+import {
+    ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check,
+    User as UserIcon, MessageCircle, Smartphone, Crown,
+    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles
+} from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { fetchProfileData, updateProfile, updateFinancialSettings, updateSecuritySettings, disconnectTelegram } from "./actions";
+import {
+    fetchProfileData, updateProfile, updateFinancialSettings,
+    updateSecuritySettings, disconnectTelegram
+} from "./actions";
 import { serverSignOut } from "@/app/actions/auth";
 import { cn } from "@/frontend/lib/utils";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { useToast } from "@/frontend/components/UI";
+import { UserTier, canUseTelegram } from "@/lib/tier-gate";
+import { useSession } from "next-auth/react";
+
+const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
+    miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
+    kaya: { label: "Kaya", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
+    sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
+};
 
 const menuItems = [
     { id: "account", icon: UserIcon, label: "Pengaturan Akun", color: "blue", hasArrow: true },
@@ -52,7 +67,8 @@ export default function ProfilePage() {
         hourlyRate: "",
         primaryGoalId: "",
         securityPin: "",
-        isAppLockEnabled: false
+        isAppLockEnabled: false,
+        hideBalance: false
     });
 
     useEffect(() => {
@@ -87,7 +103,7 @@ export default function ProfilePage() {
                     // Don't load existing PIN for security - user must enter new one
                     securityPin: "",
                     isAppLockEnabled: data.settings.isAppLockEnabled || false,
-                    hideBalance: data.settings.hideBalance || false // New: Load hideBalance setting
+                    hideBalance: data.settings.hideBalance || false
                 }));
             }
 
@@ -159,6 +175,13 @@ export default function ProfilePage() {
 
     const getInitials = () => {
         if (!user) return "??";
+        if (user.name) {
+            const parts = user.name.split(" ");
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return parts[0][0].toUpperCase();
+        }
         const first = user.firstName?.[0] || "";
         const last = user.lastName?.[0] || "";
         return (first + last).toUpperCase() || "WT"; // WT = Walet (placeholder)
@@ -166,8 +189,8 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
             </div>
         );
     }
@@ -203,7 +226,11 @@ export default function ProfilePage() {
                 >
                     <div className="relative mb-3">
                         <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-3xl font-bold shadow-xl overflow-hidden">
-                            {getInitials()}
+                            {user?.image ? (
+                                <img src={user.image} alt={user.firstName || "Profile"} className="w-full h-full object-cover" />
+                            ) : (
+                                getInitials()
+                            )}
                         </div>
                         <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-[2.5px] border-sky-600 flex items-center justify-center shadow-lg">
                             <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
@@ -218,9 +245,44 @@ export default function ProfilePage() {
                         @{user?.username || "username"}
                     </span>
 
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm">
-                        <Crown size={10} className="text-amber-400" />
-                        <span className="text-[10px] font-bold text-white tracking-widest uppercase">Free Tier</span>
+                    <div className="flex flex-col items-center gap-3">
+                        <div className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border backdrop-blur-sm",
+                            user?.tier === "kaya" ? "bg-sky-500/20 border-sky-400" :
+                                user?.tier === "sultan" ? "bg-amber-500/20 border-amber-400" :
+                                    "bg-white/10 border-white/10"
+                        )}>
+                            {(() => {
+                                const tier = (user?.tier || "miskin") as UserTier;
+                                const tierStyle = TIER_STYLES[tier];
+                                const Icon = tierStyle.icon;
+                                return (
+                                    <>
+                                        <Icon size={12} className={tier === "miskin" ? "text-white" : tierStyle.color} />
+                                        <span className="text-[10px] font-bold text-white tracking-widest uppercase">{tierStyle.label} Tier</span>
+                                    </>
+                                );
+                            })()}
+                        </div>
+
+                        {user?.tier === "miskin" && (
+                            <Link
+                                href="/fitur/upgrade"
+                                className="flex items-center gap-2 px-6 py-2 bg-white text-sky-600 rounded-2xl text-xs font-black shadow-xl shadow-sky-950/20 active:scale-95 transition-all"
+                            >
+                                <Sparkles size={14} fill="currentColor" />
+                                UPGRADE KE KAYA
+                            </Link>
+                        )}
+                        {user?.tier === "kaya" && (
+                            <Link
+                                href="/fitur/upgrade"
+                                className="flex items-center gap-2 px-6 py-2 bg-amber-500 text-white rounded-2xl text-xs font-black shadow-xl shadow-amber-950/20 active:scale-95 transition-all"
+                            >
+                                <Crown size={14} fill="currentColor" />
+                                JADI SULTAN
+                            </Link>
+                        )}
                     </div>
                 </motion.div>
             </div>
@@ -348,10 +410,10 @@ export default function ProfilePage() {
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="fixed left-4 right-4 top-[15%] bg-white rounded-3xl p-6 z-50 shadow-2xl max-w-md mx-auto max-h-[80vh] overflow-y-auto"
+                            className="fixed left-4 right-4 top-[15%] bg-white dark:bg-slate-900 rounded-3xl p-6 z-50 shadow-2xl max-w-md mx-auto max-h-[80vh] overflow-y-auto border border-transparent dark:border-slate-800"
                         >
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-slate-900">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                     {activeModal === "account" ? "Edit Profil" :
                                         activeModal === "integrations" ? "Integrasi Bot" :
                                             activeModal === "security" ? "Keamanan Aplikasi" :
@@ -367,40 +429,84 @@ export default function ProfilePage() {
 
                             {activeModal === "account" ? (
                                 <div className="space-y-4">
-                                    {/* ... existing account form ... */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Nama Depan</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Depan</label>
                                         <input
                                             type="text"
                                             value={formData.firstName}
-                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                             placeholder="Nama Depan"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Nama Belakang</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Belakang</label>
                                         <input
                                             type="text"
                                             value={formData.lastName}
-                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                             placeholder="Nama Belakang"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
                                         <div className="relative">
                                             <span className="absolute left-4 top-3.5 text-slate-400">@</span>
                                             <input
                                                 type="text"
                                                 value={formData.username}
-                                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                                className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                                                className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                 placeholder="username"
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Currency & Language Settings */}
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Preferensi Regional</p>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {/* Currency Picker */}
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mata Uang</label>
+                                                <select
+                                                    value={typeof window !== "undefined" ? (localStorage.getItem("monev_currency") || "IDR") : "IDR"}
+                                                    onChange={(e) => {
+                                                        localStorage.setItem("monev_currency", e.target.value);
+                                                        window.dispatchEvent(new Event("storage"));
+                                                        toast.success("✓", `Mata uang diubah ke ${e.target.value}`);
+                                                    }}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                >
+                                                    <option value="IDR">🇮🇩 IDR</option>
+                                                    <option value="USD">🇺🇸 USD</option>
+                                                    <option value="EUR">🇪🇺 EUR</option>
+                                                    <option value="SGD">🇸🇬 SGD</option>
+                                                    <option value="MYR">🇲🇾 MYR</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Language Picker */}
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Bahasa</label>
+                                                <select
+                                                    value={typeof window !== "undefined" ? (localStorage.getItem("monev_language") || "id") : "id"}
+                                                    onChange={(e) => {
+                                                        localStorage.setItem("monev_language", e.target.value);
+                                                        window.dispatchEvent(new Event("storage"));
+                                                        toast.success("✓", `Bahasa diubah ke ${e.target.value === "id" ? "Indonesia" : "English"}`);
+                                                    }}
+                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                >
+                                                    <option value="id">🇮🇩 Indonesia</option>
+                                                    <option value="en">🇬🇧 English</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <button
                                         onClick={handleSaveProfile}
                                         className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
@@ -412,30 +518,50 @@ export default function ProfilePage() {
                             ) : activeModal === "integrations" ? (
                                 <div className="space-y-6">
                                     {/* Telegram Section */}
-                                    <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
+                                    <div className={cn(
+                                        "p-4 rounded-2xl border transition-all relative overflow-hidden",
+                                        canUseTelegram(user?.tier as UserTier)
+                                            ? "bg-sky-50 border-sky-100 dark:bg-sky-900/20 dark:border-sky-800"
+                                            : "bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700 opacity-90"
+                                    )}>
+                                        {!canUseTelegram(user?.tier as UserTier) && (
+                                            <div className="absolute inset-0 z-10 bg-white/40 dark:bg-slate-900/60 backdrop-blur-[1px] flex flex-col items-center justify-center p-4 text-center">
+                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center mb-2">
+                                                    <Lock size={18} className="text-slate-400" />
+                                                </div>
+                                                <p className="text-[11px] font-bold text-slate-900 dark:text-white mb-1">Fitur Khusus Sultan 👑</p>
+                                                <Link
+                                                    href="/fitur/upgrade"
+                                                    className="text-[10px] font-black text-sky-600 dark:text-sky-500 underline uppercase tracking-tighter"
+                                                >
+                                                    Upgrade Sekarang
+                                                </Link>
+                                            </div>
+                                        )}
+
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-600">
+                                            <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-400">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-8.609 3.33c-2.068.8-4.133 1.598-5.724 2.21a405.15 405.15 0 0 1-2.849 1.09c-.42.147-.99.332-1.473.901-.728.968.193 1.798.919 2.286 1.61.516 3.275 1.009 4.654 1.472.509 1.793.997 3.592 1.48 5.388.16.36.506.494.864.498l-.002.018s.281.028.555-.038a2.1 2.1 0 0 0 .933-.517c.345-.324 1.28-1.244 1.811-1.764l3.999 2.952.032.018s.442.311 1.09.355c.324.037.75-.048 1.118-.308.58-.458 9.079-42.94 11.231-48.455.576-1.532-1.22-3.83-3.647-4.225" /></svg>
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800">Telegram Bot</h4>
-                                                <p className="text-xs text-sky-600 font-medium">@MonevappBot</p>
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">Telegram Bot</h4>
+                                                <p className="text-xs text-sky-600 dark:text-sky-400 font-medium">@MonevappBot</p>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
                                             Terima notifikasi dan laporan harian langsung di Telegram Anda.
                                         </p>
-                                        <div className="bg-white rounded-xl border border-sky-200 p-3 mb-3">
+                                        <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-sky-200 dark:border-sky-900/50 p-3 mb-3">
                                             <div className="flex justify-between items-center mb-1">
-                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">User ID Anda</p>
-                                                <span className="text-[10px] text-slate-400">(Ketik /id di bot)</span>
+                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">User ID Anda</p>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500">(Ketik /id di bot)</span>
                                             </div>
                                             <input
                                                 type="text"
                                                 inputMode="numeric"
                                                 value={formData.telegramId || ""}
-                                                onChange={(e) => setFormData({ ...formData, telegramId: e.target.value })}
-                                                className="w-full font-mono text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                onChange={(e) => setFormData(prev => ({ ...prev, telegramId: e.target.value }))}
+                                                className="w-full font-mono text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
                                                 placeholder="Contoh: 123456789"
                                             />
                                             {formData.telegramId && (
@@ -475,19 +601,19 @@ export default function ProfilePage() {
                                     </div>
 
                                     {/* WhatsApp Section */}
-                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 opacity-75">
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 opacity-75">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
                                                 <MessageCircle size={22} />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800">WhatsApp Bot</h4>
-                                                <div className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full inline-block">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">WhatsApp Bot</h4>
+                                                <div className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold rounded-full inline-block">
                                                     COMING SOON
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
                                             Fitur integrasi via WhatsApp sedang dalam pengembangan. Nantikan update selanjutnya! 🚀
                                         </p>
                                     </div>
@@ -502,7 +628,7 @@ export default function ProfilePage() {
                                         </button>
                                         <button
                                             onClick={() => setActiveModal(null)}
-                                            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors"
+                                            className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-colors"
                                         >
                                             Tutup
                                         </button>
@@ -510,14 +636,14 @@ export default function ProfilePage() {
                                 </div>
                             ) : activeModal === "security" ? (
                                 <div className="space-y-6">
-                                    <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/50">
                                         <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                                            <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
                                                 <Shield size={20} />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800 text-sm">App Lock</h4>
-                                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">App Lock</h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                                                     Kunci aplikasi saat dibuka atau di-refresh. Gunakan PIN 6 digit untuk membuka.
                                                 </p>
                                             </div>
@@ -525,7 +651,7 @@ export default function ProfilePage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">PIN Keamanan (6 Angka)</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">PIN Keamanan (6 Angka)</label>
                                         <input
                                             type="password"
                                             inputMode="numeric"
@@ -534,21 +660,21 @@ export default function ProfilePage() {
                                             value={formData.securityPin}
                                             onChange={(e) => {
                                                 const val = e.target.value.replace(/[^0-9]/g, "");
-                                                if (val.length <= 6) setFormData({ ...formData, securityPin: val });
+                                                if (val.length <= 6) setFormData(prev => ({ ...prev, securityPin: val }));
                                             }}
-                                            className="w-full text-center text-2xl font-bold tracking-[0.5em] py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                            className="w-full text-center text-2xl font-bold tracking-[0.5em] py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                                             placeholder="••••••"
                                         />
-                                        <p className="text-xs text-slate-400 mt-1 text-center">
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 text-center">
                                             PIN dienkripsi untuk keamanan. Masukkan PIN baru untuk mengubah.
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                        <span className="font-medium text-slate-700 text-sm">Aktifkan App Lock</span>
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                        <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">Aktifkan App Lock</span>
                                         <button
-                                            onClick={() => setFormData({ ...formData, isAppLockEnabled: !formData.isAppLockEnabled })}
-                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.isAppLockEnabled ? "bg-amber-500" : "bg-slate-300"}`}
+                                            onClick={() => setFormData(prev => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }))}
+                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.isAppLockEnabled ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"}`}
                                         >
                                             <span
                                                 className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out ${formData.isAppLockEnabled ? "translate-x-6" : "translate-x-0"}`}
@@ -566,27 +692,26 @@ export default function ProfilePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {/* ... existing financial settings form ... */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Gaji Per Jam (Hourly Rate)</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gaji Per Jam (Hourly Rate)</label>
                                         <div className="relative">
-                                            <span className="absolute left-4 top-3.5 text-slate-400">Rp</span>
+                                            <span className="absolute left-4 top-3.5 text-slate-400 dark:text-slate-500">Rp</span>
                                             <input
                                                 type="number"
                                                 value={formData.hourlyRate}
-                                                onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                                onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: e.target.value }))}
+                                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                                 placeholder="Contoh: 50000"
                                             />
                                         </div>
-                                        <p className="text-xs text-slate-400 mt-1">Digunakan untuk menghitung "Waktu Kerja vs Pengeluaran".</p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Digunakan untuk menghitung "Waktu Kerja vs Pengeluaran".</p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Target Utama (Primary Goal)</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Utama (Primary Goal)</label>
                                         <select
                                             value={formData.primaryGoalId}
-                                            onChange={(e) => setFormData({ ...formData, primaryGoalId: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none bg-white"
+                                            onChange={(e) => setFormData(prev => ({ ...prev, primaryGoalId: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none"
                                         >
                                             <option value="">-- Pilih Goal Utama --</option>
                                             {goals.map(goal => (
@@ -595,11 +720,11 @@ export default function ProfilePage() {
                                         </select>
                                     </div>
                                     {/* New: Hide Balance Toggle */}
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                        <span className="font-medium text-slate-700 text-sm">Sembunyikan Saldo</span>
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                        <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">Sembunyikan Saldo</span>
                                         <button
-                                            onClick={() => setFormData({ ...formData, hideBalance: !formData.hideBalance })}
-                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.hideBalance ? "bg-emerald-500" : "bg-slate-300"}`}
+                                            onClick={() => setFormData(prev => ({ ...prev, hideBalance: !prev.hideBalance }))}
+                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.hideBalance ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"}`}
                                         >
                                             <span
                                                 className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out ${formData.hideBalance ? "translate-x-6" : "translate-x-0"}`}

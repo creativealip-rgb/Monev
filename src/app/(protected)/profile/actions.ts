@@ -16,6 +16,7 @@ import {
     getGoals,
     getAllUsers
 } from "@/backend/db/operations";
+import { canUseTelegram, UserTier } from "@/lib/tier-gate";
 import { getDb } from "@/backend/db"; // New: Import getDb
 import { userSettings } from "@/backend/db/schema"; // New: Import userSettings schema
 
@@ -43,13 +44,17 @@ export async function fetchProfileData() {
             userId,
             hourlyRate: 50000,
             hideBalance: false, // Ensure default for hideBalance
+            hasCompletedOnboarding: false,
         }).returning().get();
     }
     const goals = await getGoals(userId);
 
     // Return safe settings (without securityPin) and a flag indicating if PIN exists
     return {
-        user,
+        user: {
+            ...user,
+            tier: user.tier || "miskin"
+        },
         settings: {
             id: settings.id,
             userId: settings.userId,
@@ -58,7 +63,8 @@ export async function fetchProfileData() {
             isAppLockEnabled: settings.isAppLockEnabled,
             hideBalance: settings.hideBalance, // Ensure hideBalance is included
             updatedAt: settings.updatedAt,
-            hasPin: !!settings.securityPin // Only return boolean flag, not the actual PIN
+            hasPin: !!settings.securityPin, // Only return boolean flag, not the actual PIN
+            hasCompletedOnboarding: settings.hasCompletedOnboarding
         },
         goals
     };
@@ -67,24 +73,35 @@ export async function fetchProfileData() {
 // --- Update Actions ---
 
 export async function updateProfile(formData: FormData) {
-    const session = await auth();
-    if (!session?.user?.id) {
-        throw new Error("Unauthorized");
-    }
-    const userId = parseInt(session.user.id);
-
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const username = formData.get("username") as string;
-    const whatsappId = formData.get("whatsappId") as string;
-    const telegramIdStr = formData.get("telegramId") as string;
-    const telegramId = telegramIdStr ? parseInt(telegramIdStr) : null;
-
-    console.log("updateProfile Action Triggered:", { userId, telegramId, telegramIdStr });
-
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            throw new Error("Unauthorized");
+        }
+        const userId = parseInt(session.user.id);
+
+        const firstName = formData.get("firstName") as string;
+        const lastName = formData.get("lastName") as string;
+        const username = formData.get("username") as string;
+        const whatsappId = formData.get("whatsappId") as string;
+        const telegramIdStr = formData.get("telegramId") as string;
+        const telegramId = telegramIdStr ? parseInt(telegramIdStr) : null;
+
+        console.log("updateProfile Action Triggered:", { userId, telegramId, telegramIdStr });
+
+        // Fetch user data for tier check
+        const user = await getUserById(userId);
+        if (!user) {
+            return { success: false, message: "Pengguna tidak ditemukan" };
+        }
+
         // Link Telegram account (handle unique constraint)
         if (telegramId) {
+            // Tier check
+            if (!canUseTelegram(user.tier as UserTier)) {
+                return { success: false, message: "Fitur Telegram hanya tersedia untuk Sultan! 👑" };
+            }
+
             console.log("Attempting to link Telegram Account...");
             const linkResult = await linkTelegramAccount(userId, telegramId);
             console.log("Link Result:", linkResult);
@@ -201,7 +218,7 @@ export async function verifySecurityPin(pin: string): Promise<{ success: boolean
 
     // Get user's hashed PIN from database
     const settings = await getUserSettings(userId);
-    if (!settings.securityPin) {
+    if (!settings || !settings.securityPin) {
         return { success: false, message: "PIN belum diatur" };
     }
 

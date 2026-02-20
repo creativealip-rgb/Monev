@@ -296,34 +296,28 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                                                             : "border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
                                                     )}
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        {item.icon && (
-                                                            <div
-                                                                className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                                                                style={{ backgroundColor: (item.color || "#3b82f6") + "20" }}
-                                                            >
-                                                                <span>{item.icon}</span>
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            <p className="font-medium text-slate-900 dark:text-white">{item.name}</p>
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                                {mode === "transfer" ? (
-                                                                    activeTab === "goal" && item.targetAmount
-                                                                        ? `${formatCurrency(item.currentAmount || 0)} / ${formatCurrency(item.targetAmount)}`
-                                                                        : activeTab === "investment" && item.currentPrice
-                                                                            ? `${item.quantity} unit @ ${formatCurrency(item.currentPrice)}`
-                                                                            : item.amount
-                                                                                ? formatCurrency(item.amount)
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="font-bold text-slate-900 dark:text-white truncate leading-tight mb-0.5">{item.name}</p>
+                                                            <div className="flex items-center gap-1.5 overflow-hidden">
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                                                    {mode === "transfer" ? (
+                                                                        activeTab === "goal" && item.targetAmount
+                                                                            ? `${formatCurrency(item.currentAmount || 0)} / ${formatCurrency(item.targetAmount)}`
+                                                                            : activeTab === "investment" && item.currentPrice
+                                                                                ? `${item.quantity} unit @ ${formatCurrency(item.currentPrice)}`
+                                                                                : item.amount
+                                                                                    ? formatCurrency(item.amount)
+                                                                                    : ""
+                                                                    ) : (
+                                                                        activeTab === "goal"
+                                                                            ? `Saldo: ${formatCurrency(item.currentAmount || 0)}`
+                                                                            : activeTab === "investment"
+                                                                                ? `${item.quantity} unit = ${formatCurrency(item.currentValue || 0)}`
                                                                                 : ""
-                                                                ) : (
-                                                                    activeTab === "goal"
-                                                                        ? `Saldo: ${formatCurrency(item.currentAmount || 0)}`
-                                                                        : activeTab === "investment"
-                                                                            ? `${item.quantity} unit = ${formatCurrency(item.currentValue || 0)}`
-                                                                            : ""
-                                                                )}
-                                                            </p>
+                                                                    )}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     {mode === "transfer" && activeTab === "goal" && item.targetAmount && (

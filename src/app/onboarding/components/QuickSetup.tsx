@@ -25,7 +25,7 @@ export function QuickSetup({
     onPrev,
 }: QuickSetupProps) {
     return (
-        <div className="h-full flex flex-col">
+        <div className="flex-1 flex flex-col h-full">
             {/* Header */}
             <header className="sticky top-0 z-50 w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4">
                 <div className="pt-2 flex items-center gap-4">
@@ -138,15 +138,29 @@ export function QuickSetup({
                             <input
                                 key={index}
                                 type="password"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                autoComplete="off"
+                                data-lpignore="true"
                                 maxLength={1}
                                 value={pin[index] || ""}
                                 onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, "");
+                                    if (!val && e.target.value !== "") return;
+
                                     const newPin = pin.split("");
-                                    newPin[index] = e.target.value;
+                                    newPin[index] = val;
                                     onUpdate("pin", newPin.join("").slice(0, 6));
-                                    if (e.target.value && index < 5) {
+
+                                    if (val && index < 5) {
                                         const inputs = document.querySelectorAll('.pin-input');
                                         (inputs[index + 1] as HTMLInputElement)?.focus();
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Backspace" && !pin[index] && index > 0) {
+                                        const inputs = document.querySelectorAll('.pin-input');
+                                        (inputs[index - 1] as HTMLInputElement)?.focus();
                                     }
                                 }}
                                 className={cn(

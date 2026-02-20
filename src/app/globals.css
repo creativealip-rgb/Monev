@@ -141,7 +141,7 @@
   }
 
   .glass-card {
-    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl shadow-slate-200/40;
+    @apply bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-slate-200/40 dark:shadow-none;
   }
 
   .gradient-primary {
@@ -341,7 +341,7 @@
   }
 
   .input-modern {
-    @apply w-full px-4 py-3 bg-white/50 backdrop-blur-sm rounded-lg border border-slate-200/60 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white/80 outline-none transition-all;
+    @apply w-full px-4 py-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-200/60 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white/80 dark:focus:bg-slate-900 outline-none transition-all;
   }
 
   .section-title {

@@ -87,7 +87,7 @@ const features = [
                 desc: "Upgrade ke akun Pro/Expert untuk fitur premium",
                 status: "ready",
                 color: "indigo",
-                href: "#"
+                href: "/fitur/upgrade"
             },
         ]
     },
@@ -287,16 +287,16 @@ export default function FiturPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-[#F8FAFC]/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pb-4"
+                className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe pb-4"
             >
                 <div className="flex items-center gap-3 pt-2">
                     <Link
                         href="/"
-                        className="w-7 h-7 rounded-lg bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95"
+                        className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95"
                     >
                         <ArrowLeft size={16} strokeWidth={2.5} />
                     </Link>
-                    <h1 className="text-sm font-bold text-slate-900 tracking-tight">Semua Fitur</h1>
+                    <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Semua Fitur</h1>
                 </div>
             </motion.header>
 

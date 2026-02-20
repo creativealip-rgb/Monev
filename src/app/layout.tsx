@@ -9,12 +9,34 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "Monev - Agentic Finance",
-    description: "Asisten keuangan pribadi berbasis AI yang proaktif.",
+    description: "Asisten keuangan pribadi berbasis AI. Catat transaksi, analisa pengeluaran, dan raih target keuanganmu dengan bantuan AI yang proaktif.",
     manifest: "/manifest.json",
     icons: {
-        icon: "/icon.svg",
-        apple: "/icon.svg",
+        icon: [
+            { url: "/icon.svg", type: "image/svg+xml" },
+            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+            { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
+        apple: "/icon-192.png",
     },
+    openGraph: {
+        title: "Monev - Agentic Finance",
+        description: "Asisten keuangan pribadi berbasis AI. Catat transaksi, analisa pengeluaran, dan raih target keuanganmu.",
+        type: "website",
+        locale: "id_ID",
+        siteName: "Monev",
+    },
+    twitter: {
+        card: "summary",
+        title: "Monev - Agentic Finance",
+        description: "Asisten keuangan pribadi berbasis AI.",
+    },
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: "Monev",
+    },
+    keywords: ["keuangan", "finance", "AI", "budgeting", "expense tracker", "money management"],
 };
 
 export const viewport: Viewport = {

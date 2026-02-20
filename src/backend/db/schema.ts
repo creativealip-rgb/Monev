@@ -24,6 +24,8 @@ export const users = sqliteTable("users", {
     firstName: text("first_name"),
     lastName: text("last_name"),
     whatsappId: text("whatsapp_id"),
+    tier: text("tier", { enum: ["miskin", "kaya", "sultan"] }).notNull().default("miskin"),
+    tierExpiresAt: integer("tier_expires_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -86,6 +88,8 @@ export const userSettings = sqliteTable("user_settings", {
     securityPin: text("security_pin"),
     isAppLockEnabled: integer("is_app_lock_enabled", { mode: "boolean" }).notNull().default(false),
     hideBalance: integer("hide_balance", { mode: "boolean" }).notNull().default(false), // New: Hide balance on dashboard
+    notificationsEnabled: integer("notifications_enabled", { mode: "boolean" }).notNull().default(true), // New: Persistence for notifications
+    hasCompletedOnboarding: integer("has_completed_onboarding", { mode: "boolean" }).notNull().default(false), // New: Track onboarding status
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -151,6 +155,17 @@ export const investments = sqliteTable("investments", {
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const coupons = sqliteTable("coupons", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    code: text("code").unique().notNull(),
+    tier: text("tier", { enum: ["kaya", "sultan"] }).notNull(),
+    isUsed: integer("is_used", { mode: "boolean" }).notNull().default(false),
+    usedBy: integer("used_by").references(() => users.id),
+    usedAt: integer("used_at", { mode: "timestamp" }),
+    expiresAt: integer("expires_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 // Types
 export type Category = typeof categories.$inferSelect;
 export type User = typeof users.$inferSelect;
@@ -164,6 +179,7 @@ export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
 export type ChatHistory = typeof chatHistory.$inferSelect;
 export type Investment = typeof investments.$inferSelect;
+export type Coupon = typeof coupons.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -177,6 +193,7 @@ export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
 export type InsertBill = typeof bills.$inferInsert;
 export type InsertChatHistory = typeof chatHistory.$inferInsert;
 export type InsertInvestment = typeof investments.$inferInsert;
+export type InsertCoupon = typeof coupons.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -193,3 +210,5 @@ export const insertBillSchema = createInsertSchema(bills);
 export const selectBillSchema = createSelectSchema(bills);
 export const insertInvestmentSchema = createInsertSchema(investments);
 export const selectInvestmentSchema = createSelectSchema(investments);
+export const insertCouponSchema = createInsertSchema(coupons);
+export const selectCouponSchema = createSelectSchema(coupons);

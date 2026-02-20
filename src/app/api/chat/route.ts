@@ -6,9 +6,11 @@ import {
     createBudget, updateBudget, deleteBudget,
     createGoal, updateGoal, removeGoal,
     getInvestments, getInvestmentById, createInvestment, updateInvestment, deleteInvestment,
-    getBills, getBillById, createBill, updateBill, deleteBill, toggleBillPaid
+    getBills, getBillById, createBill, updateBill, deleteBill, toggleBillPaid,
+    getDailyAICount, logAIChat
 } from "@/backend/db/operations";
 import { askFinanceAgent } from "@/lib/ai";
+import { canUseAI, UserTier } from "@/lib/tier-gate";
 
 export async function POST(req: NextRequest) {
     try {
@@ -17,12 +19,27 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
         const userId = parseInt(session.user.id);
+        // @ts-ignore
+        const userTier = (session.user.tier as UserTier) || "miskin";
 
         const { message, history } = await req.json();
 
         if (!message) {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
         }
+
+        // 1. Check AI Daily Limit
+        const usageToday = await getDailyAICount(userId);
+        if (!canUseAI(usageToday, userTier)) {
+            return NextResponse.json({
+                error: "Limit AI tercapai",
+                message: "Ups, limit AI harianmu sudah habis, Bos! Upgrade ke Kaya atau Sultan untuk chat tanpa batas. 🚀",
+                limitReached: true
+            }, { status: 403 });
+        }
+
+        // 2. Log User Message
+        await logAIChat(userId, "user", message);
 
         // Fetch context data (current month)
         const now = new Date();
@@ -375,6 +392,9 @@ Ada lagi yang mau dicatat?`;
 
         // Final cleanup to remove any markdown bold syntax that might have slipped through
         finalReply = finalReply.replace(/\*\*/g, "");
+
+        // 3. Log Assistant Response
+        await logAIChat(userId, "assistant", finalReply);
 
         return NextResponse.json({ reply: finalReply });
     } catch (error: any) {
