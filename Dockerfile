@@ -53,8 +53,8 @@ COPY --from=builder /app/src/backend/db/schema.ts ./src/backend/db/schema.ts
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Install drizzle-kit globally in the runner for manual tasks if needed
-RUN npm install -g drizzle-kit
+# Install drizzle-kit and its dependencies in the runner for manual tasks
+RUN npm install -g drizzle-kit drizzle-orm better-sqlite3
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
