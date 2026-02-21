@@ -18,9 +18,12 @@ import {
     PieChart,
     PiggyBank,
     Receipt,
-    Crown
+    Crown,
+    Lock
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { UserTier, isTierSufficient } from "@/lib/tier-gate";
 
 const features = [
     {
@@ -33,7 +36,8 @@ const features = [
                 desc: "Chat dengan AI Assistant untuk analisis keuangan",
                 status: "ready",
                 color: "purple",
-                href: "/chat"
+                href: "/chat",
+                requiredTier: undefined as UserTier | undefined
             },
             {
                 id: 102,
@@ -42,7 +46,8 @@ const features = [
                 desc: "Analisis cashflow dan pengeluaran by kategori",
                 status: "ready",
                 color: "blue",
-                href: "/analytics"
+                href: "/analytics",
+                requiredTier: "kaya" as UserTier
             },
             {
                 id: 107,
@@ -78,7 +83,8 @@ const features = [
                 desc: "Tracking portfolio dan rekomendasi investasi",
                 status: "ready",
                 color: "amber",
-                href: "/investments"
+                href: "/investments",
+                requiredTier: "kaya" as UserTier
             },
             {
                 id: 106,
@@ -101,7 +107,8 @@ const features = [
                 desc: "Upload screenshot bukti transfer/QRIS",
                 status: "ready",
                 color: "emerald",
-                href: "#"
+                href: "#",
+                requiredTier: "kaya" as UserTier
             },
             {
                 id: 2,
@@ -119,7 +126,8 @@ const features = [
                 desc: "Rekam suara untuk input multi-item",
                 status: "ready",
                 color: "purple",
-                href: "#"
+                href: "#",
+                requiredTier: "kaya" as UserTier
             },
         ]
     },
@@ -281,6 +289,10 @@ const itemVariants = {
 };
 
 export default function FiturPage() {
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+
     return (
         <div className="relative min-h-screen pb-28">
             {/* Standardized Header */}
@@ -332,7 +344,17 @@ export default function FiturPage() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">{feature.title}</h3>
-                                                    {feature.status === "ready" && (
+                                                    {feature.status === "ready" && !feature.requiredTier && (
+                                                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
+                                                            Ready
+                                                        </span>
+                                                    )}
+                                                    {feature.status === "ready" && feature.requiredTier && !isTierSufficient(userTier, feature.requiredTier) && (
+                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-bold rounded-md border border-amber-100 tracking-tighter uppercase flex items-center gap-0.5">
+                                                            <Lock size={8} /> {feature.requiredTier === "kaya" ? "Kaya" : "Sultan"}
+                                                        </span>
+                                                    )}
+                                                    {feature.status === "ready" && feature.requiredTier && isTierSufficient(userTier, feature.requiredTier) && (
                                                         <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
                                                             Ready
                                                         </span>

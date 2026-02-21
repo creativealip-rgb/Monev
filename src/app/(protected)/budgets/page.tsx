@@ -11,6 +11,9 @@ import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { Budget } from "@/types";
+import { useSession } from "next-auth/react";
+import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
+import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 
 interface Category {
     id: number;
@@ -57,6 +60,10 @@ export default function BudgetsPage() {
     const [detailBudget, setDetailBudget] = useState<Budget | null>(null);
     const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
     const toast = useToast();
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const tierConfig = getTierConfig(userTier);
 
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
@@ -152,7 +159,13 @@ export default function BudgetsPage() {
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => setIsBudgetModalOpen(true)}
+                        onClick={() => {
+                            if (!canCreateBudget(budgets.length, userTier)) {
+                                toast.error("Batas Tercapai", `Tier ${tierConfig.name} hanya bisa ${tierConfig.maxBudgets} anggaran. Upgrade untuk menambah!`);
+                                return;
+                            }
+                            setIsBudgetModalOpen(true);
+                        }}
                         className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900 transition-all"
                     >
                         <Plus size={18} />

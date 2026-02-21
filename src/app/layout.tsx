@@ -8,8 +8,11 @@ import { Metadata, Viewport } from "next";
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Monev - Agentic Finance",
-    description: "Asisten keuangan pribadi berbasis AI. Catat transaksi, analisa pengeluaran, dan raih target keuanganmu dengan bantuan AI yang proaktif.",
+    title: {
+        default: "Monev - Asisten Keuangan AI Pintar",
+        template: "%s | Monev"
+    },
+    description: "Monev adalah asisten keuangan pribadi berbasis AI yang membantu Anda mencatat transaksi lewat suara/foto, menganalisa pengeluaran secara cerdas, dan mencapai target keuangan lebih cepat.",
     manifest: "/manifest.json",
     icons: {
         icon: [

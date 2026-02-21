@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2, X, ChevronDown, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
 import { TIER_CONFIGS, UserTier } from "@/lib/tier-gate";
@@ -46,7 +46,7 @@ const TIER_CARDS = [
     },
     {
         id: "sultan" as UserTier,
-        price: "Rp 99k",
+        price: "Rp 59k",
         period: "/bulan",
         description: "Akses eksklusif tanpa batas untuk sang Sultan",
         icon: Crown,
@@ -65,6 +65,7 @@ export default function UpgradePage() {
 
     const [couponCode, setCouponCode] = useState("");
     const [isApplying, setIsApplying] = useState(false);
+    const [showFullMatrix, setShowFullMatrix] = useState(false);
 
     const handleApplyCoupon = async () => {
         if (!couponCode) {
@@ -245,6 +246,111 @@ export default function UpgradePage() {
                         </button>
                     </div>
                     <p className="mt-3 text-[10px] text-slate-500 font-medium">Kupon akan langsung mengaktifkan tier premium pilihan kamu.</p>
+                </motion.div>
+
+                {/* Access Matrix */}
+                <motion.div
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="mt-10 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50 overflow-hidden"
+                >
+                    <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-2 mb-1">
+                            <BarChart3 size={18} className="text-sky-500" />
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Perbandingan Fitur</h3>
+                        </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">Apa saja yang kamu dapat di setiap tier</p>
+                    </div>
+
+                    {/* Table Header */}
+                    <div className="grid grid-cols-4 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-2">Fitur</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Miskin</div>
+                        <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider text-center">Kaya</div>
+                        <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-center">Sultan</div>
+                    </div>
+
+                    {/* Matrix Rows */}
+                    {(() => {
+                        const allRows = [
+                            { feature: "Transaksi", miskin: "50/bln", kaya: "Unlimited", sultan: "Unlimited" },
+                            { feature: "Anggaran", miskin: "2", kaya: "10", sultan: "Unlimited" },
+                            { feature: "Target Tabungan", miskin: "1", kaya: "10", sultan: "Unlimited" },
+                            { feature: "Tagihan", miskin: "3", kaya: "20", sultan: "Unlimited" },
+                            { feature: "AI Chat", miskin: "3/hari", kaya: "Unlimited", sultan: "Prioritas" },
+                            { feature: "Analisa Keuangan", miskin: false, kaya: true, sultan: true },
+                            { feature: "Investasi", miskin: false, kaya: "5 aset", sultan: "Unlimited" },
+                            { feature: "Smart Input", miskin: false, kaya: true, sultan: true },
+                            { feature: "Export", miskin: false, kaya: "CSV/Excel", sultan: "CSV/Excel/PDF" },
+                            { feature: "Bebas Iklan", miskin: false, kaya: true, sultan: true },
+                            { feature: "Telegram Bot", miskin: false, kaya: false, sultan: true },
+                            { feature: "Smart Agents", miskin: false, kaya: true, sultan: true },
+                            { feature: "Laporan PDF", miskin: false, kaya: false, sultan: true },
+                            { feature: "Support 24/7", miskin: false, kaya: false, sultan: true },
+                        ];
+
+                        const visibleRows = showFullMatrix ? allRows : allRows.slice(0, 6);
+
+                        const renderCell = (value: string | boolean) => {
+                            if (value === true) return <Check size={14} className="text-emerald-500 mx-auto" strokeWidth={3} />;
+                            if (value === false) return <X size={14} className="text-slate-300 dark:text-slate-600 mx-auto" strokeWidth={3} />;
+                            return <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{value}</span>;
+                        };
+
+                        return (
+                            <>
+                                {visibleRows.map((row, i) => (
+                                    <div
+                                        key={row.feature}
+                                        className={cn(
+                                            "grid grid-cols-4 px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 items-center",
+                                            i % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-slate-800/20"
+                                        )}
+                                    >
+                                        <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 pl-2">{row.feature}</div>
+                                        <div className="text-center">{renderCell(row.miskin)}</div>
+                                        <div className="text-center">{renderCell(row.kaya)}</div>
+                                        <div className="text-center">{renderCell(row.sultan)}</div>
+                                    </div>
+                                ))}
+
+                                <AnimatePresence>
+                                    {showFullMatrix && allRows.slice(6).map((row, i) => (
+                                        <motion.div
+                                            key={row.feature}
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className={cn(
+                                                "grid grid-cols-4 px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 items-center",
+                                                (i + 6) % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-slate-800/20"
+                                            )}
+                                        >
+                                            <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 pl-2">{row.feature}</div>
+                                            <div className="text-center">{renderCell(row.miskin)}</div>
+                                            <div className="text-center">{renderCell(row.kaya)}</div>
+                                            <div className="text-center">{renderCell(row.sultan)}</div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </>
+                        );
+                    })()}
+
+                    {/* Expand/Collapse Button */}
+                    <button
+                        onClick={() => setShowFullMatrix(!showFullMatrix)}
+                        className="w-full py-4 flex items-center justify-center gap-2 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all active:scale-[0.98]"
+                    >
+                        {showFullMatrix ? "Sembunyikan" : `Lihat ${14 - 6} fitur lainnya`}
+                        <motion.div
+                            animate={{ rotate: showFullMatrix ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <ChevronDown size={14} />
+                        </motion.div>
+                    </button>
                 </motion.div>
 
                 {/* Info Note */}

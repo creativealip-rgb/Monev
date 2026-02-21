@@ -3,6 +3,7 @@ export interface FeatureSlide {
     icon: string;
     title: string;
     description: string;
+    image?: string;
 }
 
 export interface OnboardingFormData {
@@ -28,12 +29,14 @@ export const FEATURES: FeatureSlide[] = [
         icon: "Receipt",
         title: "Catat Transaksi dalam Sekejap",
         description: "Rekam pemasukan dan pengeluaran dengan mudah, kapan saja dan di mana saja",
+        image: "/images/onboarding-budget.png",
     },
     {
         id: 2,
         icon: "BarChart3",
         title: "Analisis Keuangan Otomatis",
         description: "Lihat laporan mingguan dan bulanan untuk mengontrol keuanganmu dengan bijak",
+        image: "/images/onboarding-ai.png",
     },
     {
         id: 3,

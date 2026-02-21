@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { Receipt, BarChart3, Target, Shield, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { ProgressDots } from "./ProgressDots";
@@ -119,19 +120,29 @@ export function FeatureCarousel({ onNext, onPrev }: FeatureCarouselProps) {
                         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
                         className="flex flex-col items-center text-center w-full"
                     >
-                        {/* Icon */}
+                        {/* Image or Icon */}
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.1 }}
                             className={cn(
-                                "w-32 h-32 mb-8 rounded-[32px] flex items-center justify-center shadow-2xl",
-                                "bg-gradient-to-br",
-                                colorConfig.bg,
+                                "w-32 h-32 mb-8 rounded-[32px] flex items-center justify-center shadow-2xl overflow-hidden",
+                                !feature.image && "bg-gradient-to-br",
+                                !feature.image && colorConfig.bg,
                                 colorConfig.glow
                             )}
                         >
-                            {IconComponent && <IconComponent className={cn("w-14 h-14", colorConfig.icon)} />}
+                            {feature.image ? (
+                                <Image
+                                    src={feature.image}
+                                    alt={feature.title}
+                                    width={128}
+                                    height={128}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                IconComponent && <IconComponent className={cn("w-14 h-14", colorConfig.icon)} />
+                            )}
                         </motion.div>
 
                         {/* Title */}

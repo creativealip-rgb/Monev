@@ -1,11 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileText, Camera, Mic, Bell, Sparkles } from "lucide-react";
+import { X, FileText, Camera, Mic, Bell, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
 import { TransactionForm } from "./TransactionForm";
 import { SmartInput } from "./SmartInput";
+import { useSession } from "next-auth/react";
+import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";
 
 interface AddTransactionSheetProps {
     isOpen: boolean;
@@ -47,6 +49,10 @@ const actions = [
 export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransactionSheetProps) {
     const [showForm, setShowForm] = useState(false);
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const hasSmartAccess = canAccessSmartInput(userTier);
 
     // Close on escape key
     useEffect(() => {
@@ -167,15 +173,19 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                 {actions.map((action) => {
                                     const Icon = action.icon;
                                     const colors = colorClasses[action.color];
+                                    const isSmartInput = action.id !== "manual";
+                                    const isLocked = isSmartInput && !hasSmartAccess;
                                     return (
                                         <motion.button
                                             key={action.id}
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                            onClick={() => handleAction(action.id)}
+                                            whileHover={{ scale: isLocked ? 1 : 1.02 }}
+                                            whileTap={{ scale: isLocked ? 1 : 0.98 }}
+                                            onClick={() => isLocked ? window.location.href = '/fitur/upgrade' : handleAction(action.id)}
                                             className={cn(
                                                 "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all",
-                                                "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 hover:shadow-md",
+                                                isLocked
+                                                    ? "border-slate-100 dark:border-slate-700 opacity-60"
+                                                    : "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 hover:shadow-md",
                                                 "bg-white dark:bg-slate-800"
                                             )}
                                         >
@@ -191,9 +201,13 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                             </div>
                                             <div className={cn(
                                                 "w-8 h-8 rounded-full flex items-center justify-center",
-                                                "bg-slate-50 dark:bg-slate-700 group-hover:bg-slate-100"
+                                                "bg-slate-50 dark:bg-slate-700"
                                             )}>
-                                                <Sparkles size={14} className="text-slate-400 dark:text-slate-500" />
+                                                {isLocked ? (
+                                                    <Lock size={14} className="text-amber-500" />
+                                                ) : (
+                                                    <Sparkles size={14} className="text-slate-400 dark:text-slate-500" />
+                                                )}
                                             </div>
                                         </motion.button>
                                     );

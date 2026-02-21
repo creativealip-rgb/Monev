@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { authenticate, signInWithGoogle } from "@/app/actions/auth";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
@@ -228,9 +229,14 @@ export default function LoginPage() {
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sky-500/30">
-                        <Lock className="w-8 h-8 text-white" />
-                    </div>
+                    <Image
+                        src="/images/login-illustration.png"
+                        alt="Welcome to Monev"
+                        width={120}
+                        height={120}
+                        className="mx-auto mb-4 rounded-2xl"
+                        priority
+                    />
                     <h1 className="text-2xl font-bold text-gradient mb-2">
                         Welcome Back
                     </h1>

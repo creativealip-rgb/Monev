@@ -36,7 +36,7 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { fetchProfileData } from "@/app/(protected)/profile/actions";
 import { cn } from "@/frontend/lib/utils";
-import { UserTier } from "@/lib/tier-gate";
+import { UserTier, canAccessAnalytics, canAccessInvestments } from "@/lib/tier-gate";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -434,8 +434,9 @@ export default function Home() {
                         className="grid grid-cols-3 gap-y-8 gap-x-4 justify-items-center"
                     >
                         {mainFeatures.map((feature) => {
-                            const isPremium = ["Anggaran", "Tagihan", "Investasi"].includes(feature.label);
-                            const isLocked = userTier === "miskin" && isPremium;
+                            const isLocked =
+                                (feature.label === "Analitik" && !canAccessAnalytics(userTier)) ||
+                                (feature.label === "Investasi" && !canAccessInvestments(userTier));
 
                             return (
                                 <Link

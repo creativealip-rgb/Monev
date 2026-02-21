@@ -10,6 +10,9 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/UI";
+import { useSession } from "next-auth/react";
+import { UserTier, canCreateBill, getTierConfig } from "@/lib/tier-gate";
+import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     Receipt, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle,
@@ -164,6 +167,10 @@ export default function BillsPage() {
     const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const toast = useToast();
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const tierConfig = getTierConfig(userTier);
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -345,7 +352,13 @@ export default function BillsPage() {
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => setIsAddModalOpen(true)}
+                        onClick={() => {
+                            if (!canCreateBill(bills.length, userTier)) {
+                                toast.error("Batas Tercapai", `Tier ${tierConfig.name} hanya bisa ${tierConfig.maxBills} tagihan. Upgrade untuk menambah!`);
+                                return;
+                            }
+                            setIsAddModalOpen(true);
+                        }}
                         className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900 transition-all"
                     >
                         <Plus size={18} />

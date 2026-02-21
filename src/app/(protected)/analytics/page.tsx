@@ -15,6 +15,7 @@ import Link from "next/link";
 import { ErrorEmpty } from "@/frontend/components/EmptyState";
 import { useSession } from "next-auth/react";
 import { UserTier, hasFullAnalytics } from "@/lib/tier-gate";
+import { TierGateOverlay } from "@/frontend/components/TierGateOverlay";
 import { useToast } from "@/frontend/components/UI";
 
 // New Components
@@ -161,7 +162,7 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
+        <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
             {/* Standardized Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}

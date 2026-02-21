@@ -20,6 +20,8 @@ import { useToast, ErrorEmpty } from "@/frontend/components/UI";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useSession } from "next-auth/react";
+import { UserTier, canUseAI, getTierConfig } from "@/lib/tier-gate";
+import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 
 interface Message {
     id: string;
@@ -113,9 +115,32 @@ export default function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const tierConfig = getTierConfig(userTier);
+
+    const getDailyUsage = (): number => {
+        const today = new Date().toISOString().split('T')[0];
+        const key = `monev_ai_usage_${session?.user?.id}_${today}`;
+        return parseInt(localStorage.getItem(key) || "0", 10);
+    };
+
+    const incrementDailyUsage = () => {
+        const today = new Date().toISOString().split('T')[0];
+        const key = `monev_ai_usage_${session?.user?.id}_${today}`;
+        const current = getDailyUsage();
+        localStorage.setItem(key, String(current + 1));
+    };
+
     const handleSend = async (customText?: string) => {
         const textToSend = customText || input;
         if (!textToSend.trim()) return;
+
+        // Check daily AI limit
+        if (!canUseAI(getDailyUsage(), userTier)) {
+            toast.error("Batas Harian Tercapai", `Tier ${tierConfig.name} hanya bisa ${tierConfig.aiDailyLimit} pesan/hari. Upgrade untuk akses unlimited!`);
+            return;
+        }
 
         const userMessage: Message = {
             id: generateMessageId(),
@@ -153,6 +178,7 @@ export default function ChatPage() {
                     timestamp: new Date(),
                 };
                 setMessages((prev) => [...prev, aiMessage]);
+                incrementDailyUsage();
             } else {
                 throw new Error(data.error || "Gagal mendapatkan respons AI");
             }
@@ -189,18 +215,18 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="relative min-h-screen flex flex-col bg-slate-50">
+        <div className="relative min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/50 px-6 pt-safe pt-3 pb-4"
+                className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe pt-3 pb-4"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/"
-                            className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-sky-50 hover:text-sky-600 transition-all"
+                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
                         </Link>
@@ -209,10 +235,10 @@ export default function ChatPage() {
                                 <Bot className="text-white" size={16} />
                             </div>
                             <div>
-                                <h1 className="text-sm font-bold text-slate-900 leading-tight">Monev AI</h1>
+                                <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">Monev AI</h1>
                                 <div className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <span className="text-[10px] font-medium text-slate-500">Online</span>
+                                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Online</span>
                                 </div>
                             </div>
                         </div>
@@ -227,7 +253,7 @@ export default function ChatPage() {
                                 }
                             }
                         }}
-                        className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all"
+                        className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-all"
                     >
                         <MoreVertical size={16} />
                     </button>
@@ -240,11 +266,11 @@ export default function ChatPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100"
+                    className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-4 border border-blue-100 dark:border-slate-700"
                 >
                     <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="text-sky-600" size={18} />
-                        <span className="text-sm font-semibold text-sky-900">Quick Actions</span>
+                        <Sparkles className="text-sky-600 dark:text-sky-400" size={18} />
+                        <span className="text-sm font-semibold text-sky-900 dark:text-sky-300">Quick Actions</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         {quickActions.map((action) => {
@@ -253,10 +279,10 @@ export default function ChatPage() {
                                 <button
                                     key={action.id}
                                     onClick={() => handleQuickAction(action.id)}
-                                    className="flex items-center gap-2 p-3 bg-white rounded-xl border border-sky-100 hover:border-sky-300 hover:shadow-sm transition-all text-left"
+                                    className="flex items-center gap-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-sky-100 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-600 hover:shadow-sm transition-all text-left"
                                 >
-                                    <Icon className="text-sky-600" size={16} />
-                                    <span className="text-xs font-medium text-slate-700">{action.label}</span>
+                                    <Icon className="text-sky-600 dark:text-sky-400" size={16} />
+                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{action.label}</span>
                                 </button>
                             );
                         })}
@@ -280,11 +306,11 @@ export default function ChatPage() {
                             <div className={cn(
                                 "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
                                 message.role === "user"
-                                    ? "bg-slate-200"
+                                    ? "bg-slate-200 dark:bg-slate-700"
                                     : "bg-gradient-to-br from-sky-500 to-cyan-600"
                             )}>
                                 {message.role === "user" ? (
-                                    <User size={14} className="text-slate-600" />
+                                    <User size={14} className="text-slate-600 dark:text-slate-300" />
                                 ) : (
                                     <Bot size={14} className="text-white" />
                                 )}
@@ -295,11 +321,11 @@ export default function ChatPage() {
                                 "max-w-[80%] px-4 py-3 rounded-2xl",
                                 message.role === "user"
                                     ? "bg-sky-500 text-white rounded-br-md"
-                                    : "bg-white border border-slate-100 rounded-bl-md shadow-sm"
+                                    : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-bl-md shadow-sm"
                             )}>
                                 <p className={cn(
                                     "text-sm whitespace-pre-line",
-                                    message.role === "user" ? "text-white" : "text-slate-800"
+                                    message.role === "user" ? "text-white" : "text-slate-800 dark:text-slate-200"
                                 )}>
                                     {message.content}
                                 </p>
@@ -324,22 +350,22 @@ export default function ChatPage() {
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 flex items-center justify-center">
                             <Bot size={14} className="text-white" />
                         </div>
-                        <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
                             <div className="flex gap-1">
                                 <motion.div
                                     animate={{ y: [0, -4, 0] }}
                                     transition={{ repeat: Infinity, duration: 0.5, delay: 0 }}
-                                    className="w-2 h-2 bg-slate-300 rounded-full"
+                                    className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
                                 />
                                 <motion.div
                                     animate={{ y: [0, -4, 0] }}
                                     transition={{ repeat: Infinity, duration: 0.5, delay: 0.1 }}
-                                    className="w-2 h-2 bg-slate-300 rounded-full"
+                                    className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
                                 />
                                 <motion.div
                                     animate={{ y: [0, -4, 0] }}
                                     transition={{ repeat: Infinity, duration: 0.5, delay: 0.2 }}
-                                    className="w-2 h-2 bg-slate-300 rounded-full"
+                                    className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
                                 />
                             </div>
                         </div>
@@ -350,12 +376,12 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-slate-100">
+            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                    <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                    <button className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         <Camera size={18} />
                     </button>
-                    <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                    <button className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         <Mic size={18} />
                     </button>
                     <div className="flex-1 relative">
@@ -365,7 +391,7 @@ export default function ChatPage() {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={handleKeyPress}
                             placeholder="Ketik pesan..."
-                            className="w-full pl-4 pr-10 py-3 bg-slate-100 rounded-full text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                            className="w-full pl-4 pr-10 py-3 bg-slate-100 dark:bg-slate-800 rounded-full text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                         />
                     </div>
                     <motion.button
@@ -377,7 +403,7 @@ export default function ChatPage() {
                             "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
                             input.trim()
                                 ? "bg-sky-500 text-white hover:bg-sky-600"
-                                : "bg-slate-200 text-slate-400"
+                                : "bg-slate-200 dark:bg-slate-700 text-slate-400"
                         )}
                     >
                         <Send size={18} />

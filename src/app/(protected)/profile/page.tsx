@@ -16,6 +16,7 @@ import { serverSignOut } from "@/app/actions/auth";
 import { cn } from "@/frontend/lib/utils";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { useToast } from "@/frontend/components/UI";
+import { Portal } from "@/frontend/components/Portal";
 import { UserTier, canUseTelegram } from "@/lib/tier-gate";
 import { useSession } from "next-auth/react";
 
@@ -55,7 +56,15 @@ export default function ProfilePage() {
     const toast = useToast();
 
     // Modals
-    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | null>(null);
+    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | null>(null);
+
+    // Notification toggles (Local state for now, persists with notificationsEnabled)
+    const [notifToggles, setNotifToggles] = useState({
+        dailyReport: true,
+        budgetAlert: true,
+        transactionUpdate: true,
+        promoNews: false
+    });
 
     // Form States
     const [formData, setFormData] = useState({
@@ -74,6 +83,16 @@ export default function ProfilePage() {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        if (activeModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [activeModal]);
 
     const loadData = async () => {
         try {
@@ -115,7 +134,7 @@ export default function ProfilePage() {
     };
 
     const handleMenuClick = (id: string) => {
-        if (id === "account" || id === "financial" || id === "integrations") {
+        if (id === "account" || id === "financial" || id === "integrations" || id === "security" || id === "notifications") {
             setActiveModal(id as any);
         }
     };
@@ -396,355 +415,528 @@ export default function ProfilePage() {
             </motion.div>
 
             {/* Modals */}
-            <AnimatePresence>
-                {activeModal && (
-                    <>
+            <Portal>
+                <AnimatePresence>
+                    {activeModal && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+                            className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
                             onClick={() => setActiveModal(null)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="fixed left-4 right-4 top-[15%] bg-white dark:bg-slate-900 rounded-3xl p-6 z-50 shadow-2xl max-w-md mx-auto max-h-[80vh] overflow-y-auto border border-transparent dark:border-slate-800"
                         >
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                                    {activeModal === "account" ? "Edit Profil" :
-                                        activeModal === "integrations" ? "Integrasi Bot" :
-                                            activeModal === "security" ? "Keamanan Aplikasi" :
-                                                "Konfigurasi Keuangan"}
-                                </h3>
-                                <button
-                                    onClick={() => setActiveModal(null)}
-                                    className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            {activeModal === "account" ? (
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Depan</label>
-                                        <input
-                                            type="text"
-                                            value={formData.firstName}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                            placeholder="Nama Depan"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Belakang</label>
-                                        <input
-                                            type="text"
-                                            value={formData.lastName}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                            placeholder="Nama Belakang"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-3.5 text-slate-400">@</span>
-                                            <input
-                                                type="text"
-                                                value={formData.username}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                                                className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                placeholder="username"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Currency & Language Settings */}
-                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Preferensi Regional</p>
-
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {/* Currency Picker */}
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mata Uang</label>
-                                                <select
-                                                    value={typeof window !== "undefined" ? (localStorage.getItem("monev_currency") || "IDR") : "IDR"}
-                                                    onChange={(e) => {
-                                                        localStorage.setItem("monev_currency", e.target.value);
-                                                        window.dispatchEvent(new Event("storage"));
-                                                        toast.success("✓", `Mata uang diubah ke ${e.target.value}`);
-                                                    }}
-                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
-                                                >
-                                                    <option value="IDR">🇮🇩 IDR</option>
-                                                    <option value="USD">🇺🇸 USD</option>
-                                                    <option value="EUR">🇪🇺 EUR</option>
-                                                    <option value="SGD">🇸🇬 SGD</option>
-                                                    <option value="MYR">🇲🇾 MYR</option>
-                                                </select>
-                                            </div>
-
-                                            {/* Language Picker */}
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Bahasa</label>
-                                                <select
-                                                    value={typeof window !== "undefined" ? (localStorage.getItem("monev_language") || "id") : "id"}
-                                                    onChange={(e) => {
-                                                        localStorage.setItem("monev_language", e.target.value);
-                                                        window.dispatchEvent(new Event("storage"));
-                                                        toast.success("✓", `Bahasa diubah ke ${e.target.value === "id" ? "Indonesia" : "English"}`);
-                                                    }}
-                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
-                                                >
-                                                    <option value="id">🇮🇩 Indonesia</option>
-                                                    <option value="en">🇬🇧 English</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
+                            <motion.div
+                                initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 50, scale: 0.95 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                className="w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 relative"
+                            >
+                                <div className="flex justify-between items-center p-6 pb-4 shrink-0">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                        {activeModal === "account" ? "Edit Profil" :
+                                            activeModal === "integrations" ? "Integrasi Bot" :
+                                                activeModal === "security" ? "Keamanan Aplikasi" :
+                                                    "Konfigurasi Keuangan"}
+                                    </h3>
                                     <button
-                                        onClick={handleSaveProfile}
-                                        className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
+                                        onClick={() => setActiveModal(null)}
+                                        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
                                     >
-                                        <Check size={18} />
-                                        Simpan Perubahan
+                                        <X size={20} />
                                     </button>
                                 </div>
-                            ) : activeModal === "integrations" ? (
-                                <div className="space-y-6">
-                                    {/* Telegram Section */}
-                                    <div className={cn(
-                                        "p-4 rounded-2xl border transition-all relative overflow-hidden",
-                                        canUseTelegram(user?.tier as UserTier)
-                                            ? "bg-sky-50 border-sky-100 dark:bg-sky-900/20 dark:border-sky-800"
-                                            : "bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700 opacity-90"
-                                    )}>
-                                        {!canUseTelegram(user?.tier as UserTier) && (
-                                            <div className="absolute inset-0 z-10 bg-white/40 dark:bg-slate-900/60 backdrop-blur-[1px] flex flex-col items-center justify-center p-4 text-center">
-                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center mb-2">
-                                                    <Lock size={18} className="text-slate-400" />
-                                                </div>
-                                                <p className="text-[11px] font-bold text-slate-900 dark:text-white mb-1">Fitur Khusus Sultan 👑</p>
-                                                <Link
-                                                    href="/fitur/upgrade"
-                                                    className="text-[10px] font-black text-sky-600 dark:text-sky-500 underline uppercase tracking-tighter"
-                                                >
-                                                    Upgrade Sekarang
-                                                </Link>
-                                            </div>
-                                        )}
 
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-400">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-8.609 3.33c-2.068.8-4.133 1.598-5.724 2.21a405.15 405.15 0 0 1-2.849 1.09c-.42.147-.99.332-1.473.901-.728.968.193 1.798.919 2.286 1.61.516 3.275 1.009 4.654 1.472.509 1.793.997 3.592 1.48 5.388.16.36.506.494.864.498l-.002.018s.281.028.555-.038a2.1 2.1 0 0 0 .933-.517c.345-.324 1.28-1.244 1.811-1.764l3.999 2.952.032.018s.442.311 1.09.355c.324.037.75-.048 1.118-.308.58-.458 9.079-42.94 11.231-48.455.576-1.532-1.22-3.83-3.647-4.225" /></svg>
+                                <div className="overflow-y-auto flex-1 px-6 pb-6">
+                                    {activeModal === "account" ? (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Depan</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.firstName}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    placeholder="Nama Depan"
+                                                />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">Telegram Bot</h4>
-                                                <p className="text-xs text-sky-600 dark:text-sky-400 font-medium">@MonevappBot</p>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Belakang</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.lastName}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                    placeholder="Nama Belakang"
+                                                />
                                             </div>
-                                        </div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
-                                            Terima notifikasi dan laporan harian langsung di Telegram Anda.
-                                        </p>
-                                        <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-sky-200 dark:border-sky-900/50 p-3 mb-3">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">User ID Anda</p>
-                                                <span className="text-[10px] text-slate-400 dark:text-slate-500">(Ketik /id di bot)</span>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-3.5 text-slate-400">@</span>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.username}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                                                        className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                        placeholder="username"
+                                                    />
+                                                </div>
                                             </div>
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                value={formData.telegramId || ""}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, telegramId: e.target.value }))}
-                                                className="w-full font-mono text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-                                                placeholder="Contoh: 123456789"
-                                            />
-                                            {formData.telegramId && (
-                                                <button
-                                                    onClick={async () => {
-                                                        if (confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram?")) {
-                                                            const result = await disconnectTelegram();
-                                                            if (result.success) {
-                                                                toast.success("Berhasil", "Koneksi Telegram berhasil diputuskan.");
-                                                                loadData(); // Refresh data without page reload
-                                                            } else {
-                                                                toast.error("Gagal", result.message || "Gagal memutuskan koneksi.");
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="w-full mt-2 py-1.5 bg-rose-50 text-rose-600 text-xs font-semibold rounded-lg hover:bg-rose-100 transition-colors"
-                                                >
-                                                    Putuskan Koneksi
-                                                </button>
-                                            )}
-                                        </div>
 
-                                        <div className="text-center">
-                                            <a
-                                                href="https://t.me/MonevappBot"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-sky-200"
+                                            {/* Currency & Language Settings */}
+                                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Preferensi Regional</p>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {/* Currency Picker */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mata Uang</label>
+                                                        <select
+                                                            value={typeof window !== "undefined" ? (localStorage.getItem("monev_currency") || "IDR") : "IDR"}
+                                                            onChange={(e) => {
+                                                                localStorage.setItem("monev_currency", e.target.value);
+                                                                window.dispatchEvent(new Event("storage"));
+                                                                toast.success("✓", `Mata uang diubah ke ${e.target.value}`);
+                                                            }}
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="IDR">🇮🇩 IDR</option>
+                                                            <option value="USD">🇺🇸 USD</option>
+                                                            <option value="EUR">🇪🇺 EUR</option>
+                                                            <option value="SGD">🇸🇬 SGD</option>
+                                                            <option value="MYR">🇲🇾 MYR</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Language Picker */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Bahasa</label>
+                                                        <select
+                                                            value={typeof window !== "undefined" ? (localStorage.getItem("monev_language") || "id") : "id"}
+                                                            onChange={(e) => {
+                                                                localStorage.setItem("monev_language", e.target.value);
+                                                                window.dispatchEvent(new Event("storage"));
+                                                                toast.success("✓", `Bahasa diubah ke ${e.target.value === "id" ? "Indonesia" : "English"}`);
+                                                            }}
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="id">🇮🇩 Indonesia</option>
+                                                            <option value="en">🇬🇧 English</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleSaveProfile}
+                                                className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
                                             >
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-8.609 3.33c-2.068.8-4.133 1.598-5.724 2.21a405.15 405.15 0 0 1-2.849 1.09c-.42.147-.99.332-1.473.901-.728.968.193 1.798.919 2.286 1.61.516 3.275 1.009 4.654 1.472.509 1.793.997 3.592 1.48 5.388.16.36.506.494.864.498l-.002.018s.281.028.555-.038a2.1 2.1 0 0 0 .933-.517c.345-.324 1.28-1.244 1.811-1.764l3.999 2.952.032.018s.442.311 1.09.355c.324.037.75-.048 1.118-.308.58-.458 9.079-42.94 11.231-48.455.576-1.532-1.22-3.83-3.647-4.225" /></svg>
-                                                Buka Bot Telegram
-                                            </a>
-                                            <p className="text-[10px] text-slate-400 mt-2">
-                                                Klik tombol atau cari <span className="font-mono text-sky-600">@MonevappBot</span>
-                                            </p>
+                                                <Check size={18} />
+                                                Simpan Perubahan
+                                            </button>
                                         </div>
-                                    </div>
+                                    ) : activeModal === "integrations" ? (
+                                        <div className="space-y-6">
+                                            {/* Telegram Section */}
+                                            <div className={cn(
+                                                "p-6 rounded-[2rem] border transition-all relative overflow-hidden",
+                                                canUseTelegram(user?.tier as UserTier)
+                                                    ? "bg-sky-50 dark:bg-sky-900/10 border-sky-100 dark:border-sky-800"
+                                                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 opacity-90"
+                                            )}>
+                                                {/* Status Badge */}
+                                                <div className="absolute top-4 right-4">
+                                                    {user?.telegramId ? (
+                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                                                            <CheckCircle2 size={10} />
+                                                            Terhubung
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                                            Terputus
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                    {/* WhatsApp Section */}
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 opacity-75">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                                                <MessageCircle size={22} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">WhatsApp Bot</h4>
-                                                <div className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold rounded-full inline-block">
-                                                    COMING SOON
+                                                {!canUseTelegram(user?.tier as UserTier) && (
+                                                    <div className="absolute inset-0 z-10 bg-white/60 dark:bg-slate-900/80 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center">
+                                                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center mb-4 text-amber-500">
+                                                            <Crown size={28} />
+                                                        </div>
+                                                        <h4 className="text-lg font-black text-slate-900 dark:text-white mb-2 leading-tight">Khusus Paket Sultan 👑</h4>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-5 max-w-[200px]">
+                                                            Integrasi Telegram eksklusif untuk pengalaman finansial tanpa batas.
+                                                        </p>
+                                                        <Link
+                                                            href="/fitur/upgrade"
+                                                            className="px-6 py-2.5 bg-sky-500 text-white text-[12px] font-black rounded-xl shadow-lg shadow-sky-500/30 uppercase tracking-tighter active:scale-95 transition-all"
+                                                        >
+                                                            Upgrade Sekarang
+                                                        </Link>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white shadow-xl shadow-sky-500/20">
+                                                        <MessageCircle size={30} strokeWidth={2.5} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Telegram Sidekick</h4>
+                                                        <p className="text-xs text-sky-600 dark:text-sky-400 font-bold tracking-tight">@MonevappBot</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4 mb-6">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cara Menghubungkan:</p>
+                                                    {[
+                                                        { step: 1, text: "Buka Telegram & cari @MonevappBot" },
+                                                        { step: 2, text: "Ketik /start lalu ketik /id" },
+                                                        { step: 3, text: "Masukkan User ID Anda di bawah ini" }
+                                                    ].map((item) => (
+                                                        <div key={item.step} className="flex items-center gap-3">
+                                                            <div className="w-5 h-5 rounded-full bg-sky-500 text-white text-[10px] font-black flex items-center justify-center leading-none">
+                                                                {item.step}
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{item.text}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-sky-100 dark:border-sky-900/30 p-4 shadow-sm">
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">User ID Telegram</label>
+                                                    <div className="relative">
+                                                        <Key className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={formData.telegramId || ""}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, telegramId: e.target.value }))}
+                                                            className="w-full pl-10 pr-4 py-2.5 font-mono text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                                                            placeholder="Contoh: 123456789"
+                                                        />
+                                                    </div>
+                                                    {user?.telegramId && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram?")) {
+                                                                    const result = await disconnectTelegram();
+                                                                    if (result.success) {
+                                                                        toast.success("Berhasil", "Koneksi Telegram diputuskan.");
+                                                                        loadData();
+                                                                    } else {
+                                                                        toast.error("Gagal", result.message || "Gagal memutuskan koneksi.");
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="w-full mt-3 py-2 text-rose-500 text-[11px] font-black uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-colors border border-dashed border-rose-200 dark:border-rose-900/30"
+                                                        >
+                                                            Putuskan Koneksi
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <div className="mt-6">
+                                                    <a
+                                                        href="https://t.me/MonevappBot"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-950 rounded-2xl text-sm font-black flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
+                                                    >
+                                                        <MessageCircle size={18} fill="currentColor" />
+                                                        BUKA BOT TELEGRAM
+                                                    </a>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            Fitur integrasi via WhatsApp sedang dalam pengembangan. Nantikan update selanjutnya! 🚀
-                                        </p>
-                                    </div>
 
-                                    <div className="flex flex-col gap-3 mt-4">
-                                        <button
-                                            onClick={handleSaveProfile}
-                                            className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm shadow-sky-200"
-                                        >
-                                            <Check size={18} />
-                                            Simpan Integrasi
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveModal(null)}
-                                            className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-colors"
-                                        >
-                                            Tutup
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : activeModal === "security" ? (
-                                <div className="space-y-6">
-                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/50">
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
-                                                <Shield size={20} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">App Lock</h4>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                                    Kunci aplikasi saat dibuka atau di-refresh. Gunakan PIN 6 digit untuk membuka.
+                                            <div className="text-center">
+                                                <a
+                                                    href="https://t.me/MonevappBot"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-sky-200"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-8.609 3.33c-2.068.8-4.133 1.598-5.724 2.21a405.15 405.15 0 0 1-2.849 1.09c-.42.147-.99.332-1.473.901-.728.968.193 1.798.919 2.286 1.61.516 3.275 1.009 4.654 1.472.509 1.793.997 3.592 1.48 5.388.16.36.506.494.864.498l-.002.018s.281.028.555-.038a2.1 2.1 0 0 0 .933-.517c.345-.324 1.28-1.244 1.811-1.764l3.999 2.952.032.018s.442.311 1.09.355c.324.037.75-.048 1.118-.308.58-.458 9.079-42.94 11.231-48.455.576-1.532-1.22-3.83-3.647-4.225" /></svg>
+                                                    Buka Bot Telegram
+                                                </a>
+                                                <p className="text-[10px] text-slate-400 mt-2">
+                                                    Klik tombol atau cari <span className="font-mono text-sky-600">@MonevappBot</span>
                                                 </p>
                                             </div>
+
+                                            {/* WhatsApp Section */}
+                                            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 opacity-75">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                                        <MessageCircle size={22} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-slate-800 dark:text-slate-200">WhatsApp Bot</h4>
+                                                        <div className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold rounded-full inline-block">
+                                                            COMING SOON
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    Fitur integrasi via WhatsApp sedang dalam pengembangan. Nantikan update selanjutnya! 🚀
+                                                </p>
+                                            </div>
+
+                                            <div className="flex flex-col gap-3 mt-4">
+                                                <button
+                                                    onClick={handleSaveProfile}
+                                                    className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm shadow-sky-200"
+                                                >
+                                                    <Check size={18} />
+                                                    Simpan Integrasi
+                                                </button>
+                                                <button
+                                                    onClick={() => setActiveModal(null)}
+                                                    className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-colors"
+                                                >
+                                                    Tutup
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : activeModal === "security" ? (
+                                        <div className="space-y-6">
+                                            <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/10 rounded-[2.5rem] p-8 border border-amber-100 dark:border-amber-800/50 shadow-inner">
+                                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl" />
+                                                <div className="relative flex items-center gap-5">
+                                                    <div className="p-4 bg-white dark:bg-amber-800/40 rounded-[1.5rem] text-amber-600 dark:text-amber-400 shadow-xl shadow-amber-500/10 ring-1 ring-amber-100 dark:ring-amber-700/50">
+                                                        <Shield size={32} strokeWidth={2.5} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h4 className="font-black text-slate-900 dark:text-white text-xl tracking-tight leading-none">Proteksi Akun</h4>
+                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-bold leading-relaxed opacity-80">
+                                                            Gunakan PIN 6 digit unik untuk mengunci akses ke dashboard utama Anda.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">PIN Keamanan (6 Angka)</label>
-                                        <input
-                                            type="password"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            maxLength={6}
-                                            value={formData.securityPin}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/[^0-9]/g, "");
-                                                if (val.length <= 6) setFormData(prev => ({ ...prev, securityPin: val }));
-                                            }}
-                                            className="w-full text-center text-2xl font-bold tracking-[0.5em] py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
-                                            placeholder="••••••"
-                                        />
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 text-center">
-                                            PIN dienkripsi untuk keamanan. Masukkan PIN baru untuk mengubah.
-                                        </p>
-                                    </div>
+                                            <div className="flex flex-col items-center py-2">
+                                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">Masukkan 6 Digit PIN</p>
 
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                                        <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">Aktifkan App Lock</span>
-                                        <button
-                                            onClick={() => setFormData(prev => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }))}
-                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.isAppLockEnabled ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"}`}
-                                        >
-                                            <span
-                                                className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out ${formData.isAppLockEnabled ? "translate-x-6" : "translate-x-0"}`}
-                                            />
-                                        </button>
-                                    </div>
+                                                <div className="relative flex gap-3 mb-8">
+                                                    {/* Hidden actual input for handling input logic */}
+                                                    <input
+                                                        type="tel"
+                                                        pattern="[0-9]*"
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        value={formData.securityPin}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                                            if (val.length <= 6) {
+                                                                setFormData(prev => ({ ...prev, securityPin: val }));
+                                                            }
+                                                        }}
+                                                        autoFocus
+                                                        className="absolute inset-0 opacity-0 cursor-default"
+                                                        style={{ fontSize: '16px' }} // Prevent zoom on mobile
+                                                    />
 
-                                    <button
-                                        onClick={handleSaveSecurity}
-                                        className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Check size={18} />
-                                        Simpan Pengaturan Keamanan
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gaji Per Jam (Hourly Rate)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-3.5 text-slate-400 dark:text-slate-500">Rp</span>
-                                            <input
-                                                type="number"
-                                                value={formData.hourlyRate}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: e.target.value }))}
-                                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                                                placeholder="Contoh: 50000"
-                                            />
+                                                    {/* Discrete PIN Slots */}
+                                                    {[0, 1, 2, 3, 4, 5].map((index) => {
+                                                        const digit = formData.securityPin[index];
+                                                        const isActive = formData.securityPin.length === index;
+                                                        return (
+                                                            <motion.div
+                                                                key={index}
+                                                                whileHover={{ y: -2 }}
+                                                                animate={digit ? { scale: [1, 1.15, 1], y: [0, -4, 0] } : isActive ? { borderColor: ['#f59e0b', '#fbbf24', '#f59e0b'] } : {}}
+                                                                transition={{ duration: 0.3, repeat: isActive ? Infinity : 0 }}
+                                                                className={cn(
+                                                                    "w-12 h-16 rounded-[1.25rem] flex items-center justify-center border-2 transition-all duration-300 shadow-sm relative overflow-hidden",
+                                                                    digit
+                                                                        ? "bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/30"
+                                                                        : isActive
+                                                                            ? "bg-white dark:bg-slate-800 border-amber-400 ring-8 ring-amber-400/5"
+                                                                            : "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800"
+                                                                )}
+                                                            >
+                                                                {digit && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
+                                                                <div className={cn(
+                                                                    "w-3 h-3 rounded-full transition-all duration-300 shadow-sm",
+                                                                    digit ? "bg-white scale-125" : "bg-slate-200 dark:bg-slate-700"
+                                                                )} />
+                                                            </motion.div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold bg-slate-100 dark:bg-slate-800/50 px-4 py-1.5 rounded-full">
+                                                    PIN dienkripsi secara aman di server kami.
+                                                </p>
+                                            </div>
+
+                                            <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-amber-200/50 dark:hover:border-amber-900/30 transition-all duration-300">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cn(
+                                                        "p-3 rounded-2xl transition-all duration-300",
+                                                        formData.isAppLockEnabled ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-white dark:bg-slate-800 text-slate-400"
+                                                    )}>
+                                                        <Lock size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-slate-900 dark:text-white text-[13px] tracking-tight">Aktifkan App Lock</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold opacity-70">Minta PIN setiap kali membuka aplikasi</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setFormData(prev => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }))}
+                                                    className={cn(
+                                                        "relative w-14 h-7 rounded-full transition-all duration-500 p-1 shadow-inner",
+                                                        formData.isAppLockEnabled ? "bg-amber-500 shadow-amber-900/20" : "bg-slate-200 dark:bg-slate-800"
+                                                    )}
+                                                >
+                                                    <motion.div
+                                                        animate={{ x: formData.isAppLockEnabled ? 28 : 0 }}
+                                                        className="w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
+                                                    >
+                                                        {formData.isAppLockEnabled && <div className="w-1 h-1 bg-amber-500 rounded-full" />}
+                                                    </motion.div>
+                                                </button>
+                                            </div>
+
+                                            <motion.button
+                                                whileHover={{ scale: 1.02, y: -2 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={handleSaveSecurity}
+                                                className={cn(
+                                                    "w-full py-5 rounded-[2rem] font-black text-sm tracking-widest transition-all duration-300 flex items-center justify-center gap-3 shadow-2xl overflow-hidden relative group",
+                                                    formData.securityPin.length === 6
+                                                        ? "bg-amber-500 text-white shadow-amber-500/30 ring-4 ring-amber-500/10"
+                                                        : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                                                )}
+                                            >
+                                                <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                <motion.div
+                                                    animate={formData.securityPin.length === 6 ? { rotate: [0, 10, -10, 0] } : {}}
+                                                    transition={{ repeat: Infinity, duration: 2 }}
+                                                    className="relative z-10"
+                                                >
+                                                    <Check size={20} strokeWidth={3} />
+                                                </motion.div>
+                                                <span className="relative z-10">SIMPAN KEAMANAN</span>
+                                            </motion.button>
                                         </div>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Digunakan untuk menghitung "Waktu Kerja vs Pengeluaran".</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Utama (Primary Goal)</label>
-                                        <select
-                                            value={formData.primaryGoalId}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, primaryGoalId: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none"
-                                        >
-                                            <option value="">-- Pilih Goal Utama --</option>
-                                            {goals.map(goal => (
-                                                <option key={goal.id} value={goal.id}>{goal.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {/* New: Hide Balance Toggle */}
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                                        <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">Sembunyikan Saldo</span>
-                                        <button
-                                            onClick={() => setFormData(prev => ({ ...prev, hideBalance: !prev.hideBalance }))}
-                                            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${formData.hideBalance ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"}`}
-                                        >
-                                            <span
-                                                className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out ${formData.hideBalance ? "translate-x-6" : "translate-x-0"}`}
-                                            />
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={handleSaveSettings}
-                                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
-                                    >
-                                        <Check size={18} />
-                                        Simpan Pengaturan
-                                    </button>
+                                    ) : activeModal === "notifications" ? (
+                                        <div className="space-y-6">
+                                            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-[2rem] p-6 border border-purple-100 dark:border-purple-900/50">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-2xl text-purple-600 dark:text-purple-400 shadow-sm">
+                                                        <Bell size={28} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Notifikasi</h4>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
+                                                            Atur kapan Anda ingin diingatkan tentang keuangan Anda.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {[
+                                                    { id: "dailyReport", label: "Laporan Harian", desc: "Ringkasan pengeluaran setiap sore" },
+                                                    { id: "budgetAlert", label: "Peringatan Anggaran", desc: "Notif saat anggaran hampir habis" },
+                                                    { id: "transactionUpdate", label: "Update Transaksi", desc: "Konfirmasi setelah mencatat transaksi" },
+                                                    { id: "promoNews", label: "Berita & Promo", desc: "Update fitur dan penawaran sultan" }
+                                                ].map((item) => (
+                                                    <div key={item.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-purple-200 transition-colors">
+                                                        <div>
+                                                            <p className="font-bold text-slate-900 dark:text-white text-sm">{item.label}</p>
+                                                            <p className="text-[10px] text-slate-500 font-medium">{item.desc}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setNotifToggles(prev => ({ ...prev, [item.id]: !prev[item.id as keyof typeof notifToggles] }))}
+                                                            className={cn(
+                                                                "relative w-11 h-6 rounded-full transition-colors duration-300",
+                                                                notifToggles[item.id as keyof typeof notifToggles] ? "bg-purple-500" : "bg-slate-200 dark:bg-slate-700"
+                                                            )}
+                                                        >
+                                                            <motion.div
+                                                                animate={{ x: notifToggles[item.id as keyof typeof notifToggles] ? 22 : 2 }}
+                                                                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                                                            />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <button
+                                                onClick={() => {
+                                                    toast.success("Berhasil", "Preferensi notifikasi disimpan!");
+                                                    setActiveModal(null);
+                                                }}
+                                                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95"
+                                            >
+                                                <Check size={20} strokeWidth={3} />
+                                                SIMPAN NOTIFIKASI
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gaji Per Jam (Hourly Rate)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-3.5 text-slate-400 dark:text-slate-500">Rp</span>
+                                                    <input
+                                                        type="number"
+                                                        value={formData.hourlyRate}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: e.target.value }))}
+                                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                                        placeholder="Contoh: 50000"
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Digunakan untuk menghitung "Waktu Kerja vs Pengeluaran".</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Utama (Primary Goal)</label>
+                                                <select
+                                                    value={formData.primaryGoalId}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, primaryGoalId: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none"
+                                                >
+                                                    <option value="">-- Pilih Goal Utama --</option>
+                                                    {goals.map(goal => (
+                                                        <option key={goal.id} value={goal.id}>{goal.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                                <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">Sembunyikan Saldo</span>
+                                                <button
+                                                    onClick={() => setFormData(prev => ({ ...prev, hideBalance: !prev.hideBalance }))}
+                                                    className={cn(
+                                                        "relative w-12 h-6 rounded-full transition-colors duration-200",
+                                                        formData.hideBalance ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                                                    )}
+                                                >
+                                                    <motion.div
+                                                        animate={{ x: formData.hideBalance ? 26 : 2 }}
+                                                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                                                    />
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={handleSaveSettings}
+                                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
+                                            >
+                                                <Check size={18} />
+                                                Simpan Pengaturan
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </motion.div>
                         </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </div>
+                    )}
+                </AnimatePresence>
+            </Portal>
+        </div >
     );
 }
-

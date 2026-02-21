@@ -9,6 +9,9 @@ import { Investment } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { Portal } from "@/frontend/components/Portal";
 import { NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
+import { useSession } from "next-auth/react";
+import { UserTier, canCreateInvestment, getTierConfig } from "@/lib/tier-gate";
+import { TierGateOverlay, TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase
@@ -26,6 +29,10 @@ export default function InvestmentsPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
     const toast = useToast();
+    const { data: session } = useSession();
+    // @ts-ignore
+    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const tierConfig = getTierConfig(userTier);
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -132,6 +139,10 @@ export default function InvestmentsPage() {
     }
 
     function openAddModal() {
+        if (!canCreateInvestment(investments.length, userTier)) {
+            toast.error("Batas Tercapai", `Tier ${tierConfig.name} hanya bisa ${tierConfig.maxInvestments} aset. Upgrade untuk menambah!`);
+            return;
+        }
         resetForm();
         setSelectedAsset(null);
         setIsAddModalOpen(true);
@@ -193,6 +204,7 @@ export default function InvestmentsPage() {
 
     return (
         <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+            <TierGateOverlay requiredTier="kaya" currentTier={userTier} featureName="Investasi" />
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Wallet, Sparkles, TrendingUp, PiggyBank } from "lucide-react";
+import Image from "next/image";
+import { Sparkles, TrendingUp, PiggyBank } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
 interface WelcomeScreenProps {
@@ -24,7 +25,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col items-center justify-center px-10 pb-4">
-                {/* Logo Animation */}
+                {/* Welcome Image */}
                 <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -43,9 +44,15 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
                             repeat: Infinity,
                             ease: "easeInOut"
                         }}
-                        className="w-24 h-24 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-sky-500/30"
                     >
-                        <Wallet className="w-12 h-12 text-white" />
+                        <Image
+                            src="/images/onboarding-welcome.png"
+                            alt="Welcome to Monev"
+                            width={180}
+                            height={180}
+                            className="rounded-[32px] shadow-2xl shadow-sky-500/20"
+                            priority
+                        />
                     </motion.div>
                 </motion.div>
 
