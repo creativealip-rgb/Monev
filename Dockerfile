@@ -48,6 +48,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/drizzle.config.json ./drizzle.config.json
+COPY --from=builder /app/src/backend/db/schema.ts ./src/backend/db/schema.ts
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
