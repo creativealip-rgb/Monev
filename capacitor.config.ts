@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
     },
   },
   server: {
-    url: 'http://52.64.169.254:3000',
+    url: 'https://www.monevapp.web.id',
     cleartext: true
   }
 };
