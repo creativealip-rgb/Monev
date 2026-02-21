@@ -181,7 +181,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                         <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Pengeluaran</p>
                     </div>
                     <p className="font-bold text-[13px] text-rose-300 tabular-nums">
-                        − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense + (stats as any).fees).replace("Rp", "")}
+                        − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense + (stats.fees || 0)).replace("Rp", "")}
                     </p>
                 </div>
             </div>
@@ -199,7 +199,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
 
 export default function Home() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number }>({ income: 0, expense: 0, balance: 0 });
+    const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number; fees?: number }>({ income: 0, expense: 0, balance: 0, fees: 0 });
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [userName, setUserName] = useState<string | null>(null);

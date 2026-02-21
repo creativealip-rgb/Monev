@@ -126,6 +126,7 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
     income: number;
     expense: number;
     balance: number;
+    fees: number;
 }> {
     const db = getDb();
 
@@ -157,13 +158,26 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
         ))
         .get();
 
+    // Get fees total
+    const feesResult = await db
+        .select({ total: sql<number>`SUM(fee)` })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .get();
+
     const income = incomeResult?.total || 0;
     const expense = expenseResult?.total || 0;
+    const fees = feesResult?.total || 0;
 
     return {
         income,
         expense,
         balance: income - expense,
+        fees,
     };
 }
 
