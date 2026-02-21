@@ -3,6 +3,6 @@
     "out": "./drizzle",
     "dialect": "sqlite",
     "dbCredentials": {
-        "url": "./sqlite.db"
+        "url": "/app/data/sqlite.db"
     }
 }
