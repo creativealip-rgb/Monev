@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getInvestments, createInvestment, ensureSampleInvestments } from "@/backend/db/operations";
+import { getInvestments, createInvestment } from "@/backend/db/operations";
 
 export async function GET() {
     try {
@@ -8,7 +8,6 @@ export async function GET() {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        await ensureSampleInvestments(userId);
         const allInvestments = await getInvestments(userId);
 
         // Calculate basic stats for frontend usage if needed, 

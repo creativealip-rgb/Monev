@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getBills, createBill, ensureSampleBills } from "@/backend/db/operations";
+import { getBills, createBill } from "@/backend/db/operations";
 
 export async function GET() {
     try {
@@ -8,7 +8,6 @@ export async function GET() {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        await ensureSampleBills(userId);
         const allBills = await getBills(userId);
 
         const data = allBills.map(b => ({
