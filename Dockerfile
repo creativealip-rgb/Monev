@@ -49,6 +49,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/drizzle.config.json ./drizzle.config.json
 COPY --from=builder /app/src/backend/db/schema.ts ./src/backend/db/schema.ts
+COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
