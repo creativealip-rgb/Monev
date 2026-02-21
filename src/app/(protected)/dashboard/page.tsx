@@ -88,7 +88,7 @@ const itemVariants = {
 };
 
 interface HeroBalanceCardProps {
-    stats: { income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number };
+    stats: { income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number; fees?: number };
     mounted: boolean;
     onBalanceClick: () => void;
     onTransferClick: () => void;
