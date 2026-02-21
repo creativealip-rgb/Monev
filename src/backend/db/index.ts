@@ -27,10 +27,8 @@ export function getDb() {
                 console.error("Migration failed:", error);
             }
 
-            // Run Seed
-            import("./seed").then(({ seedDatabase }) => {
-                seedDatabase().catch(console.error);
-            });
+            // Seed logic removed - use manual seed script for demo data if needed.
+            isSeeding = true; 
         }
     }
     return db;
