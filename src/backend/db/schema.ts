@@ -15,17 +15,19 @@ export const categories = sqliteTable("categories", {
 
 export const users = sqliteTable("users", {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    telegramId: integer("telegram_id").unique(), // Optional for non-telegram users
-    email: text("email").unique(), // New: NextAuth
-    password: text("password"), // New: NextAuth (hashed)
-    name: text("name"), // New: NextAuth standard
-    image: text("image"), // New: NextAuth standard
+    telegramId: integer("telegram_id").unique(),
+    email: text("email").unique(),
+    password: text("password"),
+    name: text("name"),
+    image: text("image"),
     username: text("username"),
     firstName: text("first_name"),
     lastName: text("last_name"),
     whatsappId: text("whatsapp_id"),
     tier: text("tier", { enum: ["miskin", "kaya", "sultan"] }).notNull().default("miskin"),
     tierExpiresAt: integer("tier_expires_at", { mode: "timestamp" }),
+    isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -159,11 +161,37 @@ export const coupons = sqliteTable("coupons", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     code: text("code").unique().notNull(),
     tier: text("tier", { enum: ["kaya", "sultan"] }).notNull(),
-    isUsed: integer("is_used", { mode: "boolean" }).notNull().default(false),
-    usedBy: integer("used_by").references(() => users.id),
-    usedAt: integer("used_at", { mode: "timestamp" }),
+    quota: integer("quota").notNull().default(1),
+    claimedCount: integer("claimed_count").notNull().default(0),
     expiresAt: integer("expires_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const couponClaims = sqliteTable("coupon_claims", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    couponId: integer("coupon_id").references(() => coupons.id).notNull(),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    claimedAt: integer("claimed_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const adminActivityLog = sqliteTable("admin_activity_log", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    adminId: integer("admin_id").references(() => users.id).notNull(),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: integer("target_id"),
+    details: text("details"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const aiInsightsCache = sqliteTable("ai_insights_cache", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    month: integer("month").notNull(),
+    year: integer("year").notNull(),
+    insights: text("insights").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 // Types
@@ -180,6 +208,9 @@ export type Bill = typeof bills.$inferSelect;
 export type ChatHistory = typeof chatHistory.$inferSelect;
 export type Investment = typeof investments.$inferSelect;
 export type Coupon = typeof coupons.$inferSelect;
+export type CouponClaim = typeof couponClaims.$inferSelect;
+export type AdminActivityLog = typeof adminActivityLog.$inferSelect;
+export type AiInsightsCache = typeof aiInsightsCache.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -194,6 +225,9 @@ export type InsertBill = typeof bills.$inferInsert;
 export type InsertChatHistory = typeof chatHistory.$inferInsert;
 export type InsertInvestment = typeof investments.$inferInsert;
 export type InsertCoupon = typeof coupons.$inferInsert;
+export type InsertCouponClaim = typeof couponClaims.$inferInsert;
+export type InsertAdminActivityLog = typeof adminActivityLog.$inferInsert;
+export type InsertAiInsightsCache = typeof aiInsightsCache.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);

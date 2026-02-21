@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getCouponByCode, useCoupon } from "@/backend/db/operations";
+import { getCouponByCode, useCoupon, hasUserClaimedCoupon, getCouponClaimCount } from "@/backend/db/operations";
 
 export async function POST(req: NextRequest) {
     const session = await auth();
@@ -19,10 +19,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Kupon tidak ditemukan" }, { status: 404 });
         }
 
-        if (coupon.isUsed) {
-            return NextResponse.json({ success: false, error: "Kupon sudah pernah digunakan" }, { status: 400 });
-        }
-
         if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
             return NextResponse.json({ success: false, error: "Kupon sudah kadaluarsa" }, { status: 400 });
         }
@@ -32,7 +28,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "ID pengguna tidak valid" }, { status: 400 });
         }
 
-        // Apply upgrade
+        const alreadyClaimed = await hasUserClaimedCoupon(coupon.id, userId);
+        if (alreadyClaimed) {
+            return NextResponse.json({ success: false, error: "Anda sudah mengklaim kupon ini" }, { status: 400 });
+        }
+
+        const claimedCount = await getCouponClaimCount(coupon.id);
+        if (claimedCount >= coupon.quota) {
+            return NextResponse.json({ success: false, error: "Kuota kupon sudah habis" }, { status: 400 });
+        }
+
         await useCoupon(coupon.id, userId, coupon.tier);
 
         return NextResponse.json({
@@ -41,8 +46,8 @@ export async function POST(req: NextRequest) {
             tier: coupon.tier
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("[Coupon API] Error:", error);
-        return NextResponse.json({ success: false, error: "Terjadi kesalahan server" }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message || "Terjadi kesalahan server" }, { status: 500 });
     }
 }
