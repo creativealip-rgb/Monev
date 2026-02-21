@@ -9,7 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:prod": "drizzle-kit migrate --config=drizzle.config.prod.ts",
+    "db:seed:coupons": "tsx scripts/seed-coupons.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",

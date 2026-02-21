@@ -1,4 +1,4 @@
-import { getDb } from "../src/backend/db";
+import { getDb } from "../src/backend/db/index";
 import { coupons } from "../src/backend/db/schema";
 
 async function seed() {
