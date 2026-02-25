@@ -2,27 +2,33 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 
-let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
-let sqlite: Database.Database | null = null;
+const dbPath = process.env.DATABASE_URL || "./sqlite.db";
+
+// Prevent multiple connections during Next.js HMR (dev mode)
+const globalForDb = globalThis as unknown as {
+    sqlite: Database.Database | undefined;
+    db: ReturnType<typeof drizzle<typeof schema>> | undefined;
+};
 
 export function getDb() {
-    if (!db) {
-        const dbPath = process.env.DATABASE_URL || "./sqlite.db";
-        sqlite = new Database(dbPath);
-        db = drizzle(sqlite, { schema });
-        
+    if (!globalForDb.db) {
+        globalForDb.sqlite = new Database(dbPath);
+        // Enable WAL mode for better concurrency and less locking
+        globalForDb.sqlite.pragma('journal_mode = WAL');
+
+        globalForDb.db = drizzle(globalForDb.sqlite, { schema });
+
         // Skip migrations - tables already exist via drizzle-kit push
-        // If you need to run migrations, use: npx drizzle-kit push
         console.log("Database connected (migrations skipped - tables already exist)");
     }
-    return db;
+    return globalForDb.db;
 }
 
 export function closeDb() {
-    if (sqlite) {
-        sqlite.close();
-        sqlite = null;
-        db = null;
+    if (globalForDb.sqlite) {
+        globalForDb.sqlite.close();
+        globalForDb.sqlite = undefined;
+        globalForDb.db = undefined;
     }
 }
 
