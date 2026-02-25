@@ -295,6 +295,7 @@ export default function AnalyticsPage() {
 // --- Sub-Components ---
 
 function OverviewTab({ data, itemVariants }: { data: AnalyticsData, itemVariants: any }) {
+    const { isStealthMode } = useSecurity();
     return (
         <div className="flex flex-col gap-6">
             {/* Financial Health & Monthly Stats */}
@@ -363,6 +364,7 @@ function OverviewTab({ data, itemVariants }: { data: AnalyticsData, itemVariants
 }
 
 function TrendsTab({ data, itemVariants }: { data: AnalyticsData, itemVariants: any }) {
+    const { isStealthMode } = useSecurity();
     // Get current and previous month from monthlyComparison
     const comparison = data.monthlyComparison || [];
     const currentMonth = comparison.length > 0 ? comparison[comparison.length - 1] : null;
@@ -427,6 +429,7 @@ function TrendsTab({ data, itemVariants }: { data: AnalyticsData, itemVariants: 
 }
 
 function InsightsTab({ data, itemVariants }: { data: AnalyticsData, itemVariants: any }) {
+    const { isStealthMode } = useSecurity();
     if (!data.canAccessAIInsights) {
         return (
             <div className="flex flex-col gap-6">
