@@ -2,18 +2,19 @@
 
 import { motion } from "framer-motion";
 import { formatCurrency } from "@/frontend/lib/utils";
-import { Wallet, TrendingUp, PiggyBank, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { Wallet, TrendingUp, PiggyBank } from "lucide-react";
 
 interface NetWorthProps {
     balance: number;
     investments: number;
     goals: number;
     isLoading?: boolean;
+    hideBalance?: boolean;
+    onToggle?: (newValue: boolean) => void;
 }
 
-export function NetWorthCard({ balance, investments, goals, isLoading = false }: NetWorthProps) {
-    const [showAmount, setShowAmount] = useState(true);
+export function NetWorthCard({ balance, investments, goals, isLoading = false, hideBalance = false }: NetWorthProps) {
+    const showAmount = !hideBalance;
     const total = balance + investments + goals;
 
     if (isLoading) {
@@ -26,12 +27,6 @@ export function NetWorthCard({ balance, investments, goals, isLoading = false }:
         <div className="card-clean p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:brightness-110 hover:shadow-2xl hover:shadow-sky-500/10">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Net Worth</span>
-                <button
-                    onClick={() => setShowAmount(!showAmount)}
-                    className="text-slate-400 hover:text-white transition-colors"
-                >
-                    {showAmount ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
             </div>
 
             <motion.h2

@@ -5,13 +5,14 @@ import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarCha
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
-import { Investment } from "@/types";
-import { apiFetch } from "@/frontend/lib/api-client";
-import { Portal } from "@/frontend/components/Portal";
 import { NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
 import { useSession } from "next-auth/react";
 import { UserTier, canCreateInvestment, getTierConfig } from "@/lib/tier-gate";
 import { TierGateOverlay, TierLimitBanner } from "@/frontend/components/TierGateOverlay";
+import { Investment, InvestmentSummary } from "@/types";
+import { apiFetch } from "@/frontend/lib/api-client";
+import { Portal } from "@/frontend/components/Portal";
+import { useSecurity } from "@/components/SecurityProvider";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase
@@ -23,11 +24,12 @@ function AssetIcon({ name, color, size = 20 }: { name: string; color: string; si
 }
 
 export default function InvestmentsPage() {
-    const [investments, setInvestments] = useState<Investment[]>([]);
+    const [summary, setSummary] = useState<InvestmentSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
+    const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
     // @ts-ignore
@@ -44,22 +46,19 @@ export default function InvestmentsPage() {
     const [formIcon, setFormIcon] = useState("TrendingUp");
     const [formColor, setFormColor] = useState("#10b981");
     const [formNotes, setFormNotes] = useState("");
+    const [formDividends, setFormDividends] = useState("");
+    const [formRealizedProfit, setFormRealizedProfit] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         loadData();
     }, []);
 
-    const totalValue = useMemo(() => {
-        return investments.reduce((sum, inv) => sum + (inv.quantity * inv.currentPrice), 0);
-    }, [investments]);
-
-    const totalCost = useMemo(() => {
-        return investments.reduce((sum, inv) => sum + (inv.quantity * inv.avgBuyPrice), 0);
-    }, [investments]);
-
-    const totalProfit = totalValue - totalCost;
-    const profitPercent = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+    const investments = summary?.items || [];
+    const totalValue = summary?.totalValue || 0;
+    const totalCost = summary?.totalCost || 0;
+    const totalProfit = summary?.totalProfit || 0;
+    const profitPercent = summary?.profitPercent || 0;
 
     async function loadData() {
         setLoading(true);
@@ -67,7 +66,7 @@ export default function InvestmentsPage() {
             const res = await apiFetch("/api/investments");
             const result = await res.json();
             if (result.success) {
-                setInvestments(result.data);
+                setSummary(result);
             }
         } catch (error) {
             console.error("Error loading investments:", error);
@@ -88,6 +87,8 @@ export default function InvestmentsPage() {
                 avgBuyPrice: Number(formBuyPrice),
                 currentPrice: Number(formCurrentPrice),
                 platform: formPlatform || undefined,
+                totalDividends: parseFloat(formDividends) || 0,
+                realizedProfit: parseFloat(formRealizedProfit) || 0,
                 icon: formIcon,
                 color: formColor,
                 notes: formNotes || undefined,
@@ -128,7 +129,7 @@ export default function InvestmentsPage() {
             const res = await apiFetch(`/api/investments/${id}`, { method: "DELETE" });
             const result = await res.json();
             if (result.success) {
-                setInvestments(prev => prev.filter(i => i.id !== id));
+                setSummary(prev => prev ? { ...prev, items: prev.items.filter(i => i.id !== id) } : prev);
                 closeModals();
                 toast.success("Investasi dihapus");
             }
@@ -159,6 +160,8 @@ export default function InvestmentsPage() {
         setFormIcon(asset.icon);
         setFormColor(asset.color);
         setFormNotes(asset.notes || "");
+        setFormDividends(asset.totalDividends?.toString() || "0");
+        setFormRealizedProfit(asset.realizedProfit?.toString() || "0");
         setIsEditModalOpen(true);
     }
 
@@ -178,6 +181,8 @@ export default function InvestmentsPage() {
         setFormIcon("TrendingUp");
         setFormColor("#10b981");
         setFormNotes("");
+        setFormDividends("");
+        setFormRealizedProfit("");
     }
 
     const typeOptions = [
@@ -237,23 +242,33 @@ export default function InvestmentsPage() {
                 className="mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
                 <p className="text-cyan-200 text-xs font-medium mb-1">Total Nilai Aset</p>
-                <h2 className="text-2xl font-bold mb-6 tabular-nums">{loading ? "..." : formatCurrency(totalValue)}</h2>
+                <h2 className="text-2xl font-bold mb-6 tabular-nums">
+                    {loading ? "..." : isStealthMode ? "••••••••" : formatCurrency(totalValue)}
+                </h2>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-y-4 pt-4 border-t border-white/10">
                     <div>
                         <p className="text-cyan-200 text-[10px] uppercase tracking-wider mb-1">Modal Awal</p>
-                        <p className="font-medium tabular-nums">{loading ? "..." : formatCurrency(totalCost)}</p>
+                        <p className="font-medium tabular-nums text-sm">
+                            {loading ? "..." : isStealthMode ? "••••••••" : formatCurrency(totalCost)}
+                        </p>
                     </div>
                     <div>
-                        <p className="text-cyan-200 text-[10px] uppercase tracking-wider mb-1">Keuntungan</p>
+                        <p className="text-cyan-200 text-[10px] uppercase tracking-wider mb-1">Passive Income</p>
+                        <p className="font-bold text-emerald-300 tabular-nums text-sm">
+                            {loading ? "..." : isStealthMode ? "••••••••" : formatCurrency(summary?.totalDividends || 0)}
+                        </p>
+                    </div>
+                    <div className="col-span-2 pt-2 border-t border-white/5">
+                        <p className="text-cyan-200 text-[10px] uppercase tracking-wider mb-1">Total ROI</p>
                         <div className={cn(
-                            "flex items-center gap-1 font-semibold tabular-nums",
+                            "flex items-center gap-2 font-black tabular-nums",
                             totalProfit >= 0 ? "text-emerald-300" : "text-rose-300"
                         )}>
                             {loading ? "..." : (
                                 <>
-                                    <span>{totalProfit >= 0 ? "+" : ""}{formatCurrency(totalProfit)}</span>
-                                    <span className="text-xs px-1.5 py-0.5 bg-white/10 rounded-full">
+                                    <span className="text-lg">{totalProfit >= 0 ? "+" : ""}{isStealthMode ? "••••••••" : formatCurrency(totalProfit)}</span>
+                                    <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">
                                         {profitPercent.toFixed(1)}%
                                     </span>
                                 </>
@@ -262,6 +277,49 @@ export default function InvestmentsPage() {
                     </div>
                 </div>
             </motion.div>
+
+            {/* Asset Allocation Chart */}
+            <AnimatePresence>
+                {summary && summary.allocation.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mx-6 mt-6 p-6 card-clean"
+                    >
+                        <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <PieChart size={14} />
+                            Alokasi Aset
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                {summary.allocation.map((item, i) => (
+                                    <motion.div
+                                        key={item.label}
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(item.value / totalValue) * 100}%` }}
+                                        transition={{ duration: 1, delay: 0.2 + (i * 0.1) }}
+                                        style={{ backgroundColor: item.color }}
+                                        className="h-full first:rounded-l-full last:rounded-r-full"
+                                    />
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+                                {summary.allocation.map((item) => (
+                                    <div key={item.label} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{item.label}</span>
+                                        </div>
+                                        <span className="text-xs font-bold text-foreground">
+                                            {Math.round((item.value / totalValue) * 100)}%
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="px-6 mt-8">
                 <h3 className="text-sm font-bold text-foreground mb-4">Daftar Aset</h3>
@@ -305,22 +363,30 @@ export default function InvestmentsPage() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-semibold text-foreground tabular-nums">{formatCurrency(value)}</p>
+                                            <p className="font-semibold text-foreground tabular-nums">
+                                                {isStealthMode ? "••••••••" : formatCurrency(value)}
+                                            </p>
                                             <div className={cn(
                                                 "text-xs font-medium flex items-center justify-end gap-1 tabular-nums",
                                                 isProfit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400"
                                             )}>
-                                                {isProfit ? "+" : ""}{formatCurrency(profit)} ({profitPct.toFixed(1)}%)
+                                                {isProfit ? "+" : ""}{isStealthMode ? "••••••••" : formatCurrency(profit)} ({isStealthMode ? "••%" : profitPct.toFixed(1) + "%"})
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-700">
-                                        <div className="text-xs text-muted-foreground">
-                                            {inv.quantity.toLocaleString('id-ID')} @ {formatCurrency(inv.currentPrice)}
+                                    <div className="space-y-2 pt-3 border-t border-slate-50 dark:border-slate-700">
+                                        <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase">
+                                            <span>Kepemilikan</span>
+                                            <span>{isStealthMode ? "•••" : inv.quantity.toLocaleString('id-ID')} @ {isStealthMode ? "••••" : formatCurrency(inv.currentPrice)}</span>
                                         </div>
-                                        <div className="text-xs text-muted-foreground tabular-nums">
-                                            Modal: {formatCurrency(inv.avgBuyPrice)}
-                                        </div>
+                                        {(inv.totalDividends || 0) > 0 && (
+                                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20">
+                                                <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Passive Income</span>
+                                                <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-300">
+                                                    {isStealthMode ? "••••" : formatCurrency(inv.totalDividends!)}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </motion.div>
                             );

@@ -49,6 +49,7 @@ export const transactions = sqliteTable("transactions", {
     date: integer("date", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     isVerified: integer("is_verified", { mode: "boolean" }).notNull().default(false),
     isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
+    splitGroupId: text("split_group_id"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -90,9 +91,12 @@ export const userSettings = sqliteTable("user_settings", {
     primaryGoalId: integer("primary_goal_id").references(() => goals.id),
     securityPin: text("security_pin"),
     isAppLockEnabled: integer("is_app_lock_enabled", { mode: "boolean" }).notNull().default(false),
+    isBiometricEnabled: integer("is_biometric_enabled", { mode: "boolean" }).notNull().default(false),
     hideBalance: integer("hide_balance", { mode: "boolean" }).notNull().default(false), // New: Hide balance on dashboard
     notificationsEnabled: integer("notifications_enabled", { mode: "boolean" }).notNull().default(true), // New: Persistence for notifications
     hasCompletedOnboarding: integer("has_completed_onboarding", { mode: "boolean" }).notNull().default(false), // New: Track onboarding status
+    financialPersona: text("financial_persona"), // AI generated persona
+    personaUpdatedAt: integer("persona_updated_at", { mode: "timestamp" }),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -130,6 +134,8 @@ export const bills = sqliteTable("bills", {
     icon: text("icon").notNull().default("Receipt"),
     color: text("color").notNull().default("#6366f1"),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    isSubscription: integer("is_subscription", { mode: "boolean" }).notNull().default(false),
+    lastDetectedDate: integer("last_detected_date", { mode: "timestamp" }),
     notes: text("notes"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
@@ -154,6 +160,8 @@ export const investments = sqliteTable("investments", {
     icon: text("icon").notNull().default("TrendingUp"),
     color: text("color").notNull().default("#10b981"),
     notes: text("notes"),
+    totalDividends: real("total_dividends").default(0), // New: Track passive income
+    realizedProfit: real("realized_profit").default(0), // New: Track profit from partial sells
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
@@ -211,6 +219,25 @@ export const passwordResetTokens = sqliteTable("password_reset_tokens", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const streaks = sqliteTable("streaks", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).unique().notNull(),
+    currentStreak: integer("current_streak").notNull().default(0),
+    longestStreak: integer("longest_streak").notNull().default(0),
+    lastTransactionDate: integer("last_transaction_date", { mode: "timestamp" }),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const achievements = sqliteTable("achievements", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    type: text("type").notNull(), // e.g., 'streak_7', 'budget_hero', 'wealth_master'
+    name: text("name").notNull(),
+    description: text("description"),
+    icon: text("icon"),
+    unlockedAt: integer("unlocked_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 // Types
 export type Category = typeof categories.$inferSelect;
 export type User = typeof users.$inferSelect;
@@ -228,6 +255,8 @@ export type Coupon = typeof coupons.$inferSelect;
 export type CouponClaim = typeof couponClaims.$inferSelect;
 export type AdminActivityLog = typeof adminActivityLog.$inferSelect;
 export type AiInsightsCache = typeof aiInsightsCache.$inferSelect;
+export type Streak = typeof streaks.$inferSelect;
+export type Achievement = typeof achievements.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -245,6 +274,8 @@ export type InsertCoupon = typeof coupons.$inferInsert;
 export type InsertCouponClaim = typeof couponClaims.$inferInsert;
 export type InsertAdminActivityLog = typeof adminActivityLog.$inferInsert;
 export type InsertAiInsightsCache = typeof aiInsightsCache.$inferInsert;
+export type InsertStreak = typeof streaks.$inferInsert;
+export type InsertAchievement = typeof achievements.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -263,3 +294,7 @@ export const insertInvestmentSchema = createInsertSchema(investments);
 export const selectInvestmentSchema = createSelectSchema(investments);
 export const insertCouponSchema = createInsertSchema(coupons);
 export const selectCouponSchema = createSelectSchema(coupons);
+export const insertStreakSchema = createInsertSchema(streaks);
+export const selectStreakSchema = createSelectSchema(streaks);
+export const insertAchievementSchema = createInsertSchema(achievements);
+export const selectAchievementSchema = createSelectSchema(achievements);

@@ -8,6 +8,7 @@ import { useI18n } from "@/frontend/lib/i18n-context";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useSecurity } from "@/components/SecurityProvider";
 
 interface BottomNavProps {
     onFabClick?: () => void;
@@ -18,6 +19,8 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const [isFabPressed, setIsFabPressed] = useState(false);
     const { t } = useI18n();
     const haptics = useHaptics();
+    const { toggleStealth } = useSecurity();
+    const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
     const links = [
         { href: "/", label: t("nav.dashboard"), icon: Home },
@@ -35,6 +38,22 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
         setTimeout(() => setIsFabPressed(false), 150);
         haptics.medium();
         onFabClick?.();
+    };
+
+    const handlePointerDown = () => {
+        const timer = setTimeout(() => {
+            haptics.success();
+            toggleStealth();
+            setLongPressTimer(null);
+        }, 800);
+        setLongPressTimer(timer);
+    };
+
+    const handlePointerUp = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            setLongPressTimer(null);
+        }
     };
 
     const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) => {
@@ -95,6 +114,9 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                         <div className="flex-1 flex flex-col items-center justify-end pb-1 relative z-50">
                             <motion.button
                                 onClick={handleFabClick}
+                                onPointerDown={handlePointerDown}
+                                onPointerUp={handlePointerUp}
+                                onPointerCancel={handlePointerUp}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.85 }}
                                 animate={isFabPressed ? { scale: 0.85 } : { scale: 1 }}

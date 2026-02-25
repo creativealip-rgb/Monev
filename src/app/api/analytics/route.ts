@@ -14,7 +14,9 @@ import {
     getCashflowPrediction,
     getBudgets,
     getDailyTransactionStats,
-    getTotalInvestmentsValue
+    getTotalInvestmentsValue,
+    getPassiveIncome,
+    getUserSettings
 } from "@/backend/db/operations";
 import { getFinancialInsights } from "@/lib/ai";
 
@@ -49,7 +51,7 @@ async function getCachedInsights(userId: number, month: number, year: number): P
 async function setCachedInsights(userId: number, month: number, year: number, insights: string): Promise<void> {
     try {
         const db = getDb();
-        
+
         const existing = await db.select()
             .from(aiInsightsCache)
             .where(and(
@@ -92,13 +94,19 @@ export async function GET(req: NextRequest) {
         const year = parseInt(searchParams.get("year") || now.getFullYear().toString());
 
         const db = getDb();
-        const user = await db.select({ tier: users.tier })
+        const user = await db.select({
+            tier: users.tier,
+            // @ts-ignore - hideBalance is in userSettings but let's see if we can join it easily or just fetch it
+        })
             .from(users)
             .where(eq(users.id, userId))
             .get();
-        
+
+        const settings = await getUserSettings(userId);
+
         const userTier = user?.tier || "miskin";
         const canAccessAIInsights = userTier === "kaya" || userTier === "sultan";
+        const hideBalance = settings?.hideBalance || false;
 
         const [
             basicAnalysis,
@@ -111,7 +119,8 @@ export async function GET(req: NextRequest) {
             cashflowPrediction,
             budgets,
             dailyStats,
-            totalInvestments
+            totalInvestments,
+            passiveIncome
         ] = await Promise.all([
             getAnalysisData(userId, year, month),
             getFinancialHealthMetrics(userId),
@@ -123,14 +132,15 @@ export async function GET(req: NextRequest) {
             getCashflowPrediction(userId),
             getBudgets(userId, month, year),
             getDailyTransactionStats(userId, year, month),
-            getTotalInvestmentsValue(userId)
+            getTotalInvestmentsValue(userId),
+            getPassiveIncome(userId, year, month)
         ]);
 
         let insights: string | null = null;
-        
+
         if (canAccessAIInsights) {
             insights = await getCachedInsights(userId, month, year);
-            
+
             if (!insights) {
                 try {
                     const generatedInsights = await getFinancialInsights(basicAnalysis);
@@ -149,8 +159,8 @@ export async function GET(req: NextRequest) {
             : 0;
 
         const budgetAlerts = budgets
-            .filter(b => b.percentage > 80)
-            .map(b => ({
+            .filter((b: any) => b.percentage > 80)
+            .map((b: any) => ({
                 category: b.category,
                 spent: b.spent,
                 limit: b.amount,
@@ -174,11 +184,13 @@ export async function GET(req: NextRequest) {
             budgetAlerts,
             dailyStats,
             totalInvestments,
+            passiveIncome,
 
             health,
 
             insights: canAccessAIInsights ? insights : null,
             canAccessAIInsights,
+            hideBalance,
 
             summary: {
                 avgDailySpending,
@@ -186,7 +198,7 @@ export async function GET(req: NextRequest) {
                 highestSpendingDay: spendingPatterns.highestSpendingDay,
                 anomaliesCount: spendingPatterns.anomalies.length,
                 goalsCount: goalsProgress.length,
-                completedGoals: goalsProgress.filter(g => g.progress >= 100).length
+                completedGoals: goalsProgress.filter((g: any) => g.progress >= 100).length
             }
         });
     } catch (error) {

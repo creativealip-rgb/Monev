@@ -3,14 +3,14 @@
 import {
     ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check,
     User as UserIcon, MessageCircle, Smartphone, Crown,
-    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles
+    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
     fetchProfileData, updateProfile, updateFinancialSettings,
-    updateSecuritySettings, disconnectTelegram
+    updateSecuritySettings, disconnectTelegram, generateFinancialPersonaAction
 } from "./actions";
 import { serverSignOut } from "@/app/actions/auth";
 import { cn } from "@/frontend/lib/utils";
@@ -19,6 +19,7 @@ import { useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { UserTier, canUseTelegram } from "@/lib/tier-gate";
 import { useSession } from "next-auth/react";
+import { useSecurity } from "@/components/SecurityProvider";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
@@ -48,15 +49,28 @@ const itemVariants = {
     visible: { opacity: 1, x: 0 }
 };
 
+const ALL_BADGES = [
+    { type: "first_tx", name: "Pencatat Pemula", description: "Mencatat transaksi pertama kali! 📝", icon: "📝" },
+    { type: "streak_3", name: "Semangat 3 Hari", description: "Catat transaksi 3 hari berturut-turut! 🔥", icon: "🔥" },
+    { type: "streak_7", name: "Petarung Mingguan", description: "7 hari tanpa putus! Hebat Bos! 🛡️", icon: "🛡️" },
+    { type: "streak_30", name: "Legenda Finansial", description: "Sebulan penuh konsistensi! Sultan bangga. 👑", icon: "👑" },
+    { type: "first_goal", name: "Pemimpi Cerdas", description: "Membuat target tabungan pertama. 🎯", icon: "🎯" },
+    { type: "goal_reached", name: "Sang Pemenang", description: "Berhasil mencapai target tabungan! 🏆", icon: "🏆" },
+    { type: "first_invest", name: "Investor Muda", description: "Melakukan investasi pertama kali. 📈", icon: "📈" },
+];
+
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
     const [settings, setSettings] = useState<any>(null);
     const [goals, setGoals] = useState<any[]>([]);
+    const [streak, setStreak] = useState<any>(null);
+    const [achievements, setAchievements] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { isStealthMode, toggleStealth } = useSecurity();
     const toast = useToast();
 
     // Modals
-    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | null>(null);
+    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | null>(null);
 
     // Notification toggles (Local state for now, persists with notificationsEnabled)
     const [notifToggles, setNotifToggles] = useState({
@@ -71,13 +85,16 @@ export default function ProfilePage() {
         firstName: "",
         lastName: "",
         username: "",
-        whatsappId: "", // New Field
+        image: "" as string | File, // Store URL string or File object
+        whatsappId: "",
         telegramId: "", // New Field
         hourlyRate: "",
         primaryGoalId: "",
         securityPin: "",
         isAppLockEnabled: false,
-        hideBalance: false
+        isBiometricEnabled: false,
+        hideBalance: false,
+        financialPersona: null as any
     });
 
     useEffect(() => {
@@ -101,6 +118,8 @@ export default function ProfilePage() {
                 setUser(data.user);
                 setSettings(data.settings);
                 setGoals(data.goals);
+                setStreak(data.streak);
+                setAchievements(data.achievements);
             }
 
             if (data?.user) {
@@ -109,6 +128,7 @@ export default function ProfilePage() {
                     firstName: data.user?.firstName || "",
                     lastName: data.user?.lastName || "",
                     username: data.user?.username || "",
+                    image: data.user?.image || "", // Populate image
                     whatsappId: data.user?.whatsappId || "",
                     telegramId: data.user?.telegramId?.toString() || ""
                 }));
@@ -122,7 +142,8 @@ export default function ProfilePage() {
                     // Don't load existing PIN for security - user must enter new one
                     securityPin: "",
                     isAppLockEnabled: data.settings.isAppLockEnabled || false,
-                    hideBalance: data.settings.hideBalance || false
+                    isBiometricEnabled: data.settings.isBiometricEnabled || false,
+                    financialPersona: data.settings.financialPersona ? JSON.parse(data.settings.financialPersona) : null
                 }));
             }
 
@@ -146,6 +167,10 @@ export default function ProfilePage() {
         form.append("firstName", formData.firstName);
         form.append("lastName", formData.lastName);
         form.append("username", formData.username);
+        // Append File or keep existing image path
+        if (formData.image instanceof File) {
+            form.append("image", formData.image);
+        }
         form.append("whatsappId", formData.whatsappId);
         form.append("telegramId", formData.telegramId);
 
@@ -164,7 +189,6 @@ export default function ProfilePage() {
         const form = new FormData();
         form.append("hourlyRate", formData.hourlyRate);
         form.append("primaryGoalId", formData.primaryGoalId);
-        form.append("hideBalance", String(formData.hideBalance)); // New: Append hideBalance
 
         await updateFinancialSettings(form);
         toast.success("Berhasil", "Pengaturan keuangan berhasil disimpan!");
@@ -185,11 +209,27 @@ export default function ProfilePage() {
         const form = new FormData();
         form.append("securityPin", formData.securityPin);
         form.append("isAppLockEnabled", String(formData.isAppLockEnabled));
+        form.append("isBiometricEnabled", String(formData.isBiometricEnabled));
 
         await updateSecuritySettings(form);
         toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
         setActiveModal(null);
         loadData();
+    };
+
+    const handleGeneratePersona = async () => {
+        try {
+            setLoading(true);
+            const result = await generateFinancialPersonaAction();
+            if (result.success) {
+                setFormData(prev => ({ ...prev, financialPersona: result.persona }));
+                toast.success("Wah!", "Persona keuangan Bos sudah diupdate!");
+            }
+        } catch (error) {
+            toast.error("Gagal", "Error saat analisa persona.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getInitials = () => {
@@ -305,6 +345,104 @@ export default function ProfilePage() {
                     </div>
                 </motion.div>
             </div>
+
+            {/* Simplified Gamification Section */}
+            <div className="px-6 -mt-6 relative z-20">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => setActiveModal("collection")}
+                    className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl p-4 shadow-xl shadow-slate-200/50 dark:shadow-none flex items-center justify-around cursor-pointer active:scale-95 transition-transform"
+                >
+                    {/* Streak Section */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500">
+                            <Flame size={20} className={streak?.currentStreak > 0 ? "fill-orange-500" : "opacity-30"} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Streak</p>
+                            <p className="text-base font-black text-slate-900 dark:text-white leading-none mt-0.5">
+                                {streak?.currentStreak || 0} <span className="text-[10px] font-bold opacity-40">HARI</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
+
+                    {/* Badges Section */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">
+                            <Trophy size={20} className={achievements.length > 0 ? "fill-amber-500" : "opacity-30"} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Koleksi</p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                                {achievements.length === 0 ? (
+                                    <p className="text-base font-black text-slate-300 dark:text-slate-700 leading-none">
+                                        0 <span className="text-[10px] font-bold font-mono">ITEM</span>
+                                    </p>
+                                ) : (
+                                    <div className="flex -space-x-1.5">
+                                        {achievements.slice(0, 4).map((ach, i) => (
+                                            <motion.div
+                                                key={i}
+                                                whileHover={{ y: -2, zIndex: 10 }}
+                                                className="w-7 h-7 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-900 flex items-center justify-center text-xs shadow-sm"
+                                            >
+                                                {ALL_BADGES.find(b => b.type === ach.type)?.icon || "🏆"}
+                                            </motion.div>
+                                        ))}
+                                        {achievements.length > 4 && (
+                                            <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[10px] font-black text-amber-600 dark:text-amber-400">
+                                                +{achievements.length - 4}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+
+
+            {/* Persona Section */}
+            {formData.financialPersona && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="px-6 mt-6"
+                >
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+
+                        <div className="flex items-start justify-between relative z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                    <Sparkles size={20} className="text-yellow-300" />
+                                </div>
+                                <h3 className="font-black text-xs uppercase tracking-widest opacity-80">Profil Psikologi Keuangan</h3>
+                            </div>
+                            <button
+                                onClick={handleGeneratePersona}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <Zap size={16} />
+                            </button>
+                        </div>
+
+                        <div className="mt-4 relative z-10">
+                            <h2 className="text-2xl font-black tracking-tight leading-tight">
+                                {formData.financialPersona.title || formData.financialPersona.persona}
+                            </h2>
+                            <p className="text-sm text-indigo-50 font-medium mt-2 leading-relaxed opacity-90">
+                                {formData.financialPersona.description}
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
 
             {/* Menu Items */}
             <motion.div
@@ -483,6 +621,36 @@ export default function ProfilePage() {
                                                         placeholder="username"
                                                     />
                                                 </div>
+                                            </div>
+                                            <div className="flex flex-col items-center gap-4 py-4">
+                                                <div className="relative group">
+                                                    <div className="w-24 h-24 rounded-[2rem] bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden shadow-inner">
+                                                        {formData.image ? (
+                                                            <img
+                                                                src={typeof formData.image === 'string' ? formData.image : URL.createObjectURL(formData.image)}
+                                                                alt="Preview"
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <UserIcon size={32} className="text-slate-400" />
+                                                        )}
+                                                    </div>
+                                                    <label className="absolute inset-x-0 bottom-0 bg-slate-900/60 backdrop-blur-sm text-white text-[10px] py-1 text-center font-bold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        GANTI FOTO
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    setFormData(prev => ({ ...prev, image: file }));
+                                                                }
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 italic">Pilih file foto terbaikmu (maks. 2MB)</p>
                                             </div>
 
                                             {/* Currency & Language Settings */}
@@ -801,6 +969,36 @@ export default function ProfilePage() {
                                                 </button>
                                             </div>
 
+                                            {/* Biometric Toggle (Native Only) */}
+                                            <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-sky-200/50 dark:hover:border-sky-900/30 transition-all duration-300">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cn(
+                                                        "p-3 rounded-2xl transition-all duration-300",
+                                                        formData.isBiometricEnabled ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20" : "bg-white dark:bg-slate-800 text-slate-400"
+                                                    )}>
+                                                        <Fingerprint size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-slate-900 dark:text-white text-[13px] tracking-tight">Aktifkan Biometrik</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold opacity-70">Gunakan Sidik Jari/Wajah</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setFormData(prev => ({ ...prev, isBiometricEnabled: !prev.isBiometricEnabled }))}
+                                                    className={cn(
+                                                        "relative w-14 h-7 rounded-full transition-all duration-500 p-1 shadow-inner",
+                                                        formData.isBiometricEnabled ? "bg-sky-500 shadow-sky-900/20" : "bg-slate-200 dark:bg-slate-800"
+                                                    )}
+                                                >
+                                                    <motion.div
+                                                        animate={{ x: formData.isBiometricEnabled ? 28 : 0 }}
+                                                        className="w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
+                                                    >
+                                                        {formData.isBiometricEnabled && <div className="w-1 h-1 bg-sky-500 rounded-full" />}
+                                                    </motion.div>
+                                                </button>
+                                            </div>
+
                                             <motion.button
                                                 whileHover={{ scale: 1.02, y: -2 }}
                                                 whileTap={{ scale: 0.98 }}
@@ -878,6 +1076,73 @@ export default function ProfilePage() {
                                                 SIMPAN NOTIFIKASI
                                             </button>
                                         </div>
+                                    ) : activeModal === "collection" ? (
+                                        <div className="space-y-6">
+                                            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-[2rem] p-6 border border-amber-100 dark:border-amber-900/50">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="p-3 bg-amber-100 dark:bg-amber-900/40 rounded-2xl text-amber-600 dark:text-amber-400 shadow-sm">
+                                                        <Trophy size={28} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Koleksi Badge</h4>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
+                                                            Kumpulkan badge dengan disiplin mencatat transaksi dan menabung!
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {ALL_BADGES.map((badge) => {
+                                                    const isUnlocked = achievements.some(a => a.type === badge.type);
+                                                    return (
+                                                        <div
+                                                            key={badge.type}
+                                                            className={cn(
+                                                                "flex items-center gap-4 p-4 rounded-2xl border transition-all",
+                                                                isUnlocked
+                                                                    ? "bg-white dark:bg-slate-900/50 border-amber-200 dark:border-amber-900/30 shadow-sm"
+                                                                    : "bg-slate-50/50 dark:bg-slate-900/20 border-slate-100 dark:border-slate-800 opacity-60 grayscale"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-slate-100 dark:bg-slate-800",
+                                                                isUnlocked && "bg-amber-100 dark:bg-amber-900/40"
+                                                            )}>
+                                                                {badge.icon}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <h5 className="font-bold text-sm text-slate-900 dark:text-white">{badge.name}</h5>
+                                                                <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">{badge.description}</p>
+                                                            </div>
+                                                            {isUnlocked ? (
+                                                                <div className="text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 p-1.5 rounded-full">
+                                                                    <CheckCircle2 size={16} />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-slate-400 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full">
+                                                                    <Lock size={16} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <div className="bg-blue-50 dark:bg-sky-900/20 p-4 rounded-2xl border border-sky-100 dark:border-sky-900/30">
+                                                <h6 className="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 mb-2">Tips Sultan 👑</h6>
+                                                <p className="text-[11px] text-sky-700 dark:text-sky-300 font-medium leading-relaxed">
+                                                    Tetap disiplin mencatat setiap pengeluaran dan pemasukan harian untuk mempertahankan streak dan membuka badge langka lainnya!
+                                                </p>
+                                            </div>
+
+                                            <button
+                                                onClick={() => setActiveModal(null)}
+                                                className="w-full py-4 bg-slate-900 dark:bg-slate-800 text-white font-black rounded-2xl hover:brightness-110 transition-all active:scale-95"
+                                            >
+                                                TUTUP KOLEKSI
+                                            </button>
+                                        </div>
                                     ) : (
                                         <div className="space-y-4">
                                             <div>
@@ -910,14 +1175,14 @@ export default function ProfilePage() {
                                             <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
                                                 <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">Sembunyikan Saldo</span>
                                                 <button
-                                                    onClick={() => setFormData(prev => ({ ...prev, hideBalance: !prev.hideBalance }))}
+                                                    onClick={toggleStealth}
                                                     className={cn(
                                                         "relative w-12 h-6 rounded-full transition-colors duration-200",
-                                                        formData.hideBalance ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                                                        isStealthMode ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                                                     )}
                                                 >
                                                     <motion.div
-                                                        animate={{ x: formData.hideBalance ? 26 : 2 }}
+                                                        animate={{ x: isStealthMode ? 26 : 2 }}
                                                         className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
                                                     />
                                                 </button>

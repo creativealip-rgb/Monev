@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
     getMonthlyStats, getGoals, getBudgets, getTransactions, getTransactionById, getCategories,
-    createTransaction, updateTransaction, deleteTransaction,
+    createTransaction, updateTransaction, deleteTransaction, searchTransactions,
     createBudget, updateBudget, deleteBudget,
-    createGoal, updateGoal, removeGoal,
+    createGoal, updateGoal, removeGoal, getGoalById,
     getInvestments, getInvestmentById, createInvestment, updateInvestment, deleteInvestment,
     getBills, getBillById, createBill, updateBill, deleteBill, toggleBillPaid,
-    getDailyAICount, logAIChat
+    getDailyAICount, logAIChat, getUserSettings
 } from "@/backend/db/operations";
-import { askFinanceAgent } from "@/lib/ai";
+import { askFinanceAgent, getPsychologicalImpact } from "@/lib/ai";
 import { canUseAI, UserTier } from "@/lib/tier-gate";
 
 export async function POST(req: NextRequest) {
@@ -136,14 +136,24 @@ export async function POST(req: NextRequest) {
                         date: new Date()
                     });
 
-                    // Don't modify the content if AI already provided a confirmation
-                    // But usually, it says "Sedang memproses..." if it's a tool call
+                    let extraFeedback = "";
+                    if (args.type === 'expense') {
+                        const settings = await getUserSettings(userId);
+                        let primaryGoal = undefined;
+                        if (settings?.primaryGoalId) {
+                            primaryGoal = await getGoalById(userId, settings.primaryGoalId);
+                        }
+                        const monthlySaving = (stats && stats.balance > 0) ? stats.balance : (stats?.income || 0) * 0.2 || 1000000;
+                        const impact = await getPsychologicalImpact(args.amount, settings?.hourlyRate || 50000, primaryGoal, monthlySaving, category.name);
+                        extraFeedback = `\n\n${impact}`;
+                    }
+
                     if (finalReply.includes("memproses")) {
                         finalReply = `✅ Sip! Sudah saya catat ya, Bos. 
                         
 📝 ${args.description}
 💰 Rp ${args.amount.toLocaleString('id-ID')}
-🏷️ ${category.name}
+🏷️ ${category.name}${extraFeedback}
 
 Ada lagi yang mau dicatat?`;
                     }
@@ -370,6 +380,58 @@ Ada lagi yang mau dicatat?`;
 
                     finalReply = `✅ Data portofolio "${updatedInvestment.name}" sudah diperbarui!\n📊 Total Unit Sekarang: ${updatedInvestment.quantity}${extra}`;
                 }
+            } else if (toolName === "search_transactions") {
+                const category = allCategories.find(c =>
+                    c.name.toLowerCase() === (args.category || "").toLowerCase()
+                );
+
+                const searchResults = await searchTransactions(userId, {
+                    search: args.query,
+                    categoryId: category?.id,
+                    type: args.type,
+                    startDate: args.startDate ? new Date(args.startDate) : undefined,
+                    endDate: args.endDate ? new Date(args.endDate) : undefined,
+                    minAmount: args.minAmount,
+                    maxAmount: args.maxAmount,
+                    limit: 100 // Get more for analysis
+                });
+
+                // Format results for AI
+                const formattedResults = searchResults.map((t: any) => {
+                    const catName = allCategories.find(c => c.id === t.categoryId)?.name || "Lainnya";
+                    return `- [${new Date(t.date).toLocaleDateString('id-ID')}] ${t.description}: ${t.type === 'expense' ? '-' : '+'}Rp ${t.amount.toLocaleString('id-ID')} (${catName})`;
+                }).join("\n");
+
+                // SECOUND PASS: Give search results back to AI to answer the user
+                const secondResponse = await askFinanceAgent(
+                    `HASIL PENCARIAN:\n${formattedResults || "Tidak ditemukan transaksi yang cocok."}\n\nBerdasarkan hasil pencarian di atas, jawablah pertanyaan awal saya: "${message}"`,
+                    {
+                        monthlyStats: stats,
+                        goals: goalsContext,
+                        budgets: budgetsContext,
+                        transactions: transactionsContext,
+                        investments: allInvestments.map(i => ({
+                            id: i.id,
+                            name: i.name,
+                            type: i.type,
+                            quantity: i.quantity,
+                            currentPrice: i.currentPrice,
+                            totalValue: i.quantity * i.currentPrice,
+                            platform: i.platform
+                        })),
+                        bills: allBills.map(b => ({
+                            id: b.id,
+                            name: b.name,
+                            amount: b.amount,
+                            dueDate: b.dueDate,
+                            isPaid: b.isPaid,
+                            frequency: b.frequency
+                        }))
+                    },
+                    [...history, { role: "assistant", content: aiResponse.content }]
+                );
+
+                finalReply = secondResponse.content;
             } else if (toolName === "delete_investment") {
                 const investment = await getInvestmentById(userId, args.id); // Need to fetch details first
                 await deleteInvestment(userId, args.id);
@@ -387,6 +449,12 @@ Ada lagi yang mau dicatat?`;
                 }
 
                 finalReply = `🗑️ Aset investasi "${investment ? investment.name : 'ID ' + args.id}" sudah saya hapus dari portofolio.${extra}`;
+            } else if (toolName === "simulate_scenario") {
+                // This is a pure AI "thinking" tool, we don't need to mutate DB
+                // We just let the AI provide the final reply with calculations
+                // But we can add a second pass if we want more precision
+
+                finalReply = aiResponse.content;
             }
         }
 

@@ -11,6 +11,7 @@ interface MonthComparisonProps {
     previousExpense: number;
     currentMonthLabel: string;
     previousMonthLabel: string;
+    hideBalance?: boolean;
 }
 
 function getChangePercent(current: number, previous: number): number {
@@ -43,6 +44,7 @@ export function MonthComparison({
     previousExpense,
     currentMonthLabel,
     previousMonthLabel,
+    hideBalance = false,
 }: MonthComparisonProps) {
     const incomeChange = getChangePercent(currentIncome, previousIncome);
     const expenseChange = getChangePercent(currentExpense, previousExpense);
@@ -114,7 +116,7 @@ export function MonthComparison({
                                 />
                             </div>
                             <span className="text-[10px] font-bold text-foreground w-20 text-right tabular-nums">
-                                {formatCurrency(Math.abs(bar.current))}
+                                {hideBalance ? "******" : formatCurrency(Math.abs(bar.current))}
                             </span>
                         </div>
 
@@ -130,7 +132,7 @@ export function MonthComparison({
                                 />
                             </div>
                             <span className="text-[10px] text-muted-foreground w-20 text-right tabular-nums">
-                                {formatCurrency(Math.abs(bar.previous))}
+                                {hideBalance ? "******" : formatCurrency(Math.abs(bar.previous))}
                             </span>
                         </div>
                     </div>

@@ -75,12 +75,15 @@ async function updateUserWithGoogleData(userId: number, googleData: {
             updateData.name = googleData.name;
             updateData.firstName = googleData.name; // Also update firstName for profile page
         }
+        const currentUser = await db.select().from(users).where(eq(users.id, userId)).get();
         if (googleData.image) {
-            updateData.image = googleData.image;
+            // Only update image if current image is null or doesn't look like a local upload
+            if (!currentUser?.image || !currentUser.image.startsWith("/uploads/")) {
+                updateData.image = googleData.image;
+            }
         }
         if (googleData.username) {
             // Only update username if it's different and not already taken
-            const currentUser = await db.select().from(users).where(eq(users.id, userId)).get();
             if (currentUser && currentUser.username !== googleData.username) {
                 const existingUser = await db.select().from(users).where(eq(users.username, googleData.username)).get();
                 if (!existingUser) {

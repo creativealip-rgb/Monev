@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getInvestments, createInvestment } from "@/backend/db/operations";
+import { getInvestments, createInvestment, getInvestmentsSummary } from "@/backend/db/operations";
 
 export async function GET() {
     try {
@@ -8,13 +8,9 @@ export async function GET() {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        const allInvestments = await getInvestments(userId);
+        const summary = await getInvestmentsSummary(userId);
 
-        // Calculate basic stats for frontend usage if needed, 
-        // though better done in frontend to keep API clean.
-        // We'll return raw data.
-
-        return NextResponse.json({ success: true, data: allInvestments });
+        return NextResponse.json({ success: true, ...summary });
     } catch (error) {
         console.error("Error fetching investments:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch investments" }, { status: 500 });

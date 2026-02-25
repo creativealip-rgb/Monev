@@ -8,6 +8,9 @@ import { TransferModal } from "@/frontend/components/TransferModal";
 import { ThemeSelector } from "@/frontend/components/ThemeSelector";
 import { useHeroTheme } from "@/frontend/lib/hero-theme";
 import { TransactionListSkeleton, NoTransactionsEmpty, useToast } from "@/frontend/components/UI";
+import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
+import { DailyInsight } from "@/frontend/components/DailyInsight";
+import { toggleHideBalanceAction } from "../profile/actions";
 import {
     Sparkles,
     PieChart,
@@ -27,6 +30,8 @@ import {
     Zap,
     Crown,
     Lock,
+    Plus,
+    AlertTriangle,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -40,6 +45,7 @@ import { UserTier, canAccessAnalytics, canAccessInvestments } from "@/lib/tier-g
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useSecurity } from "@/components/SecurityProvider";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
@@ -70,6 +76,7 @@ const mainFeatures = [
     { label: "Analitik", icon: <PieChart size={24} />, color: "sky", href: "/analytics" },
     { label: "Anggaran", icon: <Wallet size={24} />, color: "orange", href: "/budgets" },
     { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/savings" },
+    { label: "Simulasi", icon: <Zap size={24} />, color: "purple", href: "/simulations" },
     { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
     { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "/investments" },
 ];
@@ -207,9 +214,11 @@ export default function Home() {
     const [userImage, setUserImage] = useState<string | null>(null);
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
-    const [hideBalance, setHideBalance] = useState(false);
+    const { isStealthMode, toggleStealth } = useSecurity();
+    const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const toast = useToast();
     const haptics = useHaptics();
+    const [anomalies, setAnomalies] = useState<any[]>([]);
 
     const loadData = async () => {
         try {
@@ -222,17 +231,18 @@ export default function Home() {
                 profileData,
                 statsResponse,
                 transResponse,
-                catsResponse
+                catsResponse,
+                anomaliesResponse
             ] = await Promise.all([
                 fetchProfileData(),
                 apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
                 apiFetch("/api/transactions"),
-                apiFetch("/api/categories")
+                apiFetch("/api/categories"),
+                apiFetch("/api/ai/analyze-anomalies")
             ]);
 
             // Process profile data
             if (profileData?.user) {
-                // Try firstName + lastName first, then fall back to name
                 const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
                 const displayName = fullName || profileData.user.name || "Sultan";
                 setUserName(displayName);
@@ -240,12 +250,6 @@ export default function Home() {
                 // @ts-ignore
                 setUserTier(profileData.user.tier || "miskin");
             }
-            // Only set hideBalance from profile if not already set from localStorage
-            const localSaved = localStorage.getItem("hideBalance");
-            if (localSaved === null && profileData?.settings?.hideBalance !== undefined) {
-                setHideBalance(profileData.settings.hideBalance);
-            }
-
 
             // Process stats
             const statsResult = await statsResponse.json();
@@ -253,25 +257,20 @@ export default function Home() {
                 setStats(statsResult.data);
             }
 
-            // Process transactions and categories
-            const [transResult, catsResult] = await Promise.all([
+            // Process transactions, categories and anomalies
+            const [transResult, catsResult, anomaliesResult] = await Promise.all([
                 transResponse.json(),
-                catsResponse.json()
+                catsResponse.json(),
+                anomaliesResponse.json()
             ]);
+
+            if (anomaliesResult.anomalies) {
+                setAnomalies(anomaliesResult.anomalies);
+            }
 
             if (transResult.success) {
                 const categories: Category[] = catsResult.success ? catsResult.data : [];
-
-                // Map transactions with category names
-                const mappedTransactions = transResult.data.slice(0, 5).map((t: {
-                    id: number;
-                    amount: number;
-                    description: string;
-                    categoryId: number;
-                    type: "expense" | "income";
-                    date: string;
-                    isVerified: boolean;
-                }) => ({
+                const mappedTransactions = transResult.data.slice(0, 5).map((t: any) => ({
                     id: t.id.toString(),
                     amount: t.amount,
                     description: t.description,
@@ -295,19 +294,10 @@ export default function Home() {
         await loadData();
     };
 
-    // Load hideBalance from localStorage on mount
-    useEffect(() => {
-        const saved = localStorage.getItem("hideBalance");
-        if (saved !== null) {
-            setHideBalance(saved === "true");
-        }
-    }, []);
-
     // Toggle handler with persistence
-    const handleToggleHideBalance = () => {
-        const newValue = !hideBalance;
-        setHideBalance(newValue);
-        localStorage.setItem("hideBalance", String(newValue));
+    const handleToggleHideBalance = async () => {
+        haptics.tap();
+        await toggleStealth();
     };
 
     const today = new Date();
@@ -410,9 +400,44 @@ export default function Home() {
                         mounted={mounted}
                         onBalanceClick={() => setShowBalanceDetail(true)}
                         onTransferClick={() => setShowTransferModal(true)}
-                        hideBalance={hideBalance}
+                        hideBalance={isStealthMode}
                         onToggleHideBalance={handleToggleHideBalance}
                     />
+                </motion.section>
+
+                {/* Spending Anomalies Alert */}
+                {anomalies.length > 0 && (
+                    <motion.section
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="px-6 mb-6"
+                    >
+                        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 flex items-start gap-3">
+                            <div className="p-2 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-bold text-rose-900 dark:text-rose-100">Lonjakan Pengeluaran Deteksi!</h3>
+                                <p className="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
+                                    Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0].spikePercentage}%** dari biasanya. Yakin aman?
+                                </p>
+                                {anomalies.length > 1 && (
+                                    <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-2 font-medium">
+                                        + {anomalies.length - 1} anomali lainnya terdeteksi.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </motion.section>
+                )}
+
+                <motion.section
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="px-6 mb-8"
+                >
+                    <DailyInsight />
                 </motion.section>
 
                 <motion.section
@@ -594,6 +619,30 @@ export default function Home() {
                     }}
                     currentBalance={stats.balance}
                 />
+
+                <AddTransactionSheet
+                    isOpen={isAddSheetOpen}
+                    onClose={() => setIsAddSheetOpen(false)}
+                    onSuccess={() => {
+                        window.dispatchEvent(new CustomEvent("transactionAdded"));
+                        loadData();
+                    }}
+                />
+
+                {/* Floating Action Button */}
+                <motion.button
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => {
+                        haptics.tap();
+                        setIsAddSheetOpen(true);
+                    }}
+                    className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-500/40 flex items-center justify-center z-[90] active:bg-sky-600 transition-colors"
+                >
+                    <Plus size={28} strokeWidth={3} />
+                </motion.button>
             </div>
         </PullToRefresh>
     );

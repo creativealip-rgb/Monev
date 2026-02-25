@@ -415,28 +415,33 @@ export async function getPsychologicalImpact(
     amount: number,
     hourlyRate: number,
     primaryGoal?: { name: string; targetAmount: number },
-    monthlySaving: number = 0 // Estimated monthly saving capacity
+    monthlySaving: number = 0,
+    categoryName: string = "Lainnya"
 ) {
     const workHours = amount / hourlyRate;
     let message = `⏱️ Setara **${workHours.toFixed(1)} jam** kerja.`;
+
+    const needs = ["Makan & Minuman", "Transportasi", "Tagihan", "Kesehatan", "Pendidikan"];
+    const isWant = !needs.includes(categoryName);
 
     if (primaryGoal) {
         const percentOfGoal = (amount / primaryGoal.targetAmount) * 100;
 
         // Calculate Delay
-        // Asumsi: Jika saving 0, gunakan 20% dari budget bulanan (misal UMR 5jt -> saving 1jt) as fallback or just 0.
-        const dailySaving = monthlySaving > 0 ? monthlySaving / 30 : (amount * 10); // Fallback: anggap user nabung 10% dari jajan ini per hari (arbitrary heuristic)
-
+        const dailySaving = monthlySaving > 0 ? monthlySaving / 30 : 50000; // Fallback 50k/day
         const delayDays = Math.ceil(amount / dailySaving);
 
         if (percentOfGoal > 0.1 || amount > 50000) {
             message += `\n🎯 **Goal Alert: "${primaryGoal.name}"**`;
-            message += `\n📉 Jajan ini bikin targetmu **MUNDUR ${delayDays} HARI**!`;
 
-            if (delayDays > 7) {
-                message += `\n💀 Yakin? Seminggu kerja rodi cuma buat ini?`;
-            } else if (delayDays > 3) {
-                message += `\n⚠️ Sayang banget lho...`;
+            if (isWant) {
+                message += `\n💀 **PENGELUARAN IMPULSIF!**`;
+                message += `\n📉 Jajan ini bikin targetmu **MUNDUR ${delayDays} HARI**!`;
+                if (delayDays > 3) {
+                    message += `\n⚠️ Bayangkan Bos, laptop/target impianmu makin jauh cuma gara-gara ini. Yakin?`;
+                }
+            } else {
+                message += `\n📉 Targetmu mundur ${delayDays} hari, tapi ini kebutuhan penting. Semangat cari cuan lagi, Bos! 💪`;
             }
         }
     }
@@ -511,6 +516,44 @@ Buat pesan yang natural dan cocok dikirim via WhatsApp.`
     });
 
     return response.choices[0]?.message?.content || `Halo ${debtorName}, jangan lupa utangnya Rp ${amount.toLocaleString('id-ID')} ya. Thanks!`;
+}
+
+export async function getFinancialPersona(context: FinancialContext) {
+    const openai = getOpenAIClient();
+    const response = await openai.chat.completions.create({
+        model: AI_MODEL,
+        messages: [
+            {
+                role: "system",
+                content: `Anda adalah "AI Financial Behavioral Psychologist". 
+Tugas Anda adalah menganalisis riwayat transaksi user dan memberikan julukan "Persona Keuangan" beserta penjelasan singkat kepribadian mereka dalam mengelola uang.
+
+Gunakan data berikut:
+- Ringkasan Bulanan: Pemasukan ${context.monthlyStats.income}, Pengeluaran ${context.monthlyStats.expense}
+- Budget: ${JSON.stringify(context.budgets)}
+- Goals: ${JSON.stringify(context.goals)}
+- Riwayat Transaksi: ${JSON.stringify(context.transactions.slice(0, 50))}
+
+Keluaran harus berupa JSON:
+{
+  "persona": "Nama Persona (max 3 kata)",
+  "description": "Penjelasan singkat (max 2 kalimat) tentang gaya hidup mereka.",
+  "title": "Sultan Hemat / Impulse King / Investor Visionary / dll"
+}
+
+Berikan julukan yang kreatif, menarik, dan relevan dengan data (Bisa dalam Bahasa Indonesia yang keren/gaul).`
+            },
+            {
+                role: "user",
+                content: "Analisis profil keuangan saya."
+            }
+        ],
+        max_tokens: 300,
+        response_format: { type: "json_object" }
+    });
+
+    const content = response.choices[0]?.message?.content || "{}";
+    return JSON.parse(content);
 }
 
 /**
@@ -681,7 +724,11 @@ Aturan:
 11. **PENTING - DATA YANG DIHAPUS**: Jika Anda baru saja menghapus sebuah data (transaksi/budget/goal/tagihan/investasi) menggunakan tool delete_* data tersebut sudah tidak ada di database. 
    - JANGAN mencoba mengupdate ID yang baru saja dihapus. 
    - Jika user ingin "mengganti" data yang baru saja dihapus, gunakan tool 'create_*' untuk membuat entry baru.
-12. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan, jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.**`
+12. **SIMULASI WHAT-IF**: Jika user bertanya "Apa yang terjadi jika..." atau "Gimana kalau saya beli...", berikan analisa simulasi.
+    - Hitung dampak ke saldo bulanan.
+    - Hitung dampak ke Target Goal (berapa lama lagi goal tercapai jika pengeluaran ini dilakukan).
+    - Berikan saran apakah keputusan tersebut bijak atau tidak.
+13. **PENTING: Anda adalah asisten KEUANGAN. Jika user bertanya hal di luar keuangan, jawab dengan sopan bahwa Anda hanya fokus membantu mengelola keuangan Bos.**`
                 },
                 ...history.map(h => ({
                     role: h.role,
@@ -970,6 +1017,41 @@ Aturan:
                                 soldAmount: { type: "number", description: "Jika dijual, masukkan total nilai penjualan (Rupiah). Jika hanya dihapus (karena salah input), biarkan kosong." }
                             },
                             required: ["id"]
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "search_transactions",
+                        description: "Mencari transaksi lama atau spesifik berdasarkan teks, kategori, nominal, atau rentang tanggal. Gunakan ini jika user bertanya tentang data yang tidak ada di riwayat 30 transaksi terakhir atau butuh perhitungan total/rata-rata pengeluaran spesifik.",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                query: { type: "string", description: "Kata kunci pencarian (nama merchant atau deskripsi)" },
+                                category: { type: "string", description: "Nama kategori (harus salah satu dari daftar kategori)" },
+                                type: { type: "string", enum: ["expense", "income", "transfer", "all"], description: "Tipe transaksi" },
+                                startDate: { type: "string", description: "Tanggal mulai (ISO YYYY-MM-DD)" },
+                                endDate: { type: "string", description: "Tanggal selesai (ISO YYYY-MM-DD)" },
+                                minAmount: { type: "number", description: "Nominal minimum" },
+                                maxAmount: { type: "number", description: "Nominal maksimum" }
+                            }
+                        }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "simulate_scenario",
+                        description: "Menjalankan simulasi 'What-If' untuk melihat dampak finansial dari sebuah keputusan (misal: beli mobil, cicilan baru, kenaikan gaji).",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                scenario: { type: "string", description: "Deskripsi skenario (misal: Beli iPhone 15 seharga 15jt)" },
+                                amount: { type: "number", description: "Nominal uang yang terlibat" },
+                                type: { type: "string", enum: ["one_time_expense", "recurring_expense", "one_time_income", "recurring_income"], description: "Jenis perubahan finansial" }
+                            },
+                            required: ["scenario", "amount", "type"]
                         }
                     }
                 },

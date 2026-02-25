@@ -1,10 +1,11 @@
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory, coupons, couponClaims } from "./schema";
-import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory, Coupon, CouponClaim } from "./schema";
-import { eq, and, desc, sql, gte, lte, like, or, count } from "drizzle-orm";
+import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory, coupons, couponClaims, streaks, achievements } from "./schema";
+import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement } from "./schema";
+import { eq, and, desc, sql, gte, lte, like, or, count, inArray } from "drizzle-orm";
 import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
+import { detectSubscriptions } from "@/lib/subscription-detector";
 
-export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory, Coupon, CouponClaim };
+export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement };
 
 // Categories (Global for now)
 export async function getCategories(): Promise<Category[]> {
@@ -45,6 +46,64 @@ export async function getTransactions(userId: number, limit = 50, offset = 0, se
         .orderBy(desc(transactions.date))
         .limit(limit)
         .offset(offset)
+        .all();
+}
+
+export interface SearchTransactionsOptions {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    categoryId?: number;
+    type?: "expense" | "income" | "transfer" | "all";
+    startDate?: Date;
+    endDate?: Date;
+    minAmount?: number;
+    maxAmount?: number;
+}
+
+export async function searchTransactions(userId: number, options: SearchTransactionsOptions): Promise<Transaction[]> {
+    const db = getDb();
+    const conditions = [eq(transactions.userId, userId)];
+
+    if (options.search) {
+        conditions.push(
+            or(
+                like(transactions.description, `%${options.search}%`),
+                like(transactions.merchantName, `%${options.search}%`)
+            ) as any
+        );
+    }
+
+    if (options.categoryId) {
+        conditions.push(eq(transactions.categoryId, options.categoryId));
+    }
+
+    if (options.type && options.type !== "all") {
+        conditions.push(eq(transactions.type, options.type));
+    }
+
+    if (options.startDate) {
+        conditions.push(gte(transactions.date, options.startDate));
+    }
+
+    if (options.endDate) {
+        conditions.push(lte(transactions.date, options.endDate));
+    }
+
+    if (options.minAmount !== undefined) {
+        conditions.push(gte(transactions.amount, options.minAmount));
+    }
+
+    if (options.maxAmount !== undefined) {
+        conditions.push(lte(transactions.amount, options.maxAmount));
+    }
+
+    return db.select()
+        .from(transactions)
+        .where(and(...conditions))
+        .orderBy(desc(transactions.date))
+        .limit(options.limit || 50)
+        .offset(options.offset || 0)
         .all();
 }
 
@@ -100,6 +159,12 @@ export async function createTransaction(userId: number, data: {
         isVerified: true,
         isRecurring: false,
     }).returning().get();
+
+    // Trigger Gamification: Update Streak & First Transaction
+    if (result) {
+        await updateUserStreak(userId);
+        await unlockAchievement(userId, "first_tx", "Pencatat Pemula", "Mencatat transaksi pertama kali! 📝");
+    }
 
     return result;
 }
@@ -360,13 +425,19 @@ export async function createGoal(userId: number, data: {
     color?: string;
 }): Promise<Goal> {
     const db = getDb();
-    return db.insert(goals).values({
+    const result = db.insert(goals).values({
         ...data,
         userId,
         currentAmount: data.currentAmount || 0,
         icon: data.icon || "Target",
         color: data.color || "#3b82f6",
     }).returning().get();
+
+    if (result) {
+        await unlockAchievement(userId, "first_goal", "Pemimpi Cerdas", "Membuat target tabungan pertama. 🎯");
+    }
+
+    return result;
 }
 
 export async function updateGoal(userId: number, id: number, data: Partial<Goal>): Promise<Goal | undefined> {
@@ -385,11 +456,17 @@ export async function updateGoalProgress(userId: number, id: number, amount: num
 
     const newAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
 
-    return db.update(goals)
+    const updated = await db.update(goals)
         .set({ currentAmount: newAmount })
         .where(and(eq(goals.id, id), eq(goals.userId, userId)))
         .returning()
         .get();
+
+    if (updated && updated.currentAmount >= updated.targetAmount) {
+        await unlockAchievement(userId, "goal_reached", "Sang Pemenang", `Berhasil mencapai target: ${updated.name}! 🏆`);
+    }
+
+    return updated;
 }
 
 export async function removeGoal(userId: number, id: number): Promise<Goal | undefined> {
@@ -587,57 +664,33 @@ export async function updateUserSettings(userId: number, data: Partial<UserSetti
 }
 
 // Advanced Features
-export async function analyzeSubscriptions(userId: number, monthsBack = 3): Promise<Array<{ merchant: string, amount: number, frequency: number, lastDate: Date }>> {
+export async function analyzeSubscriptions(userId: number, monthsBack = 3): Promise<Array<{ merchant: string, amount: number, frequency: string, lastDate: Date, confidence: number }>> {
     const db = getDb();
     const now = new Date();
     const startDate = new Date();
     startDate.setMonth(now.getMonth() - monthsBack);
 
-    // Get all expenses in window for user
-    const expenses = await db.select()
+    // Get all transactions for user
+    const userTransactions = await db.select()
         .from(transactions)
         .where(and(
-            eq(transactions.type, "expense"),
-            gte(transactions.date, startDate),
-            eq(transactions.userId, userId)
+            eq(transactions.userId, userId),
+            gte(transactions.date, startDate)
         ))
         .orderBy(desc(transactions.date))
         .all();
 
-    // Group by Merchant
-    const groups: Record<string, Transaction[]> = {};
-    expenses.forEach(t => {
-        if (!t.merchantName) return;
-        const key = t.merchantName.toLowerCase().trim();
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(t);
-    });
+    // Mapping Transaction from DB to generic Transaction type if needed
+    // In this codebase, they seem to be the same or very similar.
+    const patterns = detectSubscriptions(userTransactions as any);
 
-    const potentialSubs = [];
-
-    for (const [merchant, trans] of Object.entries(groups)) {
-        if (trans.length < 2) continue;
-
-        // Check if amounts are consistent (variance < 5%)
-        const amounts = trans.map(t => t.amount);
-        const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
-        const isConsistent = amounts.every(a => Math.abs(a - avg) / avg < 0.05);
-
-        if (isConsistent) {
-            // Check intervals (roughly monthly, e.g., 25-35 days)
-            // simplified: if count >= monthsBack - 1, likely recurring
-            if (trans.length >= monthsBack - 1) {
-                potentialSubs.push({
-                    merchant: trans[0].merchantName!,
-                    amount: avg,
-                    frequency: trans.length,
-                    lastDate: trans[0].date
-                });
-            }
-        }
-    }
-
-    return potentialSubs;
+    return patterns.map(p => ({
+        merchant: p.merchantName,
+        amount: p.avgAmount,
+        frequency: p.frequency,
+        lastDate: p.lastDate,
+        confidence: p.confidence
+    }));
 }
 
 // Debts / Create Split Bill
@@ -926,6 +979,8 @@ export async function createInvestment(userId: number, data: {
     avgBuyPrice: number;
     currentPrice: number;
     platform?: string;
+    totalDividends?: number;
+    realizedProfit?: number;
     icon?: string;
     color?: string;
     notes?: string;
@@ -943,6 +998,11 @@ export async function createInvestment(userId: number, data: {
         color: data.color || "#10b981",
         notes: data.notes || null,
     }).returning();
+
+    if (result && result[0]) {
+        await unlockAchievement(userId, "first_invest", "Investor Muda", "Melakukan investasi pertama kali. 📈");
+    }
+
     return result[0];
 }
 
@@ -972,6 +1032,85 @@ export async function ensureSampleInvestments(userId: number): Promise<void> {
         { userId, name: "BBCA", type: "stock", quantity: 500, avgBuyPrice: 9200, currentPrice: 10500, platform: "Ajaib", icon: "BarChart", color: "#3b82f6" },
         { userId, name: "Emas Antam", type: "gold", quantity: 5, avgBuyPrice: 1100000, currentPrice: 1350000, platform: "Pegadaian", icon: "Award", color: "#eab308" },
     ]);
+}
+
+export async function getInvestmentsSummary(userId: number) {
+    const allInvestments = await getInvestments(userId);
+
+    let totalValue = 0;
+    let totalCost = 0;
+    let totalDividends = 0;
+    let totalRealizedProfit = 0;
+    const allocation: Record<string, { label: string, value: number, color: string }> = {};
+
+    allInvestments.forEach(inv => {
+        const value = inv.quantity * inv.currentPrice;
+        const cost = inv.quantity * inv.avgBuyPrice;
+        totalValue += value;
+        totalCost += cost;
+        totalDividends += (inv.totalDividends || 0);
+        totalRealizedProfit += (inv.realizedProfit || 0);
+
+        if (!allocation[inv.type]) {
+            const labels: Record<string, string> = {
+                stock: "Saham",
+                crypto: "Crypto",
+                mutual_fund: "Reksadana",
+                gold: "Emas",
+                bond: "Obligasi",
+                other: "Lainnya"
+            };
+            allocation[inv.type] = {
+                label: labels[inv.type] || inv.type,
+                value: 0,
+                color: inv.color
+            };
+        }
+        allocation[inv.type].value += value;
+    });
+
+    const totalUnrealizedProfit = totalValue - totalCost;
+    const totalProfit = totalUnrealizedProfit + totalDividends + totalRealizedProfit;
+    const profitPercent = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+
+    return {
+        totalValue,
+        totalCost,
+        totalProfit,
+        totalDividends,
+        profitPercent,
+        allocation: Object.values(allocation),
+        items: allInvestments
+    };
+}
+
+export async function getPassiveIncome(userId: number, year: number, month: number): Promise<number> {
+    const db = getDb();
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    // Categories that count as passive income
+    const passiveCats = ["Investasi", "Dividen", "Bunga", "Passive Income", "Pendapatan Pasif"];
+
+    const cats = await db.select().from(categories).all();
+    const targetCatIds = cats
+        .filter(c => passiveCats.some(pc => c.name.toLowerCase().includes(pc.toLowerCase())))
+        .map(c => c.id);
+
+    if (targetCatIds.length === 0) return 0;
+
+    const result = await db.select({ total: sql<number>`SUM(${transactions.amount})` })
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "income"),
+            inArray(transactions.categoryId, targetCatIds),
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate)
+        ))
+        .get();
+
+    return result?.total || 0;
 }
 
 export async function getFinancialHealthMetrics(userId: number) {
@@ -1591,5 +1730,101 @@ export async function useCoupon(couponId: number, userId: number, tier: "kaya" |
         .set({ tier: tier })
         .where(eq(users.id, userId))
         .run();
+}
+
+// ============ Gamification (Streaks & Achievements) ============
+
+export async function getUserStreak(userId: number): Promise<Streak | undefined> {
+    const db = getDb();
+    return db.select().from(streaks).where(eq(streaks.userId, userId)).get();
+}
+
+export async function updateUserStreak(userId: number): Promise<Streak> {
+    const db = getDb();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    let streak = await getUserStreak(userId);
+
+    if (!streak) {
+        // First time streak
+        return db.insert(streaks).values({
+            userId,
+            currentStreak: 1,
+            longestStreak: 1,
+            lastTransactionDate: today,
+            updatedAt: now
+        }).returning().get();
+    }
+
+    const lastDate = streak.lastTransactionDate ? new Date(streak.lastTransactionDate) : null;
+    if (!lastDate) {
+        // Repair streak if lastDate is null
+        return db.update(streaks)
+            .set({ currentStreak: 1, lastTransactionDate: today, updatedAt: now })
+            .where(eq(streaks.userId, userId))
+            .returning().get();
+    }
+
+    const lastTransactionDay = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+    const diffTime = today.getTime() - lastTransactionDay.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+        // Already recorded today, no streak change
+        return streak;
+    } else if (diffDays === 1) {
+        // Consecutive day!
+        const newStreak = streak.currentStreak + 1;
+        const newLongest = Math.max(newStreak, streak.longestStreak);
+
+        const updated = await db.update(streaks)
+            .set({
+                currentStreak: newStreak,
+                longestStreak: newLongest,
+                lastTransactionDate: today,
+                updatedAt: now
+            })
+            .where(eq(streaks.userId, userId))
+            .returning().get();
+
+        // Check for streak milestones
+        if (newStreak === 3) await unlockAchievement(userId, "streak_3", "Semangat 3 Hari", "Catat transaksi 3 hari berturut-turut! 🔥");
+        if (newStreak === 7) await unlockAchievement(userId, "streak_7", "Petarung Mingguan", "7 hari tanpa putus! Hebat Bos! 🛡️");
+        if (newStreak === 30) await unlockAchievement(userId, "streak_30", "Legenda Finansial", "Sebulan penuh konsistensi! Sultan bangga. 👑");
+
+        return updated;
+    } else {
+        // Streak broken
+        return db.update(streaks)
+            .set({
+                currentStreak: 1,
+                lastTransactionDate: today,
+                updatedAt: now
+            })
+            .where(eq(streaks.userId, userId))
+            .returning().get();
+    }
+}
+
+export async function getUserAchievements(userId: number): Promise<Achievement[]> {
+    const db = getDb();
+    return db.select().from(achievements).where(eq(achievements.userId, userId)).orderBy(desc(achievements.unlockedAt)).all();
+}
+
+export async function unlockAchievement(userId: number, type: string, name: string, description: string) {
+    const db = getDb();
+
+    // Check if already unlocked
+    const existing = db.select().from(achievements).where(and(eq(achievements.userId, userId), eq(achievements.type, type))).get();
+    if (existing) return;
+
+    return db.insert(achievements).values({
+        userId,
+        type,
+        name,
+        description,
+        unlockedAt: new Date()
+    }).run();
 }
 

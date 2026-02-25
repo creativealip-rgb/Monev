@@ -14,7 +14,9 @@ import { ThemeProvider } from "@/frontend/lib/theme-context";
 import { CurrencyProvider } from "@/frontend/lib/currency-context";
 import { I18nProvider } from "@/frontend/lib/i18n-context";
 import { ToastProvider } from "@/frontend/components/Toast";
+import { cn } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 
 export default function ClientLayout({
     children,
@@ -90,23 +92,37 @@ export default function ClientLayout({
                                 <NetworkStatus />
                                 <NativeNotificationService />
                                 <NotificationListenerService />
-                                <div className="fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-200/30 via-transparent to-transparent dark:from-sky-900/30" />
-                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-cyan-200/30 via-transparent to-transparent dark:from-indigo-900/30" />
+                                <div className={cn(
+                                    "fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100",
+                                    !["/login", "/register"].includes(pathname) && "dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
+                                )}>
+                                    <div className={cn(
+                                        "absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-200/30 via-transparent to-transparent",
+                                        !["/login", "/register"].includes(pathname) && "dark:from-sky-900/30"
+                                    )} />
+                                    <div className={cn(
+                                        "absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-cyan-200/30 via-transparent to-transparent",
+                                        !["/login", "/register"].includes(pathname) && "dark:from-indigo-900/30"
+                                    )} />
                                 </div>
 
-                                <main className="min-h-screen max-w-[500px] mx-auto bg-background/80 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-black/20 pb-24 relative">
-                                    <AnimatePresence mode="wait">
-                                        <motion.div
-                                            key={pathname}
-                                            initial={{ opacity: 0, y: 6 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -6 }}
-                                            transition={{ duration: 0.15, ease: "easeOut" }}
-                                        >
-                                            {children}
-                                        </motion.div>
-                                    </AnimatePresence>
+                                <main className={cn(
+                                    "min-h-screen max-w-[500px] mx-auto bg-background/80 backdrop-blur-xl pb-24 relative shadow-2xl shadow-sky-900/10",
+                                    !["/login", "/register"].includes(pathname) && "dark:shadow-black/20"
+                                )}>
+                                    <SecurityGuard>
+                                        <AnimatePresence mode="wait">
+                                            <motion.div
+                                                key={pathname}
+                                                initial={{ opacity: 0, y: 6 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -6 }}
+                                                transition={{ duration: 0.15, ease: "easeOut" }}
+                                            >
+                                                {children}
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </SecurityGuard>
                                 </main>
 
                                 <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />

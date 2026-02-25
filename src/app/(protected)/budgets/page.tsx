@@ -12,6 +12,7 @@ import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { Budget } from "@/types";
 import { useSession } from "next-auth/react";
+import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
 import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 
@@ -59,6 +60,7 @@ export default function BudgetsPage() {
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
     const [detailBudget, setDetailBudget] = useState<Budget | null>(null);
     const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+    const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
     // @ts-ignore
@@ -181,8 +183,8 @@ export default function BudgetsPage() {
                 <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Budget Bulan Ini</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
-                        <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent)}</p>
-                        <p className="text-white/60 text-xs tabular-nums">dari {formatCurrency(totalBudget)}</p>
+                        <p className="text-2xl font-bold tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
+                        <p className="text-white/60 text-xs tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
@@ -250,14 +252,14 @@ export default function BudgetsPage() {
                                             </div>
                                             <div className="flex-1">
                                                 <span className="font-bold text-foreground text-[13px]">{b.category}</span>
-                                                <p className="text-xs text-muted-foreground tabular-nums">Limit: {formatCurrency(b.limit)}</p>
+                                                <p className="text-xs text-muted-foreground tabular-nums">Limit: {isStealthMode ? "******" : formatCurrency(b.limit)}</p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
                                                     "font-bold text-[13px] block tabular-nums",
                                                     isDanger ? "text-rose-600 dark:text-rose-400" : "text-foreground"
                                                 )}>
-                                                    {formatCurrency(b.spent)}
+                                                    {isStealthMode ? "******" : formatCurrency(b.spent)}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground tabular-nums">
                                                     {Math.round(b.percentage)}%

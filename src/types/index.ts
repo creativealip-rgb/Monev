@@ -65,6 +65,18 @@ export type Investment = {
     icon: string;
     color: string;
     notes: string | null;
+    totalDividends: number | null;
+    realizedProfit: number | null;
     createdAt: Date;
     updatedAt: Date;
+};
+
+export type InvestmentSummary = {
+    totalValue: number;
+    totalCost: number;
+    totalProfit: number;
+    totalDividends: number;
+    profitPercent: number;
+    allocation: { label: string; value: number; color: string }[];
+    items: Investment[];
 };

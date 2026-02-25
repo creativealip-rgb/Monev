@@ -11,6 +11,7 @@ import { Bill } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/UI";
 import { useSession } from "next-auth/react";
+import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBill, getTierConfig } from "@/lib/tier-gate";
 import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 
@@ -56,12 +57,14 @@ function BillItem({
     bill,
     index,
     onDelete,
-    onToggle
+    onToggle,
+    isStealthMode
 }: {
     bill: Bill;
     index: number;
     onDelete: (id: number) => void;
     onToggle: (id: number, e: React.MouseEvent) => void;
+    isStealthMode: boolean;
 }) {
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
@@ -118,7 +121,7 @@ function BillItem({
                         "font-bold text-[13px] block tabular-nums",
                         bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
                     )}>
-                        {formatCurrency(bill.amount)}
+                        {isStealthMode ? "******" : formatCurrency(bill.amount)}
                     </span>
                     <span className={cn(
                         "text-[10px] tabular-nums",
@@ -166,6 +169,7 @@ export default function BillsPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
     // @ts-ignore
@@ -202,8 +206,9 @@ export default function BillsPage() {
     interface DetectedSub {
         merchant: string;
         amount: number;
-        frequency: number;
+        frequency: string;
         lastDate: string;
+        confidence: number;
     }
     const [subscriptions, setSubscriptions] = useState<DetectedSub[]>([]);
     const [subsLoading, setSubsLoading] = useState(false);
@@ -374,7 +379,7 @@ export default function BillsPage() {
                 <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Tagihan Bulan Ini</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
-                        <p className="text-2xl font-bold tabular-nums">{loading ? "..." : formatCurrency(totalUnpaid)}</p>
+                        <p className="text-2xl font-bold tabular-nums">{loading ? "..." : (isStealthMode ? "******" : formatCurrency(totalUnpaid))}</p>
                         <p className="text-white/60 text-xs tabular-nums">{loading ? "..." : `${bills.length - paidCount} belum dibayar`}</p>
                     </div>
                     <div className="text-right">
@@ -445,11 +450,11 @@ export default function BillsPage() {
                                         <div>
                                             <p className="text-[13px] font-bold text-foreground">{sub.merchant}</p>
                                             <p className="text-[10px] text-muted-foreground">
-                                                {sub.frequency}x terdeteksi • Terakhir {new Date(sub.lastDate).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                                                Pola {sub.frequency} • Terakhir {new Date(sub.lastDate).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
                                             </p>
                                         </div>
                                         <span className="text-[13px] font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-                                            {formatCurrency(sub.amount)}
+                                            {isStealthMode ? "******" : formatCurrency(sub.amount)}
                                         </span>
                                     </motion.div>
                                 ))}
@@ -521,7 +526,7 @@ export default function BillsPage() {
                             <div className="space-y-4">
                                 {filteredBills.map((bill, i) => {
                                     return (
-                                        <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} />
+                                        <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} isStealthMode={isStealthMode} />
                                     );
                                 })}
                             </div>

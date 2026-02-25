@@ -12,6 +12,7 @@ import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
 import { Goal } from "@/types";
 import { useSession } from "next-auth/react";
+import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";
 import { Zap } from "lucide-react";
 
@@ -39,6 +40,7 @@ export default function SavingsPage() {
     const [goals, setGoals] = useState<Goal[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const { isStealthMode } = useSecurity();
 
     const { data: session } = useSession();
     // @ts-ignore
@@ -155,7 +157,9 @@ export default function SavingsPage() {
                 <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Total Tabungan</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
-                        <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSaved)}</p>
+                        <p className="text-2xl font-bold tabular-nums">
+                            {isStealthMode ? "••••••••" : formatCurrency(totalSaved)}
+                        </p>
                         <p className="text-white/60 text-xs tabular-nums">dari {goals.length} goals</p>
                     </div>
                     <div className="text-right">
@@ -230,14 +234,16 @@ export default function SavingsPage() {
                                             </div>
                                             <div className="flex-1">
                                                 <span className="font-bold text-foreground text-[13px]">{g.name}</span>
-                                                <p className="text-xs text-muted-foreground tabular-nums">Target: {formatCurrency(g.target)}</p>
+                                                <p className="text-xs text-muted-foreground tabular-nums">
+                                                    Target: {isStealthMode ? "••••••••" : formatCurrency(g.target)}
+                                                </p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
                                                     "font-bold text-[13px] block tabular-nums",
                                                     isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
                                                 )}>
-                                                    {formatCurrency(g.saved)}
+                                                    {isStealthMode ? "••••••••" : formatCurrency(g.saved)}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground tabular-nums">
                                                     {Math.round(g.percentage)}%

@@ -1,14 +1,18 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { Lock, Unlock } from "lucide-react";
-import { fetchProfileData, verifySecurityPin } from "@/app/(protected)/profile/actions";
+import { fetchProfileData, verifySecurityPin, toggleHideBalanceAction } from "@/app/(protected)/profile/actions";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
 
 interface SecurityContextType {
     isLocked: boolean;
     unlock: (pin: string) => Promise<{ success: boolean; message?: string }>;
     isEnabled: boolean;
     hasPin: boolean;
+    isStealthMode: boolean;
+    toggleStealth: () => Promise<void>;
 }
 
 const SecurityContext = createContext<SecurityContextType | undefined>(undefined);
@@ -24,7 +28,8 @@ export function useSecurity() {
 export function SecurityProvider({ children }: { children: ReactNode }) {
     const [isEnabled, setIsEnabled] = useState(false);
     const [hasPin, setHasPin] = useState(false);
-    const [isLocked, setIsLocked] = useState(true); // Default to locked until verified
+    const [isLocked, setIsLocked] = useState(true);
+    const [isStealthMode, setIsStealthMode] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [inputPin, setInputPin] = useState("");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -39,15 +44,11 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
             const settings = data?.settings;
             const enabled = settings?.isAppLockEnabled || false;
             const pinExists = settings?.hasPin || false;
+            const stealth = settings?.hideBalance || false;
 
             setIsEnabled(enabled);
             setHasPin(pinExists);
-
-            // Logic:
-            // If NOT enabled -> Not Locked.
-            // If Enabled -> Check Session Storage.
-            // If Session says "unlocked", then Not Locked.
-            // Else -> Locked.
+            setIsStealthMode(stealth);
 
             if (!enabled || !pinExists) {
                 setIsLocked(false);
@@ -61,24 +62,75 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
             }
         } catch (error) {
             console.error("Failed to check security settings", error);
-            // Fail safe? Or Fail lock? Fail safe for now to avoid locking out on network error
             setIsLocked(false);
         } finally {
             setIsLoading(false);
         }
     };
 
+    const lockApp = useCallback(() => {
+        if (isEnabled && hasPin) {
+            setIsLocked(true);
+            sessionStorage.removeItem("monev_unlocked");
+        }
+    }, [isEnabled, hasPin]);
+
+    useEffect(() => {
+        // Web: Visibility change
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") {
+                // If user leaves, we don't necessarily lock immediately
+                // but we can if we want "High Resilience"
+            } else if (document.visibilityState === "visible") {
+                // Return to app -> lock
+                lockApp();
+            }
+        };
+
+        // Native: App state change
+        let listener: any;
+        if (Capacitor.isNativePlatform()) {
+            App.addListener("appStateChange", ({ isActive }) => {
+                if (!isActive) {
+                    // Moving to background
+                } else {
+                    // Returning to active
+                    lockApp();
+                }
+            }).then(l => listener = l);
+        } else {
+            document.addEventListener("visibilitychange", handleVisibilityChange);
+        }
+
+        return () => {
+            if (listener) listener.remove();
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [lockApp]);
+
+    const toggleStealth = async () => {
+        const newValue = !isStealthMode;
+        setIsStealthMode(newValue);
+        try {
+            await toggleHideBalanceAction(newValue);
+        } catch (e) {
+            console.error(e);
+            // Fallback
+            setIsStealthMode(!newValue);
+        }
+    };
+
     const unlock = async (pin: string): Promise<{ success: boolean; message?: string }> => {
         const result = await verifySecurityPin(pin);
-        
+
         if (result.success) {
             setIsLocked(false);
             sessionStorage.setItem("monev_unlocked", "true");
             return { success: true };
         }
-        
-        return { 
-            success: false, 
+
+        return {
+            success: false,
             message: result.message || "PIN salah. Silakan coba lagi."
         };
     };
@@ -86,9 +138,9 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
     const handleUnlockSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMessage(null);
-        
+
         const result = await unlock(inputPin);
-        
+
         if (result.success) {
             setInputPin("");
             setErrorMessage(null);
@@ -168,7 +220,7 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <SecurityContext.Provider value={{ isLocked, unlock, isEnabled, hasPin }}>
+        <SecurityContext.Provider value={{ isLocked, unlock, isEnabled, hasPin, isStealthMode, toggleStealth }}>
             {children}
         </SecurityContext.Provider>
     );

@@ -4,10 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, FileText, Camera, Mic, Bell, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
+import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { TransactionForm } from "./TransactionForm";
 import { SmartInput } from "./SmartInput";
 import { useSession } from "next-auth/react";
 import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";
+import { useHaptics } from "@/frontend/hooks/useHaptics";
+import { useToast } from "./UI";
 
 interface AddTransactionSheetProps {
     isOpen: boolean;
@@ -53,6 +56,8 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
     // @ts-ignore
     const userTier = (session?.user?.tier as UserTier) || "miskin";
     const hasSmartAccess = canAccessSmartInput(userTier);
+    const haptics = useHaptics();
+    const { success: toastSuccess } = useToast();
 
     // Close on escape key
     useEffect(() => {
@@ -215,17 +220,76 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                             </div>
 
                             <div className="px-6 pb-8 pt-2 border-t border-slate-100 dark:border-slate-700">
-                                <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">Template cepat:</p>
-                                <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                                    {["Kopi", "Makan", "Transport", "Pulsa"].map((template) => (
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Template Cepat</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { label: "☕ Kopi (20rb)", amount: 20000, category: "Makan & Minuman", desc: "Beli kopi" },
+                                        { label: "🍱 Makan (35rb)", amount: 35000, category: "Makan & Minuman", desc: "Makan siang" },
+                                        { label: "🚗 Bensin (50rb)", amount: 50000, category: "Transportasi", desc: "Isi bensin" },
+                                        { label: "📱 Pulsa (100rb)", amount: 100000, category: "Tagihan", desc: "Top up pulsa" },
+                                    ].map((template) => (
                                         <button
-                                            key={template}
-                                            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-full text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/50 hover:text-sky-600 dark:hover:text-sky-400 transition-colors whitespace-nowrap"
+                                            key={template.label}
+                                            onClick={async () => {
+                                                const transData = {
+                                                    amount: template.amount,
+                                                    description: template.desc,
+                                                    categoryName: template.category,
+                                                    type: "expense",
+                                                    paymentMethod: "cash",
+                                                    date: new Date().toISOString(),
+                                                };
+                                                try {
+                                                    haptics.tap();
+                                                    const response = await fetch("/api/transactions", {
+                                                        method: "POST",
+                                                        headers: { "Content-Type": "application/json" },
+                                                        body: JSON.stringify(transData),
+                                                    });
+
+                                                    // Show Time-Cost
+                                                    const settingsRes = await fetch("/api/profile");
+                                                    const profile = await settingsRes.json();
+                                                    const hourlyRate = profile.data?.user?.hourlyRate || 50000;
+                                                    const hours = template.amount / hourlyRate;
+
+                                                    if (response.ok) {
+                                                        toastSuccess(
+                                                            "Berhasil!",
+                                                            `Dicatat pakai template. Setara ${hours.toFixed(1)} jam kerja.`
+                                                        );
+                                                        window.dispatchEvent(new CustomEvent("transactionAdded"));
+                                                        onClose();
+                                                    } else {
+                                                        // Fail-over to offline queue
+                                                        OfflineManager.queueTransaction(transData);
+                                                        toastSuccess(
+                                                            "Antrean Offline",
+                                                            "Internet bermasalah, transaksi masuk antrean."
+                                                        );
+                                                        window.dispatchEvent(new CustomEvent("transactionAdded"));
+                                                        onClose();
+                                                    }
+                                                } catch (err) {
+                                                    // Network error, queue it
+                                                    OfflineManager.queueTransaction(transData);
+                                                    window.dispatchEvent(new CustomEvent("transactionAdded"));
+                                                    onClose();
+                                                }
+                                            }}
+                                            className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl hover:bg-sky-50 dark:hover:bg-sky-900/30 border border-transparent hover:border-sky-200 dark:hover:border-sky-800 transition-all group"
                                         >
-                                            {template}
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-600 dark:group-hover:text-sky-400">{template.label}</span>
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-500">{template.category}</span>
                                         </button>
                                     ))}
                                 </div>
+                                <button
+                                    onClick={() => handleAction("manual")}
+                                    className="w-full mt-4 py-3 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-xl hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
+                                >
+                                    + Buat Template Custom
+                                </button>
                             </div>
                         </div>
                     </motion.div>

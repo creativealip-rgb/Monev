@@ -1,219 +1,121 @@
 # 📋 Monev — Feature Documentation
 
-Dokumentasi lengkap semua fitur aplikasi Monev.
+Dokumentasi lengkap semua fitur aplikasi Monev, mencakup fitur dasar hingga asisten bertenaga AI.
 
 ---
 
-## 1. 🏠 Dashboard
+## 1. 🏠 Dashboard (Personalized Home)
 
-Halaman utama dengan ringkasan keuangan.
+Halaman utama yang proaktif dan adaptif.
 
-| Elemen | Deskripsi |
-|--------|-----------|
-| Greeting | Sapaan dinamis berdasar waktu (Selamat pagi/siang/sore/malam) |
-| Saldo | Total saldo terkini, bisa disembunyikan (hide balance) |
-| Pemasukan/Pengeluaran | Ringkasan bulan ini |
-| Daily Insight | Rata-rata pengeluaran harian |
-| Transaksi Terbaru | 5 transaksi terakhir |
-| Quick Stats | Statistik cepat (total tabungan, tagihan aktif, dll) |
-
----
-
-## 2. 💬 AI Chat (Asisten Keuangan)
-
-Chat interaktif dengan AI yang memahami data keuanganmu.
-
-**Kemampuan AI:**
-- Menjawab pertanyaan tentang saldo, pemasukan, dan pengeluaran
-- Menganalisis pola pengeluaranmu
-- Memberikan saran keuangan yang dipersonalisasi
-- Memahami konteks: transaksi, budget, tagihan, tabungan, dan investasi
-
-**Teknologi:** OpenAI GPT dengan system prompt yang di-inject data keuangan real-time user.
+| Fitur | Deskripsi | Status |
+|-------|-----------|--------|
+| Greeting | Sapaan dinamis berdasarkan waktu & mood. | ✅ Done |
+| balance | Total saldo (Bank + Cash) dengan opsi sembunyi. | ✅ Done |
+| **Daily Insight** | Kartu penasihat AI yang menganalisis budget & MoM anomaly. | ✅ Done |
+| FAB | Tombol melayang untuk akses cepat ke semua input. | ✅ Done |
+| Quick-Tap | Template 1-kali sentuh untuk transaksi rutin (Kopi, Makan, dll). | ✅ Done |
 
 ---
 
-## 3. 📊 Analytics (Statistik)
+## 2. 🤳 Intelligent Ingestion (Input Cerdas)
 
-Visualisasi data keuangan dengan beberapa tab:
+Mengurangi *friction* saat mencatat pengeluaran.
 
-### Tab Ringkasan
-- Pie chart distribusi pengeluaran per kategori
-- Top 5 spending categories
-- Income vs expense ratio
+### A. The "Screenshot" Agent (Vision)
+- **Fungsi**: Ekstrak data dari struk belanja atau screenshot mutasi bank.
+- **Teknologi**: GPT-4o Vision OCR.
+- **Status**: ✅ Implemented.
 
-### Tab Tren
-- Line chart pengeluaran 6 bulan terakhir
-- **Month-over-Month Comparison** — perbandingan pengeluaran bulan ini vs bulan lalu
-- **Spending Heatmap** — pola pengeluaran per hari dalam minggu & jam
+### B. The "Voice Memo" Catcher
+- **Fungsi**: Mencatat transaksi hanya dengan perintah suara (multi-item).
+- **Teknologi**: OpenAI Whisper.
+- **Status**: ✅ Implemented.
 
-### Tab Harian
-- Calendar heatmap aktivitas transaksi
-- Detail pengeluaran per hari
-
----
-
-## 4. 📝 Transactions (Riwayat Transaksi)
-
-Daftar lengkap semua transaksi.
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Filter | Filter by kategori, tipe (income/expense), rentang tanggal |
-| Search | Cari transaksi by deskripsi atau merchant |
-| Edit/Delete | CRUD lengkap per transaksi |
-| Transfer | Transfer antar akun / wallet |
-| CSV Export | Download semua transaksi sebagai CSV |
-| Infinite Scroll | Load more otomatis saat scroll |
-
-### Input Transaksi
-- **Manual** — Form input standar (jumlah, kategori, deskripsi, tanggal)
-- **Smart Input** — Input natural language (contoh: "makan 50rb" → otomatis parse)
-- **OCR** — Scan struk/receipt untuk auto-extract data transaksi
-- **Voice** — Input via suara (speech-to-text)
-- **AI Categorize** — Kategorisasi otomatis berdasar deskripsi transaksi
+### C. The "Time-Cost Translator"
+- **Fungsi**: Mengonversi nominal belanja menjadi "Jam Kerja" (berdasarkan hourly rate user).
+- **Psikologi**: Memberi rasa 'sakit' sebelum belanja impulsif.
+- **Status**: ✅ Implemented.
 
 ---
 
-## 5. 🎯 Budgets (Anggaran)
+## 3. 🤖 AI Chat & Context Engine
 
-Kelola anggaran bulanan per kategori.
+Asisten yang bukan sekadar bot, tapi memahami kondisi keuanganmu.
 
-| Fitur | Deskripsi |
-|-------|-----------|
-| Create Budget | Set budget per kategori + jumlah + periode |
-| Progress Bar | Visual progress spending vs budget |
-| Alert | Peringatan saat mendekati/melebihi budget |
-| Edit/Delete | CRUD lengkap |
-| Icon + Color | Kustomisasi visual per budget |
-
----
-
-## 6. 📅 Bills (Tagihan Berulang)
-
-Tracking tagihan bulanan/mingguan/tahunan.
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Bill List | Daftar tagihan aktif dengan status bayar |
-| Due Date | Tanggal jatuh tempo |
-| Frequency | Monthly, weekly, atau yearly |
-| Mark as Paid | Tandai sudah dibayar |
-| Subscription Detection | Deteksi langganan otomatis dari transaksi recurring |
-| Reminder Widget | Widget pengingat tagihan yang akan jatuh tempo |
+| Fitur | Deskripsi | Status |
+|-------|-----------|--------|
+| **Detective Agent** | Mencari identitas merchant ambigu via Google Search. | ✅ Implemented |
+| **Semantic Search** | Tanya jawab data finansial via NLP ("Berapa biaya servis motor?"). | ✅ Implemented |
+| Context Prediction | Prediksi kategori otomatis berdasarkan waktu & pola kebiasaan. | ✅ Implemented |
+| AI Chat | Diskusi strategis tentang mencapai goal finansial. | ✅ Done |
+| **Prediction Caching** | Cache lokal untuk merchant yang pernah dikunjungi. | ✅ Done |
 
 ---
 
-## 7. 💰 Savings (Tabungan/Goals)
+## 4. 📅 Bills & Subscriptions
 
-Target tabungan dan tracking progress.
+Melacak pengeluaran rutin yang sering terlupakan.
 
-| Fitur | Deskripsi |
-|-------|-----------|
-| Create Goal | Set nama, target, deadline, icon, warna |
-| Progress Tracking | Visual bar persentase tabungan |
-| Add Savings | Tambah tabungan ke goal tertentu |
-| Primary Goal | Set primary goal di dashboard |
+- **Subscription Hunter**: Otomatis mendeteksi pola transaksi berulang (recurring).
+- **Bill Reminders**: Pengingat tagihan jatuh tempo di dashboard & notifikasi.
+- **Status**: ✅ Implemented.
 
 ---
 
-## 8. 📈 Investments (Investasi)
+## 5. 🤝 Social Finance & Assets
 
-Portfolio tracking untuk berbagai jenis investasi.
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Asset Types | Stock, crypto, mutual fund, gold, bond, other |
-| Portfolio Summary | Total value, total gain/loss |
-| Allocation Chart | Donut chart alokasi aset |
-| CRUD | Tambah/edit/hapus aset investasi |
-| Platform | Track platform investasi (Bibit, Ajaib, dll) |
+| Fitur | Deskripsi | Status |
+|-------|-----------|--------|
+| **Split Bill** | Alur otomatis untuk bagi tagihan setelah belanja besar. | ✅ Implemented |
+| **Debt Collector** | Generator pesan penagih hutang (copywriting sopan/galak). | ✅ Implemented |
+| **Goal Defender** | Intervensi AI jika pengeluaran menghambat target tabungan. | ✅ Implemented |
+| **Cash Burn Rate** | Interogasi sisa uang tunai 3 hari setelah tarik ATM (Stock Opname). | ✅ Implemented |
 
 ---
 
-## 9. 👤 Profile & Settings
+## 6. 📊 Reports & Analysis
 
-Pengaturan akun dan preferensi.
+- **Automated Wealth PDF**: Laporan aset & kesehatan finansial bulanan dalam format PDF cantik.
+- **50/30/20 Rule**: Analisis otomatis alokasi gaji harian/bulanan.
+- **Status**: ✅ Implemented (Phase 6).
 
-| Fitur | Deskripsi |
-|-------|-----------|
-| Edit Profil | Nama, email |
-| Currency Setting | Pilih mata uang (IDR, USD, EUR, SGD, MYR) |
-| Language Setting | Bahasa Indonesia / English |
-| Theme | Light/dark mode + theme selector |
-| Security PIN | Set/ubah PIN keamanan |
-| App Lock | Aktifkan kunci aplikasi |
-| Hide Balance | Sembunyikan saldo di dashboard |
-| Notifications | On/off notifikasi |
-| Download APK | Download APK Android |
+## 7. 🚀 Phase 8: Automation, Security & Engagement
+Fase untuk memperkuat keamanan, mempermudah masukan data massal, dan meningkatkan keterikatan pengguna.
 
----
-
-## 10. 🔐 Authentication
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Email Login | Login via email + password |
-| Guest Mode | Akses tanpa akun (data lokal) |
-| Onboarding | Wizard setup awal (mata uang, saldo awal, preferensi) |
-| Security PIN | Kunci aplikasi dengan PIN |
-| Forgot Password | Reset password |
+| Fitur | Deskripsi | Status |
+|-------|-----------|--------|
+| **Biometric Lock** | Keamanan sidik jari/wajah (FaceID) via Capacitor Native. | ✅ Implemented |
+| **Bulk Importer** | Impor transaksi massal dari CSV/Excel mutasi bank. | ✅ Implemented |
+| **Daily Streak** | Track konsistensi pencatatan harian dengan "Flame Counter". | ✅ Implemented |
+| **Badges & Trophies** | Koleksi badge pencapaian (koleksi trophy di profil). | ✅ Implemented |
+| **AI Persona** | Analisis psikologi & kepribadian keuangan otomatis oleh AI. | ✅ Implemented |
 
 ---
 
-## 11. 🤖 Telegram Bot Integration
+## 🛠️ Technical Excellence (Experience)
 
-Catat transaksi langsung dari Telegram.
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Webhook | `/api/telegram-webhook` menerima pesan Telegram |
-| Natural Language | Parse input seperti "makan siang 35rb" |
-| Quick Reply | Konfirmasi transaksi via inline keyboard |
+- **Offline-First (IndexedDB)**: Sinkronisasi data handal bahkan saat internet tidak stabil.
+- **Capacitor Haptics**: Getaran taktil untuk aksi kirim sukses atau peringatan boros.
+- **PWA / Mobile**: Installable sebagai aplikasi di Android atau Web PWA.
+- **Panic Toggle (Quick Stealth)**: Proteksi instan untuk menyembunyikan data sensitif.
+- **Global App Lock**: Proteksi aplikasi secara menyeluruh saat di-resume dari background.
 
 ---
 
-## 12. 🔔 Notifications
+## 8. 🔮 Upcoming Features (Roadmap)
 
-| Fitur | Deskripsi |
-|-------|-----------|
-| Push Notifications | Web Push via Service Worker |
-| Daily Recap | Ringkasan harian via cron job |
-| Bill Reminders | Pengingat tagihan jatuh tempo |
-| Subscription Check | Deteksi langganan otomatis via cron |
-| Native Notifications | Notifikasi native via Capacitor |
+Fitur masa depan untuk mengubah Monev menjadi *Ultimate Financial Strategist*.
 
----
-
-## 13. 🌐 Internationalization (i18n)
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Languages | Indonesia (id) & English (en) |
-| Provider | React Context `I18nProvider` |
-| Storage | `localStorage` key `monev_language` |
-| Coverage | Bottom nav, common labels |
+| Fitur | Deskripsi | Status |
+|-------|-----------|--------|
+| **Interactive Financial Map** | Visualisasi aliran uang (Sankey/Treemap) dari Income -> Alokasi -> Pengeluaran. | 🏗️ Planning |
+| **AI "What-If" Simulator** | Simulasi keputusan finansial (Kredit vs Cash, Investasi vs Konsumsi). | 🏗️ Planning |
+| **Shared/Collab Wallet** | Pengelolaan anggaran bersama pasangan atau keluarga dengan sinkronisasi instan. | 🏗️ Planning |
+| **Impulse Buy Judge** | AI yang menilai keranjang belanja online Bos berdasarkan kondisi *cashflow* nyata. | 🏗️ Planning |
+| **Voice Command V2** | Kendali aplikasi penuh lewat suara (Navigasi, Set Budget, Filter Laporan). | 🏗️ Planning |
 
 ---
 
-## 14. 💱 Multi-Currency
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Currencies | IDR, USD, EUR, SGD, MYR |
-| Provider | React Context `CurrencyProvider` |
-| Formatting | `formatCurrency()` utility |
-| Storage | `localStorage` key `monev_currency` |
-
----
-
-## 15. 🔧 Fitur Lainnya
-
-| Fitur | Deskripsi |
-|-------|-----------|
-| Semua Fitur Page | Hub navigasi ke semua fitur |
-| Upgrade Tier | Kupon sistem untuk unlock fitur premium |
-| Error Boundary | Global error handler dengan UI friendly |
-| Rate Limiting | API rate limiter (60 req/menit default) |
-| Offline Support | Service Worker dengan cache fallback |
-| PWA Install | Install sebagai Progressive Web App |
+*Last Updated: 25 February 2026*
+*Version: 1.9 (Strategist Roadmap)*
