@@ -17,6 +17,7 @@ export const users = sqliteTable("users", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     telegramId: integer("telegram_id").unique(),
     email: text("email").unique(),
+    emailVerified: integer("email_verified", { mode: "timestamp" }),
     password: text("password"),
     name: text("name"),
     image: text("image"),
@@ -192,6 +193,22 @@ export const aiInsightsCache = sqliteTable("ai_insights_cache", {
     insights: text("insights").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const verificationTokens = sqliteTable("verification_tokens", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    identifier: text("identifier").notNull(), // email address being verified
+    token: text("token").notNull().unique(),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const passwordResetTokens = sqliteTable("password_reset_tokens", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    identifier: text("identifier").notNull(), // email address being reset
+    token: text("token").notNull().unique(),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 // Types

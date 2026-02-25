@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { register, signInWithGoogle } from "@/app/actions/auth";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
-import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, MailCheck } from "lucide-react";
 
 interface FormErrors {
     name?: string;
@@ -149,17 +149,18 @@ function GoogleLoginButton() {
 }
 
 export default function RegisterPage() {
-    const [formData, setFormData] = useState<FormData>({ 
-        name: "", 
-        email: "", 
-        password: "", 
-        confirmPassword: "" 
+    const [formData, setFormData] = useState<FormData>({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: ""
     });
     const [errors, setErrors] = useState<FormErrors>({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isPending, setIsPending] = useState(false);
     const [shake, setShake] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     // Auto-focus name field on mount
@@ -253,6 +254,13 @@ export default function RegisterPage() {
             submitFormData.append("confirmPassword", formData.confirmPassword);
 
             const result = await register({ error: "" }, submitFormData);
+
+            // @ts-ignore
+            if (result?.success) {
+                setIsSuccess(true);
+                return;
+            }
+
             if (result?.error) {
                 setErrors({ general: result.error });
                 setShake(true);
@@ -266,6 +274,29 @@ export default function RegisterPage() {
             setIsPending(false);
         }
     };
+
+    if (isSuccess) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-sky-50/30 to-cyan-50/20 p-4">
+                <div className="glass-card w-full max-w-md p-8 rounded-3xl text-center">
+                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <MailCheck className="w-10 h-10 text-emerald-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-3">Cek Email Anda</h2>
+                    <p className="text-slate-600 mb-6 leading-relaxed">
+                        Kami telah mengirimkan link verifikasi ke <span className="font-semibold text-slate-800">{formData.email}</span>.
+                        Silakan klik link tersebut untuk mengaktifkan akun Anda.
+                    </p>
+                    <Link
+                        href="/login"
+                        className="btn-primary w-full py-3 inline-flex justify-center"
+                    >
+                        Kembali ke Login
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-sky-50/30 to-cyan-50/20 p-4">
