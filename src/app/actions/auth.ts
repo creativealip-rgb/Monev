@@ -8,7 +8,6 @@ import { users, verificationTokens, passwordResetTokens } from "@/backend/db/sch
 import { getDb } from "@/backend/db";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { v4 as uuidv4 } from "uuid";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/mailer";
 
 export async function authenticate(
