@@ -15,6 +15,7 @@ Halaman utama yang proaktif dan adaptif.
 | **Daily Insight** | Kartu penasihat AI yang menganalisis budget & MoM anomaly. | ✅ Done |
 | FAB | Tombol melayang untuk akses cepat ke semua input. | ✅ Done |
 | Quick-Tap | Template 1-kali sentuh untuk transaksi rutin (Kopi, Makan, dll). | ✅ Done |
+| **Anomaly Alert** | Notifikasi visual di dashboard jika ada lonjakan pengeluaran kategori >20%. | ✅ Implemented |
 
 ---
 
@@ -50,6 +51,7 @@ Asisten yang bukan sekadar bot, tapi memahami kondisi keuanganmu.
 | Context Prediction | Prediksi kategori otomatis berdasarkan waktu & pola kebiasaan. | ✅ Implemented |
 | AI Chat | Diskusi strategis tentang mencapai goal finansial. | ✅ Done |
 | **Prediction Caching** | Cache lokal untuk merchant yang pernah dikunjungi. | ✅ Done |
+| **What-If Simulator** | Simulasi dampak keputusan finansial (Kredit vs Cash) bertenaga AI. | ✅ Implemented |
 
 ---
 
@@ -78,7 +80,8 @@ Melacak pengeluaran rutin yang sering terlupakan.
 
 - **Automated Wealth PDF**: Laporan aset & kesehatan finansial bulanan dalam format PDF cantik.
 - **50/30/20 Rule**: Analisis otomatis alokasi gaji harian/bulanan.
-- **Status**: ✅ Implemented (Phase 6).
+- **Investment ROI & Dividends**: Tracking passive income (dividen) dan realized profit secara mendalam.
+- **Status**: ✅ Implemented (Phase 8 Final).
 
 ## 7. 🚀 Phase 8: Automation, Security & Engagement
 Fase untuk memperkuat keamanan, mempermudah masukan data massal, dan meningkatkan keterikatan pengguna.
@@ -110,7 +113,6 @@ Fitur masa depan untuk mengubah Monev menjadi *Ultimate Financial Strategist*.
 | Fitur | Deskripsi | Status |
 |-------|-----------|--------|
 | **Interactive Financial Map** | Visualisasi aliran uang (Sankey/Treemap) dari Income -> Alokasi -> Pengeluaran. | 🏗️ Planning |
-| **AI "What-If" Simulator** | Simulasi keputusan finansial (Kredit vs Cash, Investasi vs Konsumsi). | 🏗️ Planning |
 | **Shared/Collab Wallet** | Pengelolaan anggaran bersama pasangan atau keluarga dengan sinkronisasi instan. | 🏗️ Planning |
 | **Impulse Buy Judge** | AI yang menilai keranjang belanja online Bos berdasarkan kondisi *cashflow* nyata. | 🏗️ Planning |
 | **Voice Command V2** | Kendali aplikasi penuh lewat suara (Navigasi, Set Budget, Filter Laporan). | 🏗️ Planning |
