@@ -111,6 +111,40 @@ async function updateUserWithGoogleData(userId: number, googleData: {
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
     ...authConfig,
+    session: {
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+    cookies: {
+        sessionToken: {
+            name: `next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+            },
+        },
+        csrfToken: {
+            name: `next-auth.csrf-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+            },
+        },
+        pkceCodeVerifier: {
+            name: `next-auth.pkce.code_verifier`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 60 * 15, // 15 minutes
+            },
+        },
+    },
     callbacks: {
         async signIn({ user, account, profile }) {
             console.log("[OAuth] SignIn callback - Provider:", account?.provider);
