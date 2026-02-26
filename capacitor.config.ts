@@ -15,18 +15,12 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true,
     },
     SplashScreen: {
-      launchAutoHide: false,
+      launchAutoHide: true, // Auto hide splash screen
       backgroundColor: '#0EA5E9',
       showSpinner: false,
       androidScaleType: 'CENTER_CROP',
     },
   },
-  /*
-  server: {
-    url: 'https://www.monevapp.web.id',
-    cleartext: true
-  }
-  */
 };
 
 export default config;
