@@ -1,38 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Capacitor } from "@capacitor/core";
 import { WifiOff } from "lucide-react";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { useToast } from "@/frontend/components/Toast";
+import { useNetworkStatus } from "@/frontend/hooks/useNetworkStatus";
 
 export function NetworkStatus() {
-    const [isOnline, setIsOnline] = useState(true);
+    const { isOnline } = useNetworkStatus();
     const [showBanner, setShowBanner] = useState(false);
     const { success } = useToast();
-
-    useEffect(() => {
-        if (Capacitor.isNativePlatform()) {
-            // Native: use Capacitor Network plugin
-            import("@capacitor/network").then(({ Network }) => {
-                Network.addListener("networkStatusChange", (status) => {
-                    setIsOnline(status.connected);
-                });
-                Network.getStatus().then((s) => setIsOnline(s.connected));
-            });
-        } else {
-            // Web fallback
-            setIsOnline(navigator.onLine);
-            const goOnline = () => setIsOnline(true);
-            const goOffline = () => setIsOnline(false);
-            window.addEventListener("online", goOnline);
-            window.addEventListener("offline", goOffline);
-            return () => {
-                window.removeEventListener("online", goOnline);
-                window.removeEventListener("offline", goOffline);
-            };
-        }
-    }, []);
 
     useEffect(() => {
         if (!isOnline) {
@@ -53,7 +30,7 @@ export function NetworkStatus() {
             const t = setTimeout(() => setShowBanner(false), 2000);
             return () => clearTimeout(t);
         }
-    }, [isOnline]);
+    }, [isOnline, success]);
 
     if (!showBanner) return null;
 

@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { useToast } from "./UI";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface AddTransactionSheetProps {
     isOpen: boolean;
@@ -241,14 +242,14 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                 };
                                                 try {
                                                     haptics.tap();
-                                                    const response = await fetch("/api/transactions", {
+                                                    const response = await apiFetch("/api/transactions", {
                                                         method: "POST",
                                                         headers: { "Content-Type": "application/json" },
                                                         body: JSON.stringify(transData),
                                                     });
 
                                                     // Show Time-Cost
-                                                    const settingsRes = await fetch("/api/profile");
+                                                    const settingsRes = await apiFetch("/api/profile");
                                                     const profile = await settingsRes.json();
                                                     const hourlyRate = profile.data?.user?.hourlyRate || 50000;
                                                     const hours = template.amount / hourlyRate;

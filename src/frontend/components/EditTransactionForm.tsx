@@ -7,6 +7,7 @@ import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 
 import { Transaction } from "@/types";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface Category {
     id: number;
@@ -65,7 +66,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
 
     const loadCategories = async (type: "expense" | "income") => {
         try {
-            const response = await fetch("/api/categories");
+            const response = await apiFetch("/api/categories");
             const result = await response.json();
             if (result.success) {
                 setCategories(result.data.filter((c: Category) => c.type === type));
@@ -99,7 +100,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
         setError(null);
 
         try {
-            const response = await fetch(`/api/transactions/${transaction.id}`, {
+            const response = await apiFetch(`/api/transactions/${transaction.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

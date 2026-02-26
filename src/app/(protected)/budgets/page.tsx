@@ -117,7 +117,7 @@ export default function BudgetsPage() {
         if (!confirm("Yakin mau hapus budget ini?")) return;
 
         try {
-            const response = await fetch(`/api/budgets/${id}`, {
+            const response = await apiFetch(`/api/budgets/${id}`, {
                 method: "DELETE",
             });
 

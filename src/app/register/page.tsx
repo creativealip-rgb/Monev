@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { register, signInWithGoogle } from "@/app/actions/auth";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, MailCheck } from "lucide-react";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface FormErrors {
     name?: string;
@@ -120,7 +121,7 @@ function GoogleLoginButton() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            await signInWithGoogle();
+            await signIn("google", { redirectTo: "/dashboard" });
         } catch (error) {
             console.error("Google login error:", error);
         } finally {
@@ -246,22 +247,24 @@ export default function RegisterPage() {
         }
 
         try {
-            // Create FormData for the server action
-            const submitFormData = new FormData();
-            submitFormData.append("name", formData.name);
-            submitFormData.append("email", formData.email);
-            submitFormData.append("password", formData.password);
-            submitFormData.append("confirmPassword", formData.confirmPassword);
+            const response = await apiFetch("/api/auth/register", {
+                method: "POST",
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword
+                })
+            });
 
-            const result = await register({ error: "" }, submitFormData);
+            const result = await response.json();
 
-            // @ts-ignore
-            if (result?.success) {
+            if (result.success) {
                 setIsSuccess(true);
                 return;
             }
 
-            if (result?.error) {
+            if (result.error) {
                 setErrors({ general: result.error });
                 setShake(true);
                 setTimeout(() => setShake(false), 500);

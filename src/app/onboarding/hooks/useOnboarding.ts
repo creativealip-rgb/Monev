@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { OnboardingFormData, OnboardingState } from "../types";
-import { completeOnboardingAction } from "../actions";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 const STORAGE_KEY = "monev_onboarding_complete";
 const ONBOARDING_DATA_KEY = "monev_onboarding_data";
@@ -105,13 +105,19 @@ export function useOnboarding() {
     const completeOnboarding = useCallback(async () => {
         setIsSubmitting(true);
         try {
-            const result = await completeOnboardingAction(state.formData);
+            const response = await apiFetch("/api/onboarding", {
+                method: "POST",
+                body: JSON.stringify(state.formData)
+            });
+            const result = await response.json();
             if (result.success) {
                 localStorage.setItem(STORAGE_KEY, "true");
                 setState((prev) => ({ ...prev, isComplete: true }));
             } else {
                 console.error("Failed to complete onboarding:", result.message);
             }
+        } catch (error) {
+            console.error("Onboarding Error:", error);
         } finally {
             setIsSubmitting(false);
         }

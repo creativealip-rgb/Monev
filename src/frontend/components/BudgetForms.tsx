@@ -7,6 +7,7 @@ import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { Budget, Goal } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface Category {
     id: number;
@@ -43,7 +44,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
         setError(null);
 
         try {
-            const response = await fetch("/api/budgets", {
+            const response = await apiFetch("/api/budgets", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -207,7 +208,7 @@ export function AddGoalForm({ isOpen, onClose, onSuccess }: AddGoalFormProps) {
         setError(null);
 
         try {
-            const response = await fetch("/api/goals", {
+            const response = await apiFetch("/api/goals", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -395,7 +396,7 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
         setError(null);
 
         try {
-            const response = await fetch(`/api/budgets/${budget.id}`, {
+            const response = await apiFetch(`/api/budgets/${budget.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -516,7 +517,7 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
         setError(null);
 
         try {
-            const response = await fetch(`/api/goals/${goal.id}`, {
+            const response = await apiFetch(`/api/goals/${goal.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "build:apk": "node scripts/build-apk.js",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",

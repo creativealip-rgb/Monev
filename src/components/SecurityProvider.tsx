@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { Lock, Unlock } from "lucide-react";
-import { fetchProfileData, verifySecurityPin, toggleHideBalanceAction } from "@/app/(protected)/profile/actions";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface SecurityContextType {
     isLocked: boolean;
@@ -40,25 +40,31 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
 
     const checkSecuritySettings = async () => {
         try {
-            const data = await fetchProfileData();
-            const settings = data?.settings;
-            const enabled = settings?.isAppLockEnabled || false;
-            const pinExists = settings?.hasPin || false;
-            const stealth = settings?.hideBalance || false;
+            const response = await apiFetch("/api/profile");
+            const result = await response.json();
 
-            setIsEnabled(enabled);
-            setHasPin(pinExists);
-            setIsStealthMode(stealth);
+            if (result.success) {
+                const settings = result.data?.settings;
+                const enabled = settings?.isAppLockEnabled || false;
+                const pinExists = settings?.hasPin || false;
+                const stealth = settings?.hideBalance || false;
 
-            if (!enabled || !pinExists) {
-                setIsLocked(false);
-            } else {
-                const sessionUnlocked = sessionStorage.getItem("monev_unlocked");
-                if (sessionUnlocked === "true") {
+                setIsEnabled(enabled);
+                setHasPin(pinExists);
+                setIsStealthMode(stealth);
+
+                if (!enabled || !pinExists) {
                     setIsLocked(false);
                 } else {
-                    setIsLocked(true);
+                    const sessionUnlocked = sessionStorage.getItem("monev_unlocked");
+                    if (sessionUnlocked === "true") {
+                        setIsLocked(false);
+                    } else {
+                        setIsLocked(true);
+                    }
                 }
+            } else {
+                setIsLocked(false);
             }
         } catch (error) {
             console.error("Failed to check security settings", error);
@@ -112,7 +118,10 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
         const newValue = !isStealthMode;
         setIsStealthMode(newValue);
         try {
-            await toggleHideBalanceAction(newValue);
+            await apiFetch("/api/profile", {
+                method: "POST",
+                body: JSON.stringify({ type: "settings", hideBalance: newValue })
+            });
         } catch (e) {
             console.error(e);
             // Fallback
@@ -121,18 +130,29 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
     };
 
     const unlock = async (pin: string): Promise<{ success: boolean; message?: string }> => {
-        const result = await verifySecurityPin(pin);
+        try {
+            const response = await apiFetch("/api/profile/verify-pin", {
+                method: "POST",
+                body: JSON.stringify({ pin })
+            });
+            const result = await response.json();
 
-        if (result.success) {
-            setIsLocked(false);
-            sessionStorage.setItem("monev_unlocked", "true");
-            return { success: true };
+            if (result.success) {
+                setIsLocked(false);
+                sessionStorage.setItem("monev_unlocked", "true");
+                return { success: true };
+            }
+
+            return {
+                success: false,
+                message: result.message || "PIN salah. Silakan coba lagi."
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: "Gagal verifikasi PIN. Cek koneksi internet."
+            };
         }
-
-        return {
-            success: false,
-            message: result.message || "PIN salah. Silakan coba lagi."
-        };
     };
 
     const handleUnlockSubmit = async (e: React.FormEvent) => {

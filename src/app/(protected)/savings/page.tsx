@@ -95,7 +95,7 @@ export default function SavingsPage() {
         if (!confirm("Yakin mau hapus goal ini?")) return;
 
         try {
-            const response = await fetch(`/api/goals/${id}`, {
+            const response = await apiFetch(`/api/goals/${id}`, {
                 method: "DELETE",
             });
 

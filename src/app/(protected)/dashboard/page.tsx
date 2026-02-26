@@ -10,7 +10,6 @@ import { useHeroTheme } from "@/frontend/lib/hero-theme";
 import { TransactionListSkeleton, NoTransactionsEmpty, useToast } from "@/frontend/components/UI";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { DailyInsight } from "@/frontend/components/DailyInsight";
-import { toggleHideBalanceAction } from "../profile/actions";
 import {
     Sparkles,
     PieChart,
@@ -39,12 +38,12 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
-import { fetchProfileData } from "@/app/(protected)/profile/actions";
 import { cn } from "@/frontend/lib/utils";
 import { UserTier, canAccessAnalytics, canAccessInvestments } from "@/lib/tier-gate";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { useSecurity } from "@/components/SecurityProvider";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
@@ -226,20 +225,45 @@ export default function Home() {
             const currentMonth = new Date().getMonth() + 1;
             const currentYear = new Date().getFullYear();
 
+            // Try to load cached data first for instant UI response
+            const [cachedProfile, cachedStats, cachedTrans, cachedAnomalies] = await Promise.all([
+                OfflineManager.getCache("dashboard_profile"),
+                OfflineManager.getCache("dashboard_stats"),
+                OfflineManager.getCache("dashboard_transactions"),
+                OfflineManager.getCache("dashboard_anomalies")
+            ]);
+
+            if (cachedProfile) {
+                const fullName = `${cachedProfile.firstName || ""} ${cachedProfile.lastName || ""}`.trim();
+                setUserName(fullName || cachedProfile.name || "Sultan");
+                setUserImage(cachedProfile.image || null);
+                // @ts-ignore
+                setUserTier(cachedProfile.tier || "miskin");
+            }
+            if (cachedStats) setStats(cachedStats);
+            if (cachedTrans) setTransactions(cachedTrans);
+            if (cachedAnomalies) setAnomalies(cachedAnomalies);
+
             // Fetch all data in parallel for better performance
             const [
-                profileData,
+                profileResponse,
                 statsResponse,
                 transResponse,
                 catsResponse,
                 anomaliesResponse
             ] = await Promise.all([
-                fetchProfileData(),
+                apiFetch("/api/profile"),
                 apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
                 apiFetch("/api/transactions"),
                 apiFetch("/api/categories"),
                 apiFetch("/api/ai/analyze-anomalies")
             ]);
+
+            const profileResult = await profileResponse.json();
+            const profileData = profileResult.success ? profileResult.data : null;
+
+            // Early read for anomalies
+            const anomaliesResultData = await anomaliesResponse.json();
 
             // Process profile data
             if (profileData?.user) {
@@ -249,28 +273,37 @@ export default function Home() {
                 setUserImage(profileData.user.image || null);
                 // @ts-ignore
                 setUserTier(profileData.user.tier || "miskin");
+                // Cache profile data
+                OfflineManager.setCache("dashboard_profile", profileData.user);
             }
 
             // Process stats
             const statsResult = await statsResponse.json();
+            let freshStats = null;
             if (statsResult.success) {
-                setStats(statsResult.data);
+                freshStats = statsResult.data;
+                setStats(freshStats);
+                OfflineManager.setCache("dashboard_stats", freshStats);
             }
 
-            // Process transactions, categories and anomalies
-            const [transResult, catsResult, anomaliesResult] = await Promise.all([
+            // Process transactions and categories
+            const [transResult, catsResult] = await Promise.all([
                 transResponse.json(),
-                catsResponse.json(),
-                anomaliesResponse.json()
+                catsResponse.json()
             ]);
 
-            if (anomaliesResult.anomalies) {
-                setAnomalies(anomaliesResult.anomalies);
+            if (anomaliesResultData.anomalies) {
+                setAnomalies(anomaliesResultData.anomalies);
+                OfflineManager.setCache("dashboard_anomalies", anomaliesResultData.anomalies);
             }
 
+            let freshTransactions = [];
             if (transResult.success) {
                 const categories: Category[] = catsResult.success ? catsResult.data : [];
-                const mappedTransactions = transResult.data.slice(0, 5).map((t: any) => ({
+                if (catsResult.success) {
+                    OfflineManager.setCache("dashboard_categories", catsResult.data);
+                }
+                freshTransactions = transResult.data.slice(0, 5).map((t: any) => ({
                     id: t.id.toString(),
                     amount: t.amount,
                     description: t.description,
@@ -280,7 +313,38 @@ export default function Home() {
                     is_verified: t.isVerified,
                 }));
 
-                setTransactions(mappedTransactions);
+                setTransactions(freshTransactions);
+                OfflineManager.setCache("dashboard_transactions", freshTransactions);
+            }
+
+            // Merge Optimistic (Offline) Transactions
+            const offlineTrans = await OfflineManager.getOptimisticTransactions();
+            const offlineCats = await OfflineManager.getCache("dashboard_categories") || [];
+
+            if (offlineTrans.length > 0) {
+                const mappedOffline = offlineTrans.map(t => ({
+                    ...t,
+                    category: offlineCats.find((c: any) => c.id === Number(t.categoryId))?.name || "Lainnya"
+                }));
+
+                setTransactions(prev => {
+                    const combined = [...mappedOffline, ...prev];
+                    return combined.slice(0, 5);
+                });
+
+                // Update Stats with offline impact
+                setStats(currentStats => {
+                    const baseStats = freshStats || currentStats;
+                    const offlineIncome = offlineTrans.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
+                    const offlineExpense = offlineTrans.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
+
+                    return {
+                        ...baseStats,
+                        income: baseStats.income + offlineIncome,
+                        expense: baseStats.expense + offlineExpense,
+                        balance: baseStats.balance + offlineIncome - offlineExpense
+                    };
+                });
             }
         } catch (error) {
             console.error("Error loading data:", error);

@@ -6,6 +6,7 @@ import { NativeBiometric } from "capacitor-native-biometric";
 import { App } from "@capacitor/app";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Fingerprint, ShieldCheck } from "lucide-react";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface SecurityGuardProps {
     children: React.ReactNode;
@@ -47,7 +48,7 @@ export function SecurityGuard({ children }: SecurityGuardProps) {
             }
 
             try {
-                const res = await fetch("/api/user/settings");
+                const res = await apiFetch("/api/user/settings");
                 const data = await res.json();
 
                 if (data.settings?.isBiometricEnabled) {

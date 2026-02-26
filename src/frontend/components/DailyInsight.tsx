@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, AlertCircle, TrendingUp, RefreshCw } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 export function DailyInsight() {
     const [insight, setInsight] = useState<{ text: string, type: "success" | "warning" | "info" } | null>(null);
@@ -12,7 +13,7 @@ export function DailyInsight() {
     const fetchInsight = async () => {
         setLoading(true);
         try {
-            const res = await fetch("/api/ai/insight");
+            const res = await apiFetch("/api/ai/insight");
             const data = await res.json();
             if (data.success) {
                 setInsight({ text: data.insight, type: data.type });

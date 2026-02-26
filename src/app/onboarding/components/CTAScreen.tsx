@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { UserPlus, LogIn, Sparkles, Loader2, Wallet, ArrowRight } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { authenticate } from "@/app/actions/auth";
+import { signIn } from "next-auth/react";
 
 interface CTAScreenProps {
     initialBalance: number;
@@ -33,18 +33,17 @@ export function CTAScreen({ initialBalance, currency, onRegister, onLogin, onGue
             const result = await response.json();
 
             if (result.success && result.credentials) {
-                // Sign in with the created credentials
-                const formData = new FormData();
-                formData.append("email", result.credentials.email);
-                formData.append("password", result.credentials.password);
+                const authResult = await signIn("credentials", {
+                    email: result.credentials.email,
+                    password: result.credentials.password,
+                    redirect: false,
+                });
 
-                const authResult = await authenticate(undefined, formData);
-
-                if (!authResult) {
+                if (authResult?.ok) {
                     // Success - redirect to dashboard
                     onGuest();
                 } else {
-                    console.error("Guest auth failed:", authResult);
+                    console.error("Guest auth failed:", authResult?.error);
                     // Still try to proceed
                     onGuest();
                 }

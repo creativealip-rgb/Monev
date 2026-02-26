@@ -17,7 +17,6 @@ import { useSession } from "next-auth/react";
 import { UserTier, hasFullAnalytics } from "@/lib/tier-gate";
 import { TierGateOverlay } from "@/frontend/components/TierGateOverlay";
 import { useToast } from "@/frontend/components/UI";
-import { toggleHideBalanceAction } from "../profile/actions";
 import { useSecurity } from "@/components/SecurityProvider";
 
 // New Components

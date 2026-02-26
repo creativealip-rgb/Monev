@@ -21,10 +21,12 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
     },
   },
+  /*
   server: {
     url: 'https://www.monevapp.web.id',
     cleartext: true
   }
+  */
 };
 
 export default config;

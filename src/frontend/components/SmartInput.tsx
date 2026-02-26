@@ -2,12 +2,13 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
     X, Camera, Mic, Upload, Loader2, Check, AlertCircle,
     Sparkles, ArrowRight
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface SmartInputProps {
     mode: "screenshot" | "voice";
@@ -46,7 +47,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
     const [error, setError] = useState<string | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
-    
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
@@ -69,7 +70,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
         setError(null);
 
         try {
-            const response = await fetch("/api/transactions/ocr", {
+            const response = await apiFetch("/api/transactions/ocr", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ imageBase64: base64.split(",")[1] }),
@@ -114,7 +115,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
 
             mediaRecorder.start();
             setIsRecording(true);
-            
+
             timerRef.current = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
             }, 1000);
@@ -142,7 +143,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
             const formData = new FormData();
             formData.append("audio", audioBlob, "voice.webm");
 
-            const response = await fetch("/api/transactions/voice", {
+            const response = await apiFetch("/api/transactions/voice", {
                 method: "POST",
                 body: formData,
             });
@@ -178,11 +179,11 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
 
         try {
             // Get category ID from name
-            const catsResponse = await fetch("/api/categories");
+            const catsResponse = await apiFetch("/api/categories");
             const catsResult = await catsResponse.json();
             const categories = catsResult.data || [];
             const category = categories.find((c: any) => c.name === result.category);
-            
+
             if (!category) {
                 setError("Kategori tidak ditemukan");
                 setSaving(false);
@@ -190,7 +191,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
             }
 
             // Save transaction directly
-            const response = await fetch("/api/transactions", {
+            const response = await apiFetch("/api/transactions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -204,7 +205,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
             });
 
             const saveResult = await response.json();
-            
+
             if (saveResult.success) {
                 // Trigger refresh
                 window.dispatchEvent(new CustomEvent("transactionAdded"));
@@ -322,8 +323,8 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                                 onClick={isRecording ? stopRecording : startRecording}
                                                 className={cn(
                                                     "w-32 h-32 mx-auto rounded-full flex items-center justify-center transition-all",
-                                                    isRecording 
-                                                        ? "bg-rose-500 animate-pulse" 
+                                                    isRecording
+                                                        ? "bg-rose-500 animate-pulse"
                                                         : "bg-purple-500 hover:scale-105"
                                                 )}
                                             >
@@ -408,7 +409,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                         <div>
                                             <p className="text-xs text-slate-400 mb-1">Kategori</p>
                                             <div className="flex items-center gap-2">
-                                                <div 
+                                                <div
                                                     className="w-3 h-3 rounded-full"
                                                     style={{ backgroundColor: categoryColors[result.category] }}
                                                 />

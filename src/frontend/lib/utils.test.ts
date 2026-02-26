@@ -41,17 +41,20 @@ describe("formatCurrency", () => {
         expect(result).toMatch(/Rp|IDR/);
     });
 
-    it("formats USD when set", () => {
+    it("formats USD when set and applies conversion", () => {
         mockLocalStorage.setItem("monev_currency", "USD");
-        const result = formatCurrency(100);
+        // 100000 IDR * 0.000064 = 6.4 USD
+        const result = formatCurrency(100000);
         expect(result).toContain("$");
-        expect(result).toContain("100");
+        expect(result).toContain("6.40");
     });
 
-    it("formats EUR when set", () => {
+    it("formats EUR when set and applies conversion", () => {
         mockLocalStorage.setItem("monev_currency", "EUR");
-        const result = formatCurrency(250);
+        // 100000 IDR * 0.000059 = 5.9 EUR
+        const result = formatCurrency(100000);
         expect(result).toContain("€");
+        expect(result).toContain("5,90"); // de-DE uses comma for decimals
     });
 
     it("handles zero", () => {

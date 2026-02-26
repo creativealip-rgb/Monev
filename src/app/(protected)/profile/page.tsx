@@ -8,11 +8,8 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import {
-    fetchProfileData, updateProfile, updateFinancialSettings,
-    updateSecuritySettings, disconnectTelegram, generateFinancialPersonaAction
-} from "./actions";
-import { serverSignOut } from "@/app/actions/auth";
+import { apiFetch } from "@/frontend/lib/api-client";
+import { signOut } from "next-auth/react";
 import { cn } from "@/frontend/lib/utils";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { useToast } from "@/frontend/components/UI";
@@ -113,7 +110,9 @@ export default function ProfilePage() {
 
     const loadData = async () => {
         try {
-            const data = await fetchProfileData();
+            const response = await apiFetch("/api/profile");
+            const result = await response.json();
+            const data = result.success ? result.data : null;
             if (data) {
                 setUser(data.user);
                 setSettings(data.settings);
@@ -163,7 +162,6 @@ export default function ProfilePage() {
     const handleSaveProfile = async () => {
         if (!user) return;
         const form = new FormData();
-        // form.append("id", user.id.toString()); // Not needed for updateProfile action as it uses session
         form.append("firstName", formData.firstName);
         form.append("lastName", formData.lastName);
         form.append("username", formData.username);
@@ -173,8 +171,13 @@ export default function ProfilePage() {
         }
         form.append("whatsappId", formData.whatsappId);
         form.append("telegramId", formData.telegramId);
+        form.append("action", "updateProfile");
 
-        const result = await updateProfile(form);
+        const response = await apiFetch("/api/profile", {
+            method: "POST",
+            body: form
+        });
+        const result = await response.json();
 
         if (result.success) {
             setActiveModal(null);
@@ -187,10 +190,14 @@ export default function ProfilePage() {
 
     const handleSaveSettings = async () => {
         const form = new FormData();
+        form.append("action", "updateFinancial");
         form.append("hourlyRate", formData.hourlyRate);
         form.append("primaryGoalId", formData.primaryGoalId);
 
-        await updateFinancialSettings(form);
+        await apiFetch("/api/profile", {
+            method: "POST",
+            body: form
+        });
         toast.success("Berhasil", "Pengaturan keuangan berhasil disimpan!");
         setActiveModal(null);
         loadData(); // Refresh
@@ -206,12 +213,15 @@ export default function ProfilePage() {
             return;
         }
 
-        const form = new FormData();
-        form.append("securityPin", formData.securityPin);
-        form.append("isAppLockEnabled", String(formData.isAppLockEnabled));
-        form.append("isBiometricEnabled", String(formData.isBiometricEnabled));
-
-        await updateSecuritySettings(form);
+        await apiFetch("/api/profile", {
+            method: "POST",
+            body: JSON.stringify({
+                type: "settings",
+                securityPin: formData.securityPin,
+                isAppLockEnabled: formData.isAppLockEnabled,
+                isBiometricEnabled: formData.isBiometricEnabled
+            })
+        });
         toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
         setActiveModal(null);
         loadData();
@@ -220,7 +230,8 @@ export default function ProfilePage() {
     const handleGeneratePersona = async () => {
         try {
             setLoading(true);
-            const result = await generateFinancialPersonaAction();
+            const response = await apiFetch("/api/profile/generate-persona", { method: "POST" });
+            const result = await response.json();
             if (result.success) {
                 setFormData(prev => ({ ...prev, financialPersona: result.persona }));
                 toast.success("Wah!", "Persona keuangan Bos sudah diupdate!");
@@ -532,7 +543,7 @@ export default function ProfilePage() {
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => serverSignOut()}
+                    onClick={() => signOut({ callbackUrl: "/login" })}
                     className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6"
                 >
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
@@ -789,7 +800,11 @@ export default function ProfilePage() {
                                                         <button
                                                             onClick={async () => {
                                                                 if (confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram?")) {
-                                                                    const result = await disconnectTelegram();
+                                                                    const response = await apiFetch("/api/profile", {
+                                                                        method: "POST",
+                                                                        body: JSON.stringify({ type: "disconnectTelegram" })
+                                                                    });
+                                                                    const result = await response.json();
                                                                     if (result.success) {
                                                                         toast.success("Berhasil", "Koneksi Telegram diputuskan.");
                                                                         loadData();

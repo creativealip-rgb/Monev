@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Lock, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
-import { resetPassword } from "@/app/actions/auth";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 function PasswordStrength({ password }: { password: string }) {
     const getStrength = (pwd: string): number => {
@@ -87,35 +87,45 @@ function ResetPasswordForm() {
 
     const [errorMsg, setErrorMsg] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg("");
+        setIsLoading(true);
 
         if (!token) {
             setErrorMsg("Token tidak valid atau tidak ditemukan. Cek kembali link email Anda.");
+            setIsLoading(false);
             return;
         }
 
         if (password !== confirmPassword) {
             setErrorMsg("Password dan konfirmasi password tidak cocok.");
+            setIsLoading(false);
             return;
         }
 
-        const formData = new FormData();
-        formData.append("token", token);
-        formData.append("password", password);
-        formData.append("confirmPassword", confirmPassword);
+        try {
+            const response = await apiFetch("/api/auth/reset-password", {
+                method: "POST",
+                body: JSON.stringify({ token, password, confirmPassword })
+            });
 
-        const result = await resetPassword({}, formData);
+            const result = await response.json();
 
-        if (result?.success) {
-            setIsSuccess(true);
-            setTimeout(() => {
-                router.push("/login?reset=success");
-            }, 3000);
-        } else if (result?.error) {
-            setErrorMsg(result.error);
+            if (result.success) {
+                setIsSuccess(true);
+                setTimeout(() => {
+                    router.push("/login?reset=success");
+                }, 3000);
+            } else {
+                setErrorMsg(result.error || "Gagal menyetel ulang password.");
+            }
+        } catch (error) {
+            setErrorMsg("Terjadi kesalahan. Silakan coba lagi.");
+        } finally {
+            setIsLoading(false);
         }
     };
 

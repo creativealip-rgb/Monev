@@ -17,21 +17,25 @@ import {
     ExternalLink,
     Settings,
     Layers,
-    Cpu
+    Cpu,
+    MessageSquare,
+    CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
-import { fetchNotificationConfig } from "../actions";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 type AutomationApp = "macrodroid" | "tasker" | "automate";
 
 export default function NotificationGuidePage() {
-    const [config, setConfig] = useState<{ apiKey: string; telegramId: number | null; webhookUrl: string } | null>(null);
+    const [config, setConfig] = useState<any>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [activeStep, setActiveStep] = useState(1);
     const [selectedApp, setSelectedApp] = useState<AutomationApp>("macrodroid");
 
     useEffect(() => {
-        fetchNotificationConfig().then(setConfig);
+        apiFetch("/api/config/notifications").then(res => res.json()).then(res => {
+            if (res.success) setConfig(res.data);
+        });
     }, []);
 
     const copyToClipboard = (text: string, field: string) => {

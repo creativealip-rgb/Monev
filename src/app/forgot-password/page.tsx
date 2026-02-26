@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { ArrowLeft, Mail, Lock, Loader2, AlertCircle, MailCheck } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
-import { requestPasswordReset } from "@/app/actions/auth";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -34,26 +34,39 @@ export default function ForgotPasswordPage() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [emailSent, setEmailSent] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg("");
+        setIsLoading(true);
 
         const formData = new FormData(e.currentTarget);
         const email = formData.get("email") as string;
 
         if (!email) {
             setErrorMsg("Email wajib diisi");
+            setIsLoading(false);
             return;
         }
 
-        const result = await requestPasswordReset({}, formData);
+        try {
+            const response = await apiFetch("/api/auth/forgot-password", {
+                method: "POST",
+                body: JSON.stringify({ email })
+            });
+            const result = await response.json();
 
-        if (result?.success) {
-            setEmailSent(email);
-            setIsSuccess(true);
-        } else if (result?.error) {
-            setErrorMsg(result.error);
+            if (result.success) {
+                setEmailSent(email);
+                setIsSuccess(true);
+            } else {
+                setErrorMsg(result.error || "Gagal memproses permintaan");
+            }
+        } catch (error) {
+            setErrorMsg("Terjadi kesalahan. Silakan coba lagi.");
+        } finally {
+            setIsLoading(false);
         }
     };
 

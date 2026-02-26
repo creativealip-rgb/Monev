@@ -9,6 +9,7 @@ import { useToast } from "./UI";
 import { predictCategory } from "@/lib/context-engine";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { SplitBillFlow } from "./SplitBillFlow";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface Category {
     id: number;
@@ -57,7 +58,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     // Load categories when type changes
     const loadCategories = async (type: "expense" | "income") => {
         try {
-            const response = await fetch("/api/categories");
+            const response = await apiFetch("/api/categories");
             const result = await response.json();
             if (result.success) {
                 const filteredCats = result.data.filter((c: Category) => c.type === type);
@@ -131,7 +132,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         };
 
         try {
-            const response = await fetch("/api/transactions", {
+            const response = await apiFetch("/api/transactions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(transData),
@@ -141,11 +142,12 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
 
             if (result.success || !response.ok) {
                 if (!response.ok) {
-                    OfflineManager.queueTransaction(transData);
+                    await OfflineManager.queueTransaction(transData);
+                    window.dispatchEvent(new CustomEvent("transactionAdded"));
                 }
 
                 // Show success feedback with Time-Cost
-                const settingsRes = await fetch("/api/profile");
+                const settingsRes = await apiFetch("/api/profile");
                 const profile = await settingsRes.json();
                 const hourlyRate = profile.data?.user?.hourlyRate || 50000;
                 const hours = parsedAmount / hourlyRate;
@@ -184,7 +186,8 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         } catch (err) {
             console.error(err);
             // Handle network error via offline queue
-            OfflineManager.queueTransaction(transData);
+            await OfflineManager.queueTransaction(transData);
+            window.dispatchEvent(new CustomEvent("transactionAdded"));
             onSuccess?.();
             onClose();
         } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 /**
  * Web Push Notification registration hook.
@@ -43,7 +44,7 @@ export function useWebPush() {
             if (permission !== "granted") return false;
 
             // Get VAPID key from server
-            const res = await fetch("/api/push/vapid-key");
+            const res = await apiFetch("/api/push/vapid-key");
             if (!res.ok) {
                 console.error("[WebPush] Failed to get VAPID key");
                 return false;
@@ -56,7 +57,7 @@ export function useWebPush() {
             });
 
             // Send subscription to server
-            await fetch("/api/push/subscribe", {
+            await apiFetch("/api/push/subscribe", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(subscription),
@@ -77,7 +78,7 @@ export function useWebPush() {
             const sub = await registration.pushManager.getSubscription();
             if (sub) {
                 await sub.unsubscribe();
-                await fetch("/api/push/unsubscribe", {
+                await apiFetch("/api/push/unsubscribe", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ endpoint: sub.endpoint }),

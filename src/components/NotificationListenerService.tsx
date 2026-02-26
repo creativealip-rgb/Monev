@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { apiFetch } from "@/frontend/lib/api-client";
 import { Capacitor } from "@capacitor/core";
 
 /**
@@ -110,7 +111,7 @@ export function NotificationListenerService() {
 
                         // Send to API
                         try {
-                            await fetch("/api/notification-webhook", {
+                            await apiFetch("/api/notification-webhook", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({

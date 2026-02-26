@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { authenticate, signInWithGoogle } from "@/app/actions/auth";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -75,7 +75,7 @@ function GoogleLoginButton() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            await signInWithGoogle();
+            await signIn("google", { redirectTo: "/dashboard" });
         } catch (error) {
             console.error("Google login error:", error);
         } finally {
@@ -159,17 +159,17 @@ export default function LoginPage() {
 
             if (result.success && result.credentials) {
                 // Sign in with the created credentials
-                const submitFormData = new FormData();
-                submitFormData.append("email", result.credentials.email);
-                submitFormData.append("password", result.credentials.password);
+                const authResult = await signIn("credentials", {
+                    email: result.credentials.email,
+                    password: result.credentials.password,
+                    redirect: false,
+                });
 
-                const authResult = await authenticate(undefined, submitFormData);
-
-                if (!authResult) {
+                if (authResult?.ok) {
                     // Success - redirect to dashboard
                     router.push("/dashboard");
                 } else {
-                    console.error("Guest auth failed:", authResult);
+                    console.error("Guest auth failed:", authResult?.error);
                 }
             }
         } catch (error) {
@@ -203,16 +203,18 @@ export default function LoginPage() {
         setErrors({});
 
         try {
-            // Create FormData for the server action
-            const submitFormData = new FormData();
-            submitFormData.append("email", formData.email);
-            submitFormData.append("password", formData.password);
+            const result = await signIn("credentials", {
+                email: formData.email,
+                password: formData.password,
+                redirect: false,
+            });
 
-            const error = await authenticate(undefined, submitFormData);
-            if (error) {
-                setErrors({ general: error });
+            if (result?.error) {
+                setErrors({ general: result.error });
                 setShake(true);
                 setTimeout(() => setShake(false), 500);
+            } else if (result?.ok) {
+                router.push("/dashboard");
             }
         } finally {
             setIsPending(false);

@@ -5,6 +5,7 @@ import { X, Target, TrendingUp, Receipt, ArrowRightLeft, Loader2, ArrowLeftRight
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 interface TransferModalProps {
     isOpen: boolean;
@@ -67,7 +68,7 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
     useEffect(() => {
         if (isOpen) {
             setFetching(true);
-            fetch(`/api/transfer?mode=${mode}`)
+            apiFetch(`/api/transfer?mode=${mode}`)
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.success) {
@@ -106,7 +107,7 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
 
         setLoading(true);
         try {
-            const res = await fetch("/api/transfer", {
+            const res = await apiFetch("/api/transfer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

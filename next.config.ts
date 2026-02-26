@@ -1,38 +1,19 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from "next/constants";
 
-const withPWA = require("@ducanh2912/next-pwa").default({
-  dest: "public",
-});
+const nextConfig = (phase: string): NextConfig => {
+  // Only allow static export during the actual production build for APK
+  const isApkBuild = process.env.IS_APK === "true" && phase === PHASE_PRODUCTION_BUILD;
 
-const nextConfig: NextConfig = {
-  /* config options here */
-
-  serverExternalPackages: ["better-sqlite3"],
-  output: "standalone",
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "api.qrserver.com",
-      },
-    ],
-  },
-  async headers() {
-    return [
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET,DELETE,PATCH,POST,PUT,OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" },
-        ],
-      },
-    ];
-  },
-  turbopack: {
-    root: __dirname,
-  },
+  return {
+    output: isApkBuild ? "export" : undefined,
+    images: {
+      unoptimized: true,
+    },
+    env: {
+      NEXT_PUBLIC_IS_APK: isApkBuild ? "true" : "false",
+    },
+  };
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;

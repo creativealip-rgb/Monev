@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2, X, ChevronDown, BarChart3 } from "lucide-react";
+import { apiFetch } from "@/frontend/lib/api-client";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
 import { TIER_CONFIGS, UserTier } from "@/lib/tier-gate";
@@ -75,7 +76,7 @@ export default function UpgradePage() {
 
         setIsApplying(true);
         try {
-            const res = await fetch("/api/coupons/validate", {
+            const res = await apiFetch("/api/coupons/validate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code: couponCode })

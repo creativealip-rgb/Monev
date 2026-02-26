@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchProfileData } from "@/app/(protected)/profile/actions";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 // Keys for query caching
 export const queryKeys = {
@@ -18,7 +18,12 @@ export const queryKeys = {
 export function useProfile() {
     return useQuery({
         queryKey: queryKeys.profile,
-        queryFn: fetchProfileData,
+        queryFn: async () => {
+            const response = await apiFetch("/api/profile");
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+        },
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }
@@ -28,7 +33,7 @@ export function useStats(year: number, month: number) {
     return useQuery({
         queryKey: queryKeys.stats(year, month),
         queryFn: async () => {
-            const response = await fetch(`/api/stats?year=${year}&month=${month}`);
+            const response = await apiFetch(`/api/stats?year=${year}&month=${month}`);
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -42,7 +47,7 @@ export function useTransactions(limit = 50) {
     return useQuery({
         queryKey: queryKeys.transactions(limit),
         queryFn: async () => {
-            const response = await fetch(`/api/transactions?limit=${limit}`);
+            const response = await apiFetch(`/api/transactions?limit=${limit}`);
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -56,7 +61,7 @@ export function useCategories() {
     return useQuery({
         queryKey: queryKeys.categories,
         queryFn: async () => {
-            const response = await fetch("/api/categories");
+            const response = await apiFetch("/api/categories");
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -70,7 +75,7 @@ export function useBudgets(month: number, year: number) {
     return useQuery({
         queryKey: queryKeys.budgets(month, year),
         queryFn: async () => {
-            const response = await fetch(`/api/budgets?month=${month}&year=${year}`);
+            const response = await apiFetch(`/api/budgets?month=${month}&year=${year}`);
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -84,7 +89,7 @@ export function useGoals() {
     return useQuery({
         queryKey: queryKeys.goals,
         queryFn: async () => {
-            const response = await fetch("/api/goals");
+            const response = await apiFetch("/api/goals");
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -98,7 +103,7 @@ export function useBills() {
     return useQuery({
         queryKey: queryKeys.bills,
         queryFn: async () => {
-            const response = await fetch("/api/bills");
+            const response = await apiFetch("/api/bills");
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -112,7 +117,7 @@ export function useInvestments() {
     return useQuery({
         queryKey: queryKeys.investments,
         queryFn: async () => {
-            const response = await fetch("/api/investments");
+            const response = await apiFetch("/api/investments");
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;
@@ -126,7 +131,7 @@ export function useAnalytics(year: number, month: number) {
     return useQuery({
         queryKey: queryKeys.analytics(year, month),
         queryFn: async () => {
-            const response = await fetch(`/api/analytics?year=${year}&month=${month}`);
+            const response = await apiFetch(`/api/analytics?year=${year}&month=${month}`);
             const result = await response.json();
             if (!result.success) throw new Error(result.message);
             return result.data;

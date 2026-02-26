@@ -5,6 +5,17 @@ import { users, transactions, adminActivityLog } from "@/backend/db/schema";
 import { eq, sql, desc, gte, lte, and, count } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
+    // Build-time bypass for static export
+    if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production') {
+        try {
+            // Check if we are actually in a real request or just pre-rendering
+            // For static export, we want to skip the logic
+            if (req.headers.get('x-next-build')) return NextResponse.json({ static: true });
+        } catch (e) {
+            return NextResponse.json({ static: true });
+        }
+    }
+
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -13,7 +24,7 @@ export async function GET(req: NextRequest) {
 
         const db = getDb();
         const currentUserId = parseInt(session.user.id);
-        
+
         const adminCheck = await db.select({ isAdmin: users.isAdmin })
             .from(users)
             .where(eq(users.id, currentUserId))
@@ -88,7 +99,7 @@ export async function GET(req: NextRequest) {
             kaya: 0,
             sultan: 0,
         };
-        
+
         tierStats.forEach((stat) => {
             tierDistribution[stat.tier as keyof typeof tierDistribution] = stat.count;
         });
@@ -102,7 +113,7 @@ export async function GET(req: NextRequest) {
             const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
             const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-            
+
             const dayStats = await db.select({
                 count: sql<number>`COUNT(*)`,
             })
@@ -112,7 +123,7 @@ export async function GET(req: NextRequest) {
                     lte(users.createdAt, dayEnd)
                 ))
                 .get();
-            
+
             dailyStats.push({
                 date: dayStart.toISOString().split("T")[0],
                 count: dayStats?.count || 0,

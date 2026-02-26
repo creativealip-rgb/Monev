@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { NotificationsListener } from 'capacitor-notifications-listener';
+import { apiFetch } from "@/frontend/lib/api-client";
 
 // Keep a global variable outside the component to survive re-renders/Strict Mode
 let isInitialized = false;
@@ -24,8 +25,9 @@ export const NativeNotificationService = () => {
                 console.log('Initializing Native Notification Bridge...');
 
                 // 1. Fetch config first to get telegramId and right apiKey
-                const { fetchNotificationConfig } = await import('@/app/(protected)/fitur/actions');
-                const config = await fetchNotificationConfig();
+                const response = await apiFetch('/api/config/notifications');
+                const result = await response.json();
+                const config = result.data;
 
                 if (!config || !config.telegramId) {
                     console.log('Notification listener skipped: Missing config or Telegram ID');
@@ -98,7 +100,7 @@ export const NativeNotificationService = () => {
                             return;
                         }
 
-                        const response = await fetch('/api/notification-webhook', {
+                        const response = await apiFetch('/api/notification-webhook', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

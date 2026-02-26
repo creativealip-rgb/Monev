@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Transaction } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { OfflineManager } from "@/frontend/lib/offline-manager";
+import { useHaptics } from "@/frontend/hooks/useHaptics";
 
 interface Category {
     id: number;
@@ -148,23 +150,37 @@ export default function TransactionsPage() {
         return { data: [], pagination: { total: 0, limit, offset, hasMore: false } };
     }, [searchQuery, mapTransaction]);
 
+    // New version of loadData with caching
     async function loadData(reset = false) {
         try {
             setLoading(true);
 
+            // Load from cache first for instant display
+            if (reset && searchQuery === "" && filterCategory === "all" && filterType === "all") {
+                const cachedTrans = await OfflineManager.getCache("transactions_list");
+                if (cachedTrans) {
+                    setTransactions(cachedTrans);
+                }
+                const cachedCats = await OfflineManager.getCache("dashboard_categories");
+                if (cachedCats) {
+                    setCategories(cachedCats);
+                }
+            }
+
             // Fetch categories first and WAIT for it to complete
             let currentCategories = categories;
             if (currentCategories.length === 0) {
-                const catsResponse = await fetch("/api/categories");
+                const catsResponse = await apiFetch("/api/categories");
                 const catsResult = await catsResponse.json();
                 if (catsResult.success) {
                     currentCategories = catsResult.data;
                     setCategories(currentCategories);
+                    OfflineManager.setCache("dashboard_categories", currentCategories);
                 }
             }
 
             // Fetch transactions with pagination
-            const transResponse = await fetch(`/api/transactions?limit=${pagination.limit}&offset=0&search=${searchQuery}`);
+            const transResponse = await apiFetch(`/api/transactions?limit=${pagination.limit}&offset=0&search=${searchQuery}`);
             const transResult = await transResponse.json();
 
             if (transResult.success) {
@@ -190,11 +206,30 @@ export default function TransactionsPage() {
 
                 if (reset) {
                     setTransactions(mappedTransactions);
+                    // Cache the first page of "all-transactions"
+                    if (searchQuery === "" && filterCategory === "all" && filterType === "all") {
+                        OfflineManager.setCache("transactions_list", mappedTransactions);
+                    }
                 } else {
                     setTransactions(prev => [...prev, ...mappedTransactions]);
                 }
 
                 setPagination(transResult.pagination);
+            }
+
+            // Merge Optimistic (Offline) Transactions
+            const offlineTrans = await OfflineManager.getOptimisticTransactions();
+            if (offlineTrans.length > 0) {
+                const mappedOffline = offlineTrans.map(t => ({
+                    ...t,
+                    category: currentCategories.find((c: Category) => c.id === Number(t.categoryId))?.name || "Lainnya"
+                }));
+                setTransactions(prev => {
+                    // Avoid duplicates if sync just happened but UI hasn't reloaded
+                    const existingIds = new Set(prev.map(t => t.id));
+                    const newOffline = mappedOffline.filter(t => !existingIds.has(t.id));
+                    return [...newOffline, ...prev];
+                });
             }
         } catch (error) {
             console.error("Error loading data:", error);
@@ -208,7 +243,7 @@ export default function TransactionsPage() {
 
         setDeletingId(id);
         try {
-            const response = await fetch(`/api/transactions/${id}`, {
+            const response = await apiFetch(`/api/transactions/${id}`, {
                 method: "DELETE",
             });
 

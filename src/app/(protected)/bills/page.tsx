@@ -247,7 +247,7 @@ export default function BillsPage() {
     async function handleTogglePaid(id: number, e: React.MouseEvent) {
         e.stopPropagation();
         try {
-            const res = await fetch(`/api/bills/${id}`, {
+            const res = await apiFetch(`/api/bills/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ togglePaid: true }),
@@ -267,7 +267,7 @@ export default function BillsPage() {
     async function handleDelete(id: number) {
         if (!confirm("Yakin mau hapus tagihan ini?")) return;
         try {
-            const res = await fetch(`/api/bills/${id}`, { method: "DELETE" });
+            const res = await apiFetch(`/api/bills/${id}`, { method: "DELETE" });
             const result = await res.json();
             if (result.success) {
                 setBills(prev => prev.filter(b => b.id !== id));
@@ -283,7 +283,7 @@ export default function BillsPage() {
         if (!formName || !formAmount) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch("/api/bills", {
+            const res = await apiFetch("/api/bills", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
