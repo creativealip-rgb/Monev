@@ -309,6 +309,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             allowDangerousEmailAccountLinking: true,
+            checks: ["state"], // Use state instead of PKCE to avoid cookie issues
+            authorization: {
+                params: {
+                    prompt: "consent",
+                    access_type: "offline",
+                    scope: "openid email profile",
+                },
+            },
             profile(profile) {
                 // Extract and normalize Google profile data
                 return {
