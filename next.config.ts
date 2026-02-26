@@ -4,9 +4,12 @@ import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from "next/constants
 const nextConfig = (phase: string): NextConfig => {
     // Only allow static export during the actual production build for APK
     const isApkBuild = process.env.IS_APK === "true" && phase === PHASE_PRODUCTION_BUILD;
+    // Use standalone output for Docker deployment (not APK build)
+    const isDockerBuild = process.env.IS_DOCKER === "true" || (!isApkBuild && phase === PHASE_PRODUCTION_BUILD);
 
     return {
-        output: isApkBuild ? "export" : undefined,
+        // APK needs static export, Docker needs standalone, dev needs undefined
+        output: isApkBuild ? "export" : isDockerBuild ? "standalone" : undefined,
         
         // Image optimization configuration
         images: {
