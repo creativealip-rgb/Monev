@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const categories = sqliteTable("categories", {
@@ -51,7 +51,13 @@ export const transactions = sqliteTable("transactions", {
     isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
     splitGroupId: text("split_group_id"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_transactions_user_id").on(table.userId),
+    dateIdx: index("idx_transactions_date").on(table.date),
+    typeIdx: index("idx_transactions_type").on(table.type),
+    categoryIdIdx: index("idx_transactions_category_id").on(table.categoryId),
+    userIdDateIdx: index("idx_transactions_user_date").on(table.userId, table.date),
+}));
 
 export const budgets = sqliteTable("budgets", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -61,7 +67,11 @@ export const budgets = sqliteTable("budgets", {
     month: integer("month").notNull(),
     year: integer("year").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_budgets_user_id").on(table.userId),
+    monthYearIdx: index("idx_budgets_month_year").on(table.month, table.year),
+    userIdMonthYearIdx: index("idx_budgets_user_month_year").on(table.userId, table.month, table.year),
+}));
 
 export const goals = sqliteTable("goals", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -73,7 +83,9 @@ export const goals = sqliteTable("goals", {
     icon: text("icon").notNull().default("Target"),
     color: text("color").notNull().default("#3b82f6"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_goals_user_id").on(table.userId),
+}));
 
 export const merchantMappings = sqliteTable("merchant_mappings", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -138,7 +150,10 @@ export const bills = sqliteTable("bills", {
     lastDetectedDate: integer("last_detected_date", { mode: "timestamp" }),
     notes: text("notes"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_bills_user_id").on(table.userId),
+    isActiveIdx: index("idx_bills_is_active").on(table.isActive),
+}));
 
 export const chatHistory = sqliteTable("chat_history", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -146,7 +161,10 @@ export const chatHistory = sqliteTable("chat_history", {
     role: text("role", { enum: ["user", "assistant"] }).notNull(),
     content: text("content").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_chat_history_user_id").on(table.userId),
+    createdAtIdx: index("idx_chat_history_created_at").on(table.createdAt),
+}));
 
 export const investments = sqliteTable("investments", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -164,7 +182,10 @@ export const investments = sqliteTable("investments", {
     realizedProfit: real("realized_profit").default(0), // New: Track profit from partial sells
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_investments_user_id").on(table.userId),
+    typeIdx: index("idx_investments_type").on(table.type),
+}));
 
 export const coupons = sqliteTable("coupons", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -201,7 +222,10 @@ export const aiInsightsCache = sqliteTable("ai_insights_cache", {
     insights: text("insights").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-});
+}, (table) => ({
+    userIdIdx: index("idx_ai_insights_user_id").on(table.userId),
+    monthYearIdx: index("idx_ai_insights_month_year").on(table.month, table.year),
+}));
 
 export const verificationTokens = sqliteTable("verification_tokens", {
     id: integer("id").primaryKey({ autoIncrement: true }),

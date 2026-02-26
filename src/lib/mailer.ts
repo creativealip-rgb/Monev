@@ -1,6 +1,15 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+// Lazy initialization to avoid build-time errors when API key is missing
+const getResendClient = () => {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+        console.warn("RESEND_API_KEY is not set. Email functionality will be disabled.");
+        return null;
+    }
+    return new Resend(apiKey);
+};
+
 const fromEmail = process.env.EMAIL_FROM || "noreply@yourdomain.com";
 
 // Tipe untuk environment variables Next.js
@@ -8,6 +17,12 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_UR
 
 export const sendVerificationEmail = async (email: string, token: string) => {
     const confirmLink = `${appUrl}/api/auth/verify-email?token=${token}`;
+
+    const resend = getResendClient();
+    if (!resend) {
+        console.warn("Email not sent: RESEND_API_KEY is not configured");
+        return { error: "Email service not configured" };
+    }
 
     try {
         const { data, error } = await resend.emails.send({
@@ -41,6 +56,12 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 
 export const sendPasswordResetEmail = async (email: string, token: string) => {
     const resetLink = `${appUrl}/reset-password?token=${token}`;
+
+    const resend = getResendClient();
+    if (!resend) {
+        console.warn("Email not sent: RESEND_API_KEY is not configured");
+        return { error: "Email service not configured" };
+    }
 
     try {
         const { data, error } = await resend.emails.send({
