@@ -309,7 +309,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             allowDangerousEmailAccountLinking: true,
-            checks: ["state"], // Use state instead of PKCE to avoid cookie issues
+            checks: [], // Disable all checks to avoid cookie parsing issues
             authorization: {
                 params: {
                     prompt: "consent",
