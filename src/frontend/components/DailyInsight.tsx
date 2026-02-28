@@ -13,7 +13,7 @@ export function DailyInsight() {
     const fetchInsight = async () => {
         setLoading(true);
         try {
-            const res = await apiFetch("/api/ai/insight");
+            const res = await apiFetch("/api/dashboard/tip");
             const data = await res.json();
             if (data.success) {
                 setInsight({ text: data.insight, type: data.type });

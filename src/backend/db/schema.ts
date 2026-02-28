@@ -3,14 +3,12 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const categories = sqliteTable("categories", {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id), // Null = Global system category, Not Null = User specific
     name: text("name").notNull(),
     color: text("color").notNull().default("#3b82f6"),
     icon: text("icon").notNull().default("Wallet"),
     type: text("type", { enum: ["expense", "income"] }).notNull().default("expense"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-    // Categories can be global (system default) or user-specific. For now, let's keep them global or nullable userId
-    // If we want custom categories per user, we need userId.
-    // Let's add partial support for custom categories later. For now, keep as is (global).
 });
 
 export const users = sqliteTable("users", {
@@ -219,6 +217,19 @@ export const passwordResetTokens = sqliteTable("password_reset_tokens", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const recurringTransactions = sqliteTable("recurring_transactions", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    amount: real("amount").notNull(),
+    description: text("description").notNull(),
+    categoryId: integer("category_id").references(() => categories.id),
+    type: text("type", { enum: ["expense", "income"] }).notNull().default("expense"),
+    frequency: text("frequency", { enum: ["daily", "weekly", "monthly"] }).notNull().default("monthly"),
+    nextRunAt: integer("next_run_at", { mode: "timestamp" }).notNull(),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 export const streaks = sqliteTable("streaks", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id").references(() => users.id).unique().notNull(),
@@ -255,6 +266,8 @@ export type Coupon = typeof coupons.$inferSelect;
 export type CouponClaim = typeof couponClaims.$inferSelect;
 export type AdminActivityLog = typeof adminActivityLog.$inferSelect;
 export type AiInsightsCache = typeof aiInsightsCache.$inferSelect;
+export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
+export type InsertRecurringTransaction = typeof recurringTransactions.$inferInsert;
 export type Streak = typeof streaks.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
 

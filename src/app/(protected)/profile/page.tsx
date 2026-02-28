@@ -3,7 +3,7 @@
 import {
     ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check,
     User as UserIcon, MessageCircle, Smartphone, Crown,
-    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame
+    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame, Download
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -708,9 +708,33 @@ export default function ProfilePage() {
                                                 </div>
                                             </div>
 
+                                            {/* Backup Section */}
+                                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 pb-2">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Backup Data</p>
+                                                        <p className="text-[10px] text-slate-500 font-medium">Ekspor seluruh riwayat transaksi ke CSV</p>
+                                                    </div>
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.02 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={() => {
+                                                            const a = document.createElement("a");
+                                                            a.href = "/api/transactions/export/csv";
+                                                            a.download = "monev_full_backup.csv";
+                                                            a.click();
+                                                        }}
+                                                        className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-2"
+                                                    >
+                                                        <Download size={14} />
+                                                        Download CSV
+                                                    </motion.button>
+                                                </div>
+                                            </div>
+
                                             <button
                                                 onClick={handleSaveProfile}
-                                                className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
+                                                className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-[1rem] transition-colors flex items-center justify-center gap-2 mt-4"
                                             >
                                                 <Check size={18} />
                                                 Simpan Perubahan

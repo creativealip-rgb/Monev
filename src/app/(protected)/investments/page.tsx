@@ -12,6 +12,7 @@ import { TierGateOverlay, TierLimitBanner } from "@/frontend/components/TierGate
 import { Investment, InvestmentSummary } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { Portal } from "@/frontend/components/Portal";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { useSecurity } from "@/components/SecurityProvider";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -29,6 +30,8 @@ export default function InvestmentsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
@@ -123,8 +126,12 @@ export default function InvestmentsPage() {
         }
     }
 
-    async function handleDelete(id: number) {
-        if (!confirm("Yakin mau hapus aset investasi ini?")) return;
+    function handleDelete(id: number) {
+        setConfirmDeleteId(id);
+    }
+
+    async function executeDelete(id: number) {
+        setDeletingId(id);
         try {
             const res = await apiFetch(`/api/investments/${id}`, { method: "DELETE" });
             const result = await res.json();
@@ -136,6 +143,9 @@ export default function InvestmentsPage() {
         } catch (error) {
             console.error("Error deleting investment:", error);
             toast.error("Gagal menghapus");
+        } finally {
+            setDeletingId(null);
+            setConfirmDeleteId(null);
         }
     }
 
@@ -557,6 +567,15 @@ export default function InvestmentsPage() {
                     )}
                 </AnimatePresence>
             </Portal>
+
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
+                title="Hapus Aset"
+                description="Investasi ini akan dihapus secara permanen beserta catatannya. Lanjutkan?"
+                loading={!!deletingId}
+            />
         </div>
     );
 }

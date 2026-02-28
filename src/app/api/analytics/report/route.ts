@@ -62,10 +62,10 @@ export async function GET(req: NextRequest) {
             aiInsight: aiInsight
         };
 
-        // 4. Create PDF
-        const doc = generateWealthReport(reportData);
+        // 4. Generate PDF
+        const doc = await generateWealthReport(reportData);
 
-        // Output as Buffer
+        // 5. Build Buffer
         const pdfOutput = doc.output("arraybuffer");
 
         return new NextResponse(pdfOutput, {

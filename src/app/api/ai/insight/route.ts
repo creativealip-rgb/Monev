@@ -1,17 +1,35 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getMonthlyStats, getGoals, getBudgets, getTransactions, getPendingScheduledMessages, markScheduledMessageSent } from "@/backend/db/operations";
 import OpenAI from "openai";
+import { checkAIRateLimit, incrementAIUsage, getRateLimitHeaders } from "@/lib/rate-limiter";
+import { rateLimit } from "@/lib/rate-limit";
+import { UserTier } from "@/lib/tier-gate";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    // Basic IP Rate Limiting: max 10 requests per minute
+    const limited = rateLimit(req, { maxRequests: 10, windowMs: 60000 });
+    if (limited) return limited;
+
     try {
         const session = await auth();
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
+        // @ts-ignore
+        const userTier = (session.user.tier as UserTier) || "miskin";
+
+        // Rate limiting
+        const rateLimit = checkAIRateLimit(userId, userTier);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "Limit AI harian tercapai", limitReached: true, used: rateLimit.used, limit: rateLimit.limit },
+                { status: 429, headers: getRateLimitHeaders(rateLimit) }
+            );
+        }
 
         // PRIORITY: Check for scheduled stock opname/reconciliation messages
         const scheduledMessages = await getPendingScheduledMessages();
@@ -73,6 +91,7 @@ export async function GET() {
         });
 
         const content = JSON.parse(response.choices[0].message.content || "{}");
+        incrementAIUsage(userId);
         return NextResponse.json({ success: true, ...content });
     } catch (error) {
         console.error("Insight Error:", error);

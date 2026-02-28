@@ -6,9 +6,11 @@ import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { Filter, Search, ArrowLeft, X, Check, Loader2, Download } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
+import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -48,6 +50,7 @@ export default function TransactionsPage() {
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -60,6 +63,14 @@ export default function TransactionsPage() {
         offset: 0,
         hasMore: true
     });
+
+    const { ref: loadMoreRef, inView } = useInView();
+
+    useEffect(() => {
+        if (inView && !loading && pagination.hasMore && filteredTransactions.length > 0) {
+            loadData(false);
+        }
+    }, [inView, loading, pagination.hasMore]);
 
     // Reload when search or filters change
     useEffect(() => {
@@ -179,8 +190,10 @@ export default function TransactionsPage() {
                 }
             }
 
+            const currentOffset = reset ? 0 : pagination.offset + pagination.limit;
+
             // Fetch transactions with pagination
-            const transResponse = await apiFetch(`/api/transactions?limit=${pagination.limit}&offset=0&search=${searchQuery}`);
+            const transResponse = await apiFetch(`/api/transactions?limit=${pagination.limit}&offset=${currentOffset}&search=${searchQuery}`);
             const transResult = await transResponse.json();
 
             if (transResult.success) {
@@ -238,9 +251,11 @@ export default function TransactionsPage() {
         }
     }
 
-    async function handleDelete(id: string) {
-        if (!confirm("Yakin mau hapus transaksi ini?")) return;
+    function handleDelete(id: string) {
+        setConfirmDeleteId(id);
+    }
 
+    async function executeDelete(id: string) {
         setDeletingId(id);
         try {
             const response = await apiFetch(`/api/transactions/${id}`, {
@@ -258,6 +273,7 @@ export default function TransactionsPage() {
             toast.error("Gagal menghapus", "Terjadi kesalahan");
         } finally {
             setDeletingId(null);
+            setConfirmDeleteId(null);
         }
     }
 
@@ -295,8 +311,12 @@ export default function TransactionsPage() {
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => {
+                                const params = new URLSearchParams();
+                                if (searchQuery) params.append("search", searchQuery);
+                                if (filterCategory !== "all") params.append("categoryId", filterCategory.toString()); // Assuming API handles this later, or just simple export for now
+
                                 const a = document.createElement("a");
-                                a.href = "/api/transactions/export";
+                                a.href = `/api/transactions/export/csv?${params.toString()}`;
                                 a.download = "monev_transaksi.csv";
                                 a.click();
                             }}
@@ -392,13 +412,8 @@ export default function TransactionsPage() {
                 }
 
                 {!loading && pagination.hasMore && filteredTransactions.length > 0 && (
-                    <div className="text-center py-6">
-                        <button
-                            onClick={() => loadData(false)}
-                            className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-colors"
-                        >
-                            Muat Lebih Banyak
-                        </button>
+                    <div ref={loadMoreRef} className="text-center py-6 h-10 flex items-center justify-center text-muted-foreground">
+                        <Loader2 size={20} className="animate-spin" />
                     </div>
                 )}
 
@@ -544,6 +559,15 @@ export default function TransactionsPage() {
                 }}
                 onSuccess={handleEditSuccess}
                 transaction={editingTransaction}
+            />
+
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
+                title="Hapus Transaksi"
+                description="Transaksi ini akan dihapus secara permanen. Anda yakin?"
+                loading={!!deletingId}
             />
         </div >
     );

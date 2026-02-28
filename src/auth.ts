@@ -111,6 +111,7 @@ async function updateUserWithGoogleData(userId: number, googleData: {
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
     ...authConfig,
+    trustHost: true,
     callbacks: {
         async signIn({ user, account, profile }) {
             console.log("[OAuth] SignIn callback - Provider:", account?.provider);

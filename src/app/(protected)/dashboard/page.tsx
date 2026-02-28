@@ -10,6 +10,8 @@ import { useHeroTheme } from "@/frontend/lib/hero-theme";
 import { TransactionListSkeleton, NoTransactionsEmpty, useToast } from "@/frontend/components/UI";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { DailyInsight } from "@/frontend/components/DailyInsight";
+import { HealthScoreWidget } from "@/frontend/components/HealthScoreWidget";
+import type { HealthScoreResult } from "@/lib/health-score";
 import {
     Sparkles,
     PieChart,
@@ -31,6 +33,8 @@ import {
     Lock,
     Plus,
     AlertTriangle,
+    Users,
+    Repeat,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -78,6 +82,8 @@ const mainFeatures = [
     { label: "Simulasi", icon: <Zap size={24} />, color: "purple", href: "/simulations" },
     { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
     { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "/investments" },
+    { label: "Hutang", icon: <Users size={24} />, color: "rose", href: "/debts" },
+    { label: "Berulang", icon: <Repeat size={24} />, color: "emerald", href: "/recurring" },
 ];
 
 const containerVariants = {
@@ -205,7 +211,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
 
 export default function Home() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number; fees?: number }>({ income: 0, expense: 0, balance: 0, fees: 0 });
+    const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number; fees?: number; healthScore?: HealthScoreResult; streak?: { current: number; longest: number } }>({ income: 0, expense: 0, balance: 0, fees: 0 });
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [userName, setUserName] = useState<string | null>(null);
@@ -256,7 +262,7 @@ export default function Home() {
                 apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
                 apiFetch("/api/transactions"),
                 apiFetch("/api/categories"),
-                apiFetch("/api/ai/analyze-anomalies")
+                apiFetch("/api/dashboard/scan")
             ]);
 
             const profileResult = await profileResponse.json();
@@ -433,6 +439,17 @@ export default function Home() {
                                         {TIER_STYLES[userTier].label}
                                     </span>
                                 </div>
+
+                                {/* Streak Badge */}
+                                {stats.streak && stats.streak.current > 0 && (
+                                    <div className="px-1.5 py-0.5 rounded-md border border-orange-200 bg-orange-50 dark:border-orange-900/30 dark:bg-orange-900/10 flex items-center gap-1">
+                                        <span className="text-[8px]">🔥</span>
+                                        <span className="text-[8px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-tighter" title={`Longest: ${stats.streak.longest} hari`}>
+                                            {stats.streak.current} Hari
+                                        </span>
+                                    </div>
+                                )}
+
                                 <Link
                                     href="/fitur/upgrade"
                                     className="text-[8px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-0.5 border-l border-slate-200 dark:border-slate-800 pl-1.5"
@@ -468,6 +485,18 @@ export default function Home() {
                         onToggleHideBalance={handleToggleHideBalance}
                     />
                 </motion.section>
+
+                {/* Health Score Widget */}
+                {stats.healthScore && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.12 }}
+                        className="px-6 mb-6"
+                    >
+                        <HealthScoreWidget data={stats.healthScore} />
+                    </motion.section>
+                )}
 
                 {/* Spending Anomalies Alert */}
                 {anomalies.length > 0 && (

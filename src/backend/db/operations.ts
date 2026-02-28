@@ -7,10 +7,22 @@ import { detectSubscriptions } from "@/lib/subscription-detector";
 
 export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement };
 
-// Categories (Global for now)
-export async function getCategories(): Promise<Category[]> {
+// Categories (Global + User Specific)
+export async function getCategories(userId?: number): Promise<Category[]> {
     const db = getDb();
-    return db.select().from(categories).all();
+    if (!userId) {
+        // Return only global categories if no user is specified
+        return db.select().from(categories).where(sql`${categories.userId} IS NULL`).all();
+    }
+
+    // Return global categories + user specific categories
+    return db.select()
+        .from(categories)
+        .where(or(
+            sql`${categories.userId} IS NULL`,
+            eq(categories.userId, userId)
+        ))
+        .all();
 }
 
 export async function getCategoryById(id: number): Promise<Category | undefined> {

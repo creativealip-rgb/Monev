@@ -1,0 +1,453 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+    ArrowLeft, Plus, ToggleLeft, ToggleRight, Trash2, Repeat,
+    Calendar, TrendingDown, TrendingUp, FileText, DollarSign,
+    Tag, Clock, Sparkles, X
+} from "lucide-react";
+import Link from "next/link";
+import { apiFetch } from "@/frontend/lib/api-client";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/frontend/lib/utils";
+import { formatCurrency } from "@/frontend/lib/utils";
+import { useToast } from "@/frontend/components/UI";
+import { Portal } from "@/frontend/components/Portal";
+
+interface RecurringTx {
+    id: number;
+    userId: number;
+    amount: number;
+    description: string;
+    categoryId: number | null;
+    type: "expense" | "income";
+    frequency: "daily" | "weekly" | "monthly";
+    nextRunAt: string;
+    isActive: boolean;
+    createdAt: string;
+}
+
+interface Category {
+    id: number;
+    name: string;
+    color: string;
+    type: string;
+}
+
+const FREQ_LABELS: Record<string, { label: string; short: string; emoji: string }> = {
+    daily: { label: "Harian", short: "/ hari", emoji: "📅" },
+    weekly: { label: "Mingguan", short: "/ minggu", emoji: "📆" },
+    monthly: { label: "Bulanan", short: "/ bulan", emoji: "🗓️" },
+};
+
+export default function RecurringPage() {
+    const [items, setItems] = useState<RecurringTx[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const toast = useToast();
+
+    const [form, setForm] = useState({
+        description: "",
+        amount: "",
+        type: "expense" as "expense" | "income",
+        frequency: "monthly" as "daily" | "weekly" | "monthly",
+        categoryId: "",
+    });
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [res, catRes] = await Promise.all([
+                apiFetch("/api/recurring"),
+                apiFetch("/api/categories"),
+            ]);
+            const data = await res.json();
+            const catData = await catRes.json();
+            if (data.success) setItems(data.data);
+            if (catData.success) setCategories(catData.data);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { load(); }, [load]);
+
+    const handleToggle = async (item: RecurringTx) => {
+        await apiFetch(`/api/recurring/${item.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isActive: !item.isActive }),
+        });
+        toast.success(item.isActive ? "Dinonaktifkan" : "Diaktifkan", item.description);
+        load();
+    };
+
+    const handleDelete = async (id: number) => {
+        await apiFetch(`/api/recurring/${id}`, { method: "DELETE" });
+        toast.success("Dihapus", "Transaksi berulang dihapus");
+        load();
+    };
+
+    const handleCreate = async () => {
+        if (!form.description || !form.amount) return;
+        const res = await apiFetch("/api/recurring", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...form,
+                amount: parseFloat(form.amount),
+                categoryId: form.categoryId ? parseInt(form.categoryId) : undefined,
+            }),
+        });
+        if (res.ok) {
+            toast.success("Berhasil! 🎉", "Transaksi berulang ditambahkan");
+            setShowForm(false);
+            setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+            load();
+        }
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+    };
+
+    const filtered = { active: items.filter(i => i.isActive), inactive: items.filter(i => !i.isActive) };
+
+    // Summary stats
+    const totalMonthlyIn = items.filter(i => i.isActive && i.type === "income" && i.frequency === "monthly").reduce((s, i) => s + i.amount, 0);
+    const totalMonthlyOut = items.filter(i => i.isActive && i.type === "expense" && i.frequency === "monthly").reduce((s, i) => s + i.amount, 0);
+
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
+            {/* Header */}
+            <motion.header
+                initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe pt-3 pb-4"
+            >
+                <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            className="w-8 h-8 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                        >
+                            <ArrowLeft size={16} strokeWidth={2.5} />
+                        </Link>
+                        <div>
+                            <h1 className="text-base font-black text-foreground tracking-tight flex items-center gap-2">
+                                <Repeat size={16} className="text-emerald-500" />
+                                Transaksi Berulang
+                            </h1>
+                            <p className="text-[10px] text-muted-foreground">Otomatis catat setiap periode</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
+                    >
+                        <Plus size={14} strokeWidth={3} />
+                        Tambah
+                    </button>
+                </div>
+            </motion.header>
+
+            <div className="px-5 pt-5 space-y-5">
+                {/* Summary mini cards */}
+                {(totalMonthlyIn > 0 || totalMonthlyOut > 0) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                        className="grid grid-cols-2 gap-3"
+                    >
+                        <div className="card-clean p-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-emerald-500/10 -translate-y-4 translate-x-4" />
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Pemasukan / bln</p>
+                            <p className="text-lg font-black text-emerald-600 tabular-nums leading-tight">
+                                {formatCurrency(totalMonthlyIn).replace("Rp", "Rp ")}
+                            </p>
+                        </div>
+                        <div className="card-clean p-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-rose-500/10 -translate-y-4 translate-x-4" />
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Pengeluaran / bln</p>
+                            <p className="text-lg font-black text-rose-600 tabular-nums leading-tight">
+                                {formatCurrency(totalMonthlyOut).replace("Rp", "Rp ")}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* List */}
+                {loading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)}
+                    </div>
+                ) : items.length === 0 ? (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center py-20 text-center"
+                    >
+                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 flex items-center justify-center mb-5 shadow-inner">
+                            <Repeat size={36} className="text-emerald-400" />
+                        </div>
+                        <p className="font-black text-foreground text-lg">Belum ada teman setia 😅</p>
+                        <p className="text-xs text-muted-foreground mt-2 max-w-[220px] leading-relaxed">
+                            Tambahkan gaji, tagihan rutin, Netflix, atau pengeluaran mingguan kamu
+                        </p>
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="mt-6 flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-95"
+                        >
+                            <Plus size={16} />
+                            Tambah Sekarang
+                        </button>
+                    </motion.div>
+                ) : (
+                    <div className="space-y-5">
+                        {filtered.active.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                        Aktif ({filtered.active.length})
+                                    </p>
+                                </div>
+                                <div className="space-y-2.5">
+                                    {filtered.active.map(item => (
+                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+                        {filtered.inactive.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-2 h-2 rounded-full bg-slate-300" />
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                        Nonaktif ({filtered.inactive.length})
+                                    </p>
+                                </div>
+                                <div className="space-y-2.5 opacity-55">
+                                    {filtered.inactive.map(item => (
+                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Add Form Bottom Sheet */}
+            <Portal>
+                <AnimatePresence>
+                    {showForm && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
+                                onClick={closeForm}
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, y: "100%" }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: "100%" }}
+                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 max-w-[500px] mx-auto"
+                            >
+                                {/* Title row */}
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold text-foreground">Transaksi Berulang Baru</h2>
+                                    <button
+                                        onClick={closeForm}
+                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-5">
+                                    {/* Type Toggle */}
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jenis</label>
+                                        <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                                            {(["expense", "income"] as const).map(t => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => setForm(f => ({ ...f, type: t, categoryId: "" }))}
+                                                    className={cn(
+                                                        "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                                                        form.type === t
+                                                            ? t === "expense"
+                                                                ? "bg-rose-500 text-white shadow-sm"
+                                                                : "bg-emerald-500 text-white shadow-sm"
+                                                            : "text-muted-foreground hover:text-foreground"
+                                                    )}
+                                                >
+                                                    {t === "expense"
+                                                        ? <><TrendingDown size={14} /> Pengeluaran</>
+                                                        : <><TrendingUp size={14} /> Pemasukan</>
+                                                    }
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Transaksi</label>
+                                        <input
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                            placeholder="Gaji, Netflix, Uang Kos..."
+                                            value={form.description}
+                                            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* Amount */}
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                            placeholder="0"
+                                            value={form.amount}
+                                            onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* Frequency */}
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Frekuensi</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {(["daily", "weekly", "monthly"] as const).map(freq => (
+                                                <button
+                                                    key={freq}
+                                                    onClick={() => setForm(f => ({ ...f, frequency: freq }))}
+                                                    className={cn(
+                                                        "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border-2 flex flex-col items-center gap-1",
+                                                        form.frequency === freq
+                                                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600"
+                                                            : "border-slate-100 dark:border-slate-700 text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <span className="text-base">{FREQ_LABELS[freq].emoji}</span>
+                                                    {FREQ_LABELS[freq].label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Category */}
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Kategori <span className="normal-case font-medium text-muted-foreground">(opsional)</span></label>
+                                        <select
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                            value={form.categoryId}
+                                            onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}
+                                        >
+                                            <option value="">Pilih Kategori</option>
+                                            {categories.filter(c => c.type === form.type).map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Submit */}
+                                    <button
+                                        onClick={handleCreate}
+                                        disabled={!form.description || !form.amount}
+                                        className={cn(
+                                            "w-full py-4 rounded-xl font-bold text-white text-sm transition-all mt-2",
+                                            form.type === "expense"
+                                                ? "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20"
+                                                : "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20",
+                                            (!form.description || !form.amount) && "opacity-40 cursor-not-allowed"
+                                        )}
+                                    >
+                                        Simpan Transaksi
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            </Portal>
+        </div>
+    );
+}
+
+function RecurringItem({
+    item, onToggle, onDelete
+}: {
+    item: RecurringTx;
+    onToggle: (item: RecurringTx) => void;
+    onDelete: (id: number) => void;
+}) {
+    const isIncome = item.type === "income";
+    const freq = FREQ_LABELS[item.frequency];
+
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="card-clean p-4"
+        >
+            <div className="flex items-center gap-3">
+                {/* Icon */}
+                <div className={cn(
+                    "w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 relative",
+                    isIncome ? "bg-emerald-100 dark:bg-emerald-900/40" : "bg-rose-100 dark:bg-rose-900/40"
+                )}>
+                    {isIncome
+                        ? <TrendingUp size={20} className="text-emerald-600" />
+                        : <TrendingDown size={20} className="text-rose-600" />
+                    }
+                    {/* Frequency dot */}
+                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
+                        <span className="text-[8px]">{freq.emoji}</span>
+                    </div>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-foreground truncate">{item.description}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className={cn("text-xs font-black", isIncome ? "text-emerald-600" : "text-rose-600")}>
+                            {isIncome ? "+" : "-"}{formatCurrency(item.amount)}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-muted-foreground font-semibold">
+                            {freq.label}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                            <Calendar size={9} />
+                            {new Date(item.nextRunAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                        onClick={() => onToggle(item)}
+                        className={cn(
+                            "p-2 rounded-xl transition-colors",
+                            item.isActive ? "hover:bg-emerald-50 dark:hover:bg-emerald-900/20" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                        )}
+                    >
+                        {item.isActive
+                            ? <ToggleRight size={24} className="text-emerald-500" />
+                            : <ToggleLeft size={24} className="text-slate-300 dark:text-slate-600" />
+                        }
+                    </button>
+                    <button
+                        onClick={() => onDelete(item.id)}
+                        className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                        <Trash2 size={15} className="text-red-400" />
+                    </button>
+                </div>
+            </div>
+        </motion.div>
+    );
+}

@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import {
-    PieChart, Wallet, TrendingUp, AlertTriangle, ArrowRight,
-    Target, CreditCard, Calendar, Activity, Zap, Brain,
-    ChevronRight, Gauge, LayoutDashboard, History, Sparkles,
-    ArrowLeft, Lock, FileDown, Download
+    Wallet, TrendingUp, AlertTriangle, ArrowRight,
+    Calendar, Zap, Brain, ChevronRight, Gauge, LayoutDashboard, Sparkles,
+    Lock, Download, ArrowLeft, FileDown, Flame
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -24,7 +23,6 @@ import { NetWorthCard } from "./components/NetWorthCard";
 import { CalendarHeatmap } from "./components/CalendarHeatmap";
 import { MonthComparison } from "./components/MonthComparison";
 import { SpendingHeatmap } from "./components/SpendingHeatmap";
-import { AnalyticsTabs } from "./components/AnalyticsTabs";
 import { FinancialMap } from "./components/FinancialMap";
 
 // Types
@@ -68,16 +66,7 @@ interface AnalyticsData {
         expense: CategoryBreakdown[];
         income: CategoryBreakdown[];
     };
-    healthScore: {
-        totalScore: number;
-        metrics: {
-            savingsRate: { score: number; value: number; status: string };
-            emergencyFund: { score: number; value: number; status: string };
-            debtToIncome: { score: number; value: number; status: string };
-            discretionarySpending: { score: number; value: number; status: string };
-        };
-        insights: string[];
-    };
+    healthScore: any;
     cashflowPrediction: {
         nextMonth: number;
         trend: "up" | "down" | "stable";
@@ -107,7 +96,9 @@ export default function AnalyticsPage() {
     // @ts-ignore
     const userTier = (session?.user?.tier as UserTier) || "miskin";
     const toast = useToast();
-    const canSeeFullAnalytics = hasFullAnalytics(userTier);
+    // Use data.canAccessAIInsights from API (reads from DB) as primary source,
+    // fall back to session-based check. This prevents lock when session fetch fails transiently.
+    const canSeeFullAnalytics = data?.canAccessAIInsights ?? hasFullAnalytics(userTier);
 
     const tabs = [
         { id: "overview", label: "Ringkasan" },
@@ -144,13 +135,32 @@ export default function AnalyticsPage() {
     };
 
     const handleDownloadReport = async () => {
+        if (!data) return;
+        // Tier gate: only Kaya/Sultan
+        if (!canSeeFullAnalytics) {
+            toast.error("Fitur Premium", "Export PDF tersedia untuk tier Kaya dan Sultan.");
+            return;
+        }
         setIsDownloading(true);
         try {
-            // We use standard window.open or a hidden anchor for the download
-            const url = `/api/analytics/report?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`;
-            window.open(url, '_blank');
-            toast.success("Laporan Siap", "Laporan PDF sedang diunduh...");
+            const { exportAnalyticsPDF } = await import("@/lib/pdf-export");
+            await exportAnalyticsPDF({
+                month: currentDate.getMonth() + 1,
+                year: currentDate.getFullYear(),
+                income: data.income || 0,
+                expense: data.expense || 0,
+                balance: (data.income || 0) - (data.expense || 0),
+                categoryStats: [
+                    ...(data.categoryBreakdown?.expense || []),
+                    ...(data.categoryBreakdown?.income || []),
+                ].map((cat: any) => ({
+                    categoryName: cat.categoryName || cat.name,
+                    total: cat.total || cat.amount || 0,
+                })),
+            });
+            toast.success("Berhasil", "Laporan PDF berhasil diunduh!");
         } catch (err) {
+            console.error("PDF export error:", err);
             toast.error("Gagal Unduh", "Terjadi kesalahan saat membuat laporan.");
         } finally {
             setIsDownloading(false);
@@ -217,16 +227,24 @@ export default function AnalyticsPage() {
                         </button>
 
                         {/* Month Selector Mini */}
-                        <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 shadow-sm">
-                            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                                <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
-                            </button>
-                            <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
-                                {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
-                            </span>
-                            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                            </button>
+                        <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm">
+                            <div className="flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
+                                <Flame size={12} className="text-orange-500" />
+                                <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
+                                    {(data as any)?.summary?.streakDays || 0}
+                                </span>
+                            </div>
+                            <div className="flex items-center px-1 py-1">
+                                <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                                    <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
+                                </button>
+                                <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
+                                    {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
+                                </span>
+                                <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -529,25 +547,17 @@ function InsightsTab({ data, itemVariants }: { data: AnalyticsData, itemVariants
 
 // --- Helper Components ---
 function FinancialHealthScore({ healthData }: { healthData: any }) {
-    const score = healthData.totalScore;
-    const getScoreInfo = (s: number) => {
-        if (s >= 80) return { label: "Sangat Sehat", color: "emerald", emoji: "💪" };
-        if (s >= 60) return { label: "Sehat", color: "green", emoji: "✅" };
-        if (s >= 40) return { label: "Cukup", color: "yellow", emoji: "⚠️" };
-        if (s >= 20) return { label: "Perlu Perhatian", color: "orange", emoji: "😰" };
-        return { label: "Kritis", color: "red", emoji: "🚨" };
-    };
-    const info = getScoreInfo(score);
-    const circumference = 2 * Math.PI * 30; // Reduced size slightly
-    const strokeDashoffset = circumference - (score / 100) * circumference;
+    if (!healthData || typeof healthData.score === 'undefined') return null;
 
-    const colorClasses: Record<string, string> = {
-        emerald: "stroke-emerald-500 text-emerald-600",
-        green: "stroke-green-500 text-green-600",
-        yellow: "stroke-yellow-500 text-yellow-600",
-        orange: "stroke-orange-500 text-orange-600",
-        red: "stroke-red-500 text-red-600"
+    const score = healthData.score;
+    const info = {
+        label: healthData.label,
+        emoji: healthData.emoji,
+        colorHex: healthData.color
     };
+
+    const circumference = 2 * Math.PI * 30;
+    const strokeDashoffset = circumference - (score / 100) * circumference;
 
     return (
         <motion.div className="card-clean p-5 relative overflow-hidden flex flex-col justify-between">
@@ -556,9 +566,14 @@ function FinancialHealthScore({ healthData }: { healthData: any }) {
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Health Score</h3>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-2">
                 <div>
-                    <span className={cn("text-xl font-black block", colorClasses[info.color].split(" ")[1])}>{score}</span>
+                    <span
+                        className="text-xl font-black block"
+                        style={{ color: info.colorHex }}
+                    >
+                        {score} {info.emoji}
+                    </span>
                     <span className="text-[10px] font-bold text-muted-foreground">{info.label}</span>
                 </div>
                 <div className="relative w-16 h-16">
@@ -569,14 +584,19 @@ function FinancialHealthScore({ healthData }: { healthData: any }) {
                             fill="none"
                             strokeWidth="8"
                             strokeLinecap="round"
-                            className={colorClasses[info.color].split(" ")[0]}
                             initial={{ strokeDashoffset: circumference }}
                             animate={{ strokeDashoffset }}
-                            style={{ strokeDasharray: circumference }}
+                            style={{ strokeDasharray: circumference, stroke: info.colorHex }}
                         />
                     </svg>
                 </div>
             </div>
+
+            {healthData.tip && (
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-4 leading-relaxed line-clamp-2">
+                    {healthData.tip}
+                </p>
+            )}
         </motion.div>
     );
 }
@@ -588,9 +608,13 @@ function StatsCard({ title, value, icon, subtitle, trend, hideValue }: any) {
                 {icon}
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{title}</span>
             </div>
-            <p className="text-lg font-black text-foreground">
-                {hideValue ? "******" : formatCurrency(value)}
-            </p>
+            <div className="flex items-baseline gap-2">
+                <p className="text-lg font-black text-foreground">
+                    {hideValue ? "******" : formatCurrency(value)}
+                </p>
+                {trend === 'up' && <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">↗</span>}
+                {trend === 'down' && <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-full">↘</span>}
+            </div>
             <p className="text-[10px] text-muted-foreground mt-1">{subtitle}</p>
         </motion.div>
     );

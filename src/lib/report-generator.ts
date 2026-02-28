@@ -1,6 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 export interface ReportData {
     userName: string;
     month: string;
@@ -29,7 +26,10 @@ export interface ReportData {
     aiInsight: string;
 }
 
-export function generateWealthReport(data: ReportData) {
+export async function generateWealthReport(data: ReportData) {
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;

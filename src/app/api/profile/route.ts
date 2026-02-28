@@ -27,10 +27,21 @@ export async function GET() {
         }
         const userId = parseInt(session.user.id);
 
-        const user = await getUserById(userId);
+        let user = await getUserById(userId);
         if (!user) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
+
+        // ── Tier Expiry Check ─────────────────────────────────────────
+        if (user.tierExpiresAt && user.tier !== "miskin") {
+            const now = new Date();
+            if (new Date(user.tierExpiresAt) < now) {
+                // Tier expired → auto-downgrade to miskin
+                const updatedUser = await updateUser(userId, { tier: "miskin", tierExpiresAt: null });
+                if (updatedUser) user = updatedUser;
+            }
+        }
+        // ─────────────────────────────────────────────────────────────
 
         let settings = await getUserSettings(userId);
         if (!settings) {

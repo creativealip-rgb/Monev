@@ -57,6 +57,10 @@ export const OfflineManager = {
 
         await db.add(STORE_SYNC_QUEUE, item);
 
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("offline-queue-changed"));
+        }
+
         // Register for sync if possible (Web only)
         if ("serviceWorker" in navigator && "SyncManager" in window) {
             try {
@@ -102,6 +106,10 @@ export const OfflineManager = {
             } catch (err) {
                 failed++;
             }
+        }
+
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("offline-queue-changed"));
         }
 
         return { success, failed };

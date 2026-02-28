@@ -16,8 +16,11 @@ import {
     getDailyTransactionStats,
     getTotalInvestmentsValue,
     getPassiveIncome,
-    getUserSettings
+    getUserSettings,
+    getDebts,
+    getUserStreak
 } from "@/backend/db/operations";
+import { calculateHealthScore } from "@/lib/health-score";
 import { getFinancialInsights } from "@/lib/ai";
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour cache
@@ -115,12 +118,13 @@ export async function GET(req: NextRequest) {
             topCategories,
             spendingPatterns,
             goalsProgress,
-            healthScore,
             cashflowPrediction,
             budgets,
             dailyStats,
             totalInvestments,
-            passiveIncome
+            passiveIncome,
+            unpaidDebts,
+            streak
         ] = await Promise.all([
             getAnalysisData(userId, year, month),
             getFinancialHealthMetrics(userId),
@@ -128,12 +132,13 @@ export async function GET(req: NextRequest) {
             getTopSpendingCategories(userId, year, month, 5),
             getSpendingPatterns(userId, year, month),
             getGoalsProgress(userId),
-            calculateFinancialHealthScore(userId),
             getCashflowPrediction(userId),
             getBudgets(userId, month, year),
             getDailyTransactionStats(userId, year, month),
             getTotalInvestmentsValue(userId),
-            getPassiveIncome(userId, year, month)
+            getPassiveIncome(userId, year, month),
+            getDebts(userId, "unpaid"),
+            getUserStreak(userId)
         ]);
 
         let insights: string | null = null;
@@ -153,6 +158,26 @@ export async function GET(req: NextRequest) {
             }
         }
 
+        let totalOwe = 0;
+        let totalOwed = 0;
+        unpaidDebts.forEach((d: any) => {
+            if (d.description?.startsWith("[OWED]")) {
+                totalOwed += d.amount;
+            } else {
+                totalOwe += d.amount;
+            }
+        });
+
+        const healthScore = calculateHealthScore({
+            income: basicAnalysis.income,
+            expense: basicAnalysis.expense,
+            streakDays: streak?.currentStreak || 0,
+            budgets: budgets.map((b: any) => ({ amount: b.amount, spent: b.spent })),
+            goalsCount: goalsProgress.length,
+            totalOwe,
+            totalOwed
+        });
+
         const avgDailySpending = spendingPatterns.averageDailySpending;
         const savingsRate = basicAnalysis.income > 0
             ? ((basicAnalysis.income - basicAnalysis.expense) / basicAnalysis.income) * 100
@@ -161,7 +186,7 @@ export async function GET(req: NextRequest) {
         const budgetAlerts = budgets
             .filter((b: any) => b.percentage > 80)
             .map((b: any) => ({
-                category: b.category,
+                category: b.category?.name || b.category,
                 spent: b.spent,
                 limit: b.amount,
                 percentage: b.percentage,
@@ -180,7 +205,11 @@ export async function GET(req: NextRequest) {
             spendingPatterns,
             goalsProgress,
             healthScore,
-            cashflowPrediction,
+            cashflowPrediction: {
+                nextMonth: cashflowPrediction.projections?.[0]?.projectedBalance || 0,
+                trend: cashflowPrediction.trend === 'positive' ? 'up' : 'down',
+                confidence: 85
+            },
             budgetAlerts,
             dailyStats,
             totalInvestments,
@@ -198,7 +227,8 @@ export async function GET(req: NextRequest) {
                 highestSpendingDay: spendingPatterns.highestSpendingDay,
                 anomaliesCount: spendingPatterns.anomalies.length,
                 goalsCount: goalsProgress.length,
-                completedGoals: goalsProgress.filter((g: any) => g.progress >= 100).length
+                completedGoals: goalsProgress.filter((g: any) => g.progress >= 100).length,
+                streakDays: streak?.currentStreak || 0
             }
         });
     } catch (error) {

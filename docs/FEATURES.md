@@ -13,6 +13,7 @@ Halaman utama yang proaktif dan adaptif.
 | Greeting | Sapaan dinamis berdasarkan waktu & mood. | ✅ Done |
 | balance | Total saldo (Bank + Cash) dengan opsi sembunyi. | ✅ Done |
 | **Daily Insight** | Kartu penasihat AI yang menganalisis budget & MoM anomaly. | ✅ Done |
+| **Health Score** | Ringkasan metrik kesehatan keuangan personal (Tabungan, Hutang, dsb). | ✅ Implemented |
 | FAB | Tombol melayang untuk akses cepat ke semua input. | ✅ Done |
 | Quick-Tap | Template 1-kali sentuh untuk transaksi rutin (Kopi, Makan, dll). | ✅ Done |
 | **Anomaly Alert** | Notifikasi visual di dashboard jika ada lonjakan pengeluaran kategori >20%. | ✅ Implemented |
@@ -93,16 +94,21 @@ Fase untuk memperkuat keamanan, mempermudah masukan data massal, dan meningkatka
 | **Daily Streak** | Track konsistensi pencatatan harian dengan "Flame Counter". | ✅ Implemented |
 | **Badges & Trophies** | Koleksi badge pencapaian (koleksi trophy di profil). | ✅ Implemented |
 | **AI Persona** | Analisis psikologi & kepribadian keuangan otomatis oleh AI. | ✅ Implemented |
+| **Global Delete Dialog** | Sistem konfirmasi hapus data yang aman, responsif, & estetis di seluruh App. | ✅ Implemented |
+| **Rate Limiter AI** | Mencegah penyalahgunaan & *spam* ke Endpoint AI untuk efisiensi biaya. | ✅ Implemented |
 
 ---
 
 ## 🛠️ Technical Excellence (Experience)
 
-- **Offline-First (IndexedDB)**: Sinkronisasi data handal bahkan saat internet tidak stabil.
+- **Offline-First (IndexedDB)**: Sinkronisasi data handal bahkan saat internet tidak stabil. (✅ Termasuk *Offline Sync pending badge*).
+- **Infinite Scroll Pagination**: Pemuatan riwayat transaksi dinamis tanpa *lag*, hemat bandwidth, via API offset-limit & IntersectionObserver.
 - **Capacitor Haptics**: Getaran taktil untuk aksi kirim sukses atau peringatan boros.
 - **PWA / Mobile**: Installable sebagai aplikasi di Android atau Web PWA.
 - **Panic Toggle (Quick Stealth)**: Proteksi instan untuk menyembunyikan data sensitif.
 - **Global App Lock**: Proteksi aplikasi secara menyeluruh saat di-resume dari background.
+- **Dynamic Import (jsPDF)**: Pemecahan _bundle_ kode PDF supaya aplikasi bisa terbuka lebih cepat *secara keseluruhan*. 
+- **Per-User Isolation**: Migrasi Master Data (seperti List Kategori) agar hanya bisa diakses spesifik per *User ID*, menjaga integritas data SaaS.
 
 ---
 
@@ -119,5 +125,5 @@ Fitur masa depan untuk mengubah Monev menjadi *Ultimate Financial Strategist*.
 
 ---
 
-*Last Updated: 25 February 2026*
-*Version: 1.9 (Strategist Roadmap)*
+*Last Updated: 28 February 2026*
+*Version: 1.10 (Refinement Execution)*

@@ -135,9 +135,9 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
     };
 
     const getCurrentItems = () => {
-        if (activeTab === "goal") return destinations.goals;
-        if (activeTab === "investment") return destinations.investments;
-        return destinations.bills;
+        if (activeTab === "goal") return destinations?.goals || [];
+        if (activeTab === "investment") return destinations?.investments || [];
+        return destinations?.bills || [];
     };
 
     const getMaxAmount = () => {

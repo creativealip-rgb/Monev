@@ -19,7 +19,8 @@ import {
     PiggyBank,
     Receipt,
     Crown,
-    Lock
+    Lock,
+    RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -85,6 +86,24 @@ const features = [
                 color: "amber",
                 href: "/investments",
                 requiredTier: "kaya" as UserTier
+            },
+            {
+                id: 109,
+                icon: RefreshCw,
+                title: "Transaksi Berulang",
+                desc: "Set gaji, tagihan rutin, atau pengeluaran berulang otomatis",
+                status: "ready",
+                color: "emerald",
+                href: "/recurring"
+            },
+            {
+                id: 108,
+                icon: Users,
+                title: "Hutang & Piutang",
+                desc: "Catat dan track utang piutang dengan mudah",
+                status: "ready",
+                color: "rose",
+                href: "/debts"
             },
             {
                 id: 106,

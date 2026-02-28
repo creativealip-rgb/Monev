@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import {
     getMonthlyStats, getGoals, getBudgets, getTransactions, getTransactionById, getCategories,
     createTransaction, updateTransaction, deleteTransaction, searchTransactions,
@@ -13,6 +14,10 @@ import { askFinanceAgent, getPsychologicalImpact } from "@/lib/ai";
 import { canUseAI, UserTier } from "@/lib/tier-gate";
 
 export async function POST(req: NextRequest) {
+    // Basic IP Rate Limiting: max 5 requests per minute
+    const limited = rateLimit(req, { maxRequests: 5, windowMs: 60000 });
+    if (limited) return limited;
+
     try {
         const session = await auth();
         if (!session?.user?.id) {

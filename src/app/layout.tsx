@@ -51,15 +51,19 @@ export const viewport: Viewport = {
     viewportFit: "cover",
 };
 
-export default function RootLayout({
+import { auth } from "@/auth";
+
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const session = await auth();
+
     return (
         <html lang="id" suppressHydrationWarning>
             <body className={jakarta.className} suppressHydrationWarning>
-                <Providers>
+                <Providers session={session}>
                     <script
                         dangerouslySetInnerHTML={{
                             __html: `
