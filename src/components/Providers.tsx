@@ -7,10 +7,9 @@ export function Providers({ children, session }: { children: React.ReactNode, se
     return (
         <SessionProvider
             session={session}
+            basePath="/api/auth"
             // Don't refetch session every time user switches tabs — reduces ClientFetchError spam
             refetchOnWindowFocus={false}
-            // Only refetch session every 5 minutes instead of constantly
-            refetchInterval={10 * 60} // Incremental increase
         >
             <QueryProvider>
                 {children}
