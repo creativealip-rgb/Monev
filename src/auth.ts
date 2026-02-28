@@ -112,6 +112,40 @@ async function updateUserWithGoogleData(userId: number, googleData: {
 export const { auth, signIn, signOut, handlers } = NextAuth({
     ...authConfig,
     trustHost: true,
+    session: {
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+    cookies: {
+        sessionToken: {
+            name: `next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+            },
+        },
+        csrfToken: {
+            name: `next-auth.csrf-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+            },
+        },
+        pkceCodeVerifier: {
+            name: `next-auth.pkce.code_verifier`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 60 * 15, // 15 minutes
+            },
+        },
+    },
     callbacks: {
         async signIn({ user, account, profile }) {
             console.log("[OAuth] SignIn callback - Provider:", account?.provider);
@@ -276,6 +310,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             allowDangerousEmailAccountLinking: true,
+            checks: [], // Disable all checks to avoid cookie parsing issues
+            authorization: {
+                params: {
+                    prompt: "consent",
+                    access_type: "offline",
+                    scope: "openid email profile",
+                },
+            },
             profile(profile) {
                 // Extract and normalize Google profile data
                 return {
