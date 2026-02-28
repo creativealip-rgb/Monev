@@ -30,6 +30,46 @@ try {
         console.log('[!] bills.last_detected_date might already exist or error:', e.message);
     }
 
+    // Categories Table
+    try {
+        db.exec('ALTER TABLE categories ADD COLUMN user_id INTEGER');
+        console.log('[✓] Added categories.user_id');
+    } catch (e) {
+        console.log('[!] categories.user_id might already exist or error:', e.message);
+    }
+
+    // Budgets Table
+    try {
+        db.exec('ALTER TABLE budgets ADD COLUMN user_id INTEGER');
+        console.log('[✓] Added budgets.user_id');
+    } catch (e) {
+        console.log('[!] budgets.user_id might already exist or error:', e.message);
+    }
+
+    // Goals Table
+    try {
+        db.exec('ALTER TABLE goals ADD COLUMN user_id INTEGER');
+        console.log('[✓] Added goals.user_id');
+    } catch (e) {
+        console.log('[!] goals.user_id might already exist or error:', e.message);
+    }
+
+    // Merchant Mappings Table
+    try {
+        db.exec('ALTER TABLE merchant_mappings ADD COLUMN user_id INTEGER');
+        console.log('[✓] Added merchant_mappings.user_id');
+    } catch (e) {
+        console.log('[!] merchant_mappings.user_id might already exist or error:', e.message);
+    }
+
+    // User Settings Table
+    try {
+        db.exec('ALTER TABLE user_settings ADD COLUMN user_id INTEGER');
+        console.log('[✓] Added user_settings.user_id');
+    } catch (e) {
+        console.log('[!] user_settings.user_id might already exist or error:', e.message);
+    }
+
     console.log('Schema update complete.');
 } catch (e) {
     console.error('Migration failed:', e);
