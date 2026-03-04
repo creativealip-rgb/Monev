@@ -41,19 +41,28 @@ export default function SimulationsPage() {
     };
 
     return (
-        <main className="min-h-screen pb-24 bg-slate-50 dark:bg-slate-950">
+        <main className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
-            <header className="sticky top-0 z-40 glass-card border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Link href="/dashboard" className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
-                        <ArrowLeft size={20} />
-                    </Link>
-                    <h1 className="text-lg font-bold">What-If Simulator</h1>
+            <motion.header
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
+            >
+                <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                        >
+                            <ArrowLeft size={20} strokeWidth={2.5} />
+                        </Link>
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold text-foreground tracking-tight">Simulasi</h1>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">What-If Simulator</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                    <Zap size={20} />
-                </div>
-            </header>
+            </motion.header>
 
             <div className="px-6 py-8">
                 <motion.div
@@ -101,8 +110,8 @@ export default function SimulationsPage() {
                                             key={t.id}
                                             onClick={() => setType(t.id)}
                                             className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${type === t.id
-                                                    ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
-                                                    : "bg-transparent border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                                                ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
+                                                : "bg-transparent border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                                                 }`}
                                         >
                                             <t.icon size={16} className={type === t.id ? "text-purple-600 dark:text-purple-400" : "text-slate-400"} />
@@ -141,7 +150,7 @@ export default function SimulationsPage() {
                             >
                                 {/* Risk Badge */}
                                 <div className={`absolute top-0 right-0 px-4 py-1.5 font-bold text-[10px] uppercase tracking-widest rounded-bl-xl ${result.riskLevel === "high" ? "bg-rose-500 text-white" :
-                                        result.riskLevel === "medium" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white"
+                                    result.riskLevel === "medium" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white"
                                     }`}>
                                     Risk: {result.riskLevel}
                                 </div>

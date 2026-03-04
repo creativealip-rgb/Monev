@@ -218,31 +218,34 @@ export default function InvestmentsPage() {
     const colorOptions = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
 
     return (
-        <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             <TierGateOverlay requiredTier="kaya" currentTier={userTier} featureName="Investasi" />
+
+            {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 px-6 pt-safe pt-3 pb-4 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/"
-                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
+                            href="/dashboard"
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
-                            <ArrowLeft size={16} strokeWidth={2.5} />
+                            <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-foreground tracking-tight">Investasi</h1>
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold text-foreground tracking-tight">Investasi</h1>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Pantau Portfolio Anda</p>
+                        </div>
                     </div>
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                    <button
                         onClick={openAddModal}
-                        className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900 transition-all"
+                        className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                     >
-                        <Plus size={18} />
-                    </motion.button>
+                        <Plus size={24} strokeWidth={2.5} />
+                    </button>
                 </div>
             </motion.header>
 

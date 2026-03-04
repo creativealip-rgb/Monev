@@ -11,7 +11,7 @@ export function HealthScoreWidget({ data }: { data: HealthScoreResult }) {
 
     // Circle progress properties
     const strokeWidth = 8;
-    const radius = 38;
+    const radius = 36;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (data.score / 100) * circumference;
 
@@ -23,9 +23,9 @@ export function HealthScoreWidget({ data }: { data: HealthScoreResult }) {
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="relative w-20 h-20 flex items-center justify-center">
+                        <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
                             {/* Background circle */}
-                            <svg className="w-full h-full transform -rotate-90">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80" overflow="visible">
                                 <circle
                                     cx="40"
                                     cy="40"

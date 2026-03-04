@@ -3,7 +3,8 @@
 import {
     ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check,
     User as UserIcon, MessageCircle, Smartphone, Crown,
-    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame, Download
+    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame, Download,
+    Tag, Plus, Trash2
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +28,7 @@ const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; 
 const menuItems = [
     { id: "account", icon: UserIcon, label: "Pengaturan Akun", color: "blue", hasArrow: true },
     { id: "financial", icon: Wallet, label: "Konfigurasi Keuangan", color: "emerald", hasArrow: true },
+    { id: "categories", icon: Tag, label: "Kategori Custom", color: "pink", hasArrow: true },
     { id: "notifications", icon: Bell, label: "Notifikasi", color: "purple", hasArrow: true },
     { id: "integrations", icon: MessageCircle, label: "Integrasi Bot", color: "indigo", hasArrow: true },
     { id: "security", icon: Shield, label: "Keamanan", color: "amber", hasArrow: true },
@@ -62,12 +64,13 @@ export default function ProfilePage() {
     const [goals, setGoals] = useState<any[]>([]);
     const [streak, setStreak] = useState<any>(null);
     const [achievements, setAchievements] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const { isStealthMode, toggleStealth } = useSecurity();
     const toast = useToast();
 
     // Modals
-    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | null>(null);
+    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | null>(null);
 
     // Notification toggles (Local state for now, persists with notificationsEnabled)
     const [notifToggles, setNotifToggles] = useState({
@@ -78,6 +81,7 @@ export default function ProfilePage() {
     });
 
     // Form States
+    const [newCategory, setNewCategory] = useState({ name: "", type: "expense", icon: "Tag", color: "#ec4899" });
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -146,6 +150,13 @@ export default function ProfilePage() {
                 }));
             }
 
+            const catResponse = await apiFetch("/api/categories");
+            const catResult = await catResponse.json();
+            if (catResult.success && data?.user?.id) {
+                // Filter only user-specific custom categories
+                setCategories(catResult.data.filter((c: any) => c.userId === data.user.id));
+            }
+
             setLoading(false);
         } catch (error) {
             console.error("Failed to load profile data:", error);
@@ -154,7 +165,7 @@ export default function ProfilePage() {
     };
 
     const handleMenuClick = (id: string) => {
-        if (id === "account" || id === "financial" || id === "integrations" || id === "security" || id === "notifications") {
+        if (id === "account" || id === "financial" || id === "integrations" || id === "security" || id === "notifications" || id === "categories") {
             setActiveModal(id as any);
         }
     };
@@ -201,6 +212,57 @@ export default function ProfilePage() {
         toast.success("Berhasil", "Pengaturan keuangan berhasil disimpan!");
         setActiveModal(null);
         loadData(); // Refresh
+    };
+
+    const handleAddCategory = async () => {
+        if (!newCategory.name.trim()) {
+            toast.error("Validasi", "Nama kategori wajib diisi.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await apiFetch("/api/categories", {
+                method: "POST",
+                body: JSON.stringify(newCategory)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                toast.success("Berhasil", "Kategori berhasil ditambahkan!");
+                setNewCategory({ name: "", type: "expense", icon: "Tag", color: "#ec4899" });
+                loadData();
+            } else {
+                toast.error("Gagal", result.error || "Gagal menambahkan kategori.");
+            }
+        } catch (error) {
+            toast.error("Gagal", "Terjadi kesalahan sistem.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteCategory = async (id: number) => {
+        if (!confirm("Yakin ingin menghapus kategori ini? Semua transaksi terkait akan menjadi tanpa kategori.")) return;
+
+        try {
+            setLoading(true);
+            const response = await apiFetch(`/api/categories?id=${id}`, {
+                method: "DELETE"
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                toast.success("Berhasil", "Kategori dihapus.");
+                loadData();
+            } else {
+                toast.error("Gagal", result.error || "Gagal menghapus kategori.");
+            }
+        } catch (error) {
+            toast.error("Gagal", "Terjadi kesalahan sistem.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSaveSecurity = async () => {
@@ -268,7 +330,7 @@ export default function ProfilePage() {
     return (
         <div className="relative min-h-screen pb-24">
             {/* Premium Header Profile Card */}
-            <div className="relative bg-gradient-to-br from-sky-500 via-sky-600 to-cyan-700 pb-10 pt-safe pt-3 px-6 rounded-b-[3rem] shadow-2xl overflow-hidden z-10">
+            <div className="relative bg-gradient-to-br w-full rounded-b-[3rem] from-sky-500 via-sky-600 to-cyan-700 pb-10 pt-safe pt-3 px-6 shadow-2xl overflow-hidden z-[100]">
                 {/* Abstract Background Shapes */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-sky-400/30 rounded-full blur-3xl mix-blend-overlay" />
@@ -276,15 +338,19 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Top Action Bar */}
-                <div className="relative flex items-center justify-between mt-2 mb-6 z-10">
-                    <Link
-                        href="/"
-                        className="w-7 h-7 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20"
-                    >
-                        <ChevronLeft size={16} strokeWidth={2.5} />
-                    </Link>
-                    <h1 className="text-sm font-bold text-white/90 tracking-tight">Profil Saya</h1>
-                    <div className="w-7" /> {/* Spacer for balance */}
+                <div className="relative flex items-center justify-between mt-2 mb-6 z-10 w-full">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md shadow-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95"
+                        >
+                            <ArrowLeft size={20} strokeWidth={2.5} />
+                        </Link>
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold text-white tracking-tight">Profil Saya</h1>
+                            <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">Pengaturan Akun</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Profile Info */}
@@ -488,6 +554,7 @@ export default function ProfilePage() {
                         amber: { bg: "bg-amber-50", text: "text-amber-600" },
                         indigo: { bg: "bg-indigo-50", text: "text-indigo-600" },
                         sky: { bg: "bg-sky-50", text: "text-sky-600" },
+                        pink: { bg: "bg-pink-50", text: "text-pink-600" },
                     };
                     const color = colors[item.color];
 
@@ -1181,6 +1248,89 @@ export default function ProfilePage() {
                                             >
                                                 TUTUP KOLEKSI
                                             </button>
+                                        </div>
+                                    ) : activeModal === "categories" ? (
+                                        <div className="space-y-6">
+                                            {/* Header */}
+                                            <div className="bg-pink-50 dark:bg-pink-900/20 rounded-[2rem] p-6 border border-pink-100 dark:border-pink-900/50">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="p-3 bg-pink-100 dark:bg-pink-900/40 rounded-2xl text-pink-600 dark:text-pink-400 shadow-sm">
+                                                        <Tag size={28} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-slate-900 dark:text-white text-lg leading-tight">Kategori Custom</h4>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed">
+                                                            Punya sumber pendapatan atau jenis pengeluaran unik? Tambahkan di sini.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Add New Category */}
+                                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-5 border border-slate-100 dark:border-slate-800">
+                                                <h5 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">Kategori Baru</h5>
+                                                <div className="space-y-3">
+                                                    <input
+                                                        type="text"
+                                                        value={newCategory.name}
+                                                        onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                                                        placeholder="Nama Kategori..."
+                                                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all"
+                                                    />
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <select
+                                                            value={newCategory.type}
+                                                            onChange={(e) => setNewCategory(prev => ({ ...prev, type: e.target.value as "expense" | "income" }))}
+                                                            className="px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-sm font-medium focus:outline-none transition-all appearance-none"
+                                                        >
+                                                            <option value="expense">Pengeluaran 📉</option>
+                                                            <option value="income">Pemasukan 📈</option>
+                                                        </select>
+                                                        <input
+                                                            type="color"
+                                                            value={newCategory.color}
+                                                            onChange={(e) => setNewCategory(prev => ({ ...prev, color: e.target.value }))}
+                                                            className="w-full h-full min-h-[46px] p-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 cursor-pointer"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={handleAddCategory}
+                                                        className="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2"
+                                                    >
+                                                        <Plus size={18} />
+                                                        Tambah Kategori
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* List Categories */}
+                                            {categories.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Kategori Milikmu</h5>
+                                                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                                                        {categories.map((cat, i) => (
+                                                            <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm" style={{ backgroundColor: cat.color }}>
+                                                                        <Tag size={18} />
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-bold text-slate-900 dark:text-white text-sm">{cat.name}</p>
+                                                                        <p className="text-[10px] uppercase font-bold text-slate-500">{cat.type === "expense" ? "Pengeluaran" : "Pemasukan"}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleDeleteCategory(cat.id)}
+                                                                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
+                                                                >
+                                                                    <Trash2 size={18} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
