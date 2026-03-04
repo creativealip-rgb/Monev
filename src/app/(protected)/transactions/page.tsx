@@ -290,21 +290,25 @@ export default function TransactionsPage() {
     }
 
     return (
-        <div className="relative min-h-screen bg-sky-50 dark:bg-slate-950 pb-28">
+        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+            {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-sky-100/50 dark:border-slate-800/50 px-6 pt-safe pt-3 pb-4"
+                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/"
-                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
+                            href="/dashboard"
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
-                            <ArrowLeft size={16} strokeWidth={2.5} />
+                            <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Riwayat</h1>
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold text-foreground tracking-tight">Riwayat</h1>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Semua Transaksi Anda</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <motion.button
@@ -320,23 +324,23 @@ export default function TransactionsPage() {
                                 a.download = "monev_transaksi.csv";
                                 a.click();
                             }}
-                            className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
+                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
                             title="Export CSV"
                         >
-                            <Download size={15} />
+                            <Download size={20} />
                         </motion.button>
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsFilterModalOpen(true)}
                             className={cn(
-                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
                                 (filterCategory !== "all" || filterType !== "all")
                                     ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
                                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
                             )}
                         >
-                            <Filter size={16} />
+                            <Filter size={20} />
                         </motion.button>
                     </div>
                 </div>
