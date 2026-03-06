@@ -407,8 +407,8 @@ export default function SaldoPage() {
                                             inputMode="numeric"
                                             value={balance}
                                             onChange={(e) => {
-                                                const value = e.target.value.replace(/[^0-9.]/g, '');
-                                                setBalance(value);
+                                                const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                                                setBalance(rawValue);
                                             }}
                                             placeholder="0"
                                             className="w-full p-4 text-center text-2xl font-bold bg-slate-50 dark:bg-slate-800 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500 dark:text-white"
