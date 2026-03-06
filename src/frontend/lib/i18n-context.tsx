@@ -17,6 +17,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "nav.investments": "Investasi",
         "nav.chat": "Chat AI",
         "nav.profile": "Profil",
+        "nav.transfer": "Transfer Internal",
 
         // Common
         "common.save": "Simpan",
@@ -31,6 +32,9 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "common.filter": "Filter",
         "common.export": "Ekspor",
         "common.noData": "Belum ada data",
+        "common.transfer": "Transfer",
+        "common.sourceAccount": "Sumber Saldo",
+        "common.targetAccount": "Tujuan Saldo",
 
         // Dashboard
         "dashboard.title": "Beranda",
@@ -72,6 +76,56 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "profile.settings": "Pengaturan",
         "profile.security": "Keamanan",
         "profile.logout": "Keluar",
+        "profile.language": "Bahasa",
+        "profile.theme": "Tema",
+
+        // Features
+        "features.allFeatures": "Semua Fitur",
+        "features.explore": "Eksplorasi Kemampuan Monev",
+        "features.ready": "Siap",
+        "features.soon": "Segera",
+        "features.upgrade": "Upgrade",
+
+        // Dashboard Features
+        "features.monev_ai": "Monev AI",
+        "features.analytics": "Analitik",
+        "features.budgets": "Anggaran",
+        "features.savings": "Tabungan",
+        "features.simulations": "Simulasi",
+        "features.bills": "Tagihan",
+        "features.investments": "Investasi",
+        "features.debts": "Hutang",
+        "features.recurring": "Berulang",
+        "nav.balances": "Saldo",
+
+        // Saldo / Balances
+        "saldo.title": "Saldo & Akun",
+        "saldo.subtitle": "Kelola semua dompetmu",
+        "saldo.netWorth": "Total Kekayaan Bersih",
+        "saldo.accountsCount": "Akun Terdaftar",
+        "saldo.noAccounts": "Belum ada akun",
+        "saldo.addSample": "Tambahkan Bank, E-Wallet, atau Cash.",
+        "saldo.addAccount": "Tambah Akun Baru",
+        "saldo.accountName": "Nama Akun",
+        "saldo.accountType": "Jenis",
+        "saldo.currentBalance": "Saldo Saat Ini",
+        "saldo.saveAccount": "Simpan Akun",
+        "saldo.type.bank": "Bank",
+        "saldo.type.emoney": "E-Money",
+        "saldo.type.cash": "Tunai",
+        "saldo.type.credit_card": "Kartu Kredit",
+        "saldo.type.investment": "Investasi",
+        "saldo.quickAdd": "Tambah Cepat",
+        "saldo.selectType": "Pilih Jenis",
+        "saldo.selectBank": "Pilih Bank",
+        "saldo.selectEmoney": "Pilih E-Money",
+        "saldo.selectCash": "Pilih Tunai",
+        "saldo.selectCreditCard": "Pilih Kartu Kredit",
+        "saldo.selectInvestment": "Pilih Investasi",
+        "saldo.customOption": "Custom / Lainnya",
+        "saldo.initialBalance": "Saldo Awal",
+        "saldo.back": "Kembali",
+        "saldo.addAccountSuccess": "Akun berhasil ditambahkan",
     },
     en: {
         // Navigation
@@ -84,6 +138,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "nav.investments": "Investments",
         "nav.chat": "AI Chat",
         "nav.profile": "Profile",
+        "nav.transfer": "Internal Transfer",
 
         // Common
         "common.save": "Save",
@@ -98,6 +153,12 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "common.filter": "Filter",
         "common.export": "Export",
         "common.noData": "No data yet",
+        "common.confirm": "Confirm",
+        "common.success": "Success",
+        "common.failed": "Failed",
+        "common.transfer": "Transfer",
+        "common.sourceAccount": "Source Account",
+        "common.targetAccount": "Target Account",
 
         // Dashboard
         "dashboard.title": "Home",
@@ -106,6 +167,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "dashboard.expense": "Expense",
         "dashboard.recentTransactions": "Recent Transactions",
         "dashboard.viewAll": "View All",
+        "dashboard.aiInsight": "AI Insight",
 
         // Transactions
         "transactions.title": "History",
@@ -139,6 +201,56 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "profile.settings": "Settings",
         "profile.security": "Security",
         "profile.logout": "Sign Out",
+        "profile.language": "Language",
+        "profile.theme": "Theme",
+
+        // Features
+        "features.allFeatures": "All Features",
+        "features.explore": "Explore Monev Capabilities",
+        "features.ready": "Ready",
+        "features.soon": "Soon",
+        "features.upgrade": "Upgrade",
+
+        // Dashboard Features
+        "features.monev_ai": "Monev AI",
+        "features.analytics": "Analytics",
+        "features.budgets": "Budgets",
+        "features.savings": "Savings",
+        "features.simulations": "Simulations",
+        "features.bills": "Bills",
+        "features.investments": "Investments",
+        "features.debts": "Debts",
+        "features.recurring": "Recurring",
+        "nav.balances": "Balances",
+
+        // Saldo / Balances
+        "saldo.title": "Balances & Accounts",
+        "saldo.subtitle": "Manage all your wallets",
+        "saldo.netWorth": "Total Net Worth",
+        "saldo.accountsCount": "Registered Accounts",
+        "saldo.noAccounts": "No accounts yet",
+        "saldo.addSample": "Add Bank, E-Wallet, or Cash.",
+        "saldo.addAccount": "Add New Account",
+        "saldo.accountName": "Account Name",
+        "saldo.accountType": "Type",
+        "saldo.currentBalance": "Current Balance",
+        "saldo.saveAccount": "Save Account",
+        "saldo.type.bank": "Bank",
+        "saldo.type.emoney": "E-Money",
+        "saldo.type.cash": "Cash",
+        "saldo.type.credit_card": "Credit Card",
+        "saldo.type.investment": "Investment",
+        "saldo.quickAdd": "Quick Add",
+        "saldo.selectType": "Select Type",
+        "saldo.selectBank": "Select Bank",
+        "saldo.selectEmoney": "Select E-Money",
+        "saldo.selectCash": "Select Cash",
+        "saldo.selectCreditCard": "Select Credit Card",
+        "saldo.selectInvestment": "Select Investment",
+        "saldo.customOption": "Custom / Other",
+        "saldo.initialBalance": "Initial Balance",
+        "saldo.back": "Back",
+        "saldo.addAccountSuccess": "Account added successfully",
     },
 };
 
