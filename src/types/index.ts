@@ -1,24 +1,73 @@
-export type Transaction = {
-    id: string;
-    amount: number;
-    description: string;
-    merchant_name?: string;
-    category: string;
-    categoryId?: number;
-    type: 'expense' | 'income' | 'transfer';
-    payment_method?: string;
-    created_at: string;
-    is_verified: boolean;
+import type {
+    Transaction,
+    User,
+    Category,
+    Budget,
+    Goal,
+    Bill,
+    Investment,
+    Debt,
+    MerchantMapping,
+    UserSettings,
+    ScheduledMessage,
+    ChatHistory,
+    Coupon,
+    CouponClaim,
+    AdminActivityLog,
+    AiInsightsCache,
+    RecurringTransaction,
+    Streak,
+    Achievement,
+    InsertTransaction,
+    InsertCategory,
+    InsertBudget,
+    InsertGoal,
+    InsertBill,
+    InsertInvestment,
+    InsertDebt,
+} from "@/backend/db/schema";
+
+export type {
+    Transaction,
+    User,
+    Category,
+    Budget,
+    Goal,
+    Bill,
+    Investment,
+    Debt,
+    MerchantMapping,
+    UserSettings,
+    ScheduledMessage,
+    ChatHistory,
+    Coupon,
+    CouponClaim,
+    AdminActivityLog,
+    AiInsightsCache,
+    RecurringTransaction,
+    Streak,
+    Achievement,
+    InsertTransaction,
+    InsertCategory,
+    InsertBudget,
+    InsertGoal,
+    InsertBill,
+    InsertInvestment,
+    InsertDebt,
 };
 
-export type User = {
-    id: string;
-    full_name: string;
-    username: string;
-    subscription_tier: 'free' | 'pro' | 'expert';
+// Frontend-specific types that extend or combine schema types
+export type InvestmentSummary = {
+    totalValue: number;
+    totalCost: number;
+    totalProfit: number;
+    totalDividends: number;
+    profitPercent: number;
+    allocation: { label: string; value: number; color: string }[];
+    items: Investment[];
 };
 
-export type Budget = {
+export type BudgetSummary = {
     id: number;
     category: string;
     categoryId: number;
@@ -28,55 +77,20 @@ export type Budget = {
     percentage: number;
 };
 
-export type Goal = {
-    id: number;
-    name: string;
-    target: number;
-    saved: number;
+export type TransactionWithCategory = Transaction & {
+    categoryName: string;
+    categoryColor: string;
+    categoryIcon: string;
+};
+
+export type BudgetWithProgress = Budget & {
     percentage: number;
-    icon: string;
-    color: string;
-    deadline?: string;
+    daysRemaining: number;
+    dailyBudget: number;
 };
 
-export type Bill = {
-    id: number;
-    name: string;
-    amount: number;
-    categoryId: number | null;
-    dueDate: number;
-    frequency: "monthly" | "weekly" | "yearly";
-    isPaid: boolean;
-    lastPaidAt: string | null;
-    icon: string;
-    color: string;
-    isActive: boolean;
-    notes: string | null;
-};
-
-export type Investment = {
-    id: number;
-    name: string;
-    type: "stock" | "crypto" | "mutual_fund" | "gold" | "bond" | "other";
-    quantity: number;
-    avgBuyPrice: number;
-    currentPrice: number;
-    platform: string | null;
-    icon: string;
-    color: string;
-    notes: string | null;
-    totalDividends: number | null;
-    realizedProfit: number | null;
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-export type InvestmentSummary = {
-    totalValue: number;
-    totalCost: number;
-    totalProfit: number;
-    totalDividends: number;
-    profitPercent: number;
-    allocation: { label: string; value: number; color: string }[];
-    items: Investment[];
+export type GoalWithProgress = Goal & {
+    percentage: number;
+    daysUntilDeadline?: number;
+    monthlyTarget?: number;
 };

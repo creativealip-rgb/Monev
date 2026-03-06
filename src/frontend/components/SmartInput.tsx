@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     X, Camera, Mic, Upload, Loader2, Check, AlertCircle,
-    Sparkles, ArrowRight
+    Sparkles
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useAIParser } from "@/frontend/hooks/useAIParser";
 
 interface SmartInputProps {
     mode: "screenshot" | "voice";
@@ -36,136 +37,19 @@ const categoryColors: Record<string, string> = {
 };
 
 export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
-    const [step, setStep] = useState<"input" | "processing" | "review">("input");
-    const [preview, setPreview] = useState<string | null>(null);
-    const [result, setResult] = useState<{
-        merchantName: string;
-        amount: number;
-        description: string;
-        category: string;
-    } | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [recordingTime, setRecordingTime] = useState(0);
+    const {
+        step,
+        result,
+        error,
+        setError,
+        isRecording,
+        recordingTime,
+        handleFileSelect,
+        startRecording,
+        stopRecording,
+    } = useAIParser(onSuccess);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const chunksRef = useRef<Blob[]>([]);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreview(reader.result as string);
-                processImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const processImage = async (base64: string) => {
-        setStep("processing");
-        setError(null);
-
-        try {
-            const response = await apiFetch("/api/transactions/ocr", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imageBase64: base64.split(",")[1] }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                setResult({
-                    merchantName: data.data.merchantName || "",
-                    amount: data.data.amount || 0,
-                    description: data.data.description || "",
-                    category: data.data.category || "Lainnya",
-                });
-                setStep("review");
-            } else {
-                setError(data.error || "Failed to process image");
-            }
-        } catch (err) {
-            setError("Failed to process image. Please try again.");
-        }
-    };
-
-    const startRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-            chunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    chunksRef.current.push(e.data);
-                }
-            };
-
-            mediaRecorder.onstop = async () => {
-                const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-                await processVoice(blob);
-                stream.getTracks().forEach(track => track.stop());
-            };
-
-            mediaRecorder.start();
-            setIsRecording(true);
-
-            timerRef.current = setInterval(() => {
-                setRecordingTime(prev => prev + 1);
-            }, 1000);
-        } catch (err) {
-            setError("Failed to access microphone. Please check permissions.");
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
-            }
-            setStep("processing");
-        }
-    };
-
-    const processVoice = async (audioBlob: Blob) => {
-        setError(null);
-
-        try {
-            const formData = new FormData();
-            formData.append("audio", audioBlob, "voice.webm");
-
-            const response = await apiFetch("/api/transactions/voice", {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                setResult({
-                    merchantName: data.data.parsed.merchantName || "",
-                    amount: data.data.parsed.amount || 0,
-                    description: data.data.parsed.description || "",
-                    category: data.data.parsed.category || "Lainnya",
-                });
-                setStep("review");
-            } else {
-                setError(data.error || "Failed to process voice");
-            }
-        } catch (err) {
-            setError("Failed to process voice. Please try again.");
-        }
-    };
-
     const [saving, setSaving] = useState(false);
 
     const handleConfirm = async () => {

@@ -8,6 +8,9 @@ import { formatCurrency } from "@/frontend/lib/utils";
 
 import { Transaction } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useAccountsData } from "@/frontend/hooks/useAccountsData";
+import { useHaptics } from "@/frontend/hooks/useHaptics";
+
 
 interface Category {
     id: number;
@@ -46,7 +49,12 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
+    const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+    const [targetAccountId, setTargetAccountId] = useState<number | null>(null);
+    const { accounts, isLoading: accountsLoading } = useAccountsData();
     const [error, setError] = useState<string | null>(null);
+    const haptics = useHaptics();
+
 
     // Load transaction data when opened
     useEffect(() => {
@@ -54,22 +62,24 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
             setAmount(transaction.amount.toString());
             setDescription(transaction.description);
             setSelectedCategory(transaction.categoryId || null);
-            if (transaction.type === "expense" || transaction.type === "income") {
-                loadCategories(transaction.type);
-            } else {
-                loadCategories("expense"); // Fallback for transfer
-            }
+            loadCategories(transaction.type as any);
             setStep("amount");
+            setSelectedAccountId((transaction as any).accountId || null);
+            setTargetAccountId((transaction as any).targetAccountId || null);
             setError(null);
+
         }
     }, [transaction, isOpen]);
 
-    const loadCategories = async (type: "expense" | "income") => {
+    const loadCategories = async (type: "expense" | "income" | "transfer") => {
         try {
             const response = await apiFetch("/api/categories");
             const result = await response.json();
             if (result.success) {
-                setCategories(result.data.filter((c: Category) => c.type === type));
+                setCategories(result.data.filter((c: Category) => {
+                    if (type === "transfer") return c.name === "Transfer";
+                    return c.type === type;
+                }));
             }
         } catch (err) {
             console.error("Error loading categories:", err);
@@ -107,9 +117,11 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                     amount: parseFloat(amount),
                     description,
                     categoryId: selectedCategory,
-                    type: transaction.type as "expense" | "income",
+                    type: transaction.type,
                     paymentMethod: "cash",
-                    date: transaction.created_at,
+                    accountId: selectedAccountId,
+                    targetAccountId: transaction.type === 'transfer' ? targetAccountId : null,
+                    date: transaction.createdAt,
                 }),
             });
 
@@ -135,7 +147,10 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
 
     if (!isOpen || !transaction) return null;
 
-    const transactionTypeLabel = transaction.type === "expense" ? "Pengeluaran" : "Pemasukan";
+    const transactionTypeLabel = transaction.type === "expense" ? "Pengeluaran" : transaction.type === "income" ? "Pemasukan" : "Transfer";
+    const typeColorClass = transaction.type === "expense" ? "bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400" :
+        transaction.type === "income" ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400" :
+            "bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400";
 
     return (
         <AnimatePresence>
@@ -173,7 +188,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                         <div className="mb-6 text-center">
                             <span className={cn(
                                 "inline-block px-3 py-1 rounded-full text-xs font-bold",
-                                transaction.type === "expense" ? "bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400" : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
+                                typeColorClass
                             )}>
                                 {transactionTypeLabel}
                             </span>
@@ -242,6 +257,59 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
 
                         {step === "details" && (
                             <div className="space-y-6">
+                                {/* Account Selection */}
+                                <div className="space-y-4">
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                        {transaction.type === 'transfer' ? 'Dari Saldo' : 'Sumber Saldo'}
+                                    </p>
+                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                        {accounts.map((acc) => {
+                                            const isSelected = selectedAccountId === acc.id;
+                                            return (
+                                                <button
+                                                    key={acc.id}
+                                                    onClick={() => { haptics.tap(); setSelectedAccountId(acc.id); }}
+                                                    className={cn(
+                                                        "min-w-[120px] p-3 rounded-2xl border-2 transition-all text-left",
+                                                        isSelected
+                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/40"
+                                                            : "bg-slate-50 dark:bg-slate-800 border-transparent"
+                                                    )}
+                                                >
+                                                    <p className="font-bold text-slate-900 dark:text-white text-[10px] truncate">{acc.name}</p>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Rp {acc.balance.toLocaleString('id-ID')}</p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {transaction.type === 'transfer' && (
+                                    <div className="space-y-4">
+                                        <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Ke Saldo</p>
+                                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                            {accounts.filter(a => a.id !== selectedAccountId).map((acc) => {
+                                                const isSelected = targetAccountId === acc.id;
+                                                return (
+                                                    <button
+                                                        key={acc.id}
+                                                        onClick={() => { haptics.tap(); setTargetAccountId(acc.id); }}
+                                                        className={cn(
+                                                            "min-w-[120px] p-3 rounded-2xl border-2 transition-all text-left",
+                                                            isSelected
+                                                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/40"
+                                                                : "bg-slate-50 dark:bg-slate-800 border-transparent"
+                                                        )}
+                                                    >
+                                                        <p className="font-bold text-slate-900 dark:text-white text-[10px] truncate">{acc.name}</p>
+                                                        <p className="text-[10px] text-slate-500 dark:text-slate-400">Rp {acc.balance.toLocaleString('id-ID')}</p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Deskripsi
@@ -267,10 +335,16 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                 </div>
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading || !description}
+                                    disabled={loading || !description || (transaction.type === 'transfer' && !targetAccountId)}
                                     className={cn(
                                         "w-full py-4 rounded-2xl font-bold text-white transition-all",
-                                        loading || !description ? "bg-slate-300 dark:bg-slate-700" : "bg-sky-500 hover:bg-sky-600"
+                                        loading || !description || (transaction.type === 'transfer' && !targetAccountId)
+                                            ? "bg-slate-300 dark:bg-slate-700"
+                                            : transaction.type === "expense"
+                                                ? "bg-rose-500 hover:bg-rose-600"
+                                                : transaction.type === "income"
+                                                    ? "bg-emerald-500 hover:bg-emerald-600"
+                                                    : "bg-sky-500 hover:bg-sky-600"
                                     )}
                                 >
                                     {loading ? "Menyimpan..." : "Simpan Perubahan"}

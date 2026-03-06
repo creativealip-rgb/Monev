@@ -1,12 +1,15 @@
 "use client";
 
 import {
-    ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check,
+    ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check, Globe,
     User as UserIcon, MessageCircle, Smartphone, Crown,
     CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame, Download,
     Tag, Plus, Trash2
 } from "lucide-react";
+import { LanguageSelector } from "@/frontend/components/LanguageSelector";
+import { useI18n } from "@/frontend/lib/i18n-context";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -59,6 +62,8 @@ const ALL_BADGES = [
 ];
 
 export default function ProfilePage() {
+    const { data: session } = useSession();
+    const { t } = useI18n();
     const [user, setUser] = useState<any>(null);
     const [settings, setSettings] = useState<any>(null);
     const [goals, setGoals] = useState<any[]>([]);
@@ -347,12 +352,13 @@ export default function ProfilePage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-white tracking-tight">Profil Saya</h1>
-                            <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">Pengaturan Akun</p>
+                            <h1 className="text-xl font-bold text-white tracking-tight">{t("profile.title")}</h1>
+                            <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">{t("profile.settings")}</p>
                         </div>
                     </div>
                 </div>
 
+                {/* Profile Info */}
                 {/* Profile Info */}
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
@@ -360,33 +366,39 @@ export default function ProfilePage() {
                     transition={{ delay: 0.1 }}
                     className="flex flex-col items-center relative z-10"
                 >
-                    <div className="relative mb-3">
-                        <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-3xl font-bold shadow-xl overflow-hidden">
+                    <div className="relative mb-4 group">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border-4 border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl overflow-hidden ring-4 ring-black/5">
                             {user?.image ? (
-                                <img src={user.image} alt={user.firstName || "Profile"} className="w-full h-full object-cover" />
+                                <Image
+                                    src={user.image.split('?')[0]}
+                                    alt={user.firstName || "Profile"}
+                                    width={96}
+                                    height={96}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                />
                             ) : (
                                 getInitials()
                             )}
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-[2.5px] border-sky-600 flex items-center justify-center shadow-lg">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                        <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-400 rounded-full border-[3px] border-sky-600 flex items-center justify-center shadow-lg">
+                            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                         </div>
                     </div>
 
-                    <h2 className="text-lg font-bold tracking-tight text-white mb-0.5">
+                    <h2 className="text-2xl font-black tracking-tight text-white mb-1.5 shadow-black/10 drop-shadow-sm text-center px-4">
                         {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Pengguna Baru"}
                     </h2>
 
-                    <span className="text-indigo-200/80 text-[11px] font-bold tracking-widest uppercase mb-4">
+                    <span className="text-sky-100/90 text-xs font-bold tracking-widest uppercase mb-5 bg-black/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm shadow-inner">
                         @{user?.username || "username"}
                     </span>
 
                     <div className="flex flex-col items-center gap-3">
                         <div className={cn(
-                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border backdrop-blur-sm",
-                            user?.tier === "kaya" ? "bg-sky-500/20 border-sky-400" :
-                                user?.tier === "sultan" ? "bg-amber-500/20 border-amber-400" :
-                                    "bg-white/10 border-white/10"
+                            "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border backdrop-blur-md shadow-xl transition-transform hover:scale-105",
+                            user?.tier === "kaya" ? "bg-sky-500/30 border-sky-300" :
+                                user?.tier === "sultan" ? "bg-amber-500/30 border-amber-300" :
+                                    "bg-white/20 border-white/30"
                         )}>
                             {(() => {
                                 const tier = (user?.tier || "miskin") as UserTier;
@@ -394,8 +406,8 @@ export default function ProfilePage() {
                                 const Icon = tierStyle.icon;
                                 return (
                                     <>
-                                        <Icon size={12} className={tier === "miskin" ? "text-white" : tierStyle.color} />
-                                        <span className="text-[10px] font-bold text-white tracking-widest uppercase">{tierStyle.label} Tier</span>
+                                        <Icon size={14} className={tier === "miskin" ? "text-white" : tierStyle.color} />
+                                        <span className="text-[11px] font-bold text-white tracking-widest uppercase">{tierStyle.label} Tier</span>
                                     </>
                                 );
                             })()}
@@ -404,7 +416,7 @@ export default function ProfilePage() {
                         {user?.tier === "miskin" && (
                             <Link
                                 href="/fitur/upgrade"
-                                className="flex items-center gap-2 px-6 py-2 bg-white text-sky-600 rounded-2xl text-xs font-black shadow-xl shadow-sky-950/20 active:scale-95 transition-all"
+                                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-white to-sky-50 text-sky-700 rounded-2xl text-xs font-black shadow-xl shadow-sky-950/20 active:scale-95 transition-all outline-none ring-2 ring-white/50"
                             >
                                 <Sparkles size={14} fill="currentColor" />
                                 UPGRADE KE KAYA
@@ -413,7 +425,7 @@ export default function ProfilePage() {
                         {user?.tier === "kaya" && (
                             <Link
                                 href="/fitur/upgrade"
-                                className="flex items-center gap-2 px-6 py-2 bg-amber-500 text-white rounded-2xl text-xs font-black shadow-xl shadow-amber-950/20 active:scale-95 transition-all"
+                                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-2xl text-xs font-black shadow-xl shadow-amber-950/20 active:scale-95 transition-all outline-none ring-2 ring-amber-400/50"
                             >
                                 <Crown size={14} fill="currentColor" />
                                 JADI SULTAN
@@ -424,7 +436,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Simplified Gamification Section */}
-            <div className="px-6 -mt-6 relative z-20">
+            <div className="px-6 -mt-6 relative z-[110]">
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -538,11 +550,28 @@ export default function ProfilePage() {
                             <Moon size={20} className="text-slate-600 dark:text-slate-300" />
                         </div>
                         <div>
-                            <p className="font-semibold text-slate-900 dark:text-white text-sm">Mode Gelap</p>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p>
                         </div>
                     </div>
                     <ThemeToggleSwitch />
+                </motion.div>
+
+                {/* Language Selector Card */}
+                <motion.div
+                    variants={itemVariants}
+                    className="card-clean p-4 space-y-4"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center">
+                            <Globe size={20} className="text-sky-600 dark:text-sky-400" />
+                        </div>
+                        <div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p>
+                        </div>
+                    </div>
+                    <LanguageSelector />
                 </motion.div>
 
                 {menuItems.map((item, index) => {

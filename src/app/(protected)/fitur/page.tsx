@@ -307,27 +307,38 @@ const itemVariants = {
     visible: { opacity: 1, y: 0 }
 };
 
+import { useI18n } from "@/frontend/lib/i18n-context";
+import { LanguageSelector } from "@/frontend/components/LanguageSelector";
+
 export default function FiturPage() {
     const { data: session } = useSession();
+    const { t } = useI18n();
     // @ts-ignore
     const userTier = (session?.user?.tier as UserTier) || "miskin";
 
     return (
-        <div className="relative min-h-screen pb-28">
-            {/* Standardized Header */}
+        <div className="min-h-screen pb-28 bg-sky-50 dark:bg-slate-950">
+            {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe pt-3 pb-4"
+                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center gap-3 pt-2">
-                    <Link
-                        href="/"
-                        className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95"
-                    >
-                        <ArrowLeft size={16} strokeWidth={2.5} />
-                    </Link>
-                    <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Semua Fitur</h1>
+                <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                        >
+                            <ArrowLeft size={20} strokeWidth={2.5} />
+                        </Link>
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold text-foreground tracking-tight">{t("features.allFeatures")}</h1>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">{t("features.explore")}</p>
+                        </div>
+                    </div>
+
+                    <LanguageSelector variant="minimal" />
                 </div>
             </motion.header>
 

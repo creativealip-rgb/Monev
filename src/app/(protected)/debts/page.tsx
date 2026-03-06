@@ -592,18 +592,6 @@ export default function DebtsPage() {
                     )}
                 </AnimatePresence>
             </Portal>
-
-            {/* FAB */}
-            <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setShowAddSheet(true)}
-                className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-500/40 flex items-center justify-center z-40 active:bg-sky-600 transition-colors"
-            >
-                <Plus size={28} strokeWidth={3} />
-            </motion.button>
         </div>
     );
 }

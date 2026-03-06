@@ -12,6 +12,7 @@ import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { DailyInsight } from "@/frontend/components/DailyInsight";
 import { HealthScoreWidget } from "@/frontend/components/HealthScoreWidget";
 import type { HealthScoreResult } from "@/lib/health-score";
+import Image from "next/image";
 import {
     Sparkles,
     PieChart,
@@ -49,6 +50,8 @@ import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { useSecurity } from "@/components/SecurityProvider";
+import { useDashboardData } from "@/frontend/hooks/useDashboardData";
+import { useI18n } from "@/frontend/lib/i18n-context";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
@@ -56,15 +59,7 @@ const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; 
     sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
 };
 
-interface Transaction {
-    id: string;
-    amount: number;
-    description: string;
-    category: string;
-    type: "expense" | "income";
-    created_at: string;
-    is_verified: boolean;
-}
+import { TransactionWithCategory } from "@/types";
 
 interface Category {
     id: number;
@@ -75,15 +70,15 @@ interface Category {
 }
 
 const mainFeatures = [
-    { label: "Monev AI", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
-    { label: "Analitik", icon: <PieChart size={24} />, color: "sky", href: "/analytics" },
-    { label: "Anggaran", icon: <Wallet size={24} />, color: "orange", href: "/budgets" },
-    { label: "Tabungan", icon: <PiggyBank size={24} />, color: "emerald", href: "/savings" },
-    { label: "Simulasi", icon: <Zap size={24} />, color: "purple", href: "/simulations" },
-    { label: "Tagihan", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
-    { label: "Investasi", icon: <TrendingUp size={24} />, color: "amber", href: "/investments" },
-    { label: "Hutang", icon: <Users size={24} />, color: "rose", href: "/debts" },
-    { label: "Berulang", icon: <Repeat size={24} />, color: "emerald", href: "/recurring" },
+    { label: "features.monev_ai", icon: <Sparkles size={24} />, color: "purple", href: "/chat" },
+    { label: "features.analytics", icon: <PieChart size={24} />, color: "sky", href: "/analytics" },
+    { label: "features.budgets", icon: <Wallet size={24} />, color: "orange", href: "/budgets" },
+    { label: "features.savings", icon: <PiggyBank size={24} />, color: "emerald", href: "/savings" },
+    { label: "features.simulations", icon: <Zap size={24} />, color: "purple", href: "/simulations" },
+    { label: "features.bills", icon: <Receipt size={24} />, color: "rose", href: "/bills" },
+    { label: "features.investments", icon: <TrendingUp size={24} />, color: "amber", href: "/investments" },
+    { label: "features.debts", icon: <Users size={24} />, color: "rose", href: "/debts" },
+    { label: "features.recurring", icon: <Repeat size={24} />, color: "emerald", href: "/recurring" },
 ];
 
 const containerVariants = {
@@ -109,6 +104,7 @@ interface HeroBalanceCardProps {
 }
 
 function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hideBalance, onToggleHideBalance }: HeroBalanceCardProps) {
+    const { t, locale } = useI18n();
     const { themeConfig } = useHeroTheme();
 
     return (
@@ -128,7 +124,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                        <p className="text-white/70 text-xs font-medium group-hover:text-white transition-colors">Total Balance</p>
+                        <p className="text-white/70 text-xs font-medium group-hover:text-white transition-colors">{t("dashboard.balance")}</p>
                         <ChevronRight size={14} className="text-white/50 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
                     </div>
                     <div className="flex items-center gap-2">
@@ -141,7 +137,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                                 onToggleHideBalance();
                             }}
                             className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                            title={hideBalance ? "Tampilkan saldo" : "Sembunyikan saldo"}
+                            title={hideBalance ? (locale === "id" ? "Tampilkan saldo" : "Show balance") : (locale === "id" ? "Sembunyikan saldo" : "Hide balance")}
                         >
                             {hideBalance ? (
                                 <EyeOff size={14} className="text-white/70" />
@@ -178,7 +174,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                         <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                             <ArrowDownRight size={14} className="text-emerald-300" />
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Income</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">{t("dashboard.income")}</p>
                     </div>
                     <p className="font-bold text-[13px] text-emerald-300 tabular-nums">
                         + {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.income).replace("Rp", "")}
@@ -190,7 +186,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                         <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
                             <ArrowUpRight size={14} className="text-rose-300" />
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Pengeluaran</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">{t("dashboard.expense")}</p>
                     </div>
                     <p className="font-bold text-[13px] text-rose-300 tabular-nums">
                         − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense + (stats.fees || 0)).replace("Rp", "")}
@@ -203,165 +199,36 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                 className="mt-4 w-full py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-sm hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
             >
                 <ArrowRightLeft size={16} />
-                Transfer Saldo
+                {t("common.confirm")}
             </button>
         </div>
     );
 }
 
 export default function Home() {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState<{ income: number; expense: number; balance: number; growth?: number; totalGoals?: number; totalInvestments?: number; fees?: number; healthScore?: HealthScoreResult; streak?: { current: number; longest: number } }>({ income: 0, expense: 0, balance: 0, fees: 0 });
-    const [loading, setLoading] = useState(true);
-    const [mounted, setMounted] = useState(false);
-    const [userName, setUserName] = useState<string | null>(null);
-    const [userTier, setUserTier] = useState<UserTier>("miskin");
-    const [userImage, setUserImage] = useState<string | null>(null);
+    const { t } = useI18n();
+    const {
+        transactions,
+        stats,
+        userName,
+        userTier,
+        userImage,
+        anomalies,
+        loading,
+        mounted,
+        refresh
+    } = useDashboardData();
+
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const { isStealthMode, toggleStealth } = useSecurity();
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const toast = useToast();
     const haptics = useHaptics();
-    const [anomalies, setAnomalies] = useState<any[]>([]);
-
-    const loadData = async () => {
-        try {
-            // Get current month for stats
-            const currentMonth = new Date().getMonth() + 1;
-            const currentYear = new Date().getFullYear();
-
-            // Try to load cached data first for instant UI response
-            const [cachedProfile, cachedStats, cachedTrans, cachedAnomalies] = await Promise.all([
-                OfflineManager.getCache("dashboard_profile"),
-                OfflineManager.getCache("dashboard_stats"),
-                OfflineManager.getCache("dashboard_transactions"),
-                OfflineManager.getCache("dashboard_anomalies")
-            ]);
-
-            if (cachedProfile) {
-                const fullName = `${cachedProfile.firstName || ""} ${cachedProfile.lastName || ""}`.trim();
-                setUserName(fullName || cachedProfile.name || "Sultan");
-                setUserImage(cachedProfile.image || null);
-                // @ts-ignore
-                setUserTier(cachedProfile.tier || "miskin");
-            }
-            if (cachedStats) setStats(cachedStats);
-            if (cachedTrans) setTransactions(cachedTrans);
-            if (cachedAnomalies) setAnomalies(cachedAnomalies);
-
-            // Fetch all data in parallel for better performance
-            const [
-                profileResponse,
-                statsResponse,
-                transResponse,
-                catsResponse,
-                anomaliesResponse
-            ] = await Promise.all([
-                apiFetch("/api/profile"),
-                apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
-                apiFetch("/api/transactions"),
-                apiFetch("/api/categories"),
-                apiFetch("/api/dashboard/scan")
-            ]);
-
-            const profileResult = await profileResponse.json();
-            const profileData = profileResult.success ? profileResult.data : null;
-
-            // Early read for anomalies
-            const anomaliesResultData = await anomaliesResponse.json();
-
-            // Process profile data
-            if (profileData?.user) {
-                const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
-                const displayName = fullName || profileData.user.name || "Sultan";
-                setUserName(displayName);
-                setUserImage(profileData.user.image || null);
-                // @ts-ignore
-                setUserTier(profileData.user.tier || "miskin");
-                // Cache profile data
-                OfflineManager.setCache("dashboard_profile", profileData.user);
-            }
-
-            // Process stats
-            const statsResult = await statsResponse.json();
-            let freshStats = null;
-            if (statsResult.success) {
-                freshStats = statsResult.data;
-                setStats(freshStats);
-                OfflineManager.setCache("dashboard_stats", freshStats);
-            }
-
-            // Process transactions and categories
-            const [transResult, catsResult] = await Promise.all([
-                transResponse.json(),
-                catsResponse.json()
-            ]);
-
-            if (anomaliesResultData.anomalies) {
-                setAnomalies(anomaliesResultData.anomalies);
-                OfflineManager.setCache("dashboard_anomalies", anomaliesResultData.anomalies);
-            }
-
-            let freshTransactions = [];
-            if (transResult.success) {
-                const categories: Category[] = catsResult.success ? catsResult.data : [];
-                if (catsResult.success) {
-                    OfflineManager.setCache("dashboard_categories", catsResult.data);
-                }
-                freshTransactions = transResult.data.slice(0, 5).map((t: any) => ({
-                    id: t.id.toString(),
-                    amount: t.amount,
-                    description: t.description,
-                    category: categories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
-                    type: t.type,
-                    created_at: t.date,
-                    is_verified: t.isVerified,
-                }));
-
-                setTransactions(freshTransactions);
-                OfflineManager.setCache("dashboard_transactions", freshTransactions);
-            }
-
-            // Merge Optimistic (Offline) Transactions
-            const offlineTrans = await OfflineManager.getOptimisticTransactions();
-            const offlineCats = await OfflineManager.getCache("dashboard_categories") || [];
-
-            if (offlineTrans.length > 0) {
-                const mappedOffline = offlineTrans.map(t => ({
-                    ...t,
-                    category: offlineCats.find((c: any) => c.id === Number(t.categoryId))?.name || "Lainnya"
-                }));
-
-                setTransactions(prev => {
-                    const combined = [...mappedOffline, ...prev];
-                    return combined.slice(0, 5);
-                });
-
-                // Update Stats with offline impact
-                setStats(currentStats => {
-                    const baseStats = freshStats || currentStats;
-                    const offlineIncome = offlineTrans.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
-                    const offlineExpense = offlineTrans.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
-
-                    return {
-                        ...baseStats,
-                        income: baseStats.income + offlineIncome,
-                        expense: baseStats.expense + offlineExpense,
-                        balance: baseStats.balance + offlineIncome - offlineExpense
-                    };
-                });
-            }
-        } catch (error) {
-            console.error("Error loading data:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleRefresh = async () => {
         haptics.medium();
-        await loadData();
+        await refresh();
     };
 
     // Toggle handler with persistence
@@ -372,21 +239,6 @@ export default function Home() {
 
     const today = new Date();
     const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
-
-    useEffect(() => {
-        setMounted(true);
-        loadData();
-
-        // Listen for transaction added event
-        const handleTransactionAdded = () => {
-            loadData();
-        };
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-
-        return () => {
-            window.removeEventListener("transactionAdded", handleTransactionAdded);
-        };
-    }, []);
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
@@ -401,7 +253,13 @@ export default function Home() {
                                 >
                                     <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                                         {userImage ? (
-                                            <img src={userImage} alt={userName || "User"} className="w-full h-full object-cover" />
+                                            <Image
+                                                src={userImage.split('?')[0]}
+                                                alt={userName || "User"}
+                                                width={40}
+                                                height={40}
+                                                className="w-full h-full object-cover"
+                                            />
                                         ) : !userName ? (
                                             <div className="w-full h-full bg-slate-100 dark:bg-slate-800 animate-pulse flex items-center justify-center">
                                                 <div className="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded-full" />
@@ -542,7 +400,7 @@ export default function Home() {
                     <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
                         <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Fitur Andalan</h2>
                         <Link href="/fitur" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1">
-                            Lihat Semua
+                            {t("dashboard.viewAll")}
                             <ChevronRight size={14} />
                         </Link>
                     </motion.div>
@@ -563,7 +421,7 @@ export default function Home() {
                                     className="relative group"
                                 >
                                     <FeatureItem
-                                        label={feature.label}
+                                        label={t(feature.label)}
                                         icon={feature.icon}
                                         color={feature.color}
                                     />
@@ -585,9 +443,9 @@ export default function Home() {
                     className="px-6"
                 >
                     <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
-                        <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Riwayat Terakhir</h2>
+                        <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">{t("dashboard.recentTransactions")}</h2>
                         <Link href="/transactions" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
-                            Lihat Semua
+                            {t("dashboard.viewAll")}
                         </Link>
                     </motion.div>
 
@@ -718,24 +576,10 @@ export default function Home() {
                     onClose={() => setIsAddSheetOpen(false)}
                     onSuccess={() => {
                         window.dispatchEvent(new CustomEvent("transactionAdded"));
-                        loadData();
+                        refresh();
                     }}
                 />
 
-                {/* Floating Action Button */}
-                <motion.button
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    whileHover={{ scale: 1.1, rotate: 90 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => {
-                        haptics.tap();
-                        setIsAddSheetOpen(true);
-                    }}
-                    className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-500/40 flex items-center justify-center z-[90] active:bg-sky-600 transition-colors"
-                >
-                    <Plus size={28} strokeWidth={3} />
-                </motion.button>
             </div>
         </PullToRefresh>
     );

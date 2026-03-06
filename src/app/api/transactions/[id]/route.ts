@@ -30,6 +30,8 @@ export async function PUT(
             categoryId: body.categoryId,
             type: body.type,
             paymentMethod: body.paymentMethod,
+            accountId: body.accountId,
+            targetAccountId: body.targetAccountId,
             date: body.date ? new Date(body.date) : undefined,
         });
 

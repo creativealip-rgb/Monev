@@ -3,14 +3,14 @@ import { X, Edit2, Trash2, Calendar, Tag, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
-import { Transaction, Budget, Goal } from "@/types";
+import { TransactionWithCategory, BudgetSummary, GoalWithProgress } from "@/types";
 
 interface TransactionDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    transaction: Transaction | null;
-    onEdit: (t: Transaction) => void;
-    onDelete: (id: string) => void;
+    transaction: TransactionWithCategory | null;
+    onEdit: (t: TransactionWithCategory) => void;
+    onDelete: (id: number) => void;
 }
 
 export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, onDelete }: TransactionDetailModalProps) {
@@ -65,7 +65,7 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                                 <div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Deskripsi & Kategori</p>
                                     <p className="font-semibold text-slate-900 dark:text-white">{transaction.description}</p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">{transaction.category}</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">{transaction.categoryName || "Tanpa Kategori"}</p>
                                 </div>
                             </div>
 
@@ -76,15 +76,15 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                                 <div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Waktu Transaksi</p>
                                     <p className="font-semibold text-slate-900 dark:text-white">
-                                        {format(new Date(transaction.created_at), "EEEE, d MMMM yyyy", { locale: id })}
+                                        {format(new Date(transaction.createdAt), "EEEE, d MMMM yyyy", { locale: id })}
                                     </p>
                                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                                        Pukul {format(new Date(transaction.created_at), "HH:mm")} WIB
+                                        Pukul {format(new Date(transaction.createdAt), "HH:mm")} WIB
                                     </p>
                                 </div>
                             </div>
 
-                            {transaction.is_verified && (
+                            {transaction.isVerified && (
                                 <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm font-medium">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
                                     Terverifikasi oleh AI
@@ -118,8 +118,8 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
 interface BudgetDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    budget: Budget | null;
-    onEdit: (b: Budget) => void;
+    budget: BudgetSummary | null;
+    onEdit: (b: BudgetSummary) => void;
     onDelete: (id: number) => void;
 }
 
@@ -212,8 +212,8 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
 interface GoalDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    goal: Goal | null;
-    onEdit: (g: Goal) => void;
+    goal: GoalWithProgress | null;
+    onEdit: (g: GoalWithProgress) => void;
     onDelete: (id: number) => void;
 }
 
@@ -276,11 +276,11 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                                     <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Terkumpul</span>
-                                    <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(goal.saved)}</span>
+                                    <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(goal.currentAmount)}</span>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                                     <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Target</span>
-                                    <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(goal.target)}</span>
+                                    <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(goal.targetAmount)}</span>
                                 </div>
                             </div>
 

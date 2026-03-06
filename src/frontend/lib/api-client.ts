@@ -5,7 +5,12 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-export async function apiFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+export interface ApiOptions extends RequestInit {
+    timeout?: number;
+}
+
+export async function apiFetch(input: string | URL | Request, init?: ApiOptions): Promise<Response> {
+    const { timeout = 30000, ...rest } = init || {};
     let url = input.toString();
 
     // Only prepend if it's a relative API path and we have a base URL AND we are in APK mode
@@ -41,8 +46,25 @@ export async function apiFetch(input: string | URL | Request, init?: RequestInit
         }
 
         const fetchUrl = url;
-        const response = await fetch(fetchUrl, init);
-        return response;
+
+        // Handle timeout using AbortController
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(fetchUrl, {
+                ...rest,
+                signal: controller.signal
+            });
+            clearTimeout(id);
+            return response;
+        } catch (error: any) {
+            clearTimeout(id);
+            if (error.name === 'AbortError') {
+                throw new Error(`Request timeout: Gagal menghubungi ${url} dalam ${timeout / 1000} detik.`);
+            }
+            throw error;
+        }
     } catch (error: any) {
         // For development debugging
         if (typeof window !== "undefined") {

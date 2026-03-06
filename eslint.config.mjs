@@ -12,6 +12,15 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ignore public assets (service workers, workbox)
+    "public/*.js",
+    // Ignore CommonJS utility scripts
+    "*.cjs",
+    // Ignore database fix scripts
+    "fix-*.js",
+    "inspect-*.js",
+    // Ignore Capacitor config (uses Capacitor types)
+    "capacitor.config.ts",
   ]),
 ]);
 

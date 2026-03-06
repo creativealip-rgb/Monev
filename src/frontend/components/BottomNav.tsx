@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, NotebookTabs, BarChart3, Plus, User } from "lucide-react";
+import { Home, NotebookTabs, BarChart3, Plus, User, Wallet } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
@@ -25,7 +25,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const links = [
         { href: "/", label: t("nav.dashboard"), icon: Home },
         { href: "/transactions", label: t("nav.transactions"), icon: NotebookTabs },
-        { href: "/analytics", label: t("nav.analytics"), icon: BarChart3 },
+        { href: "/saldo", label: t("nav.balances"), icon: Wallet },
         { href: "/profile", label: t("nav.profile"), icon: User },
     ];
 

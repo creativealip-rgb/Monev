@@ -1,13 +1,42 @@
+/**
+ * @fileoverview Database Operations
+ * 
+ * Provides type-safe database operations for the Monev application.
+ * All operations use Drizzle ORM for SQLite.
+ * 
+ * @packageDocumentation
+ */
+
 import { getDb } from "./index";
-import { transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory, coupons, couponClaims, streaks, achievements } from "./schema";
-import type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement } from "./schema";
+import { accounts, transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, investments, merchantMappings, chatHistory, coupons, couponClaims, streaks, achievements } from "./schema";
+import type { Account, Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement } from "./schema";
 import { eq, and, desc, sql, gte, lte, like, or, count, inArray } from "drizzle-orm";
 import { calculateRunway, calculateIdleCash } from "@/lib/financial-advising";
 import { detectSubscriptions } from "@/lib/subscription-detector";
+import { updateAccountBalance } from "./account-operations";
 
-export type { Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement };
+export type { Account, Transaction, Category, Budget, Goal, UserSettings, User, Debt, Bill, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement };
 
-// Categories (Global + User Specific)
+// ============================================
+// Categories Operations
+// ============================================
+
+/**
+ * Get all categories for a user.
+ * Returns global categories (userId IS NULL) + user-specific categories.
+ * 
+ * @param userId - User ID to fetch categories for. If undefined, returns only global categories.
+ * @returns Array of categories accessible to the user
+ * 
+ * @example
+ * ```typescript
+ * // Get user's categories
+ * const categories = await getCategories(123);
+ * 
+ * // Get only global categories
+ * const globalCategories = await getCategories();
+ * ```
+ */
 export async function getCategories(userId?: number): Promise<Category[]> {
     const db = getDb();
     if (!userId) {
@@ -25,11 +54,49 @@ export async function getCategories(userId?: number): Promise<Category[]> {
         .all();
 }
 
+/**
+ * Get a single category by ID.
+ * 
+ * @param id - Category ID
+ * @returns Category if found, undefined otherwise
+ * 
+ * @example
+ * ```typescript
+ * const category = await getCategoryById(42);
+ * if (category) {
+ *   console.log(`Category: ${category.name}`);
+ * }
+ * ```
+ */
 export async function getCategoryById(id: number): Promise<Category | undefined> {
     const db = getDb();
     return db.select().from(categories).where(eq(categories.id, id)).get();
 }
 
+/**
+ * Create a new user-specific category.
+ * 
+ * @param data - Category creation data
+ * @param data.userId - Owner user ID
+ * @param data.name - Category name
+ * @param data.icon - Icon name (Lucide icon)
+ * @param data.color - Hex color code
+ * @param data.type - Category type (expense or income)
+ * @returns Created category
+ * 
+ * @throws Error if category creation fails
+ * 
+ * @example
+ * ```typescript
+ * const newCategory = await createCategory({
+ *   userId: 123,
+ *   name: "Groceries",
+ *   icon: "ShoppingCart",
+ *   color: "#10b981",
+ *   type: "expense"
+ * });
+ * ```
+ */
 export async function createCategory(data: {
     userId: number;
     name: string;
@@ -41,6 +108,27 @@ export async function createCategory(data: {
     return db.insert(categories).values(data).returning().get();
 }
 
+/**
+ * Delete a category and handle cascading updates.
+ * - Sets transactions.categoryId to NULL for affected transactions
+ * - Deletes budgets using this category
+ * - Prevents deletion of global categories
+ * 
+ * @param userId - User ID requesting deletion
+ * @param id - Category ID to delete
+ * 
+ * @throws Error if category not found or user lacks permission
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   await deleteCategory(123, 42);
+ *   console.log("Category deleted successfully");
+ * } catch (error) {
+ *   console.error("Failed to delete category:", error);
+ * }
+ * ```
+ */
 export async function deleteCategory(userId: number, id: number): Promise<void> {
     const db = getDb();
 
@@ -201,6 +289,8 @@ export async function createTransaction(userId: number, data: {
     categoryId: number;
     type: "expense" | "income" | "transfer";
     paymentMethod?: string;
+    accountId?: number;
+    targetAccountId?: number;
     date: Date;
 }): Promise<Transaction> {
     const db = getDb();
@@ -210,6 +300,17 @@ export async function createTransaction(userId: number, data: {
         isVerified: true,
         isRecurring: false,
     }).returning().get();
+
+    // Update Account Balance
+    if (result && data.accountId) {
+        const amountChange = data.type === 'income' ? data.amount : -data.amount;
+        await updateAccountBalance(userId, data.accountId, amountChange);
+
+        // Handle target account for transfers
+        if (data.type === 'transfer' && data.targetAccountId) {
+            await updateAccountBalance(userId, data.targetAccountId, data.amount);
+        }
+    }
 
     // Trigger Gamification: Update Streak & First Transaction
     if (result) {
@@ -222,17 +323,63 @@ export async function createTransaction(userId: number, data: {
 
 export async function updateTransaction(userId: number, id: number, data: Partial<Transaction>): Promise<Transaction | undefined> {
     const db = getDb();
+
+    // 1. Get old transaction to revert balance
+    const oldTx = await db.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId))).get();
+
+    if (!oldTx) return undefined;
+
+    // 2. Perform update
     const result = db.update(transactions)
         .set(data)
         .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
         .returning()
         .get();
 
+    if (result) {
+        // 3. Revert old balance effect
+        if (oldTx.accountId) {
+            const oldReversal = oldTx.type === 'income' ? -oldTx.amount : oldTx.amount;
+            await updateAccountBalance(userId, oldTx.accountId, oldReversal);
+
+            if (oldTx.type === 'transfer' && oldTx.targetAccountId) {
+                await updateAccountBalance(userId, oldTx.targetAccountId, -oldTx.amount);
+            }
+        }
+
+        // 4. Apply new balance effect
+        if (result.accountId) {
+            const newChange = result.type === 'income' ? result.amount : -result.amount;
+            await updateAccountBalance(userId, result.accountId, newChange);
+
+            if (result.type === 'transfer' && result.targetAccountId) {
+                await updateAccountBalance(userId, result.targetAccountId, result.amount);
+            }
+        }
+    }
+
     return result;
 }
 
 export async function deleteTransaction(userId: number, id: number): Promise<void> {
     const db = getDb();
+
+    // 1. Get transaction to revert balance
+    const tx = await db.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId))).get();
+
+    if (tx) {
+        // 2. Revert balance
+        if (tx.accountId) {
+            const reversal = tx.type === 'income' ? -tx.amount : tx.amount;
+            await updateAccountBalance(userId, tx.accountId, reversal);
+
+            if (tx.type === 'transfer' && tx.targetAccountId) {
+                await updateAccountBalance(userId, tx.targetAccountId, -tx.amount);
+            }
+        }
+    }
+
+    // 3. Delete
     await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 }
 
@@ -267,7 +414,7 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
         .from(transactions)
         .where(and(
             eq(transactions.userId, userId),
-            or(eq(transactions.type, "expense"), eq(transactions.type, "transfer")), // Include transfers
+            eq(transactions.type, "expense"), // Only true expenses
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
         ))
@@ -695,7 +842,7 @@ export async function unlinkTelegramAccount(userId: number): Promise<void> {
 // User Settings
 export async function getUserSettings(userId: number): Promise<UserSettings | undefined> {
     const db = getDb();
-    let settings = db.select().from(userSettings).where(eq(userSettings.userId, userId)).get();
+    const settings = db.select().from(userSettings).where(eq(userSettings.userId, userId)).get();
     return settings; // Return settings or undefined if not found
 }
 
@@ -1480,7 +1627,7 @@ export async function calculateFinancialHealthScore(userId: number) {
     const currentBalance = monthlyData[0]?.balance || 0;
 
     // Calculate scores (each 0-100)
-    let scores = {
+    const scores = {
         savingsRate: 0,
         expenseControl: 0,
         balanceHealth: 0,
@@ -1795,7 +1942,7 @@ export async function updateUserStreak(userId: number): Promise<Streak> {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    let streak = await getUserStreak(userId);
+    const streak = await getUserStreak(userId);
 
     if (!streak) {
         // First time streak

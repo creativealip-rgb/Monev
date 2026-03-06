@@ -10,6 +10,8 @@ import { predictCategory } from "@/lib/context-engine";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { SplitBillFlow } from "./SplitBillFlow";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useAccountsData } from "@/frontend/hooks/useAccountsData";
+
 
 interface Category {
     id: number;
@@ -43,33 +45,46 @@ import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { CacheManager } from "@/lib/cache-manager";
 
 export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormProps) {
-    const [transactionType, setTransactionType] = useState<"expense" | "income">("expense");
+    const [transactionType, setTransactionType] = useState<"expense" | "income" | "transfer">("expense");
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(false);
     const [showSplit, setShowSplit] = useState(false);
+    const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+    const { accounts, isLoading: accountsLoading } = useAccountsData();
+
     const [lastAddedTransaction, setLastAddedTransaction] = useState<any>(null);
     const { success: toastSuccess } = useToast();
     const haptics = useHaptics();
     const [error, setError] = useState<string | null>(null);
+    const [targetAccountId, setTargetAccountId] = useState<number | null>(null);
 
     // Load categories when type changes
-    const loadCategories = async (type: "expense" | "income") => {
+    const loadCategories = async (type: "expense" | "income" | "transfer") => {
         try {
             const response = await apiFetch("/api/categories");
             const result = await response.json();
             if (result.success) {
-                const filteredCats = result.data.filter((c: Category) => c.type === type);
+                const filteredCats = result.data.filter((c: Category) => {
+                    if (type === "transfer") return c.name === "Transfer";
+                    return c.type === type;
+                });
                 setCategories(filteredCats);
 
-                // Auto-suggest category based on context if none selected
-                if (!selectedCategory) {
+                // Auto-select Transfer category if type is transfer
+                if (type === "transfer") {
+                    const transferCat = filteredCats.find((c: Category) => c.name === "Transfer");
+                    if (transferCat) setSelectedCategory(transferCat.id);
+                } else if (!selectedCategory || categories.find(c => c.id === selectedCategory)?.name === "Transfer") {
+                    // Auto-suggest category based on context
                     const prediction = predictCategory({ time: new Date() });
                     const suggested = filteredCats.find((c: Category) => c.name === prediction.suggestedCategory);
                     if (suggested) {
                         setSelectedCategory(suggested.id);
+                    } else {
+                        setSelectedCategory(null);
                     }
                 }
             }
@@ -128,6 +143,8 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
             categoryId: selectedCategory,
             type: transactionType,
             paymentMethod: "cash",
+            accountId: selectedAccountId,
+            targetAccountId: transactionType === 'transfer' ? targetAccountId : null,
             date: new Date().toISOString(),
         };
 
@@ -281,6 +298,18 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     <Wallet size={18} />
                                     Pemasukan
                                 </button>
+                                <button
+                                    onClick={() => setTransactionType("transfer")}
+                                    className={cn(
+                                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all",
+                                        transactionType === "transfer"
+                                            ? "bg-sky-500 text-white shadow-sm"
+                                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                                    )}
+                                >
+                                    <TrendingUp className="rotate-90" size={18} />
+                                    Transfer
+                                </button>
                             </div>
 
                             {/* Amount & Description Section */}
@@ -313,59 +342,145 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                             </div>
                         </section>
 
+                        {/* Account Selection */}
                         <section className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Kategori</p>
-                                {selectedCategory && (
+                                <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                    {transactionType === 'transfer' ? 'Dari Saldo' : 'Sumber Saldo'}
+                                </p>
+                                {selectedAccountId && (
                                     <span className="text-[10px] font-bold text-sky-500 uppercase">Terpilih</span>
                                 )}
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                {categories.map((cat) => {
-                                    const Icon = categoryIcons[cat.icon] || Wallet;
-                                    const isSelected = selectedCategory === cat.id;
-                                    return (
-                                        <button
-                                            key={cat.id}
-                                            onClick={() => handleCategorySelect(cat.id)}
-                                            className={cn(
-                                                "p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
-                                                isSelected
-                                                    ? transactionType === "expense"
-                                                        ? "border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20"
-                                                        : "border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
-                                                    : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-                                            )}
-                                        >
-                                            <div className="w-9 h-9 rounded-xl mb-2 flex items-center justify-center relative z-10" style={{ backgroundColor: cat.color + "15" }}>
-                                                <Icon size={18} style={{ color: cat.color }} />
-                                            </div>
-                                            <p className="font-bold text-slate-900 dark:text-white text-xs relative z-10">{cat.name}</p>
-                                            {isSelected && (
-                                                <motion.div
-                                                    layoutId="selected-check"
-                                                    className="absolute top-2 right-2 w-4 h-4 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm"
-                                                >
-                                                    <div className="w-2 h-2 rounded-full bg-sky-500" />
-                                                </motion.div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                            {accountsLoading ? (
+                                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="min-w-[120px] h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                    {accounts.map((acc) => {
+                                        const isSelected = selectedAccountId === acc.id;
+                                        return (
+                                            <button
+                                                key={acc.id}
+                                                onClick={() => setSelectedAccountId(acc.id)}
+                                                className={cn(
+                                                    "min-w-[140px] p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
+                                                    isSelected
+                                                        ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                                        : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                                                )}
+                                            >
+                                                <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{acc.name}</p>
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-400">Rp {acc.balance.toLocaleString('id-ID')}</p>
+                                            </button>
+                                        );
+                                    })}
+                                    {accounts.length === 0 && (
+                                        <div className="text-xs text-slate-400 italic py-2">Belum ada akun saldo.</div>
+                                    )}
+                                </div>
+                            )}
                         </section>
+
+                        {transactionType === 'transfer' && (
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Ke Saldo</p>
+                                    {targetAccountId && (
+                                        <span className="text-[10px] font-bold text-sky-500 uppercase">Terpilih</span>
+                                    )}
+                                </div>
+                                {accountsLoading ? (
+                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                        {[1, 2, 3].map(i => (
+                                            <div key={i} className="min-w-[120px] h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl" />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                        {accounts.filter(a => a.id !== selectedAccountId).map((acc) => {
+                                            const isSelected = targetAccountId === acc.id;
+                                            return (
+                                                <button
+                                                    key={acc.id}
+                                                    onClick={() => setTargetAccountId(acc.id)}
+                                                    className={cn(
+                                                        "min-w-[140px] p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
+                                                        isSelected
+                                                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                                                            : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                                                    )}
+                                                >
+                                                    <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{acc.name}</p>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Rp {acc.balance.toLocaleString('id-ID')}</p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
+                        {transactionType !== 'transfer' && (
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Kategori</p>
+                                    {selectedCategory && (
+                                        <span className="text-[10px] font-bold text-sky-500 uppercase">Terpilih</span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map((cat) => {
+                                        const Icon = categoryIcons[cat.icon] || Wallet;
+                                        const isSelected = selectedCategory === cat.id;
+                                        return (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => handleCategorySelect(cat.id)}
+                                                className={cn(
+                                                    "p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
+                                                    isSelected
+                                                        ? transactionType === "expense"
+                                                            ? "border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20"
+                                                            : "border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
+                                                        : "bg-slate-50 dark:bg-slate-800 border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                                                )}
+                                            >
+                                                <div className="w-9 h-9 rounded-xl mb-2 flex items-center justify-center relative z-10" style={{ backgroundColor: cat.color + "15" }}>
+                                                    <Icon size={18} style={{ color: cat.color }} />
+                                                </div>
+                                                <p className="font-bold text-slate-900 dark:text-white text-xs relative z-10">{cat.name}</p>
+                                                {isSelected && (
+                                                    <motion.div
+                                                        layoutId="selected-check"
+                                                        className="absolute top-2 right-2 w-4 h-4 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm"
+                                                    >
+                                                        <div className="w-2 h-2 rounded-full bg-sky-500" />
+                                                    </motion.div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
 
                         <div className="pt-4 pb-12 sticky bottom-0 bg-gradient-to-t from-sky-50/80 via-sky-50/40 to-transparent dark:from-slate-900 dark:via-slate-900/40 mt-auto">
                             <button
                                 onClick={handleSubmit}
-                                disabled={loading || !amount || !selectedCategory || !description}
+                                disabled={loading || !amount || !selectedCategory || !description || (transactionType === 'transfer' && !targetAccountId)}
                                 className={cn(
                                     "w-full py-4 rounded-2xl font-bold text-white shadow-xl transition-all",
-                                    loading || !amount || !selectedCategory || !description
+                                    loading || !amount || !selectedCategory || !description || (transactionType === 'transfer' && !targetAccountId)
                                         ? "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
                                         : transactionType === "expense"
                                             ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
-                                            : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                                            : transactionType === "income"
+                                                ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                                                : "bg-sky-500 hover:bg-sky-600 shadow-sky-500/20"
                                 )}
                             >
                                 {loading ? (
@@ -377,6 +492,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                             </button>
                         </div>
                     </div>
+
                 </div>
             </motion.div>
         </AnimatePresence>
