@@ -405,10 +405,12 @@ export default function SaldoPage() {
                                         <input
                                             type="text"
                                             inputMode="numeric"
-                                            value={balance}
+                                            value={balance === "0" ? "" : balance}
                                             onChange={(e) => {
                                                 const rawValue = e.target.value.replace(/[^0-9]/g, '');
-                                                setBalance(rawValue);
+                                                // Remove leading zeros
+                                                const cleanValue = rawValue.replace(/^0+/, '') || '0';
+                                                setBalance(cleanValue);
                                             }}
                                             placeholder="0"
                                             className="w-full p-4 text-center text-2xl font-bold bg-slate-50 dark:bg-slate-800 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500 dark:text-white"
