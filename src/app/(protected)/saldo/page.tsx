@@ -403,12 +403,15 @@ export default function SaldoPage() {
 
                                     <div className="mb-6">
                                         <input
-                                            type="number"
+                                            type="text"
+                                            inputMode="numeric"
                                             value={balance}
-                                            onChange={(e) => setBalance(e.target.value)}
+                                            onChange={(e) => {
+                                                const value = e.target.value.replace(/[^0-9.]/g, '');
+                                                setBalance(value);
+                                            }}
                                             placeholder="0"
                                             className="w-full p-4 text-center text-2xl font-bold bg-slate-50 dark:bg-slate-800 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500 dark:text-white"
-                                            autoFocus={!!selectedPreset}
                                         />
                                     </div>
 
