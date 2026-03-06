@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check } from "lucide-react";
 import { useState } from "react";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
@@ -120,24 +120,28 @@ export default function SaldoPage() {
 
     return (
         <div className="pb-32 font-sans">
-            <header className="px-6 pt-12 pb-8 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex justify-between items-start mb-6">
+            <header className="px-6 pt-6 pb-8">
+                <div className="flex justify-between items-start mb-6 -pt-4">
                     <div>
                         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
                         <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.subtitle")}</p>
                     </div>
-                    <button
+                    <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => { haptics.medium(); setIsAddOpen(true); }}
-                        className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 hover:scale-110 active:scale-95 transition-all"
+                        className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20"
                     >
-                        <Plus size={20} />
-                    </button>
+                        <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                            <Plus size={20} className="text-slate-700 dark:text-sky-400" />
+                        </div>
+                    </motion.button>
                 </div>
 
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden"
+                    className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden glass-card"
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full -mr-16 -mt-16 blur-3xl" />
                     <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mb-1 relative z-10">{t("saldo.netWorth")}</p>
@@ -152,7 +156,7 @@ export default function SaldoPage() {
                     <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
                         {t("saldo.quickAdd")}
                     </p>
-                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex gap-3 overflow-x-auto pb-2">
                         {QUICK_ADD_PRESETS.map((preset) => {
                             const Icon = iconMap[preset.icon] || Wallet;
                             return (
@@ -160,7 +164,7 @@ export default function SaldoPage() {
                                     key={preset.name}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => openQuickAdd(preset)}
-                                    className="flex-shrink-0 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex items-center gap-2"
+                                    className="flex-shrink-0 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 transition-all flex items-center gap-2 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md"
                                 >
                                     <Icon size={18} style={{ color: preset.color }} />
                                     <span className="font-bold text-sm whitespace-nowrap dark:text-white">{preset.name}</span>
@@ -170,7 +174,7 @@ export default function SaldoPage() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => { haptics.medium(); setIsAddOpen(true); }}
-                            className="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-lg shadow-sky-500/30"
+                            className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20"
                         >
                             <Plus size={20} />
                         </motion.button>
@@ -182,16 +186,20 @@ export default function SaldoPage() {
                 <div className="grid gap-4">
                     {isLoading ? (
                         [1, 2, 3].map(i => (
-                            <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 animate-pulse border border-slate-200 dark:border-slate-800" />
+                            <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
                         ))
                     ) : accounts.length === 0 ? (
-                        <div className="text-center py-12">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center py-12"
+                        >
                             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Wallet className="text-slate-400" size={32} />
                             </div>
                             <h3 className="text-slate-900 dark:text-white font-bold">{t("saldo.noAccounts")}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.addSample")}</p>
-                        </div>
+                        </motion.div>
                     ) : (
                         accounts.map((acc, idx) => {
                             const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
@@ -201,7 +209,7 @@ export default function SaldoPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow relative overflow-hidden group"
+                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group"
                                 >
                                     <div
                                         className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
@@ -218,7 +226,7 @@ export default function SaldoPage() {
                                             {formatCurrency(acc.balance)}
                                         </p>
                                     </div>
-                                    <button className="text-slate-300 dark:text-slate-600 ml-2" onClick={() => haptics.tap()}>
+                                    <button className="text-slate-300 dark:text-slate-600" onClick={() => haptics.tap()}>
                                         <MoreVertical size={16} />
                                     </button>
                                 </motion.div>
@@ -249,7 +257,7 @@ export default function SaldoPage() {
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl"
+                            className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl card-clean"
                         >
                             {/* Step 1: Select Type */}
                             {step === 1 && (
@@ -257,9 +265,10 @@ export default function SaldoPage() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
+                                    className="p-6"
                                 >
                                     <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6">{t("saldo.selectType")}</h2>
-                                    <div className="grid grid-cols-3 gap-3 mb-4">
+                                    <div className="grid grid-cols-3 gap-4 mb-6">
                                         {ACCOUNT_TYPES.map((type) => {
                                             const Icon = iconMap[type.icon] || Wallet;
                                             return (
@@ -271,7 +280,7 @@ export default function SaldoPage() {
                                                         setSelectedType(type.id);
                                                         setStep(2);
                                                     }}
-                                                    className="p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center gap-2"
+                                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2"
                                                 >
                                                     <Icon size={28} color={type.color} />
                                                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{type.label}</span>
@@ -283,7 +292,7 @@ export default function SaldoPage() {
                                         <button
                                             type="button"
                                             onClick={resetForm}
-                                            className="w-full py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+                                            className="w-full py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm"
                                         >
                                             {t("common.cancel")}
                                         </button>
@@ -297,6 +306,7 @@ export default function SaldoPage() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
+                                    className="p-6"
                                 >
                                     <button
                                         onClick={() => {
@@ -309,7 +319,7 @@ export default function SaldoPage() {
                                         {t("saldo.back")}
                                     </button>
                                     <h2 className="text-xl font-black text-slate-900 dark:text-white mb-4">{getTypeLabel(selectedType)}</h2>
-                                    <div className="grid grid-cols-3 gap-3 max-h-64 overflow-y-auto mb-4">
+                                    <div className="grid grid-cols-3 gap-4 max-h-64 overflow-y-auto mb-6">
                                         {ACCOUNT_PRESETS[selectedType]?.map((preset) => {
                                             const Icon = iconMap[preset.icon] || Wallet;
                                             return (
@@ -321,7 +331,7 @@ export default function SaldoPage() {
                                                         setSelectedPreset(preset);
                                                         setStep(3);
                                                     }}
-                                                    className="p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center gap-2"
+                                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2"
                                                 >
                                                     <Icon size={20} color={preset.color} />
                                                     <span className="font-bold text-xs text-slate-700 dark:text-slate-300">{preset.name}</span>
@@ -335,7 +345,7 @@ export default function SaldoPage() {
                                             setSelectedPreset(null);
                                             setStep(3);
                                         }}
-                                        className="w-full py-3 text-sky-500 font-bold border-2 border-dashed border-sky-500 rounded-xl hover:bg-sky-50 dark:hover:bg-slate-800 transition-all mb-4"
+                                        className="w-full py-3 text-sky-500 font-bold border-2 border-dashed border-sky-500 rounded-2xl hover:bg-sky-50 dark:hover:bg-slate-800 transition-all mb-6"
                                     >
                                         + {t("saldo.customOption")}
                                     </button>
@@ -343,7 +353,7 @@ export default function SaldoPage() {
                                         <button
                                             type="button"
                                             onClick={resetForm}
-                                            className="w-full py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
+                                            className="w-full py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm"
                                         >
                                             {t("common.cancel")}
                                         </button>
@@ -357,6 +367,7 @@ export default function SaldoPage() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
+                                    className="p-6"
                                 >
                                     <button
                                         onClick={() => {
@@ -392,8 +403,7 @@ export default function SaldoPage() {
                                                     value={customName}
                                                     onChange={(e) => setCustomName(e.target.value)}
                                                     placeholder="Nama Akun (contoh: Bank Jabar)"
-                                                    className="text-2xl font-black text-center text-slate-900 dark:text-white bg-transparent border-b-2 border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none py-2 w-full"
-                                                    autoFocus
+                                                    className="w-full p-4 text-2xl font-black text-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
                                                 />
                                             </>
                                         )}
@@ -413,7 +423,7 @@ export default function SaldoPage() {
                                                 setBalance(cleanValue);
                                             }}
                                             placeholder="0"
-                                            className="w-full p-4 text-center text-2xl font-bold bg-slate-50 dark:bg-slate-800 rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500 dark:text-white"
+                                            className="w-full p-4 text-center text-2xl font-bold bg-white dark:bg-slate-800 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
                                         />
                                     </div>
 
@@ -422,7 +432,7 @@ export default function SaldoPage() {
                                             type="button"
                                             onClick={resetForm}
                                             disabled={isSaving}
-                                            className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 disabled:opacity-50"
+                                            className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm disabled:opacity-50"
                                         >
                                             {t("common.cancel")}
                                         </button>
@@ -430,7 +440,7 @@ export default function SaldoPage() {
                                             type="button"
                                             onClick={handleSave}
                                             disabled={isSaving || (!selectedPreset && !customName.trim())}
-                                            className="flex-1 py-4 bg-sky-500 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            className="flex-1 py-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                         >
                                             {isSaving ? (
                                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
