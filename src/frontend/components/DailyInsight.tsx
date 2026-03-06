@@ -13,13 +13,24 @@ export function DailyInsight() {
     const fetchInsight = async () => {
         setLoading(true);
         try {
-            const res = await apiFetch("/api/dashboard/tip");
+            const res = await apiFetch("/api/dashboard/tip", { timeout: 45000 });
             const data = await res.json();
             if (data.success) {
                 setInsight({ text: data.insight, type: data.type });
+            } else {
+                // Friendly fallback from API error
+                setInsight({
+                    text: data.insight || "Tetap semangat mengelola keuanganmu hari ini!",
+                    type: data.type || "info"
+                });
             }
         } catch (e) {
             console.error(e);
+            // Fallback for network error / timeout
+            setInsight({
+                text: "Gagal menghubungkan ke AI. Cek koneksi internetmu, Bos.",
+                type: "info"
+            });
         } finally {
             setLoading(false);
         }

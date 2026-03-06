@@ -5,7 +5,7 @@ import { X, Edit2, Trash2, Calendar, Tag, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
-import { Transaction, Budget, Goal } from "@/types";
+import { TransactionWithCategory, BudgetSummary, GoalWithProgress } from "@/types";
 import { calculateFutureValue } from "@/lib/financial-advising";
 
 function Portal({ children }: { children: React.ReactNode }) {
@@ -20,9 +20,9 @@ function Portal({ children }: { children: React.ReactNode }) {
 interface TransactionDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    transaction: Transaction | null;
-    onEdit: (t: Transaction) => void;
-    onDelete: (id: string) => void;
+    transaction: TransactionWithCategory | null;
+    onEdit: (t: TransactionWithCategory) => void;
+    onDelete: (id: number) => void;
 }
 
 export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, onDelete }: TransactionDetailModalProps) {
@@ -77,7 +77,7 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-slate-900 dark:text-white text-[13px] truncate">{transaction.description}</p>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{transaction.category}</p>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{transaction.categoryName || "Tanpa Kategori"}</p>
                                     </div>
                                 </div>
 
@@ -87,15 +87,15 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-slate-900 dark:text-white text-[13px]">
-                                            {format(new Date(transaction.created_at), "d MMMM yyyy", { locale: id })}
+                                            {format(new Date(transaction.createdAt), "d MMMM yyyy", { locale: id })}
                                         </p>
                                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                            Pukul {format(new Date(transaction.created_at), "HH:mm")} WIB
+                                            Pukul {format(new Date(transaction.createdAt), "HH:mm")} WIB
                                         </p>
                                     </div>
                                 </div>
 
-                                {transaction.is_verified && (
+                                {transaction.isVerified && (
                                     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50/50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl text-[10px] font-bold uppercase tracking-wider">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                         Terverifikasi AI
@@ -130,8 +130,8 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
 interface BudgetDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    budget: Budget | null;
-    onEdit: (b: Budget) => void;
+    budget: BudgetSummary | null;
+    onEdit: (b: BudgetSummary) => void;
     onDelete: (id: number) => void;
 }
 
@@ -226,8 +226,8 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
 interface GoalDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    goal: Goal | null;
-    onEdit: (g: Goal) => void;
+    goal: GoalWithProgress | null;
+    onEdit: (g: GoalWithProgress) => void;
     onDelete: (id: number) => void;
 }
 
@@ -294,11 +294,11 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Terkumpul</span>
-                                        <span className="font-bold text-slate-900 dark:text-white text-[13px] tracking-tight tabular-nums">{formatCurrency(goal.saved)}</span>
+                                        <span className="font-bold text-slate-900 dark:text-white text-[13px] tracking-tight tabular-nums">{formatCurrency(goal.currentAmount)}</span>
                                     </div>
                                     <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Target</span>
-                                        <span className="font-bold text-slate-900 dark:text-white text-[13px] tracking-tight tabular-nums">{formatCurrency(goal.target)}</span>
+                                        <span className="font-bold text-slate-900 dark:text-white text-[13px] tracking-tight tabular-nums">{formatCurrency(goal.targetAmount)}</span>
                                     </div>
                                 </div>
 
@@ -319,7 +319,7 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                         const diffYears = diffDays / 365;
 
                                         if (diffYears > 0.5) {
-                                            const futureVal = calculateFutureValue(goal.target, diffYears);
+                                            const futureVal = calculateFutureValue(goal.targetAmount, diffYears);
                                             return (
                                                 <div className="p-2.5 bg-amber-50/80 dark:bg-amber-900/30 rounded-xl border border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-[11px]">
                                                     <div className="flex items-center gap-1.5 font-bold mb-1 text-amber-600 dark:text-amber-400">

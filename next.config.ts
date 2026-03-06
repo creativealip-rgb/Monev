@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from "next/constants";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
 const nextConfig = (phase: string): NextConfig => {
     // Only allow static export during the actual production build for APK

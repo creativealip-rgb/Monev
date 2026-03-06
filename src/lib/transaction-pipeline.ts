@@ -13,11 +13,14 @@ interface TransactionData {
     type: 'expense' | 'income' | 'transfer';
     date: Date;
     paymentMethod: string;
+    accountId?: number;
+    targetAccountId?: number;
 }
 
 export async function processAndSaveTransaction(userId: number, data: TransactionData, source: 'telegram' | 'notification') {
-    // 1. Save to Database
+    // 1. Save to Database (Balance is updated automatically inside createTransaction)
     const transaction = await createTransaction(userId, data);
+
     const categoryName = (data as any).categoryName || "Transaksi"; // Fallback if name not passed
 
     const formattedDate = format(transaction.date, "dd MMM yyyy", { locale: id });
@@ -25,7 +28,7 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
 
     // --- TRANSFER BALANCER LOGIC ---
     let isTransfer = data.type === 'transfer' || data.categoryName === 'Transfer';
-    let matchingTrans = await findRecentMatchingTransaction(userId, data.amount, data.type as any);
+    const matchingTrans = await findRecentMatchingTransaction(userId, data.amount, data.type as any);
 
     if (matchingTrans && !isTransfer) {
         console.log(`[Balancer] Match found for ${transaction.amount}: ${matchingTrans.id}. Converting to Transfer.`);

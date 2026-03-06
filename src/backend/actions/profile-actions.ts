@@ -109,16 +109,31 @@ export async function updateProfile(formData: FormData) {
         if (imageFile && imageFile.size > 0 && typeof imageFile !== 'string') {
             const buffer = Buffer.from(await imageFile.arrayBuffer());
             const ext = path.extname(imageFile.name) || ".png";
-            const filename = `avatar-${userId}${ext}`;
+
             const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
 
             if (!fs.existsSync(uploadDir)) {
                 fs.mkdirSync(uploadDir, { recursive: true });
             }
 
+            // Cleanup old avatars for this user
+            try {
+                const files = fs.readdirSync(uploadDir);
+                files.forEach(file => {
+                    if (file.startsWith(`avatar-${userId}-`)) {
+                        fs.unlinkSync(path.join(uploadDir, file));
+                    }
+                });
+            } catch (e) {
+                console.error("Error cleaning up old avatars:", e);
+            }
+
+            // Use a unique filename instead of a query string to bypass browser cache
+            const timestamp = Date.now();
+            const filename = `avatar-${userId}-${timestamp}${ext}`;
             const filePath = path.join(uploadDir, filename);
             fs.writeFileSync(filePath, buffer);
-            imagePath = `/uploads/avatars/${filename}?v=${Date.now()}`; // Add version to bust cache
+            imagePath = `/uploads/avatars/${filename}`;
         }
 
         // Fetch user data for tier check

@@ -169,6 +169,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                 </div>
                                 <button
                                     onClick={onClose}
+                                    aria-label="Tutup form tambah transaksi"
                                     className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                                 >
                                     <X size={18} />
@@ -187,6 +188,8 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                             whileHover={{ scale: isLocked ? 1 : 1.02 }}
                                             whileTap={{ scale: isLocked ? 1 : 0.98 }}
                                             onClick={() => isLocked ? window.location.href = '/fitur/upgrade' : handleAction(action.id)}
+                                            aria-label={`${action.label}${isLocked ? ' (Upgrade required)' : ''}`}
+                                            aria-disabled={isLocked}
                                             className={cn(
                                                 "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all",
                                                 isLocked
@@ -278,6 +281,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                     onClose();
                                                 }
                                             }}
+                                            aria-label={`Tambah transaksi ${template.label}`}
                                             className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl hover:bg-sky-50 dark:hover:bg-sky-900/30 border border-transparent hover:border-sky-200 dark:hover:border-sky-800 transition-all group"
                                         >
                                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-600 dark:group-hover:text-sky-400">{template.label}</span>
@@ -287,6 +291,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                 </div>
                                 <button
                                     onClick={() => handleAction("manual")}
+                                    aria-label="Buat template custom baru"
                                     className="w-full mt-4 py-3 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-xl hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
                                 >
                                     + Buat Template Custom

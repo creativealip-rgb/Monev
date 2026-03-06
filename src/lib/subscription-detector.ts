@@ -27,7 +27,7 @@ export function detectSubscriptions(transactions: Transaction[]): SubscriptionPa
         if (!patterns[cleanMerchant]) {
             patterns[cleanMerchant] = { dates: [], amounts: [] };
         }
-        patterns[cleanMerchant].dates.push(new Date(t.created_at));
+        patterns[cleanMerchant].dates.push(new Date(t.createdAt));
         patterns[cleanMerchant].amounts.push(t.amount);
     });
 

@@ -4,6 +4,7 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 
 export default NextAuth(authConfig).auth((req: NextRequest) => {
+    const start = Date.now();
     const { pathname } = req.nextUrl;
 
     // Create response
@@ -21,6 +22,11 @@ export default NextAuth(authConfig).auth((req: NextRequest) => {
                 headers: response.headers
             });
         }
+    }
+
+    const duration = Date.now() - start;
+    if (duration > 100) {
+        console.log(`[proxy] Request to ${pathname} took ${duration}ms`);
     }
 
     return response;

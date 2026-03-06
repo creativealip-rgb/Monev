@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
         const offset = (page - 1) * limit;
 
-        let conditions = [];
+        const conditions = [];
         
         if (search) {
             conditions.push(

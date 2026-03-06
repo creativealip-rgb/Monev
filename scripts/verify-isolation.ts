@@ -41,7 +41,7 @@ async function verifyIsolation() {
     console.log("Deleted previous test data.");
 
     // 3. Setup Category
-    let allCats = await getCategories();
+    const allCats = await getCategories();
     let catId = allCats[0]?.id;
 
     if (!catId) {

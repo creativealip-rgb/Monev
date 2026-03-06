@@ -44,6 +44,8 @@ export const transactions = sqliteTable("transactions", {
     sourceType: text("source_type", { enum: ["goal", "investment"] }),
     sourceId: integer("source_id"),
     fee: real("fee").default(0),
+    accountId: integer("account_id").references(() => accounts.id),
+    targetAccountId: integer("target_account_id").references(() => accounts.id), // For internal transfers
     date: integer("date", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     isVerified: integer("is_verified", { mode: "boolean" }).notNull().default(false),
     isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
@@ -109,6 +111,21 @@ export const userSettings = sqliteTable("user_settings", {
     personaUpdatedAt: integer("persona_updated_at", { mode: "timestamp" }),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
+export const accounts = sqliteTable("accounts", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    name: text("name").notNull(),
+    type: text("type", { enum: ["bank", "emoney", "cash", "credit_card", "investment_wallet"] }).notNull().default("bank"),
+    balance: real("balance").notNull().default(0),
+    color: text("color").notNull().default("#3b82f6"),
+    icon: text("icon").notNull().default("Wallet"),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_accounts_user_id").on(table.userId),
+}));
 
 export const debts = sqliteTable("debts", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -285,6 +302,7 @@ export type Debt = typeof debts.$inferSelect;
 export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
 export type ChatHistory = typeof chatHistory.$inferSelect;
+export type Account = typeof accounts.$inferSelect;
 export type Investment = typeof investments.$inferSelect;
 export type Coupon = typeof coupons.$inferSelect;
 export type CouponClaim = typeof couponClaims.$inferSelect;
@@ -306,6 +324,7 @@ export type InsertDebt = typeof debts.$inferInsert;
 export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
 export type InsertBill = typeof bills.$inferInsert;
 export type InsertChatHistory = typeof chatHistory.$inferInsert;
+export type InsertAccount = typeof accounts.$inferInsert;
 export type InsertInvestment = typeof investments.$inferInsert;
 export type InsertCoupon = typeof coupons.$inferInsert;
 export type InsertCouponClaim = typeof couponClaims.$inferInsert;
@@ -327,6 +346,8 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings);
 export const selectUserSettingsSchema = createSelectSchema(userSettings);
 export const insertBillSchema = createInsertSchema(bills);
 export const selectBillSchema = createSelectSchema(bills);
+export const insertAccountSchema = createInsertSchema(accounts);
+export const selectAccountSchema = createSelectSchema(accounts);
 export const insertInvestmentSchema = createInsertSchema(investments);
 export const selectInvestmentSchema = createSelectSchema(investments);
 export const insertCouponSchema = createInsertSchema(coupons);

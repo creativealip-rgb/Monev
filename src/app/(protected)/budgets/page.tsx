@@ -10,7 +10,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
-import { Budget } from "@/types";
+import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
@@ -52,14 +52,14 @@ const categoryIcons: Record<string, string> = {
 };
 
 export default function BudgetsPage() {
-    const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Modals state
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-    const [detailBudget, setDetailBudget] = useState<Budget | null>(null);
-    const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+    const [detailBudget, setDetailBudget] = useState<BudgetSummary | null>(null);
+    const [editingBudget, setEditingBudget] = useState<BudgetSummary | null>(null);
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();

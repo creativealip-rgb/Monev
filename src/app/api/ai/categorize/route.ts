@@ -1,6 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+import { checkAIRateLimit, incrementAIUsage, getRateLimitHeaders } from "@/lib/rate-limiter";
+import { UserTier } from "@/lib/tier-gate";
 
 function getOpenAIClient() {
     const { default: OpenAI } = require("openai");
@@ -9,7 +13,7 @@ function getOpenAIClient() {
 
 const CATEGORIES = [
     "Makan & Minuman",
-    "Transportasi", 
+    "Transportasi",
     "Hiburan",
     "Belanja",
     "Kesehatan",
@@ -22,7 +26,37 @@ const CATEGORIES = [
 ];
 
 export async function POST(req: NextRequest) {
+    // Rate limiting - AI endpoint
+    const rateLimitResponse = await applyRateLimit(req, "ai");
+    if (rateLimitResponse) return rateLimitResponse;
+
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const userId = parseInt(session.user.id);
+        // @ts-ignore
+        const userTier = (session.user.tier as UserTier) || "miskin";
+
+        // Check AI daily limit
+        const aiRateLimit = checkAIRateLimit(userId, userTier);
+        if (!aiRateLimit.allowed) {
+            return NextResponse.json(
+                {
+                    error: "AI limit exceeded",
+                    message: `You have reached your daily AI limit (${aiRateLimit.limit} requests).`,
+                    used: aiRateLimit.used,
+                    limit: aiRateLimit.limit
+                },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(aiRateLimit)
+                }
+            );
+        }
+
         const openai = getOpenAIClient();
         const body = await req.json();
         const { merchantName, description } = body;
@@ -34,8 +68,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const searchTerm = merchantName || description;
-        
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -75,7 +107,7 @@ Jawab dalam format JSON saja:
         });
 
         const content = completion.choices[0]?.message?.content || "";
-        
+
         let parsed;
         try {
             parsed = JSON.parse(content);
@@ -91,6 +123,7 @@ Jawab dalam format JSON saja:
             parsed.category = "Lainnya";
         }
 
+        incrementAIUsage(userId);
         return NextResponse.json({
             success: true,
             data: parsed

@@ -14,10 +14,13 @@ import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Transaction } from "@/types";
+import { TransactionWithCategory } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
+import { useTransactionsData } from "@/frontend/hooks/useTransactionsData";
+import { useI18n } from "@/frontend/lib/i18n-context";
+import { enUS, id as idLocale } from "date-fns/locale";
 
 interface Category {
     id: number;
@@ -41,65 +44,63 @@ const itemVariants = {
 };
 
 export default function TransactionsPage() {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { t, locale } = useI18n();
     const [searchQuery, setSearchQuery] = useState("");
     const [filterCategory, setFilterCategory] = useState<number | "all">("all");
     const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [editingTransaction, setEditingTransaction] = useState<TransactionWithCategory | null>(null);
+    const [detailTransaction, setDetailTransaction] = useState<TransactionWithCategory | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const toast = useToast();
 
-    // Pagination state
-    const [pagination, setPagination] = useState({
-        total: 0,
-        limit: 20,
-        offset: 0,
-        hasMore: true
-    });
-
     const { ref: loadMoreRef, inView } = useInView();
 
-    useEffect(() => {
-        if (inView && !loading && pagination.hasMore && filteredTransactions.length > 0) {
-            loadData(false);
-        }
-    }, [inView, loading, pagination.hasMore]);
+    const {
+        transactions,
+        categories,
+        loading,
+        mounted,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        refresh
+    } = useTransactionsData(searchQuery) as {
+        transactions: TransactionWithCategory[];
+        categories: Category[];
+        loading: boolean;
+        mounted: boolean;
+        fetchNextPage: () => void;
+        hasNextPage: boolean;
+        isFetchingNextPage: boolean;
+        refresh: () => Promise<void>;
+    };
 
-    // Reload when search or filters change
     useEffect(() => {
-        // Debounce search
-        const timer = setTimeout(() => {
-            loadData(true);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchQuery, filterCategory, filterType]);
+        if (inView && !loading && hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [inView, loading, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     // Derived values with useMemo for performance and stability
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {
-            const matchesSearch = (t.description || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (t.category || "").toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesCategory = filterCategory === "all" || t.categoryId === filterCategory;
+            const matchesCategory = filterCategory === "all" || Number(t.categoryId) === filterCategory;
             const matchesType = filterType === "all" || t.type === filterType;
-
-            return matchesSearch && matchesCategory && matchesType;
+            return matchesCategory && matchesType;
         });
-    }, [transactions, searchQuery, filterCategory, filterType]);
+    }, [transactions, filterCategory, filterType]);
 
     const groupedTransactions = useMemo(() => {
-        return filteredTransactions.reduce((groups: Record<string, Transaction[]>, transaction: Transaction) => {
+        return filteredTransactions.reduce((groups: Record<string, TransactionWithCategory[]>, transaction: TransactionWithCategory) => {
             try {
-                const dateObj = new Date(transaction.created_at);
+                const dateObj = new Date(transaction.createdAt);
                 const date = isNaN(dateObj.getTime())
-                    ? "Tanggal Tidak Valid"
-                    : format(dateObj, "dd MMM yyyy");
+                    ? (locale === "id" ? "Tanggal Tidak Valid" : "Invalid Date")
+                    : format(dateObj, "dd MMM yyyy", { locale: locale === "id" ? idLocale : enUS });
 
                 if (!groups[date]) {
                     groups[date] = [];
@@ -111,151 +112,14 @@ export default function TransactionsPage() {
                 groups[fallbackDate].push(transaction);
             }
             return groups;
-        }, {} as Record<string, Transaction[]>);
+        }, {} as Record<string, TransactionWithCategory[]>);
     }, [filteredTransactions]);
 
-    useEffect(() => {
-        // Only set up listeners on mount
-        const handleTransactionAdded = () => {
-            loadData(true);
-        };
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-
-        return () => {
-            window.removeEventListener("transactionAdded", handleTransactionAdded);
-        };
-    }, []);
-
-    // Helper to map API response to Transaction type
-    const mapTransaction = useCallback((t: {
-        id: number;
-        amount: number;
-        description: string;
-        categoryId: number;
-        type: "expense" | "income";
-        date: string;
-        isVerified: boolean;
-    }): Transaction => ({
-        id: t.id.toString(),
-        amount: t.amount,
-        description: t.description,
-        category: categories.find(c => c.id === t.categoryId)?.name || "Lainnya",
-        categoryId: t.categoryId,
-        type: t.type,
-        created_at: t.date,
-        is_verified: t.isVerified,
-    }), [categories]);
-
-    // Fetch more transactions for infinite scroll
-    const fetchMoreTransactions = useCallback(async (offset: number, limit: number) => {
-        const transResponse = await apiFetch(`/api/transactions?offset=${offset}&limit=${limit}&search=${searchQuery}`);
-        const transResult = await transResponse.json();
-
-        if (transResult.success) {
-            const mappedData = transResult.data.map(mapTransaction);
-            return {
-                data: mappedData,
-                pagination: transResult.pagination
-            };
-        }
-        return { data: [], pagination: { total: 0, limit, offset, hasMore: false } };
-    }, [searchQuery, mapTransaction]);
-
-    // New version of loadData with caching
-    async function loadData(reset = false) {
-        try {
-            setLoading(true);
-
-            // Load from cache first for instant display
-            if (reset && searchQuery === "" && filterCategory === "all" && filterType === "all") {
-                const cachedTrans = await OfflineManager.getCache("transactions_list");
-                if (cachedTrans) {
-                    setTransactions(cachedTrans);
-                }
-                const cachedCats = await OfflineManager.getCache("dashboard_categories");
-                if (cachedCats) {
-                    setCategories(cachedCats);
-                }
-            }
-
-            // Fetch categories first and WAIT for it to complete
-            let currentCategories = categories;
-            if (currentCategories.length === 0) {
-                const catsResponse = await apiFetch("/api/categories");
-                const catsResult = await catsResponse.json();
-                if (catsResult.success) {
-                    currentCategories = catsResult.data;
-                    setCategories(currentCategories);
-                    OfflineManager.setCache("dashboard_categories", currentCategories);
-                }
-            }
-
-            const currentOffset = reset ? 0 : pagination.offset + pagination.limit;
-
-            // Fetch transactions with pagination
-            const transResponse = await apiFetch(`/api/transactions?limit=${pagination.limit}&offset=${currentOffset}&search=${searchQuery}`);
-            const transResult = await transResponse.json();
-
-            if (transResult.success) {
-                // Map transactions with category names using the fetched categories
-                const mappedTransactions = transResult.data.map((t: {
-                    id: number;
-                    amount: number;
-                    description: string;
-                    categoryId: number;
-                    type: "expense" | "income";
-                    date: string;
-                    isVerified: boolean;
-                }) => ({
-                    id: t.id.toString(),
-                    amount: t.amount,
-                    description: t.description,
-                    category: currentCategories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
-                    categoryId: t.categoryId,
-                    type: t.type,
-                    created_at: t.date,
-                    is_verified: t.isVerified,
-                }));
-
-                if (reset) {
-                    setTransactions(mappedTransactions);
-                    // Cache the first page of "all-transactions"
-                    if (searchQuery === "" && filterCategory === "all" && filterType === "all") {
-                        OfflineManager.setCache("transactions_list", mappedTransactions);
-                    }
-                } else {
-                    setTransactions(prev => [...prev, ...mappedTransactions]);
-                }
-
-                setPagination(transResult.pagination);
-            }
-
-            // Merge Optimistic (Offline) Transactions
-            const offlineTrans = await OfflineManager.getOptimisticTransactions();
-            if (offlineTrans.length > 0) {
-                const mappedOffline = offlineTrans.map(t => ({
-                    ...t,
-                    category: currentCategories.find((c: Category) => c.id === Number(t.categoryId))?.name || "Lainnya"
-                }));
-                setTransactions(prev => {
-                    // Avoid duplicates if sync just happened but UI hasn't reloaded
-                    const existingIds = new Set(prev.map(t => t.id));
-                    const newOffline = mappedOffline.filter(t => !existingIds.has(t.id));
-                    return [...newOffline, ...prev];
-                });
-            }
-        } catch (error) {
-            console.error("Error loading data:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    function handleDelete(id: string) {
+    function handleDelete(id: number) {
         setConfirmDeleteId(id);
     }
 
-    async function executeDelete(id: string) {
+    async function executeDelete(id: number) {
         setDeletingId(id);
         try {
             const response = await apiFetch(`/api/transactions/${id}`, {
@@ -263,7 +127,7 @@ export default function TransactionsPage() {
             });
 
             if (response.ok) {
-                setTransactions(transactions.filter(t => t.id !== id));
+                refresh();
                 toast.success("Transaksi dihapus");
             } else {
                 toast.error("Gagal menghapus", "Coba lagi nanti");
@@ -277,13 +141,13 @@ export default function TransactionsPage() {
         }
     }
 
-    function handleEdit(transaction: Transaction) {
+    function handleEdit(transaction: TransactionWithCategory) {
         setEditingTransaction(transaction);
         setIsEditModalOpen(true);
     }
 
     function handleEditSuccess() {
-        loadData();
+        refresh();
         setIsEditModalOpen(false);
         setEditingTransaction(null);
         toast.success("Transaksi diperbarui");
@@ -306,8 +170,10 @@ export default function TransactionsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-foreground tracking-tight">Riwayat</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Semua Transaksi Anda</p>
+                            <h1 className="text-xl font-bold text-foreground tracking-tight">{t("transactions.title")}</h1>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
+                                {searchQuery ? t("transactions.searchResults") : t("transactions.allTransactions")}
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -351,7 +217,7 @@ export default function TransactionsPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <input
                         type="text"
-                        placeholder="Cari transaksi..."
+                        placeholder={t("transactions.search")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="input-modern pl-11 pr-4 py-3.5 w-full shadow-sm"
@@ -363,10 +229,10 @@ export default function TransactionsPage() {
                     className="flex items-center justify-between mb-4"
                 >
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        {searchQuery ? "Hasil Pencarian" : "Semua Transaksi"}
+                        {searchQuery ? t("transactions.searchResults") : t("transactions.allTransactions")}
                     </p>
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-                        {loading ? "..." : `${filteredTransactions.length} Transaksi`}
+                        {loading ? "..." : `${filteredTransactions.length} ${t("transactions.count")}`}
                     </span>
                 </motion.div>
 
@@ -387,7 +253,7 @@ export default function TransactionsPage() {
                             animate="visible"
                             className="space-y-6"
                         >
-                            {(Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([date, dayTransactions]) => (
+                            {(Object.entries(groupedTransactions) as [string, TransactionWithCategory[]][]).map(([date, dayTransactions]) => (
                                 <div key={date}>
                                     <h3 className="text-xs font-bold text-muted-foreground mb-3 py-1 px-2 uppercase tracking-widest">
                                         {date}
@@ -415,9 +281,13 @@ export default function TransactionsPage() {
                     )
                 }
 
-                {!loading && pagination.hasMore && filteredTransactions.length > 0 && (
+                {!loading && hasNextPage && filteredTransactions.length > 0 && (
                     <div ref={loadMoreRef} className="text-center py-6 h-10 flex items-center justify-center text-muted-foreground">
-                        <Loader2 size={20} className="animate-spin" />
+                        {isFetchingNextPage ? (
+                            <Loader2 size={20} className="animate-spin" />
+                        ) : (
+                            <span className="text-xs">Scroll untuk memuat lebih banyak</span>
+                        )}
                     </div>
                 )}
 

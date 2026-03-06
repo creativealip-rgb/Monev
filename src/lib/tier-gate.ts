@@ -91,6 +91,11 @@ export function getTierConfig(tier: UserTier = "miskin"): TierConfig {
     return TIER_CONFIGS[tier] || TIER_CONFIGS.miskin;
 }
 
+export function getUserTier(user: any): UserTier {
+    if (!user) return "miskin";
+    return (user.tier as UserTier) || "miskin";
+}
+
 export function isTierSufficient(userTier: UserTier, requiredTier: UserTier): boolean {
     return TIER_LEVELS[userTier] >= TIER_LEVELS[requiredTier];
 }

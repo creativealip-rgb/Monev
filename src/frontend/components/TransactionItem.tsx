@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase } from "lucide-react";
-import { Transaction } from "@/types";
+import { Transaction, TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -97,7 +97,7 @@ const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, grad
 
 
 interface TransactionItemProps {
-    transaction: Transaction;
+    transaction: TransactionWithCategory;
     onClick?: () => void;
 }
 
@@ -105,7 +105,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
-    const style = CATEGORY_STYLES[transaction.category] || CATEGORY_STYLES.Default;
+    const style = CATEGORY_STYLES[transaction.categoryName] || CATEGORY_STYLES.Default;
     const isExpense = transaction.type === "expense";
     const isIncome = transaction.type === "income";
     const Icon = style.icon;
@@ -134,13 +134,13 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] font-medium text-muted-foreground truncate">
-                        {transaction.category || "Lainnya"}
+                        {transaction.categoryName || "Lainnya"}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground/30 flex-shrink-0" />
                     <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0">
                         {(() => {
                             try {
-                                const date = new Date(transaction.created_at);
+                                const date = new Date(transaction.createdAt);
                                 return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm", { locale: id });
                             } catch (e) {
                                 return "N/A";
@@ -157,7 +157,7 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
                 )}>
                     {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
                 </p>
-                {transaction.is_verified && (
+                {transaction.isVerified && (
                     <div className="flex items-center justify-end gap-1 mt-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         <span className="text-[10px] font-medium text-muted-foreground">Verified</span>

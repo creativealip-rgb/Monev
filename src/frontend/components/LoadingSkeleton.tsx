@@ -36,9 +36,10 @@ export function Skeleton({
     return (
         <div
             className={cn(
-                baseClasses,
+                "relative overflow-hidden",
                 variantClasses[variant],
                 animationClasses[animation],
+                "bg-slate-200/80 dark:bg-slate-800/80",
                 className
             )}
             style={{
@@ -48,12 +49,12 @@ export function Skeleton({
         >
             {animation === "shimmer" && (
                 <motion.div
-                    className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent"
+                    className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/50 dark:via-white/5 to-transparent skew-x-[-20deg]"
                     animate={{ translateX: ["-100%", "200%"] }}
                     transition={{
                         repeat: Infinity,
-                        duration: 1.5,
-                        ease: "easeInOut"
+                        duration: 1.8,
+                        ease: "linear"
                     }}
                 />
             )}
@@ -63,13 +64,15 @@ export function Skeleton({
 
 export function TransactionSkeleton() {
     return (
-        <div className="flex items-center p-4 card-clean">
-            <Skeleton variant="rounded" className="w-12 h-12 mr-4" />
-            <div className="flex-1 space-y-2">
-                <Skeleton variant="text" className="w-3/4 h-4" />
-                <Skeleton variant="text" className="w-1/2 h-3" />
+        <div className="flex items-center p-4 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-sm backdrop-blur-sm">
+            <Skeleton variant="rounded" className="w-11 h-11 rounded-[14px] mr-4" />
+            <div className="flex-1 space-y-2.5">
+                <Skeleton variant="text" className="w-3/5 h-4 rounded-md" />
+                <Skeleton variant="text" className="w-1/3 h-3 rounded-md" />
             </div>
-            <Skeleton variant="text" className="w-20 h-5" />
+            <div className="flex flex-col items-end space-y-2.5">
+                <Skeleton variant="text" className="w-20 h-4 rounded-md" />
+            </div>
         </div>
     );
 }
@@ -154,40 +157,49 @@ export function TransactionListSkeleton({ count = 5 }: { count?: number }) {
 
 export function DashboardSkeleton() {
     return (
-        <div className="min-h-screen pb-24">
-            <div className="px-6 pt-6 space-y-6">
-                <div className="flex items-center justify-between">
+        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+            <div className="px-6 pt-safe pt-5 space-y-6">
+                {/* Header Profile Area */}
+                <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                        <Skeleton variant="circular" className="w-10 h-10" />
+                        <Skeleton variant="circular" className="w-11 h-11 border-2 border-white dark:border-slate-800 shadow-sm" />
                         <div className="space-y-2">
-                            <Skeleton variant="text" className="w-16 h-3" />
-                            <Skeleton variant="text" className="w-24 h-4" />
+                            <Skeleton variant="text" className="w-20 h-3" />
+                            <Skeleton variant="text" className="w-32 h-4" />
                         </div>
                     </div>
-                    <Skeleton variant="circular" className="w-8 h-8" />
+                    <Skeleton variant="circular" className="w-9 h-9" />
                 </div>
 
-                <div className="rounded-[32px] bg-slate-200 p-8 space-y-4">
-                    <Skeleton variant="text" className="w-24 h-3" />
-                    <Skeleton variant="text" className="w-48 h-10" />
-                    <div className="flex gap-3">
-                        <Skeleton variant="rounded" className="flex-1 h-20" />
-                        <Skeleton variant="rounded" className="flex-1 h-20" />
+                {/* Main Balance Card Skeleton */}
+                <div className="rounded-[32px] bg-gradient-to-br from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-8 space-y-5 shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 dark:bg-white/5 rounded-full blur-3xl" />
+                    <Skeleton variant="text" className="w-28 h-3 bg-slate-300 dark:bg-slate-700" />
+                    <Skeleton variant="text" className="w-56 h-10 bg-slate-300 dark:bg-slate-700" />
+
+                    <div className="flex gap-4 pt-2">
+                        <Skeleton variant="rounded" className="flex-1 h-20 bg-slate-300/50 dark:bg-slate-700/50 rounded-2xl" />
+                        <Skeleton variant="rounded" className="flex-1 h-20 bg-slate-300/50 dark:bg-slate-700/50 rounded-2xl" />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4">
+                {/* Quick Actions / Feature Grid Skeleton */}
+                <div className="grid grid-cols-4 gap-4 py-2">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="text-center space-y-2">
-                            <Skeleton variant="rounded" className="w-12 h-12 mx-auto" />
-                            <Skeleton variant="text" className="w-12 h-3 mx-auto" />
+                        <div key={i} className="text-center space-y-3 flex flex-col items-center">
+                            <Skeleton variant="rounded" className="w-14 h-14 rounded-2xl bg-white/60 dark:bg-slate-800/60 shadow-sm" />
+                            <Skeleton variant="text" className="w-14 h-2.5 mx-auto" />
                         </div>
                     ))}
                 </div>
 
-                <div className="space-y-3">
-                    <Skeleton variant="text" className="w-32 h-4" />
-                    <TransactionListSkeleton count={3} />
+                {/* Transactions Skeleton */}
+                <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between">
+                        <Skeleton variant="text" className="w-32 h-4" />
+                        <Skeleton variant="text" className="w-16 h-3" />
+                    </div>
+                    <TransactionListSkeleton count={4} />
                 </div>
             </div>
         </div>

@@ -1,12 +1,12 @@
 /**
- * Custom hook for dashboard data fetching and management
- * Separates data logic from UI component
+ * Custom hook for dashboard data fetching and management using Tanstack Query
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
-import { logger } from "@/lib/logger";
+import { UserTier } from "@/lib/tier-gate";
 
 interface Category {
     id: number;
@@ -34,6 +34,8 @@ interface DashboardStats {
     totalGoals?: number;
     totalInvestments?: number;
     fees?: number;
+    healthScore?: any;
+    streak?: { current: number; longest: number };
 }
 
 interface Anomaly {
@@ -46,188 +48,161 @@ interface UserProfile {
     firstName?: string;
     lastName?: string;
     image: string | null;
-    tier: "miskin" | "kaya" | "sultan";
+    tier: UserTier;
 }
 
-interface UseDashboardDataResult {
-    transactions: Transaction[];
-    stats: DashboardStats;
-    userName: string | null;
-    userTier: "miskin" | "kaya" | "sultan";
-    userImage: string | null;
-    anomalies: Anomaly[];
-    loading: boolean;
-    mounted: boolean;
-    refresh: () => Promise<void>;
-}
-
-export function useDashboardData(): UseDashboardDataResult {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [stats, setStats] = useState<DashboardStats>({
-        income: 0,
-        expense: 0,
-        balance: 0,
-        fees: 0,
-    });
-    const [loading, setLoading] = useState(true);
+export function useDashboardData() {
+    const queryClient = useQueryClient();
     const [mounted, setMounted] = useState(false);
-    const [userName, setUserName] = useState<string | null>(null);
-    const [userTier, setUserTier] = useState<"miskin" | "kaya" | "sultan">("miskin");
-    const [userImage, setUserImage] = useState<string | null>(null);
-    const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
-
-    const loadData = useCallback(async () => {
-        const log = logger;
-        
-        try {
-            // Get current month for stats
-            const currentMonth = new Date().getMonth() + 1;
-            const currentYear = new Date().getFullYear();
-
-            // Try to load cached data first for instant UI response
-            const [cachedProfile, cachedStats, cachedTrans, cachedAnomalies] = await Promise.all([
-                OfflineManager.getCache("dashboard_profile"),
-                OfflineManager.getCache("dashboard_stats"),
-                OfflineManager.getCache("dashboard_transactions"),
-                OfflineManager.getCache("dashboard_anomalies"),
-            ]);
-
-            if (cachedProfile) {
-                const fullName = `${cachedProfile.firstName || ""} ${cachedProfile.lastName || ""}`.trim();
-                setUserName(fullName || cachedProfile.name || "Sultan");
-                setUserImage(cachedProfile.image || null);
-                setUserTier(cachedProfile.tier || "miskin");
-            }
-            if (cachedStats) setStats(cachedStats);
-            if (cachedTrans) setTransactions(cachedTrans);
-            if (cachedAnomalies) setAnomalies(cachedAnomalies);
-
-            // Fetch all data in parallel for better performance
-            const [
-                profileResponse,
-                statsResponse,
-                transResponse,
-                catsResponse,
-                anomaliesResponse,
-            ] = await Promise.all([
-                apiFetch("/api/profile"),
-                apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`),
-                apiFetch("/api/transactions"),
-                apiFetch("/api/categories"),
-                apiFetch("/api/ai/analyze-anomalies"),
-            ]);
-
-            const profileResult = await profileResponse.json();
-            const profileData = profileResult.success ? profileResult.data : null;
-
-            // Early read for anomalies
-            const anomaliesResultData = await anomaliesResponse.json();
-
-            // Process profile data
-            if (profileData?.user) {
-                const fullName = `${profileData.user.firstName || ""} ${profileData.user.lastName || ""}`.trim();
-                const displayName = fullName || profileData.user.name || "Sultan";
-                setUserName(displayName);
-                setUserImage(profileData.user.image || null);
-                setUserTier(profileData.user.tier || "miskin");
-                // Cache profile data
-                OfflineManager.setCache("dashboard_profile", profileData.user);
-            }
-
-            // Process stats
-            const statsResult = await statsResponse.json();
-            let freshStats: DashboardStats | null = null;
-            if (statsResult.success && statsResult.data) {
-                freshStats = statsResult.data as DashboardStats;
-                setStats(freshStats);
-                OfflineManager.setCache("dashboard_stats", freshStats);
-            }
-
-            // Process transactions and categories
-            const [transResult, catsResult] = await Promise.all([
-                transResponse.json(),
-                catsResponse.json(),
-            ]);
-
-            if (anomaliesResultData.anomalies) {
-                setAnomalies(anomaliesResultData.anomalies);
-                OfflineManager.setCache("dashboard_anomalies", anomaliesResultData.anomalies);
-            }
-
-            let freshTransactions: Transaction[] = [];
-            if (transResult.success) {
-                const categories: Category[] = catsResult.success ? catsResult.data : [];
-                if (catsResult.success) {
-                    OfflineManager.setCache("dashboard_categories", catsResult.data);
-                }
-                freshTransactions = transResult.data.slice(0, 5).map((t: any) => ({
-                    id: t.id.toString(),
-                    amount: t.amount,
-                    description: t.description,
-                    category: categories.find((c: Category) => c.id === t.categoryId)?.name || "Lainnya",
-                    type: t.type,
-                    created_at: t.date,
-                    is_verified: t.isVerified,
-                }));
-
-                setTransactions(freshTransactions);
-                OfflineManager.setCache("dashboard_transactions", freshTransactions);
-            }
-
-            // Merge Optimistic (Offline) Transactions
-            const offlineTrans = await OfflineManager.getOptimisticTransactions();
-            const offlineCats = (await OfflineManager.getCache("dashboard_categories")) || [];
-
-            if (offlineTrans.length > 0) {
-                const mappedOffline = offlineTrans.map((t) => ({
-                    ...t,
-                    category: offlineCats.find((c: any) => c.id === Number(t.categoryId))?.name || "Lainnya",
-                }));
-
-                setTransactions((prev) => {
-                    const combined = [...mappedOffline, ...prev];
-                    return combined.slice(0, 5);
-                });
-
-                // Update Stats with offline impact
-                setStats((currentStats) => {
-                    const baseStats = freshStats || currentStats;
-                    const offlineIncome = offlineTrans
-                        .filter((t) => t.type === "income")
-                        .reduce((sum, t) => sum + Number(t.amount), 0);
-                    const offlineExpense = offlineTrans
-                        .filter((t) => t.type === "expense")
-                        .reduce((sum, t) => sum + Number(t.amount), 0);
-
-                    return {
-                        ...baseStats,
-                        income: baseStats.income + offlineIncome,
-                        expense: baseStats.expense + offlineExpense,
-                        balance: baseStats.balance + offlineIncome - offlineExpense,
-                    };
-                });
-            }
-        } catch (error) {
-            log.error("Error loading dashboard data:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const [offlineTrans, setOfflineTrans] = useState<any[]>([]);
 
     useEffect(() => {
         setMounted(true);
-        loadData();
+        // Load offline transactions initially and when events fire
+        const loadOffline = async () => {
+            const trans = await OfflineManager.getOptimisticTransactions();
+            setOfflineTrans(trans);
+        };
+        loadOffline();
 
-        // Listen for transaction added event
         const handleTransactionAdded = () => {
-            loadData();
+            loadOffline();
+            // Invalidate queries so React Query knows to refetch in the background
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
         };
-        window.addEventListener("transactionAdded", handleTransactionAdded);
 
-        return () => {
-            window.removeEventListener("transactionAdded", handleTransactionAdded);
+        window.addEventListener("transactionAdded", handleTransactionAdded);
+        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
+    }, [queryClient]);
+
+    // Profile Query
+    const { data: profile, isLoading: profileLoading } = useQuery({
+        queryKey: ["dashboard", "profile"],
+        queryFn: async () => {
+            const res = await apiFetch("/api/profile");
+            const json = await res.json();
+            if (json.success && json.data?.user) {
+                OfflineManager.setCache("dashboard_profile", json.data.user);
+                return json.data.user as UserProfile;
+            }
+            throw new Error("Failed to fetch profile");
+        },
+        initialData: () => {
+            // Synchronous read fails, React Query initialData expects sync or undefined if sync fails
+            // It's safer to just let it load or use offline managers sync if possible.
+            // But we can fallback to promise in initialData if we use it cautiously? No, initialData must be sync.
+            // We'll skip initialData and let it cache via react-query's built-in cache. 
+            // We can return undefined.
+            return undefined;
+        }
+    });
+
+    // Categories Query
+    const { data: categories = [] } = useQuery({
+        queryKey: ["dashboard", "categories"],
+        queryFn: async () => {
+            const res = await apiFetch("/api/categories");
+            const json = await res.json();
+            if (json.success) {
+                OfflineManager.setCache("dashboard_categories", json.data);
+                return json.data as Category[];
+            }
+            return [];
+        }
+    });
+
+    // Stats Query
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const { data: serverStats, isLoading: statsLoading } = useQuery({
+        queryKey: ["dashboard", "stats", currentYear, currentMonth],
+        queryFn: async () => {
+            const res = await apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
+            const json = await res.json();
+            if (json.success && json.data) {
+                OfflineManager.setCache("dashboard_stats", json.data);
+                return json.data as DashboardStats;
+            }
+            return { income: 0, expense: 0, balance: 0, fees: 0 };
+        }
+    });
+
+    // Transactions Query
+    const { data: serverTransactions = [], isLoading: transLoading } = useQuery({
+        queryKey: ["dashboard", "transactions"],
+        queryFn: async () => {
+            const res = await apiFetch("/api/transactions");
+            const json = await res.json();
+            if (json.success) {
+                return json.data as any[];
+            }
+            return [];
+        }
+    });
+
+    // Anomalies Query
+    const { data: anomalies = [], isLoading: anomaliesLoading } = useQuery({
+        queryKey: ["dashboard", "anomalies"],
+        queryFn: async () => {
+            const res = await apiFetch("/api/dashboard/scan");
+            const json = await res.json();
+            if (json.anomalies) {
+                OfflineManager.setCache("dashboard_anomalies", json.anomalies);
+                return json.anomalies as Anomaly[];
+            }
+            return [];
+        }
+    });
+
+    // Derived states
+    const fullName = profile ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() : null;
+    const userName = fullName || profile?.name || "Sultan";
+    const userTier = profile?.tier || "miskin";
+    const userImage = profile?.image || null;
+
+    // Merge Offline Stats
+    const stats = useMemo(() => {
+        const base = serverStats || { income: 0, expense: 0, balance: 0, fees: 0 };
+        if (offlineTrans.length === 0) return base;
+
+        const offlineIncome = offlineTrans.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
+        const offlineExpense = offlineTrans.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
+
+        return {
+            ...base,
+            income: base.income + offlineIncome,
+            expense: base.expense + offlineExpense,
+            balance: base.balance + offlineIncome - offlineExpense,
         };
-    }, [loadData]);
+    }, [serverStats, offlineTrans]);
+
+    // Merge Offline Transactions
+    const transactions = useMemo(() => {
+        const mappedServer = serverTransactions.slice(0, 5).map(t => ({
+            id: t.id.toString(),
+            amount: t.amount,
+            description: t.description,
+            category: categories.find(c => c.id === t.categoryId)?.name || "Lainnya",
+            type: t.type,
+            created_at: t.date,
+            is_verified: t.isVerified,
+        }));
+
+        const mappedOffline = offlineTrans.map(t => ({
+            ...t,
+            category: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
+        }));
+
+        return [...mappedOffline, ...mappedServer].slice(0, 5);
+    }, [serverTransactions, offlineTrans, categories]);
+
+    const loading = !mounted || (profileLoading && !profile) || (statsLoading && !serverStats);
+
+    const refresh = useCallback(async () => {
+        await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        const trans = await OfflineManager.getOptimisticTransactions();
+        setOfflineTrans(trans);
+    }, [queryClient]);
 
     return {
         transactions,
@@ -238,6 +213,6 @@ export function useDashboardData(): UseDashboardDataResult {
         anomalies,
         loading,
         mounted,
-        refresh: loadData,
+        refresh,
     };
 }

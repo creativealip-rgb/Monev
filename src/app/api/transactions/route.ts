@@ -15,12 +15,12 @@ export async function GET(request: Request) {
 
         // Get transactions with pagination
         const transactions = await getTransactions(userId, limit, offset, search);
-        
+
         // Get total count for pagination
         const total = await getTransactionsCount(userId, search);
-        
-        return NextResponse.json({ 
-            success: true, 
+
+        return NextResponse.json({
+            success: true,
             data: transactions,
             pagination: {
                 total,
@@ -53,6 +53,8 @@ export async function POST(request: Request) {
             categoryId: body.categoryId,
             type: body.type,
             paymentMethod: body.paymentMethod || "cash",
+            accountId: body.accountId,
+            targetAccountId: body.targetAccountId,
             date: new Date(body.date || Date.now()),
         });
 

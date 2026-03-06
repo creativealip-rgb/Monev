@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Wallet, TrendingUp, PiggyBank, Target, Calendar, DollarSign } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
-import { Budget, Goal } from "@/types";
+import { BudgetSummary, Goal } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { apiFetch } from "@/frontend/lib/api-client";
 
@@ -378,7 +378,7 @@ interface EditBudgetFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
-    budget: Budget;
+    budget: BudgetSummary;
 }
 
 export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudgetFormProps) {
@@ -500,8 +500,8 @@ interface EditGoalFormProps {
 
 export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormProps) {
     const [name, setName] = useState(goal.name);
-    const [targetAmount, setTargetAmount] = useState(goal.target.toString());
-    const [currentAmount, setCurrentAmount] = useState(goal.saved.toString());
+    const [targetAmount, setTargetAmount] = useState(goal.targetAmount.toString());
+    const [currentAmount, setCurrentAmount] = useState(goal.currentAmount.toString());
     const [deadline, setDeadline] = useState(goal.deadline ? new Date(goal.deadline).toISOString().split('T')[0] : "");
     const [selectedIcon, setSelectedIcon] = useState(goalIcons.find(i => i.icon === goal.icon) || goalIcons[0]);
     const [loading, setLoading] = useState(false);

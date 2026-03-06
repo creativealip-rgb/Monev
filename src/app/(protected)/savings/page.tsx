@@ -10,8 +10,9 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { AddGoalForm, EditGoalForm } from "@/frontend/components/BudgetForms";
 import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
-import { Goal } from "@/types";
+import { Goal, GoalWithProgress } from "@/types";
 import { useSession } from "next-auth/react";
+import { useSavingsData } from "@/frontend/hooks/useSavingsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";
 import { Zap } from "lucide-react";
@@ -37,9 +38,7 @@ const itemVariants = {
 };
 
 export default function SavingsPage() {
-    const [goals, setGoals] = useState<Goal[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { goals, loading, refresh } = useSavingsData() as { goals: GoalWithProgress[], loading: boolean, refresh: () => Promise<void> };
     const { isStealthMode } = useSecurity();
 
     const { data: session } = useSession();
@@ -48,48 +47,9 @@ export default function SavingsPage() {
 
     // Modals state
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
-    const [detailGoal, setDetailGoal] = useState<Goal | null>(null);
-    const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+    const [detailGoal, setDetailGoal] = useState<GoalWithProgress | null>(null);
+    const [editingGoal, setEditingGoal] = useState<GoalWithProgress | null>(null);
     const toast = useToast();
-
-    useEffect(() => {
-        loadData();
-
-        // Listen for transaction added event (as adding to goal creates a transaction)
-        const handleTransactionAdded = () => {
-            loadData();
-        };
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-
-        return () => {
-            window.removeEventListener("transactionAdded", handleTransactionAdded);
-        };
-    }, []);
-
-    async function loadData() {
-        try {
-            setLoading(true);
-
-            // Fetch categories for reference
-            const catsResponse = await apiFetch("/api/categories");
-            const catsResult = await catsResponse.json();
-            if (catsResult.success) {
-                setCategories(catsResult.data);
-            }
-
-            // Fetch goals
-            const goalsResponse = await apiFetch("/api/goals");
-            const goalsResult = await goalsResponse.json();
-
-            if (goalsResult.success) {
-                setGoals(goalsResult.data);
-            }
-        } catch (error) {
-            console.error("Error loading data:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
 
     async function handleDeleteGoal(id: number) {
         if (!confirm("Yakin mau hapus goal ini?")) return;
@@ -100,7 +60,7 @@ export default function SavingsPage() {
             });
 
             if (response.ok) {
-                setGoals(goals.filter(g => g.id !== id));
+                refresh();
                 toast.success("Goal dihapus");
             } else {
                 toast.error("Gagal menghapus", "Coba lagi nanti");
@@ -111,8 +71,8 @@ export default function SavingsPage() {
         }
     }
 
-    const totalTarget = goals.reduce((sum, g) => sum + g.target, 0);
-    const totalSaved = goals.reduce((sum, g) => sum + g.saved, 0);
+    const totalTarget = goals.reduce((sum: number, g: GoalWithProgress) => sum + g.targetAmount, 0);
+    const totalSaved = goals.reduce((sum: number, g: GoalWithProgress) => sum + g.currentAmount, 0);
     const totalPercentage = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
 
     return (
@@ -216,7 +176,7 @@ export default function SavingsPage() {
                         <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
                     ) : (
                         <div className="space-y-4">
-                            {goals.map((g, i) => {
+                            {goals.map((g: GoalWithProgress, i: number) => {
                                 const isCompleted = g.percentage >= 100;
                                 const isNearComplete = g.percentage >= 75;
 
@@ -237,7 +197,7 @@ export default function SavingsPage() {
                                             <div className="flex-1">
                                                 <span className="font-bold text-foreground text-[13px]">{g.name}</span>
                                                 <p className="text-xs text-muted-foreground tabular-nums">
-                                                    Target: {isStealthMode ? "••••••••" : formatCurrency(g.target)}
+                                                    Target: {isStealthMode ? "••••••••" : formatCurrency(g.targetAmount)}
                                                 </p>
                                             </div>
                                             <div className="text-right pr-2">
@@ -245,7 +205,7 @@ export default function SavingsPage() {
                                                     "font-bold text-[13px] block tabular-nums",
                                                     isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
                                                 )}>
-                                                    {isStealthMode ? "••••••••" : formatCurrency(g.saved)}
+                                                    {isStealthMode ? "••••••••" : formatCurrency(g.currentAmount)}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground tabular-nums">
                                                     {Math.round(g.percentage)}%
@@ -302,7 +262,7 @@ export default function SavingsPage() {
                 isOpen={isGoalModalOpen}
                 onClose={() => setIsGoalModalOpen(false)}
                 onSuccess={() => {
-                    loadData();
+                    refresh();
                     setIsGoalModalOpen(false);
                     toast.success("Goal dibuat", "Mulai menabung sekarang!");
                 }}
@@ -329,7 +289,7 @@ export default function SavingsPage() {
                     isOpen={!!editingGoal}
                     onClose={() => setEditingGoal(null)}
                     onSuccess={() => {
-                        loadData();
+                        refresh();
                         setEditingGoal(null);
                         toast.success("Goal diperbarui");
                     }}

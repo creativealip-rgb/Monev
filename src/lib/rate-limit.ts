@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Rate Limiting Utilities
+ * 
+ * Provides in-memory rate limiting for API routes and sensitive operations.
+ * For production use, consider replacing with Redis-based rate limiting.
+ * 
+ * @packageDocumentation
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 
 interface RateLimitEntry {

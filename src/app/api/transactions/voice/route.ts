@@ -2,8 +2,13 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { processVoice } from "@/lib/ai";
+import { applyRateLimit } from "@/lib/api-rate-limit";
 
 export async function POST(req: NextRequest) {
+    // Rate limiting - AI endpoint
+    const rateLimitResponse = await applyRateLimit(req, "ai");
+    if (rateLimitResponse) return rateLimitResponse;
+
     try {
         const formData = await req.formData();
         const audioFile = formData.get("audio") as File | null;

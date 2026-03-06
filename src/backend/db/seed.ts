@@ -60,6 +60,7 @@ async function doFullSeed(db: any, userId: number) {
         { name: "Tabungan", color: "#3b82f6", icon: "Wallet", type: "expense" },
         { name: "Gaji", color: "#3b82f6", icon: "Banknote", type: "income" },
         { name: "Freelance", color: "#8b5cf6", icon: "Briefcase", type: "income" },
+        { name: "Transfer", color: "#6366f1", icon: "ArrowRightLeft", type: "expense" },
         { name: "Lainnya", color: "#64748b", icon: "MoreHorizontal", type: "expense" },
     ]);
 
