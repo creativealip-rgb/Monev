@@ -11,6 +11,15 @@ const globalForDb = globalThis as unknown as {
 };
 
 export function getDb() {
+    // Force a one-time reset if needed after schema changes
+    if ((globalThis as any).__shouldResetDb) {
+        console.log("[DB] Resetting global database connection...");
+        if (globalForDb.sqlite) globalForDb.sqlite.close();
+        globalForDb.db = undefined;
+        globalForDb.sqlite = undefined;
+        (globalThis as any).__shouldResetDb = false;
+    }
+
     if (!globalForDb.db) {
         globalForDb.sqlite = new Database(dbPath);
         // Enable WAL mode for better concurrency and less locking
