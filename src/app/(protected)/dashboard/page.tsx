@@ -52,6 +52,9 @@ import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { useSecurity } from "@/components/SecurityProvider";
 import { useDashboardData } from "@/frontend/hooks/useDashboardData";
 import { useI18n } from "@/frontend/lib/i18n-context";
+import { QuickStatsSummary } from "@/frontend/components/QuickStatsSummary";
+import { TransactionQuickFilters, filterTransactionsByPeriod } from "@/frontend/components/TransactionQuickFilters";
+import { useState, useMemo } from "react";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
@@ -219,12 +222,44 @@ export default function Home() {
         refresh
     } = useDashboardData();
 
+    const [transactionFilter, setTransactionFilter] = useState<"today" | "week" | "month" | "all">("today");
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const { isStealthMode, toggleStealth } = useSecurity();
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const toast = useToast();
     const haptics = useHaptics();
+
+    // Calculate today's stats
+    const todayStats = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const todayTransactions = transactions.filter(t => {
+            const transDate = new Date(t.createdAt);
+            transDate.setHours(0, 0, 0, 0);
+            return transDate.getTime() === today.getTime();
+        });
+
+        const income = todayTransactions
+            .filter(t => t.type === "income")
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        const expense = todayTransactions
+            .filter(t => t.type === "expense")
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        return {
+            income,
+            expense,
+            count: todayTransactions.length
+        };
+    }, [transactions]);
+
+    // Filter transactions based on selected period
+    const filteredTransactions = useMemo(() => {
+        return filterTransactionsByPeriod(transactions, transactionFilter);
+    }, [transactions, transactionFilter]);
 
     const handleRefresh = async () => {
         haptics.medium();
@@ -382,6 +417,19 @@ export default function Home() {
                     </motion.section>
                 )}
 
+                {/* Quick Stats Summary */}
+                <QuickStatsSummary
+                    todayIncome={todayStats.income}
+                    todayExpense={todayStats.expense}
+                    todayTransactionCount={todayStats.count}
+                    weeklyBudgetRemaining={stats.weeklyBudgetRemaining || 0}
+                    weeklyBudgetTotal={stats.weeklyBudgetTotal || 0}
+                    currentStreak={stats.streak?.current || 0}
+                    longestStreak={stats.streak?.longest || 0}
+                    mounted={mounted}
+                    isStealthMode={isStealthMode}
+                />
+
                 <motion.section
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -442,20 +490,28 @@ export default function Home() {
                     variants={containerVariants}
                     className="px-6"
                 >
-                    <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
+                    <motion.div variants={itemVariants} className="flex items-center justify-between mb-3">
                         <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">{t("dashboard.recentTransactions")}</h2>
                         <Link href="/transactions" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
                             {t("dashboard.viewAll")}
                         </Link>
                     </motion.div>
 
+                    {/* Quick Filters */}
+                    <motion.div variants={itemVariants} className="mb-4">
+                        <TransactionQuickFilters
+                            activeFilter={transactionFilter}
+                            onFilterChange={setTransactionFilter}
+                        />
+                    </motion.div>
+
                     <motion.div variants={itemVariants} className="space-y-3">
                         {loading ? (
                             <TransactionListSkeleton count={3} />
-                        ) : transactions.length === 0 ? (
-                            <NoTransactionsEmpty />
+                        ) : filteredTransactions.length === 0 ? (
+                            <NoTransactionsEmpty onAddNew={() => setIsAddSheetOpen(true)} />
                         ) : (
-                            transactions.map((t) => (
+                            filteredTransactions.slice(0, 5).map((t) => (
                                 <TransactionItem key={t.id} transaction={t} />
                             ))
                         )}

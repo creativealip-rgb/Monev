@@ -17,11 +17,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast, ErrorEmpty } from "@/frontend/components/UI";
-import { cn } from "@/frontend/lib/utils";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useSession } from "next-auth/react";
 import { UserTier, canUseAI, getTierConfig } from "@/lib/tier-gate";
 import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
+import { QuickReplies } from "@/frontend/components/QuickReplies";
+import { SmartInput } from "@/frontend/components/SmartInput";
 
 interface Message {
     id: string;
@@ -59,7 +61,8 @@ export default function ChatPage() {
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
+const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
+    const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
     const toast = useToast();
 
     const scrollToBottom = () => {
@@ -351,24 +354,41 @@ export default function ChatPage() {
                             <Bot size={14} className="text-white" />
                         </div>
                         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                            <div className="flex gap-1">
-                                <motion.div
-                                    animate={{ y: [0, -4, 0] }}
-                                    transition={{ repeat: Infinity, duration: 0.5, delay: 0 }}
-                                    className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
-                                />
-                                <motion.div
-                                    animate={{ y: [0, -4, 0] }}
-                                    transition={{ repeat: Infinity, duration: 0.5, delay: 0.1 }}
-                                    className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
-                                />
-                                <motion.div
-                                    animate={{ y: [0, -4, 0] }}
-                                    transition={{ repeat: Infinity, duration: 0.5, delay: 0.2 }}
-                                    className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
-                                />
+                            <div className="flex items-center gap-3">
+                                <div className="flex gap-1">
+                                    <motion.div
+                                        animate={{ y: [0, -4, 0] }}
+                                        transition={{ repeat: Infinity, duration: 0.5, delay: 0 }}
+                                        className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
+                                    />
+                                    <motion.div
+                                        animate={{ y: [0, -4, 0] }}
+                                        transition={{ repeat: Infinity, duration: 0.5, delay: 0.1 }}
+                                        className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
+                                    />
+                                    <motion.div
+                                        animate={{ y: [0, -4, 0] }}
+                                        transition={{ repeat: Infinity, duration: 0.5, delay: 0.2 }}
+                                        className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"
+                                    />
+                                </div>
+                                <span className="text-xs text-slate-400">Monev AI sedang mengetik...</span>
                             </div>
                         </div>
+                    </motion.div>
+                )}
+
+                {/* Quick Replies - Show after AI messages */}
+                {!isTyping && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="pl-11"
+                    >
+                        <QuickReplies 
+                            onSelect={(query) => handleSend(query)}
+                            context="general"
+                        />
                     </motion.div>
                 )}
 
@@ -376,12 +396,18 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+<div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                    <button className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button 
+                        onClick={() => setSmartInputMode("screenshot")}
+                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
                         <Camera size={18} />
                     </button>
-                    <button className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button 
+                        onClick={() => setSmartInputMode("voice")}
+                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
                         <Mic size={18} />
                     </button>
                     <div className="flex-1 relative">
@@ -407,9 +433,21 @@ export default function ChatPage() {
                         )}
                     >
                         <Send size={18} />
-                    </motion.button>
+</motion.button>
                 </div>
             </div>
+
+            {/* Smart Input Modal */}
+            {smartInputMode && (
+                <SmartInput
+                    mode={smartInputMode}
+                    onClose={() => setSmartInputMode(null)}
+                    onSuccess={(data) => {
+                        toast.success("Transaksi Dicatat", `${data.merchantName} - ${formatCurrency(data.amount)}`);
+                        setSmartInputMode(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

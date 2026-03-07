@@ -53,6 +53,14 @@ export function HeroBalanceCard({
     return (
         <>
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Klik untuk melihat detail saldo"
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        setShowDetail(true);
+                    }
+                }}
                 className={cn(
                     "card-clean relative overflow-hidden rounded-[32px] border border-white/10 text-white p-6 cursor-pointer",
                     "bg-gradient-to-br transition-all duration-300 hover:scale-[1.01] hover:-translate-y-1 hover:brightness-110 hover:shadow-2xl hover:shadow-sky-500/10",

@@ -7,7 +7,7 @@ import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerifi
 import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
-import { Filter, Search, ArrowLeft, X, Check, Loader2, Download } from "lucide-react";
+import { Filter, Search, ArrowLeft, X, Check, Loader2, Download, ChevronDown, Trash2, Square, CheckSquare, Calendar, ArrowUpDown } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { useInView } from "react-intersection-observer";
@@ -44,11 +44,24 @@ const itemVariants = {
 };
 
 export default function TransactionsPage() {
-    const { t, locale } = useI18n();
+const { t, locale } = useI18n();
     const [searchQuery, setSearchQuery] = useState("");
     const [filterCategory, setFilterCategory] = useState<number | "all">("all");
     const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+    // Sorting
+    const [sortBy, setSortBy] = useState<"date" | "amount" | "category">("date");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+    const [showSortMenu, setShowSortMenu] = useState(false);
+
+    // Date range filter
+    const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
+    const [amountRange, setAmountRange] = useState<{ min: number; max: number } | null>(null);
+
+    // Bulk selection
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [showBulkActions, setShowBulkActions] = useState(false);
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -85,14 +98,49 @@ export default function TransactionsPage() {
         }
     }, [inView, loading, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    // Derived values with useMemo for performance and stability
+// Derived values with useMemo for performance and stability
     const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
+        const result = transactions.filter(t => {
             const matchesCategory = filterCategory === "all" || Number(t.categoryId) === filterCategory;
             const matchesType = filterType === "all" || t.type === filterType;
-            return matchesCategory && matchesType;
+            
+            // Date range filter
+            let matchesDate = true;
+            if (dateRange) {
+                const transDate = new Date(t.createdAt);
+                const startDate = new Date(dateRange.start);
+                const endDate = new Date(dateRange.end);
+                endDate.setHours(23, 59, 59, 999);
+                matchesDate = transDate >= startDate && transDate <= endDate;
+            }
+            
+            // Amount range filter
+            let matchesAmount = true;
+            if (amountRange) {
+                matchesAmount = t.amount >= amountRange.min && t.amount <= amountRange.max;
+            }
+            
+            return matchesCategory && matchesType && matchesDate && matchesAmount;
         });
-    }, [transactions, filterCategory, filterType]);
+
+        // Sorting
+        result.sort((a, b) => {
+            if (sortBy === "date") {
+                const dateA = new Date(a.createdAt).getTime();
+                const dateB = new Date(b.createdAt).getTime();
+                return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+            } else if (sortBy === "amount") {
+                return sortOrder === "desc" ? b.amount - a.amount : a.amount - b.amount;
+            } else if (sortBy === "category") {
+                const catA = a.categoryName || "";
+                const catB = b.categoryName || "";
+                return sortOrder === "desc" ? catB.localeCompare(catA) : catA.localeCompare(catB);
+            }
+            return 0;
+        });
+
+        return result;
+    }, [transactions, filterCategory, filterType, dateRange, amountRange, sortBy, sortOrder]);
 
     const groupedTransactions = useMemo(() => {
         return filteredTransactions.reduce((groups: Record<string, TransactionWithCategory[]>, transaction: TransactionWithCategory) => {
@@ -137,8 +185,62 @@ export default function TransactionsPage() {
             toast.error("Gagal menghapus", "Terjadi kesalahan");
         } finally {
             setDeletingId(null);
-            setConfirmDeleteId(null);
+setConfirmDeleteId(null);
         }
+    }
+
+    // Bulk actions
+    function toggleSelectAll() {
+        if (selectedIds.size === filteredTransactions.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredTransactions.map(t => t.id)));
+        }
+    }
+
+    function toggleSelect(id: number) {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    }
+
+    async function bulkDelete() {
+        if (!confirm(`Hapus ${selectedIds.size} transaksi?`)) return;
+        
+        setDeletingId(-1); // Indicate bulk delete
+        try {
+            const ids = Array.from(selectedIds);
+            await Promise.all(
+                ids.map(id => 
+                    apiFetch(`/api/transactions/${id}`, { method: "DELETE" })
+                )
+            );
+            refresh();
+            toast.success(`${ids.length} transaksi dihapus`);
+            setSelectedIds(new Set());
+            setShowBulkActions(false);
+        } catch (error) {
+            console.error("Bulk delete error:", error);
+            toast.error("Gagal menghapus", "Terjadi kesalahan");
+        } finally {
+            setDeletingId(null);
+        }
+    }
+
+    async function bulkExport() {
+        const ids = Array.from(selectedIds);
+        const params = new URLSearchParams();
+        ids.forEach(id => params.append("ids", id.toString()));
+        
+        const a = document.createElement("a");
+        a.href = `/api/transactions/export/csv?${params.toString()}`;
+        a.download = "monev_transaksi_selected.csv";
+        a.click();
+        toast.success(`${ids.length} transaksi diexport`);
     }
 
     function handleEdit(transaction: TransactionWithCategory) {
@@ -176,14 +278,88 @@ export default function TransactionsPage() {
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+<div className="flex items-center gap-2">
+                        {/* Sort Button */}
+                        <div className="relative">
+                            <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setShowSortMenu(!showSortMenu)}
+                                className={cn(
+                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                    sortBy !== "date" || sortOrder !== "desc"
+                                        ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
+                                )}
+                            >
+                                <ArrowUpDown size={20} />
+                            </motion.button>
+                            {showSortMenu && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[160px] z-50"
+                                >
+                                    <p className="text-xs font-bold text-muted-foreground px-2 py-1 uppercase">Urutkan</p>
+                                    {[
+                                        { id: "date", label: "Tanggal" },
+                                        { id: "amount", label: "Jumlah" },
+                                        { id: "category", label: "Kategori" }
+                                    ].map((option) => (
+                                        <button
+                                            key={option.id}
+                                            onClick={() => {
+                                                if (sortBy === option.id) {
+                                                    setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+                                                } else {
+                                                    setSortBy(option.id as typeof sortBy);
+                                                    setSortOrder("desc");
+                                                }
+                                                setShowSortMenu(false);
+                                            }}
+                                            className={cn(
+                                                "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between",
+                                                sortBy === option.id
+                                                    ? "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400"
+                                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                                            )}
+                                        >
+                                            {option.label}
+                                            {sortBy === option.id && (
+                                                <span className="text-xs">{sortOrder === "desc" ? "↓" : "↑"}</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </div>
+
+                        {/* Bulk Select Toggle */}
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => {
+                                setShowBulkActions(!showBulkActions);
+                                if (showBulkActions) setSelectedIds(new Set());
+                            }}
+                            className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                showBulkActions
+                                    ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            )}
+                            title="Pilih banyak"
+                        >
+                            {showBulkActions ? <CheckSquare size={20} /> : <Square size={20} />}
+                        </motion.button>
+
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => {
                                 const params = new URLSearchParams();
                                 if (searchQuery) params.append("search", searchQuery);
-                                if (filterCategory !== "all") params.append("categoryId", filterCategory.toString()); // Assuming API handles this later, or just simple export for now
+                                if (filterCategory !== "all") params.append("categoryId", filterCategory.toString());
 
                                 const a = document.createElement("a");
                                 a.href = `/api/transactions/export/csv?${params.toString()}`;
@@ -201,7 +377,7 @@ export default function TransactionsPage() {
                             onClick={() => setIsFilterModalOpen(true)}
                             className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                                (filterCategory !== "all" || filterType !== "all")
+                                (filterCategory !== "all" || filterType !== "all" || dateRange || amountRange)
                                     ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
                                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
                             )}
@@ -210,10 +386,10 @@ export default function TransactionsPage() {
                         </motion.button>
                     </div>
                 </div>
-            </motion.header>
+</motion.header>
 
             <div className="px-6">
-                <div className="relative mb-6 mt-4">
+                <div className="relative mb-4 mt-4">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <input
                         type="text"
@@ -223,6 +399,44 @@ export default function TransactionsPage() {
                         className="input-modern pl-11 pr-4 py-3.5 w-full shadow-sm"
                     />
                 </div>
+
+                {/* Active Filters Display */}
+                {(dateRange || amountRange) && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="flex flex-wrap gap-2 mb-4"
+                    >
+                        {dateRange && (
+                            <button
+                                onClick={() => setDateRange(null)}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-full text-xs font-medium text-sky-600 dark:text-sky-400"
+                            >
+                                <Calendar size={12} />
+                                {format(new Date(dateRange.start), "dd/MM")} - {format(new Date(dateRange.end), "dd/MM")}
+                                <X size={12} />
+                            </button>
+                        )}
+                        {amountRange && (
+                            <button
+                                onClick={() => setAmountRange(null)}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-full text-xs font-medium text-sky-600 dark:text-sky-400"
+                            >
+                                Rp {amountRange.min.toLocaleString("id-ID")} - {amountRange.max.toLocaleString("id-ID")}
+                                <X size={12} />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => {
+                                setDateRange(null);
+                                setAmountRange(null);
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+                        >
+                            Clear all
+                        </button>
+                    </motion.div>
+                )}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -260,7 +474,7 @@ export default function TransactionsPage() {
                                     </h3>
                                     <div className="space-y-3">
 
-                                        {dayTransactions.map((t) => (
+{dayTransactions.map((t) => (
                                             <motion.div
                                                 key={t.id}
                                                 variants={itemVariants}
@@ -268,8 +482,13 @@ export default function TransactionsPage() {
                                             >
                                                 <TransactionItem
                                                     transaction={t}
+                                                    showCheckbox={showBulkActions}
+                                                    isSelected={selectedIds.has(t.id)}
+                                                    onSelect={toggleSelect}
                                                     onClick={() => {
-                                                        setDetailTransaction(t);
+                                                        if (!showBulkActions) {
+                                                            setDetailTransaction(t);
+                                                        }
                                                     }}
                                                 />
                                             </motion.div>
@@ -277,27 +496,56 @@ export default function TransactionsPage() {
                                     </div>
                                 </div>
                             ))}
-                        </motion.div>
+</motion.div>
                     )
                 }
+            </div>
 
-                {!loading && hasNextPage && filteredTransactions.length > 0 && (
-                    <div ref={loadMoreRef} className="text-center py-6 h-10 flex items-center justify-center text-muted-foreground">
-                        {isFetchingNextPage ? (
-                            <Loader2 size={20} className="animate-spin" />
-                        ) : (
-                            <span className="text-xs">Scroll untuk memuat lebih banyak</span>
-                        )}
+            {/* Bulk Action Bar */}
+            {showBulkActions && selectedIds.size > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 100 }}
+                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 pb-8 z-50"
+                >
+                    <div className="max-w-[500px] mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={toggleSelectAll}
+                                className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400"
+                            >
+                                {selectedIds.size === filteredTransactions.length ? (
+                                    <CheckSquare size={20} className="text-sky-500" />
+                                ) : (
+                                    <Square size={20} />
+                                )}
+                                Pilih Semua
+                            </button>
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                {selectedIds.size} dipilih
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={bulkExport}
+                                className="px-4 py-2 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                            >
+                                <Download size={16} />
+                                Export
+                            </button>
+                            <button
+                                onClick={bulkDelete}
+                                disabled={deletingId !== null}
+                                className="px-4 py-2 bg-rose-500 text-white font-semibold rounded-xl hover:bg-rose-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+                            >
+                                <Trash2 size={16} />
+                                Hapus
+                            </button>
+                        </div>
                     </div>
-                )}
-
-                {loading && filteredTransactions.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
-                        <Loader2 size={20} className="animate-spin" />
-                        <span>Memuat...</span>
-                    </div>
-                )}
-            </div >
+                </motion.div>
+            )}
 
             < Portal >
                 <AnimatePresence>
@@ -337,7 +585,7 @@ export default function TransactionsPage() {
                                             ].map((type) => (
                                                 <button
                                                     key={type.id}
-                                                    onClick={() => setFilterType(type.id as any)}
+                                                    onClick={() => setFilterType(type.id as "all" | "expense" | "income")}
                                                     className={cn(
                                                         "flex-1 py-3 px-4 rounded-2xl text-sm font-semibold transition-all border-2",
                                                         filterType === type.id
@@ -380,14 +628,91 @@ export default function TransactionsPage() {
                                                     {cat.name}
                                                 </button>
                                             ))}
+</div>
+                                    </div>
+
+                                    {/* Date Range */}
+                                    <div>
+                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Rentang Tanggal</p>
+                                        <div className="flex gap-3">
+                                            <div className="flex-1">
+                                                <label className="text-xs text-muted-foreground mb-1 block">Mulai</label>
+                                                <input
+                                                    type="date"
+                                                    value={dateRange?.start || ""}
+                                                    onChange={(e) => setDateRange(prev => prev ? { ...prev, start: e.target.value } : { start: e.target.value, end: e.target.value })}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="text-xs text-muted-foreground mb-1 block">Akhir</label>
+                                                <input
+                                                    type="date"
+                                                    value={dateRange?.end || ""}
+                                                    onChange={(e) => setDateRange(prev => prev ? { ...prev, end: e.target.value } : { start: e.target.value, end: e.target.value })}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 mt-2">
+                                            {[
+                                                { label: "Hari ini", days: 0 },
+                                                { label: "Minggu ini", days: 7 },
+                                                { label: "Bulan ini", days: 30 },
+                                            ].map((preset) => (
+                                                <button
+                                                    key={preset.label}
+                                                    onClick={() => {
+                                                        const end = new Date();
+                                                        const start = new Date();
+                                                        start.setDate(end.getDate() - preset.days);
+                                                        setDateRange({
+                                                            start: start.toISOString().split("T")[0],
+                                                            end: end.toISOString().split("T")[0]
+                                                        });
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 transition-colors"
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-4 pt-4">
+                                    {/* Amount Range */}
+                                    <div>
+                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Rentang Jumlah</p>
+                                        <div className="flex gap-3">
+                                            <div className="flex-1">
+                                                <label className="text-xs text-muted-foreground mb-1 block">Min (Rp)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={amountRange?.min || ""}
+                                                    onChange={(e) => setAmountRange(prev => prev ? { ...prev, min: Number(e.target.value) } : { min: Number(e.target.value), max: 999999999 })}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="text-xs text-muted-foreground mb-1 block">Max (Rp)</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="999999999"
+                                                    value={amountRange?.max || ""}
+                                                    onChange={(e) => setAmountRange(prev => prev ? { ...prev, max: Number(e.target.value) } : { min: 0, max: Number(e.target.value) })}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+<div className="flex gap-4 pt-4">
                                         <button
                                             onClick={() => {
                                                 setFilterCategory("all");
                                                 setFilterType("all");
+                                                setDateRange(null);
+                                                setAmountRange(null);
                                             }}
                                             className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                                         >

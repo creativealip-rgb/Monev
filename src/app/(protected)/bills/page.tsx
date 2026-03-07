@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw, LayoutGrid, List, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -183,8 +183,12 @@ export default function BillsPage() {
     const [formFrequency, setFormFrequency] = useState<"monthly" | "weekly" | "yearly">("monthly");
     const [formIcon, setFormIcon] = useState("Receipt");
     const [formColor, setFormColor] = useState("#6366f1");
-    const [formNotes, setFormNotes] = useState("");
+const [formNotes, setFormNotes] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // View mode
+    const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const filteredBills = useMemo(() => {
         if (activeTab === "unpaid") return bills.filter(b => !b.isPaid);
@@ -346,7 +350,27 @@ export default function BillsPage() {
                 className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
             >
                 <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
+                        <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm p-1">
+                            <button
+                                onClick={() => setViewMode("list")}
+                                className={cn(
+                                    "p-1.5 rounded-full transition-all",
+                                    viewMode === "list" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <List size={16} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode("calendar")}
+                                className={cn(
+                                    "p-1.5 rounded-full transition-all",
+                                    viewMode === "calendar" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                <LayoutGrid size={16} />
+                            </button>
+                        </div>
                         <Link
                             href="/dashboard"
                             className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
@@ -492,8 +516,120 @@ export default function BillsPage() {
                                 {tab.label} ({loading ? "..." : tab.count})
                             </button>
                         ))}
-                    </div>
+</div>
 
+                    {/* Calendar View */}
+                    {viewMode === "calendar" && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="card-clean p-4"
+                        >
+                            {/* Calendar Header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <button
+                                    onClick={() => {
+                                        const newDate = new Date(currentMonth);
+                                        newDate.setMonth(newDate.getMonth() - 1);
+                                        setCurrentMonth(newDate);
+                                    }}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                                >
+                                    <ChevronRight className="rotate-180 w-4 h-4" />
+                                </button>
+                                <span className="text-sm font-bold">
+                                    {currentMonth.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        const newDate = new Date(currentMonth);
+                                        newDate.setMonth(newDate.getMonth() + 1);
+                                        setCurrentMonth(newDate);
+                                    }}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            {/* Calendar Grid */}
+                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                                {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map(day => (
+                                    <div key={day} className="text-[10px] font-bold text-muted-foreground py-1">{day}</div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1">
+                                {(() => {
+                                    const year = currentMonth.getFullYear();
+                                    const month = currentMonth.getMonth();
+                                    const firstDay = new Date(year, month, 1).getDay();
+                                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                    const today = new Date();
+                                    
+                                    const cells = [];
+                                    for (let i = 0; i < firstDay; i++) {
+                                        cells.push(<div key={`empty-${i}`} className="h-10" />);
+                                    }
+                                    
+                                    for (let day = 1; day <= daysInMonth; day++) {
+                                        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                                        const billsOnDay = bills.filter(b => {
+                                            const dueDate = new Date(year, month, b.dueDate);
+                                            return dueDate.getDate() === day && dueDate.getMonth() === month;
+                                        });
+                                        const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+                                        const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                                        
+                                        cells.push(
+                                            <div
+                                                key={day}
+                                                className={cn(
+                                                    "h-10 relative rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-colors",
+                                                    isToday ? "bg-sky-500 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                                                    isPast && !isToday ? "text-muted-foreground" : "text-foreground"
+                                                )}
+                                            >
+                                                {day}
+                                                {billsOnDay.length > 0 && (
+                                                    <div className="absolute bottom-1 flex gap-0.5">
+                                                        {billsOnDay.slice(0, 3).map((b, i) => (
+                                                            <div
+                                                                key={i}
+                                                                className={cn(
+                                                                    "w-1.5 h-1.5 rounded-full",
+                                                                    b.isPaid ? "bg-emerald-400" : isPast ? "bg-rose-400" : "bg-amber-400"
+                                                                )}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    }
+                                    return cells;
+                                })()}
+                            </div>
+
+                            {/* Legend */}
+                            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                                    <span className="text-[10px] text-muted-foreground">Lunas</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                    <span className="text-[10px] text-muted-foreground">Upcoming</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 rounded-full bg-rose-400" />
+                                    <span className="text-[10px] text-muted-foreground">Terlambat</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* List View */}
+                    {viewMode === "list" && (
                     <div>
                         {loading ? (
                             <div className="space-y-4">
@@ -525,9 +661,10 @@ export default function BillsPage() {
                                         <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} isStealthMode={isStealthMode} />
                                     );
                                 })}
-                            </div>
+</div>
                         )}
                     </div>
+                    )}
                 </motion.section>
             </motion.div>
         </div>
