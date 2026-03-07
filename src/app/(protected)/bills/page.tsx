@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw, LayoutGrid, List, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw, LayoutGrid, List, ChevronRight, History } from "lucide-react";
+import { BillHistoryModal } from "@/frontend/components/DetailModalsVerified";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,12 +59,14 @@ function BillItem({
     index,
     onDelete,
     onToggle,
+    onShowHistory,
     isStealthMode
 }: {
     bill: Bill;
     index: number;
     onDelete: (id: number) => void;
     onToggle: (id: number, e: React.MouseEvent) => void;
+    onShowHistory: (bill: Bill) => void;
     isStealthMode: boolean;
 }) {
     const [mounted, setMounted] = useState(false);
@@ -153,13 +156,29 @@ function BillItem({
                 </p>
             )}
 
-            {/* Delete button - positioned absolute top-right */}
-            <button
-                onClick={() => onDelete(bill.id)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center"
-            >
-                <Trash2 size={14} />
-            </button>
+            {/* Actions - positioned absolute top-right */}
+            <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onShowHistory(bill);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
+                    title="Riwayat"
+                >
+                    <History size={14} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(bill.id);
+                    }}
+                    className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center transition-colors"
+                    title="Hapus"
+                >
+                    <Trash2 size={14} />
+                </button>
+            </div>
         </motion.div>
     );
 }
@@ -183,8 +202,11 @@ export default function BillsPage() {
     const [formFrequency, setFormFrequency] = useState<"monthly" | "weekly" | "yearly">("monthly");
     const [formIcon, setFormIcon] = useState("Receipt");
     const [formColor, setFormColor] = useState("#6366f1");
-const [formNotes, setFormNotes] = useState("");
+    const [formNotes, setFormNotes] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [selectedBillHistory, setSelectedBillHistory] = useState<Bill | null>(null);
 
     // View mode
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
@@ -350,7 +372,7 @@ const [formNotes, setFormNotes] = useState("");
                 className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
             >
                 <div className="flex items-center justify-between pt-2">
-<div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                         <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm p-1">
                             <button
                                 onClick={() => setViewMode("list")}
@@ -516,7 +538,7 @@ const [formNotes, setFormNotes] = useState("");
                                 {tab.label} ({loading ? "..." : tab.count})
                             </button>
                         ))}
-</div>
+                    </div>
 
                     {/* Calendar View */}
                     {viewMode === "calendar" && (
@@ -565,12 +587,12 @@ const [formNotes, setFormNotes] = useState("");
                                     const firstDay = new Date(year, month, 1).getDay();
                                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                                     const today = new Date();
-                                    
+
                                     const cells = [];
                                     for (let i = 0; i < firstDay; i++) {
                                         cells.push(<div key={`empty-${i}`} className="h-10" />);
                                     }
-                                    
+
                                     for (let day = 1; day <= daysInMonth; day++) {
                                         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                                         const billsOnDay = bills.filter(b => {
@@ -579,7 +601,7 @@ const [formNotes, setFormNotes] = useState("");
                                         });
                                         const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                                         const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                                        
+
                                         cells.push(
                                             <div
                                                 key={day}
@@ -630,43 +652,60 @@ const [formNotes, setFormNotes] = useState("");
 
                     {/* List View */}
                     {viewMode === "list" && (
-                    <div>
-                        {loading ? (
-                            <div className="space-y-4">
-                                {[1, 2, 3, 4].map(i => (
-                                    <BillCardSkeleton key={i} />
-                                ))}
-                            </div>
-                        ) : filteredBills.length === 0 ? (
-                            activeTab === "all" ? (
-                                <NoBillsEmpty onAddNew={() => setIsAddModalOpen(true)} />
+                        <div>
+                            {loading ? (
+                                <div className="space-y-4">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <BillCardSkeleton key={i} />
+                                    ))}
+                                </div>
+                            ) : filteredBills.length === 0 ? (
+                                activeTab === "all" ? (
+                                    <NoBillsEmpty onAddNew={() => setIsAddModalOpen(true)} />
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-center py-16 bg-white dark:bg-slate-800 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-700"
+                                    >
+                                        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Receipt size={24} className="text-slate-300 dark:text-slate-500" />
+                                        </div>
+                                        <p className="text-muted-foreground font-bold">
+                                            {activeTab === "paid" ? "Belum ada yang lunas" : "Semua sudah lunas! 🎉"}
+                                        </p>
+                                    </motion.div>
+                                )
                             ) : (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-center py-16 bg-white dark:bg-slate-800 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-700"
-                                >
-                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Receipt size={24} className="text-slate-300 dark:text-slate-500" />
-                                    </div>
-                                    <p className="text-muted-foreground font-bold">
-                                        {activeTab === "paid" ? "Belum ada yang lunas" : "Semua sudah lunas! 🎉"}
-                                    </p>
-                                </motion.div>
-                            )
-                        ) : (
-                            <div className="space-y-4">
-                                {filteredBills.map((bill, i) => {
-                                    return (
-                                        <BillItem key={bill.id} bill={bill} index={i} onDelete={handleDelete} onToggle={handleTogglePaid} isStealthMode={isStealthMode} />
-                                    );
-                                })}
-</div>
-                        )}
-                    </div>
+                                <div className="space-y-4">
+                                    {filteredBills.map((bill, i) => {
+                                        return (
+                                            <BillItem
+                                                key={bill.id}
+                                                bill={bill}
+                                                index={i}
+                                                onDelete={handleDelete}
+                                                onToggle={handleTogglePaid}
+                                                onShowHistory={(b) => {
+                                                    setSelectedBillHistory(b);
+                                                    setIsHistoryModalOpen(true);
+                                                }}
+                                                isStealthMode={isStealthMode}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </motion.section>
             </motion.div>
+
+            <BillHistoryModal
+                isOpen={isHistoryModalOpen}
+                onClose={() => setIsHistoryModalOpen(false)}
+                bill={selectedBillHistory}
+            />
         </div>
     );
 }

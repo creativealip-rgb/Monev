@@ -136,6 +136,8 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
         );
     }
 
+    const [y, setY] = useState(0);
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -147,18 +149,39 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                         exit={{ opacity: 0 }}
                         onClick={onClose}
                         className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[10000]"
+                        style={{ opacity: y > 0 ? 1 - (y / 500) : 1 }}
                     />
 
                     {/* Bottom Sheet */}
                     <motion.div
                         initial={{ y: "100%" }}
-                        animate={{ y: 0 }}
+                        animate={{ y: y }}
                         exit={{ y: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed bottom-0 left-0 right-0 z-[10001] max-w-[500px] mx-auto"
+                        drag="y"
+                        dragConstraints={{ top: 0, bottom: 500 }}
+                        dragElastic={0.1}
+                        onDragEnd={(_, info) => {
+                            const velocity = info.velocity.y;
+                            const offset = info.offset.y;
+
+                            if (offset > 200 || velocity > 500) {
+                                onClose();
+                            } else if (offset > 100) {
+                                setY(200); // Snap to half/lower point
+                            } else {
+                                setY(0); // Snap to top
+                            }
+                        }}
+                        onUpdate={(latest: any) => {
+                            if (typeof latest.y === "number") {
+                                setY(latest.y);
+                            }
+                        }}
+                        className="fixed bottom-0 left-0 right-0 z-[10001] max-w-[500px] mx-auto cursor-grab active:cursor-grabbing"
                     >
                         <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-                            <div className="flex justify-center pt-3 pb-2">
+                            <div className="flex justify-center pt-3 pb-2 touch-none">
                                 <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
                             </div>
 

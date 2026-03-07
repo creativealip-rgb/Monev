@@ -80,6 +80,7 @@ export async function GET() {
                     financialPersona: settings.financialPersona,
                     updatedAt: settings.updatedAt,
                     hasPin: !!settings.securityPin,
+                    autoLockTimeout: settings.autoLockTimeout,
                     hasCompletedOnboarding: settings.hasCompletedOnboarding
                 },
                 goals,
@@ -157,6 +158,7 @@ export async function POST(req: NextRequest) {
                 await updateUserSettings(userId, {
                     hourlyRate: hourlyRate ? parseFloat(hourlyRate.toString()) : undefined,
                     primaryGoalId: primaryGoalId ? parseInt(primaryGoalId.toString()) : null,
+                    autoLockTimeout: formData.get("autoLockTimeout") ? parseInt(formData.get("autoLockTimeout")!.toString()) : undefined,
                 });
             }
         } else {

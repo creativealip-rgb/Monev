@@ -113,23 +113,46 @@ export async function applyBudgetTemplate(userId: number, template: "50-30-20" |
 
     if (template === "50-30-20") {
         // 50% Needs, 30% Wants, 20% Savings/Debt
-        // Mapping depends on category names. This is just a basic example.
         const needs = monthlyIncome * 0.5;
         const wants = monthlyIncome * 0.3;
-        // Savings goals handled elsewhere usually, but we can set a budget for them.
+        const savings = monthlyIncome * 0.2;
 
-        // Find "Kebutuhan" or similar
-        const needsId = categoryMap["kebutuhan"] || categoryMap["makan"] || 1;
+        const needsId = categoryMap["kebutuhan"] || categoryMap["makan"] || categoryMap["transportasi"] || 1;
+        const wantsId = categoryMap["keinginan"] || categoryMap["hiburan"] || categoryMap["belanja"] || 2;
+        const savingsId = categoryMap["tabungan"] || categoryMap["investasi"] || 8;
+
         budgetsToInsert.push({ userId, categoryId: needsId, amount: needs, month, year });
-
-        const wantsId = categoryMap["keinginan"] || categoryMap["hiburan"] || 2;
         budgetsToInsert.push({ userId, categoryId: wantsId, amount: wants, month, year });
+        budgetsToInsert.push({ userId, categoryId: savingsId, amount: savings, month, year });
+    } else if (template === "minimalist") {
+        // Needs (70%), Savings (30%)
+        const needs = monthlyIncome * 0.7;
+        const savings = monthlyIncome * 0.3;
+
+        const needsId = categoryMap["kebutuhan"] || categoryMap["makan"] || 1;
+        const savingsId = categoryMap["tabungan"] || categoryMap["investasi"] || 8;
+
+        budgetsToInsert.push({ userId, categoryId: needsId, amount: needs, month, year });
+        budgetsToInsert.push({ userId, categoryId: savingsId, amount: savings, month, year });
+    } else if (template === "aggressive-saver") {
+        // Needs (40%), Wants (10%), Savings (50%)
+        const needs = monthlyIncome * 0.4;
+        const wants = monthlyIncome * 0.1;
+        const savings = monthlyIncome * 0.5;
+
+        const needsId = categoryMap["kebutuhan"] || categoryMap["makan"] || 1;
+        const wantsId = categoryMap["keinginan"] || categoryMap["hiburan"] || 2;
+        const savingsId = categoryMap["tabungan"] || categoryMap["investasi"] || 8;
+
+        budgetsToInsert.push({ userId, categoryId: needsId, amount: needs, month, year });
+        budgetsToInsert.push({ userId, categoryId: wantsId, amount: wants, month, year });
+        budgetsToInsert.push({ userId, categoryId: savingsId, amount: savings, month, year });
     }
 
     // Insert new budgets
     if (budgetsToInsert.length > 0) {
         for (const b of budgetsToInsert) {
-            await db.insert(budgets).values(b);
+            await db.insert(budgets).values({ ...b, spent: 0, enableRollover: true }).onConflictDoNothing();
         }
     }
 

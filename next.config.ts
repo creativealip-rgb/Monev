@@ -10,7 +10,7 @@ const nextConfig = (phase: string): NextConfig => {
     return {
         // APK needs static export, Docker needs standalone, dev needs undefined
         output: isApkBuild ? "export" : isDockerBuild ? "standalone" : undefined,
-        
+
         // Image optimization configuration
         images: {
             // Only disable for APK build (static export doesn't support image optimization)
@@ -28,17 +28,17 @@ const nextConfig = (phase: string): NextConfig => {
                 },
             ],
         },
-        
+
         env: {
             NEXT_PUBLIC_IS_APK: isApkBuild ? "true" : "false",
         },
-        
+
         // Performance optimizations
         experimental: {
             // Enable optimized package imports
             optimizePackageImports: ["lucide-react", "framer-motion", "date-fns"],
         },
-        
+
         // Compiler optimizations
         compiler: {
             // Remove console.log in production (keep errors)
@@ -46,10 +46,10 @@ const nextConfig = (phase: string): NextConfig => {
                 exclude: ["error", "warn"],
             },
         },
-        
+
         // Strict mode for better development experience
         reactStrictMode: true,
-        
+
         // Power by header (security - hide framework info)
         poweredByHeader: false,
     };

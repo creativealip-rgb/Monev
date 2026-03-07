@@ -242,6 +242,7 @@ export async function updateSecuritySettings(formData: FormData) {
     const userId = parseInt(session.user.id);
 
     const securityPin = formData.get("securityPin") as string;
+    const decoyPin = formData.get("decoyPin") as string;
     const isAppLockEnabled = formData.get("isAppLockEnabled") === "true";
     const isBiometricEnabled = formData.get("isBiometricEnabled") === "true";
 
@@ -251,8 +252,14 @@ export async function updateSecuritySettings(formData: FormData) {
         hashedPin = await hashPin(securityPin);
     }
 
+    let hashedDecoyPin: string | null = null;
+    if (decoyPin && decoyPin.length === 6) {
+        hashedDecoyPin = await hashPin(decoyPin);
+    }
+
     await updateUserSettings(userId, {
-        securityPin: hashedPin,
+        ...(hashedPin && { securityPin: hashedPin }),
+        ...(hashedDecoyPin && { decoyPin: hashedDecoyPin }),
         isAppLockEnabled: isAppLockEnabled,
         isBiometricEnabled: isBiometricEnabled
     });
@@ -261,7 +268,7 @@ export async function updateSecuritySettings(formData: FormData) {
     return { success: true };
 }
 
-export async function verifySecurityPin(pin: string): Promise<{ success: boolean; message?: string }> {
+export async function verifySecurityPin(pin: string): Promise<{ success: boolean; message?: string; isDecoy?: boolean }> {
     const session = await auth();
     if (!session?.user?.id) {
         return { success: false, message: "Unauthorized" };
@@ -285,16 +292,24 @@ export async function verifySecurityPin(pin: string): Promise<{ success: boolean
     }
 
     // Verify PIN
-    const isValid = await verifyPin(pin, settings.securityPin);
+    const isValidReal = await verifyPin(pin, settings.securityPin);
 
-    if (!isValid) {
+    // Check Decoy PIN
+    if (settings.decoyPin) {
+        const isValidDecoy = await verifyPin(pin, settings.decoyPin);
+        if (isValidDecoy) {
+            return { success: true, isDecoy: true };
+        }
+    }
+
+    if (!isValidReal) {
         return {
             success: false,
             message: `PIN salah. Sisa percobaan: ${rateLimit.remaining}`
         };
     }
 
-    return { success: true };
+    return { success: true, isDecoy: false };
 }
 
 export async function generateFinancialPersonaAction() {

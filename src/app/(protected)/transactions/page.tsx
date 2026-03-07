@@ -7,7 +7,8 @@ import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerifi
 import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
-import { Filter, Search, ArrowLeft, X, Check, Loader2, Download, ChevronDown, Trash2, Square, CheckSquare, Calendar, ArrowUpDown } from "lucide-react";
+import { Filter, Search, ArrowLeft, X, Check, Loader2, Download, ChevronDown, Trash2, Square, CheckSquare, Calendar, ArrowUpDown, Upload } from "lucide-react";
+import { CSVImportWizard } from "@/frontend/components/CSVImportWizard";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { useInView } from "react-intersection-observer";
@@ -44,7 +45,7 @@ const itemVariants = {
 };
 
 export default function TransactionsPage() {
-const { t, locale } = useI18n();
+    const { t, locale } = useI18n();
     const [searchQuery, setSearchQuery] = useState("");
     const [filterCategory, setFilterCategory] = useState<number | "all">("all");
     const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
@@ -68,6 +69,7 @@ const { t, locale } = useI18n();
     const [editingTransaction, setEditingTransaction] = useState<TransactionWithCategory | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<TransactionWithCategory | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const toast = useToast();
 
     const { ref: loadMoreRef, inView } = useInView();
@@ -98,12 +100,12 @@ const { t, locale } = useI18n();
         }
     }, [inView, loading, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-// Derived values with useMemo for performance and stability
+    // Derived values with useMemo for performance and stability
     const filteredTransactions = useMemo(() => {
         const result = transactions.filter(t => {
             const matchesCategory = filterCategory === "all" || Number(t.categoryId) === filterCategory;
             const matchesType = filterType === "all" || t.type === filterType;
-            
+
             // Date range filter
             let matchesDate = true;
             if (dateRange) {
@@ -113,13 +115,13 @@ const { t, locale } = useI18n();
                 endDate.setHours(23, 59, 59, 999);
                 matchesDate = transDate >= startDate && transDate <= endDate;
             }
-            
+
             // Amount range filter
             let matchesAmount = true;
             if (amountRange) {
                 matchesAmount = t.amount >= amountRange.min && t.amount <= amountRange.max;
             }
-            
+
             return matchesCategory && matchesType && matchesDate && matchesAmount;
         });
 
@@ -185,7 +187,7 @@ const { t, locale } = useI18n();
             toast.error("Gagal menghapus", "Terjadi kesalahan");
         } finally {
             setDeletingId(null);
-setConfirmDeleteId(null);
+            setConfirmDeleteId(null);
         }
     }
 
@@ -210,12 +212,12 @@ setConfirmDeleteId(null);
 
     async function bulkDelete() {
         if (!confirm(`Hapus ${selectedIds.size} transaksi?`)) return;
-        
+
         setDeletingId(-1); // Indicate bulk delete
         try {
             const ids = Array.from(selectedIds);
             await Promise.all(
-                ids.map(id => 
+                ids.map(id =>
                     apiFetch(`/api/transactions/${id}`, { method: "DELETE" })
                 )
             );
@@ -235,7 +237,7 @@ setConfirmDeleteId(null);
         const ids = Array.from(selectedIds);
         const params = new URLSearchParams();
         ids.forEach(id => params.append("ids", id.toString()));
-        
+
         const a = document.createElement("a");
         a.href = `/api/transactions/export/csv?${params.toString()}`;
         a.download = "monev_transaksi_selected.csv";
@@ -278,7 +280,7 @@ setConfirmDeleteId(null);
                             </p>
                         </div>
                     </div>
-<div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         {/* Sort Button */}
                         <div className="relative">
                             <motion.button
@@ -374,6 +376,15 @@ setConfirmDeleteId(null);
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
+                            title="Import CSV"
+                        >
+                            <Upload size={20} />
+                        </motion.button>
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => setIsFilterModalOpen(true)}
                             className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center transition-all",
@@ -386,7 +397,7 @@ setConfirmDeleteId(null);
                         </motion.button>
                     </div>
                 </div>
-</motion.header>
+            </motion.header>
 
             <div className="px-6">
                 <div className="relative mb-4 mt-4">
@@ -474,7 +485,7 @@ setConfirmDeleteId(null);
                                     </h3>
                                     <div className="space-y-3">
 
-{dayTransactions.map((t) => (
+                                        {dayTransactions.map((t) => (
                                             <motion.div
                                                 key={t.id}
                                                 variants={itemVariants}
@@ -496,7 +507,7 @@ setConfirmDeleteId(null);
                                     </div>
                                 </div>
                             ))}
-</motion.div>
+                        </motion.div>
                     )
                 }
             </div>
@@ -628,7 +639,7 @@ setConfirmDeleteId(null);
                                                     {cat.name}
                                                 </button>
                                             ))}
-</div>
+                                        </div>
                                     </div>
 
                                     {/* Date Range */}
@@ -706,7 +717,7 @@ setConfirmDeleteId(null);
                                         </div>
                                     </div>
 
-<div className="flex gap-4 pt-4">
+                                    <div className="flex gap-4 pt-4">
                                         <button
                                             onClick={() => {
                                                 setFilterCategory("all");
@@ -759,6 +770,37 @@ setConfirmDeleteId(null);
                 onSuccess={handleEditSuccess}
                 transaction={editingTransaction}
             />
+
+            {/* CSV Import Modal */}
+            <Portal>
+                <AnimatePresence>
+                    {isImportModalOpen && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsImportModalOpen(false)}
+                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="fixed inset-x-4 top-[10%] bottom-[10%] bg-white dark:bg-slate-900 rounded-[2.5rem] z-[999999] shadow-2xl mx-auto max-w-[500px] overflow-hidden"
+                            >
+                                <CSVImportWizard
+                                    onClose={() => setIsImportModalOpen(false)}
+                                    onSuccess={() => {
+                                        refresh();
+                                        setIsImportModalOpen(false);
+                                    }}
+                                />
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            </Portal>
 
             <ConfirmDialog
                 isOpen={!!confirmDeleteId}

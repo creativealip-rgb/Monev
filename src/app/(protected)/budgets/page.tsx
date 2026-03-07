@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, ShieldAlert, ArrowLeft } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, ShieldAlert, ArrowLeft, Flame, X, Zap, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
+import { BudgetChart } from "./components/BudgetChart";
 import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
@@ -51,12 +52,75 @@ const categoryIcons: Record<string, string> = {
     "Tabungan": "🏦"
 };
 
+const BUDGET_TEMPLATES: Array<{ id: string; name: string; description: string; icon: string; color: string; allocations: Array<{ category: string; pct: number }> }> = [
+    {
+        id: "503020",
+        name: "50/30/20",
+        description: "Kebutuhan 50%, Keinginan 30%, Tabungan 20%",
+        icon: "⚖️",
+        color: "from-sky-500 to-cyan-500",
+        allocations: [
+            { category: "Makan & Minuman", pct: 25 },
+            { category: "Transportasi", pct: 15 },
+            { category: "Tagihan", pct: 10 },
+            { category: "Hiburan", pct: 15 },
+            { category: "Belanja", pct: 15 },
+            { category: "Tabungan", pct: 20 },
+        ]
+    },
+    {
+        id: "minimalist",
+        name: "Minimalist",
+        description: "Hemat maksimal, spending minimal",
+        icon: "🧘",
+        color: "from-emerald-500 to-teal-500",
+        allocations: [
+            { category: "Makan & Minuman", pct: 40 },
+            { category: "Transportasi", pct: 15 },
+            { category: "Tagihan", pct: 15 },
+            { category: "Tabungan", pct: 30 },
+        ]
+    },
+    {
+        id: "aggressive",
+        name: "Aggressive Saver",
+        description: "Tabungan & investasi prioritas",
+        icon: "🚀",
+        color: "from-amber-500 to-orange-500",
+        allocations: [
+            { category: "Makan & Minuman", pct: 30 },
+            { category: "Transportasi", pct: 10 },
+            { category: "Tagihan", pct: 10 },
+            { category: "Hiburan", pct: 5 },
+            { category: "Tabungan", pct: 45 },
+        ]
+    }
+];
+
+function getSpendingVelocity(spent: number, limit: number): { projectedDate: string | null; dailyRate: number; daysLeft: number } {
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const dayOfMonth = today.getDate();
+    const daysLeft = daysInMonth - dayOfMonth;
+    const dailyRate = dayOfMonth > 0 ? spent / dayOfMonth : 0;
+    const remaining = limit - spent;
+    if (dailyRate <= 0 || remaining <= 0) return { projectedDate: null, dailyRate, daysLeft };
+    const daysUntilDepleted = Math.ceil(remaining / dailyRate);
+    const projectedDate = new Date(today);
+    projectedDate.setDate(today.getDate() + daysUntilDepleted);
+    if (projectedDate.getMonth() === today.getMonth()) {
+        return { projectedDate: projectedDate.toLocaleDateString("id-ID", { day: "numeric", month: "short" }), dailyRate, daysLeft };
+    }
+    return { projectedDate: null, dailyRate, daysLeft };
+}
+
 export default function BudgetsPage() {
+    const [showTemplates, setShowTemplates] = useState(false);
+    const [incomeEstimate, setIncomeEstimate] = useState("");
+    const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
     const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Modals state
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
     const [detailBudget, setDetailBudget] = useState<BudgetSummary | null>(null);
     const [editingBudget, setEditingBudget] = useState<BudgetSummary | null>(null);
@@ -141,6 +205,41 @@ export default function BudgetsPage() {
     const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
     const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
 
+    async function handleApplyTemplate(templateId: string) {
+        const template = BUDGET_TEMPLATES.find(t => t.id === templateId);
+        if (!template) return;
+
+        const monthlyIncome = parseFloat(incomeEstimate.replace(/\D/g, "")) || 5000000;
+        setApplyingTemplate(templateId);
+
+        try {
+            const response = await apiFetch("/api/budgets/template", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    template: templateId === "503020" ? "50-30-20" : templateId,
+                    monthlyIncome,
+                    month: currentMonth,
+                    year: currentYear
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                await loadData();
+                setShowTemplates(false);
+                toast.success("Template diterapkan!", `Budget ${template.name} berhasil dibuat`);
+            } else {
+                toast.error(result.error || "Gagal menerapkan template");
+            }
+        } catch (e) {
+            toast.error("Gagal menerapkan template");
+        } finally {
+            setApplyingTemplate(null);
+        }
+    }
+
     return (
         <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
@@ -186,11 +285,11 @@ export default function BudgetsPage() {
                 <div className="flex items-end justify-between mb-4">
                     <div>
                         <p className="text-2xl font-bold tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
-                        <p className="text-white/60 text-xs tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
+                        <p className="text-white/60 text-xs tabular-nums">terpakai dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
-                        <p className="text-white/60 text-xs">terpakai</p>
+                        <p className="text-white/60 text-xs">limit</p>
                     </div>
                 </div>
                 <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
@@ -205,6 +304,34 @@ export default function BudgetsPage() {
                         )}
                     />
                 </div>
+
+                {/* Projected Warning */}
+                {(() => {
+                    const today = new Date();
+                    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                    const dayOfMonth = today.getDate();
+                    const totalProjected = dayOfMonth > 0 ? (totalSpent / dayOfMonth) * daysInMonth : 0;
+                    const income = parseFloat(incomeEstimate.replace(/\D/g, "")) || 0;
+
+                    if (totalProjected > totalBudget && totalBudget > 0) {
+                        return (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="mt-4 p-3 bg-white/20 backdrop-blur-md rounded-xl flex items-center gap-3 border border-white/30"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center animate-pulse">
+                                    <TrendingUp size={16} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[11px] font-bold">Waspada! Proyeksi belanja melebihi budget.</p>
+                                    <p className="text-[10px] text-white/80">Estimasi total: {formatCurrency(totalProjected)}</p>
+                                </div>
+                            </motion.div>
+                        );
+                    }
+                    return null;
+                })()}
             </motion.div>
 
             <motion.div
@@ -222,6 +349,72 @@ export default function BudgetsPage() {
                             <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Budget Bulanan</h2>
                         </div>
                         <span className="text-xs text-muted-foreground">{budgets.length} Kategori</span>
+                    </div>
+
+                    {/* Chart Section */}
+                    {budgets.length > 0 && (
+                        <div className="mb-6 card-clean p-4">
+                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">Budget vs Pengeluaran Aktual</h3>
+                            <BudgetChart budgets={budgets} />
+                        </div>
+                    )}
+
+                    {/* Template Button & Section */}
+                    <div className="mb-4">
+                        <button
+                            onClick={() => setShowTemplates(!showTemplates)}
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 border border-sky-200 dark:border-sky-800 text-sm font-semibold text-sky-700 dark:text-sky-300 hover:from-sky-100 dark:hover:from-sky-900/40 transition-all"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Zap size={16} />
+                                Gunakan Template Budget
+                            </div>
+                            <span className="text-xs">{showTemplates ? "✕" : "→"}</span>
+                        </button>
+
+                        <AnimatePresence>
+                            {showTemplates && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="mt-3 p-4 card-clean">
+                                        <p className="text-xs text-muted-foreground mb-3">Estimasi penghasilan bulanan kamu:</p>
+                                        <input
+                                            type="text"
+                                            placeholder="Rp 5.000.000"
+                                            value={incomeEstimate}
+                                            onChange={e => setIncomeEstimate(e.target.value)}
+                                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-semibold mb-4 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                        />
+                                        <div className="space-y-3">
+                                            {BUDGET_TEMPLATES.map(tpl => (
+                                                <motion.button
+                                                    key={tpl.id}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={() => handleApplyTemplate(tpl.id)}
+                                                    disabled={applyingTemplate !== null}
+                                                    className={cn(
+                                                        "w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r text-white text-left transition-all",
+                                                        tpl.color,
+                                                        applyingTemplate === tpl.id && "opacity-60"
+                                                    )}
+                                                >
+                                                    <span className="text-2xl">{tpl.icon}</span>
+                                                    <div className="flex-1">
+                                                        <p className="font-bold text-sm">{tpl.name}</p>
+                                                        <p className="text-xs text-white/80">{tpl.description}</p>
+                                                    </div>
+                                                    {applyingTemplate === tpl.id && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
+                                                </motion.button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {loading ? (
@@ -281,11 +474,28 @@ export default function BudgetsPage() {
                                             />
                                         </div>
 
-                                        {isDanger && (
-                                            <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 mt-2 flex items-center gap-1">
-                                                ⚠️ Hampir habis
-                                            </p>
-                                        )}
+                                        {/* Spending Velocity */}
+                                        {(() => {
+                                            const velocity = getSpendingVelocity(b.spent, b.limit);
+                                            if (velocity.projectedDate) {
+                                                return (
+                                                    <div className="mt-2 flex items-center gap-1.5">
+                                                        <Flame size={12} className="text-orange-500" />
+                                                        <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+                                                            Estimasi habis {velocity.projectedDate} (Rp{Math.round(velocity.dailyRate / 1000)}k/hari)
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+                                            if (isDanger) {
+                                                return (
+                                                    <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 mt-2 flex items-center gap-1">
+                                                        ⚠️ Hampir habis
+                                                    </p>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </motion.div>
                                 );
                             })}

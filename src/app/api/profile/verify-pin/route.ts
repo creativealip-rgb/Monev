@@ -35,16 +35,24 @@ export async function POST(req: NextRequest) {
         }
 
         // Verify PIN
-        const isValid = await verifyPin(pin, settings.securityPin);
+        const isValidReal = await verifyPin(pin, settings.securityPin);
 
-        if (!isValid) {
+        // Check Decoy PIN
+        if (settings.decoyPin) {
+            const isValidDecoy = await verifyPin(pin, settings.decoyPin);
+            if (isValidDecoy) {
+                return NextResponse.json({ success: true, isDecoy: true });
+            }
+        }
+
+        if (!isValidReal) {
             return NextResponse.json({
                 success: false,
                 message: `PIN salah. Sisa percobaan: ${rateLimit.remaining}`
             });
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, isDecoy: false });
     } catch (error: any) {
         console.error("API Verify PIN Error:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

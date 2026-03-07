@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { UserTier } from "@/lib/tier-gate";
+import { useSecurity } from "@/components/SecurityProvider";
 
 interface Category {
     id: number;
@@ -57,6 +58,7 @@ export function useDashboardData() {
     const queryClient = useQueryClient();
     const [mounted, setMounted] = useState(false);
     const [offlineTrans, setOfflineTrans] = useState<any[]>([]);
+    const { isDecoyMode } = useSecurity();
 
     useEffect(() => {
         setMounted(true);
@@ -156,6 +158,19 @@ export function useDashboardData() {
         }
     });
 
+    // Bills Query
+    const { data: bills = [], isLoading: billsLoading } = useQuery({
+        queryKey: ["dashboard", "bills"],
+        queryFn: async () => {
+            const res = await apiFetch("/api/bills");
+            const json = await res.json();
+            if (json.success) {
+                return json.data as any[];
+            }
+            return [];
+        }
+    });
+
     // Derived states
     const fullName = profile ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() : null;
     const userName = fullName || profile?.name || "Sultan";
@@ -164,6 +179,17 @@ export function useDashboardData() {
 
     // Merge Offline Stats
     const stats = useMemo(() => {
+        if (isDecoyMode) {
+            return {
+                income: 1250000,
+                expense: 850000,
+                balance: 1500000,
+                growth: 2.5,
+                totalGoals: 0,
+                totalInvestments: 0,
+                fees: 0
+            };
+        }
         const base = serverStats || { income: 0, expense: 0, balance: 0, fees: 0, weeklyBudgetRemaining: 0, weeklyBudgetTotal: 0 };
         if (offlineTrans.length === 0) return base;
 
@@ -176,10 +202,17 @@ export function useDashboardData() {
             expense: base.expense + offlineExpense,
             balance: base.balance + offlineIncome - offlineExpense,
         };
-    }, [serverStats, offlineTrans]);
+    }, [serverStats, offlineTrans, isDecoyMode]);
 
     // Merge Offline Transactions
     const transactions = useMemo(() => {
+        if (isDecoyMode) {
+            return [
+                { id: "fake-1", amount: 50000, description: "Makan Siang", category: "Makan", type: "expense", created_at: new Date().toISOString(), is_verified: true },
+                { id: "fake-2", amount: 15000, description: "Parkir", category: "Transportasi", type: "expense", created_at: new Date().toISOString(), is_verified: true },
+                { id: "fake-3", amount: 2500000, description: "Gaji", category: "Gaji", type: "income", created_at: new Date().toISOString(), is_verified: true },
+            ];
+        }
         const mappedServer = serverTransactions.slice(0, 5).map(t => ({
             id: t.id.toString(),
             amount: t.amount,
@@ -196,7 +229,7 @@ export function useDashboardData() {
         }));
 
         return [...mappedOffline, ...mappedServer].slice(0, 5);
-    }, [serverTransactions, offlineTrans, categories]);
+    }, [serverTransactions, offlineTrans, categories, isDecoyMode]);
 
     const loading = !mounted || (profileLoading && !profile) || (statsLoading && !serverStats);
 
@@ -213,6 +246,7 @@ export function useDashboardData() {
         userTier,
         userImage,
         anomalies,
+        bills,
         loading,
         mounted,
         refresh,

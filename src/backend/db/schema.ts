@@ -114,6 +114,7 @@ export const userSettings = sqliteTable("user_settings", {
     hourlyRate: real("hourly_rate").notNull().default(50000),
     primaryGoalId: integer("primary_goal_id").references(() => goals.id),
     securityPin: text("security_pin"),
+    decoyPin: text("decoy_pin"),
     isAppLockEnabled: integer("is_app_lock_enabled", { mode: "boolean" }).notNull().default(false),
     isBiometricEnabled: integer("is_biometric_enabled", { mode: "boolean" }).notNull().default(false),
     hideBalance: integer("hide_balance", { mode: "boolean" }).notNull().default(false), // New: Hide balance on dashboard
@@ -134,6 +135,7 @@ export const userSettings = sqliteTable("user_settings", {
     quietHoursEnabled: integer("quiet_hours_enabled", { mode: "boolean" }).notNull().default(false),
     quietHoursStart: text("quiet_hours_start").notNull().default("22:00"),
     quietHoursEnd: text("quiet_hours_end").notNull().default("08:00"),
+    autoLockTimeout: integer("auto_lock_timeout").notNull().default(300000), // Default 5 minutes in ms
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -193,6 +195,19 @@ export const bills = sqliteTable("bills", {
 }, (table) => ({
     userIdIdx: index("idx_bills_user_id").on(table.userId),
     isActiveIdx: index("idx_bills_is_active").on(table.isActive),
+}));
+
+export const billPayments = sqliteTable("bill_payments", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    billId: integer("bill_id").references(() => bills.id).notNull(),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    amount: real("amount").notNull(),
+    paidAt: integer("paid_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    transactionId: integer("transaction_id").references(() => transactions.id),
+    notes: text("notes"),
+}, (table) => ({
+    billIdIdx: index("idx_bill_payments_bill_id").on(table.billId),
+    userIdIdx: index("idx_bill_payments_user_id").on(table.userId),
 }));
 
 export const chatHistory = sqliteTable("chat_history", {
@@ -338,6 +353,7 @@ export type InsertRecurringTransaction = typeof recurringTransactions.$inferInse
 export type Streak = typeof streaks.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type BillPayment = typeof billPayments.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -358,6 +374,7 @@ export type InsertAdminActivityLog = typeof adminActivityLog.$inferInsert;
 export type InsertAiInsightsCache = typeof aiInsightsCache.$inferInsert;
 export type InsertStreak = typeof streaks.$inferInsert;
 export type InsertAchievement = typeof achievements.$inferInsert;
+export type InsertBillPayment = typeof billPayments.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -382,3 +399,5 @@ export const insertStreakSchema = createInsertSchema(streaks);
 export const selectStreakSchema = createSelectSchema(streaks);
 export const insertAchievementSchema = createInsertSchema(achievements);
 export const selectAchievementSchema = createSelectSchema(achievements);
+export const insertBillPaymentSchema = createInsertSchema(billPayments);
+export const selectBillPaymentSchema = createSelectSchema(billPayments);

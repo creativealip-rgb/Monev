@@ -13,7 +13,8 @@ import {
     Camera,
     Mic,
     TrendingUp,
-    Loader2
+    Loader2,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import { useToast, ErrorEmpty } from "@/frontend/components/UI";
@@ -30,6 +31,7 @@ interface Message {
     role: "user" | "assistant";
     content: string;
     timestamp: Date;
+    image?: string;
     actions?: Action[];
 }
 
@@ -61,9 +63,13 @@ export default function ChatPage() {
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
-    const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
+    const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const recognitionRef = useRef<any>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const toast = useToast();
+    const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -135,9 +141,20 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
         localStorage.setItem(key, String(current + 1));
     };
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setSelectedImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSend = async (customText?: string) => {
         const textToSend = customText || input;
-        if (!textToSend.trim()) return;
+        if (!textToSend.trim() && !selectedImage) return;
 
         // Check daily AI limit
         if (!canUseAI(getDailyUsage(), userTier)) {
@@ -149,11 +166,14 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
             id: generateMessageId(),
             role: "user",
             content: textToSend,
+            image: selectedImage || undefined,
             timestamp: new Date(),
         };
 
         setMessages((prev) => [...prev, userMessage]);
+        const currentImage = selectedImage;
         if (!customText) setInput("");
+        setSelectedImage(null);
         setIsTyping(true);
         // Prepare history (last 10 messages)
         const historyContext = messages.slice(-10).map(m => ({
@@ -167,7 +187,8 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: textToSend,
-                    history: historyContext
+                    history: historyContext,
+                    imageBase64: currentImage
                 }),
             });
 
@@ -203,6 +224,48 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
+        }
+    };
+
+    const toggleListening = () => {
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            toast.error("Browser Tidak Mendukung", "Fitur diktasi suara tidak tersedia di browser ini.");
+            return;
+        }
+
+        try {
+            const recognition = new SpeechRecognition();
+            recognition.lang = "id-ID";
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => setIsListening(true);
+            recognition.onend = () => setIsListening(false);
+            recognition.onresult = (event: any) => {
+                const transcript = event.results[0][0].transcript;
+                setInput(prev => prev + (prev ? " " : "") + transcript);
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error("Speech Recognition Error:", event.error);
+                setIsListening(false);
+                if (event.error === 'not-allowed') {
+                    toast.error("Izin Ditolak", "Mikrofon diblokir oleh browser.");
+                }
+            };
+
+            recognition.start();
+            recognitionRef.current = recognition;
+        } catch (e) {
+            console.error("Speech recognition initialization failed", e);
+            setIsListening(false);
         }
     };
 
@@ -321,23 +384,37 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 
                             {/* Message Bubble */}
                             <div className={cn(
-                                "max-w-[80%] px-4 py-3 rounded-2xl",
-                                message.role === "user"
-                                    ? "bg-sky-500 text-white rounded-br-md"
-                                    : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-bl-md shadow-sm"
+                                "max-w-[80%] space-y-2",
+                                message.role === "user" ? "items-end flex flex-col" : "items-start flex flex-col"
                             )}>
-                                <p className={cn(
-                                    "text-sm whitespace-pre-line",
-                                    message.role === "user" ? "text-white" : "text-slate-800 dark:text-slate-200"
+                                {message.image && (
+                                    <div className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 max-w-[200px]">
+                                        <img
+                                            src={message.image}
+                                            alt="Chat Image"
+                                            className="w-full h-auto object-cover"
+                                        />
+                                    </div>
+                                )}
+                                <div className={cn(
+                                    "px-4 py-3 rounded-2xl",
+                                    message.role === "user"
+                                        ? "bg-sky-500 text-white rounded-br-md"
+                                        : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-bl-md shadow-sm"
                                 )}>
-                                    {message.content}
-                                </p>
-                                <p className={cn(
-                                    "text-[10px] mt-1",
-                                    message.role === "user" ? "text-sky-200" : "text-slate-400"
-                                )}>
-                                    {message.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                                </p>
+                                    <p className={cn(
+                                        "text-sm whitespace-pre-line",
+                                        message.role === "user" ? "text-white" : "text-slate-800 dark:text-slate-200"
+                                    )}>
+                                        {message.content}
+                                    </p>
+                                    <p className={cn(
+                                        "text-[10px] mt-1",
+                                        message.role === "user" ? "text-sky-200" : "text-slate-400"
+                                    )}>
+                                        {message.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                                    </p>
+                                </div>
                             </div>
                         </motion.div>
                     ))}
@@ -385,7 +462,7 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
                         animate={{ opacity: 1, y: 0 }}
                         className="pl-11"
                     >
-                        <QuickReplies 
+                        <QuickReplies
                             onSelect={(query) => handleSend(query)}
                             context="general"
                         />
@@ -396,44 +473,93 @@ const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
             </div>
 
             {/* Input Area */}
-<div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                {selectedImage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-3 flex items-center gap-3"
+                    >
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
+                            <button
+                                onClick={() => setSelectedImage(null)}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/50 text-white flex items-center justify-center hover:bg-slate-900 transition-colors"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">Gambar terpilih</p>
+                            <p className="text-[10px] text-slate-400">Siap dianalisis oleh AI</p>
+                        </div>
+                    </motion.div>
+                )}
                 <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setSmartInputMode("screenshot")}
-                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                    >
-                        <Camera size={18} />
-                    </button>
-                    <button 
-                        onClick={() => setSmartInputMode("voice")}
-                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                    >
-                        <Mic size={18} />
-                    </button>
-                    <div className="flex-1 relative">
+                    <div className="flex items-center gap-1 mr-1">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageSelect}
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            title="Upload Gambar/Screenshot"
+                        >
+                            <Camera size={18} />
+                        </button>
+                        <button
+                            onClick={() => setSmartInputMode("voice")}
+                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            title="Catat Suara"
+                        >
+                            <Mic size={18} />
+                        </button>
+                    </div>
+                    <div className="flex-1 relative flex items-center">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            placeholder="Ketik pesan..."
-                            className="w-full pl-4 pr-10 py-3 bg-slate-100 dark:bg-slate-800 rounded-full text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                            placeholder={isListening ? "Mendengarkan..." : "Ketik pesan..."}
+                            className={cn(
+                                "w-full pl-4 pr-12 py-3 bg-slate-100 dark:bg-slate-800 rounded-full text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all",
+                                isListening && "ring-2 ring-rose-500/30 bg-rose-50/50 dark:bg-rose-900/10"
+                            )}
                         />
+                        <div className="absolute right-2 flex items-center gap-1">
+                            <button
+                                onClick={toggleListening}
+                                title="Dikte Suara"
+                                className={cn(
+                                    "w-8 h-8 rounded-full flex items-center justify-center transition-all",
+                                    isListening
+                                        ? "bg-rose-500 text-white animate-pulse"
+                                        : "text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                )}
+                            >
+                                <Mic size={16} />
+                            </button>
+                        </div>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleSend()}
-                        disabled={!input.trim()}
+                        disabled={(!input.trim() && !selectedImage) || isListening}
                         className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                            input.trim()
+                            (input.trim() || selectedImage) && !isListening
                                 ? "bg-sky-500 text-white hover:bg-sky-600"
                                 : "bg-slate-200 dark:bg-slate-700 text-slate-400"
                         )}
                     >
                         <Send size={18} />
-</motion.button>
+                    </motion.button>
                 </div>
             </div>
 

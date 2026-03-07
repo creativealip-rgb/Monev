@@ -21,7 +21,7 @@ export async function PUT(
         const body = await request.json();
 
         // Check if this is a toggle paid action or full update
-        if (body.action === "toggle") {
+        if (body.action === "toggle" || body.togglePaid === true) {
             const updated = await toggleBillPaid(userId, id);
             if (!updated) return NextResponse.json({ success: false, error: "Bill not found" }, { status: 404 });
             return NextResponse.json({ success: true, data: updated });
