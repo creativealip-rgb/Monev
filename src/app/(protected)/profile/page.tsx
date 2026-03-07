@@ -35,6 +35,7 @@ const menuItems = [
     { id: "notifications", icon: Bell, label: "Notifikasi", color: "purple", hasArrow: true },
     { id: "integrations", icon: MessageCircle, label: "Integrasi Bot", color: "indigo", hasArrow: true },
     { id: "security", icon: Shield, label: "Keamanan", color: "amber", hasArrow: true },
+    { id: "export", icon: Download, label: "Export Data", color: "sky", hasArrow: true },
     { id: "download", icon: Smartphone, label: "Download Aplikasi Android", color: "sky", hasArrow: true, isDownload: true },
 ];
 
@@ -75,7 +76,7 @@ export default function ProfilePage() {
     const toast = useToast();
 
     // Modals
-    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | null>(null);
+    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | null>(null);
 
     // Notification toggles (Local state for now, persists with notificationsEnabled)
     const [notifToggles, setNotifToggles] = useState({
@@ -169,8 +170,8 @@ export default function ProfilePage() {
         }
     };
 
-    const handleMenuClick = (id: string) => {
-        if (id === "account" || id === "financial" || id === "integrations" || id === "security" || id === "notifications" || id === "categories") {
+const handleMenuClick = (id: string) => {
+        if (id === "account" || id === "financial" || id === "integrations" || id === "security" || id === "notifications" || id === "categories" || id === "export") {
             setActiveModal(id as any);
         }
     };
@@ -678,12 +679,13 @@ export default function ProfilePage() {
                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 className="w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 relative"
                             >
-                                <div className="flex justify-between items-center p-6 pb-4 shrink-0">
+<div className="flex justify-between items-center p-6 pb-4 shrink-0">
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                         {activeModal === "account" ? "Edit Profil" :
                                             activeModal === "integrations" ? "Integrasi Bot" :
                                                 activeModal === "security" ? "Keamanan Aplikasi" :
-                                                    "Konfigurasi Keuangan"}
+                                                    activeModal === "export" ? "Export Data" :
+                                                        "Konfigurasi Keuangan"}
                                     </h3>
                                     <button
                                         onClick={() => setActiveModal(null)}

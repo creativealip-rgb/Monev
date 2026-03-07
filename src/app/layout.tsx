@@ -68,19 +68,23 @@ export default async function RootLayout({
                         dangerouslySetInnerHTML={{
                             __html: `
                                 if ('serviceWorker' in navigator) {
-                                    caches.keys().then(function(names) {
-                                        for (let name of names) caches.delete(name);
-                                    });
-                                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                                        for (let registration of registrations) {
-                                            registration.unregister();
-                                        }
+                                    window.addEventListener('load', function() {
+                                        navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                                            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                                        }, function(err) {
+                                            console.log('ServiceWorker registration failed: ', err);
+                                        });
                                     });
                                 }
                             `,
                         }}
                     />
-                    {children}
+                    <a href="#main-content" className="skip-link">
+                        Lanjut ke konten utama
+                    </a>
+                    <div id="main-content">
+                        {children}
+                    </div>
                 </Providers>
             </body>
         </html>

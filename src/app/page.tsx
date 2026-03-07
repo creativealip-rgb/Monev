@@ -4,11 +4,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-    ArrowRight, CheckCircle2, ShieldCheck, Zap,
-    Sparkles, Brain, Bot, Scan,
+    ArrowRight, ShieldCheck,
+    Brain, Bot, Scan,
     BarChart3, TrendingUp, ChevronRight
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import dynamic from "next/dynamic";
+
+const AppScreenshots = dynamic(() => import("./components/AppScreenshots").then(mod => mod.AppScreenshots), { ssr: false });
+const TestimonialSection = dynamic(() => import("./components/TestimonialSection").then(mod => mod.TestimonialSection), { ssr: false });
+const FAQSection = dynamic(() => import("./components/FAQSection").then(mod => mod.FAQSection), { ssr: false });
+const StickyCTA = dynamic(() => import("./components/StickyCTA").then(mod => mod.StickyCTA), { ssr: false });
 
 function FeatureCard({ icon, title, desc, className, delay = 0 }: { icon: React.ReactNode, title: string, desc: string, className?: string, delay?: number }) {
     return (
@@ -45,7 +51,15 @@ export default function LandingPage() {
             <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between glass-card py-3 px-6 rounded-2xl border-white/50">
                     <div className="flex items-center gap-2.5 group cursor-pointer">
-                        <Image src="/icon-192.png" alt="Monev Logo" width={40} height={40} className="rounded-xl shadow-lg shadow-sky-500/20 group-hover:scale-110 transition-transform duration-300" />
+                        <Image
+                            src="/icon-192.png"
+                            alt="Monev Logo"
+                            width={40}
+                            height={40}
+                            priority
+                            sizes="40px"
+                            className="rounded-xl shadow-lg shadow-sky-500/20 group-hover:scale-110 transition-transform duration-300"
+                        />
                         <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Monev</span>
                     </div>
                     <div className="flex items-center gap-6">
@@ -163,6 +177,15 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* App Screenshots Section */}
+            <AppScreenshots />
+
+            {/* Testimonial Section */}
+            <TestimonialSection />
+
+            {/* FAQ Section */}
+            <FAQSection />
+
             {/* How it Works */}
             <section className="py-32 bg-sky-500 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_30%,white_0%,transparent_100%)]" />
@@ -199,7 +222,7 @@ export default function LandingPage() {
                                         <TrendingUp size={48} className="text-sky-500" />
                                     </div>
                                     <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4">Mulai Bertumbuh</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 font-bold mb-8 italic">"Finance is not about math, it's about logic."</p>
+                                    <p className="text-slate-500 dark:text-slate-400 font-bold mb-8 italic">&ldquo;Finance is not about math, it&apos;s about logic.&rdquo;</p>
                                     <Link href="/register" className="w-full py-4 bg-sky-500 text-white font-bold rounded-2xl shadow-xl shadow-sky-500/30 hover:bg-sky-600 transition-all flex items-center justify-center gap-2">
                                         Ayo Mulai <ChevronRight size={18} />
                                     </Link>
@@ -227,6 +250,9 @@ export default function LandingPage() {
                     </p>
                 </div>
             </footer>
+
+            {/* Sticky CTA */}
+            <StickyCTA />
         </div>
     );
 }

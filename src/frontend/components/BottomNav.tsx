@@ -62,6 +62,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
             <Link
                 href={href}
                 onClick={() => haptics.tap()}
+                aria-label={label}
                 className={cn(
                     "flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative",
                     "transition-all duration-300"
@@ -117,6 +118,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                 onPointerDown={handlePointerDown}
                                 onPointerUp={handlePointerUp}
                                 onPointerCancel={handlePointerUp}
+                                aria-label={t("transactions.add")}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.85 }}
                                 animate={isFabPressed ? { scale: 0.85 } : { scale: 1 }}

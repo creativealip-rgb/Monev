@@ -1,12 +1,14 @@
+"use client";
+
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase } from "lucide-react";
-import { Transaction, TransactionWithCategory } from "@/types";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2 } from "lucide-react";
+import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useState, useEffect } from "react";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 
-const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, gradient: string }> = {
-    // Indonesian category names from database
+const CATEGORY_STYLES: Record<string, { icon: any, color: string, gradient: string }> = {
     "Makan & Minuman": {
         icon: Utensils,
         color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
@@ -62,7 +64,6 @@ const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, grad
         color: "bg-muted text-muted-foreground",
         gradient: "from-slate-500 to-slate-400"
     },
-    // Fallback for English names
     Food: {
         icon: Coffee,
         color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
@@ -95,13 +96,17 @@ const CATEGORY_STYLES: Record<string, { icon: typeof Coffee, color: string, grad
     },
 };
 
-
 interface TransactionItemProps {
     transaction: TransactionWithCategory;
     onClick?: () => void;
+    onEdit?: (transaction: TransactionWithCategory) => void;
+    onDelete?: (id: number) => void;
+    showCheckbox?: boolean;
+    isSelected?: boolean;
+    onSelect?: (id: number) => void;
 }
 
-export function TransactionItem({ transaction, onClick }: TransactionItemProps) {
+export function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect }: TransactionItemProps) {
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
@@ -110,60 +115,113 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
     const isIncome = transaction.type === "income";
     const Icon = style.icon;
 
+    // Swipe mechanism
+    const x = useMotionValue(0);
+    const background = useTransform(
+        x,
+        [-100, 0, 100],
+        ["#ef4444", "transparent", "#0ea5e9"]
+    );
+
     return (
-        <div
-            onClick={onClick}
-            className={cn(
-                "relative flex items-center p-4 card-clean cursor-pointer",
-                "transition-all duration-300"
-            )}>
-            <div className={cn(
-                "relative w-12 h-12 rounded-2xl flex items-center justify-center mr-4 overflow-hidden flex-shrink-0",
-                style.color
-            )}>
-                <div className={cn(
-                    "absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 bg-gradient-to-br",
-                    style.gradient
-                )} />
-                <Icon size={22} strokeWidth={2} className="relative z-10" />
-            </div>
-
-            <div className="flex-1 min-w-0 overflow-hidden mr-4">
-                <h4 className="font-bold text-foreground text-[13px] leading-tight line-clamp-1 break-all">
-                    {transaction.description || "Tanpa Deskripsi"}
-                </h4>
-                <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[11px] font-medium text-muted-foreground truncate">
-                        {transaction.categoryName || "Lainnya"}
-                    </span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30 flex-shrink-0" />
-                    <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0">
-                        {(() => {
-                            try {
-                                const date = new Date(transaction.createdAt);
-                                return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm", { locale: id });
-                            } catch (e) {
-                                return "N/A";
-                            }
-                        })()}
-                    </span>
+        <div className="relative overflow-hidden rounded-2xl mb-2 group">
+            {/* Action Buttons Background */}
+            <motion.div
+                style={{ background }}
+                className="absolute inset-0 flex items-center justify-between px-6 rounded-2xl"
+            >
+                <div className="flex items-center gap-2">
+                    <Edit2 size={20} className="text-white" />
+                    <span className="text-white text-xs font-bold uppercase">Edit</span>
                 </div>
-            </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-white text-xs font-bold uppercase">Hapus</span>
+                    <Trash2 size={20} className="text-white" />
+                </div>
+            </motion.div>
 
-            <div className="text-right flex-shrink-0">
-                <p className={cn(
-                    "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
-                    isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
-                )}>
-                    {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
-                </p>
-                {transaction.isVerified && (
-                    <div className="flex items-center justify-end gap-1 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-medium text-muted-foreground">Verified</span>
-                    </div>
+            {/* Swipeable Content */}
+            <motion.div
+                style={{ x }}
+                drag="x"
+                dragConstraints={{ left: -100, right: 100 }}
+                onDragEnd={(_, info) => {
+                    if (info.offset.x < -50) {
+                        onDelete?.(transaction.id);
+                    } else if (info.offset.x > 50) {
+                        onEdit?.(transaction);
+                    }
+                    x.set(0); // Reset after action
+                }}
+                onClick={onClick}
+                className={cn(
+                    "relative flex items-center p-4 card-clean cursor-pointer z-10",
+                    "transition-shadow duration-300"
                 )}
-            </div>
+            >
+                {showCheckbox && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect?.(transaction.id);
+                        }}
+                        className="mr-3 flex-shrink-0"
+                    >
+                        {isSelected ? (
+                            <CheckSquare size={22} className="text-sky-500" />
+                        ) : (
+                            <Square size={22} className="text-slate-300 dark:text-slate-600" />
+                        )}
+                    </button>
+                )}
+                <div className={cn(
+                    "relative w-12 h-12 rounded-2xl flex items-center justify-center mr-4 overflow-hidden flex-shrink-0",
+                    style.color
+                )}>
+                    <div className={cn(
+                        "absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 bg-gradient-to-br",
+                        style.gradient
+                    )} />
+                    <Icon size={22} strokeWidth={2} className="relative z-10" />
+                </div>
+
+                <div className="flex-1 min-w-0 overflow-hidden mr-4">
+                    <h4 className="font-bold text-foreground text-[13px] leading-tight line-clamp-1 break-all">
+                        {transaction.description || "Tanpa Deskripsi"}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] font-medium text-muted-foreground truncate">
+                            {transaction.categoryName || "Lainnya"}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-muted-foreground/30 flex-shrink-0" />
+                        <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0">
+                            {(() => {
+                                try {
+                                    const date = new Date(transaction.createdAt);
+                                    return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm", { locale: id });
+                                } catch (e) {
+                                    return "N/A";
+                                }
+                            })()}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="text-right flex-shrink-0">
+                    <p className={cn(
+                        "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
+                        isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                        {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
+                    </p>
+                    {transaction.isVerified && (
+                        <div className="flex items-center justify-end gap-1 mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="text-[10px] font-medium text-muted-foreground">Verified</span>
+                        </div>
+                    )}
+                </div>
+            </motion.div>
         </div>
     );
 }

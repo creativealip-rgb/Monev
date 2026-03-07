@@ -6,7 +6,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import {
     Wallet, TrendingUp, AlertTriangle, ArrowRight,
     Calendar, Zap, Brain, ChevronRight, Gauge, LayoutDashboard, Sparkles,
-    Lock, Download, ArrowLeft, FileDown, Flame
+    Lock, Download, ArrowLeft, FileDown, Flame, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -86,8 +86,10 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-    const [activeTab, setActiveTab] = useState("overview");
+const [activeTab, setActiveTab] = useState("overview");
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
+    const [showDateRangePicker, setShowDateRangePicker] = useState(false);
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -119,11 +121,15 @@ export default function AnalyticsPage() {
 
     const [isDownloading, setIsDownloading] = useState(false);
 
-    const fetchData = async () => {
+const fetchData = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await apiFetch(`/api/analytics?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`);
+            let url = `/api/analytics?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`;
+            if (dateRange) {
+                url = `/api/analytics?startDate=${dateRange.start}&endDate=${dateRange.end}`;
+            }
+            const res = await apiFetch(url);
             if (!res.ok) throw new Error("Gagal memuat data");
             const jsonData = await res.json();
             setData(jsonData);
@@ -167,9 +173,9 @@ export default function AnalyticsPage() {
         }
     };
 
-    useEffect(() => {
+useEffect(() => {
         fetchData();
-    }, [currentDate]);
+    }, [currentDate, dateRange]);
 
     const changeMonth = (offset: number) => {
         const newDate = new Date(currentDate);
@@ -229,7 +235,7 @@ export default function AnalyticsPage() {
                             <span>Laporan</span>
                         </button>
 
-                        {/* Month Selector Mini */}
+{/* Month Selector Mini */}
                         <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm">
                             <div className="flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
                                 <Flame size={12} className="text-orange-500" />
@@ -237,21 +243,113 @@ export default function AnalyticsPage() {
                                     {(data as any)?.summary?.streakDays || 0}
                                 </span>
                             </div>
-                            <div className="flex items-center px-1 py-1">
-                                <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                                    <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
+                            {dateRange ? (
+                                <button
+                                    onClick={() => {
+                                        setDateRange(null);
+                                        setCurrentDate(new Date());
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+                                >
+                                    <Calendar size={12} className="text-sky-500" />
+                                    <span className="text-[10px] font-bold px-1 min-w-[60px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
+                                        Custom
+                                    </span>
+                                    <span className="text-[8px] text-slate-400">✕</span>
                                 </button>
-                                <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
-                                    {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
-                                </span>
-                                <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                                </button>
-                            </div>
+                            ) : (
+                                <div className="flex items-center px-1 py-1">
+                                    <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                                        <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
+                                    </button>
+                                    <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
+                                        {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
+                                    </span>
+                                    <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                                    </button>
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setShowDateRangePicker(!showDateRangePicker)}
+                                className={cn(
+                                    "p-1.5 mx-1 rounded-full transition-all",
+                                    showDateRangePicker || dateRange
+                                        ? "bg-sky-100 dark:bg-sky-900/30 text-sky-600"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                                )}
+                            >
+                                <Calendar size={14} />
+                            </button>
                         </div>
                     </div>
-                </div>
+</div>
             </motion.header>
+
+            {/* Date Range Picker Dropdown */}
+            {showDateRangePicker && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute right-6 top-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[200] w-72"
+                >
+                    <p className="text-xs font-bold text-muted-foreground mb-3 uppercase">Pilih Tanggal</p>
+                    <div className="space-y-3">
+                        <div>
+                            <label className="text-[10px] text-muted-foreground">Mulai</label>
+                            <input
+                                type="date"
+                                value={dateRange?.start || ""}
+                                onChange={(e) => setDateRange(prev => prev ? { ...prev, start: e.target.value } : { start: e.target.value, end: e.target.value })}
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-muted-foreground">Akhir</label>
+                            <input
+                                type="date"
+                                value={dateRange?.end || ""}
+                                onChange={(e) => setDateRange(prev => prev ? { ...prev, end: e.target.value } : { start: e.target.value, end: e.target.value })}
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                            />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                            {[
+                                { label: "Minggu ini", days: 7 },
+                                { label: "Bulan ini", days: 30 },
+                                { label: "3 Bulan", days: 90 },
+                            ].map((preset) => (
+                                <button
+                                    key={preset.label}
+                                    onClick={() => {
+                                        const end = new Date();
+                                        const start = new Date();
+                                        start.setDate(end.getDate() - preset.days);
+                                        setDateRange({
+                                            start: start.toISOString().split("T")[0],
+                                            end: end.toISOString().split("T")[0]
+                                        });
+                                    }}
+                                    className="flex-1 px-2 py-1.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 transition-colors"
+                                >
+                                    {preset.label}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => {
+                                if (dateRange?.start && dateRange?.end) {
+                                    setShowDateRangePicker(false);
+                                }
+                            }}
+                            disabled={!dateRange?.start || !dateRange?.end}
+                            className="w-full py-2 bg-sky-500 text-white text-sm font-bold rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Terapkan
+                        </button>
+                    </div>
+                </motion.div>
+            )}
 
             <div className="p-6 space-y-6">
                 <NetWorthCard

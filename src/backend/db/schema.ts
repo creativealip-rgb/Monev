@@ -27,6 +27,16 @@ export const users = sqliteTable("users", {
     tierExpiresAt: integer("tier_expires_at", { mode: "timestamp" }),
     isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    deletionRequestedAt: integer("deletion_requested_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const sessions = sqliteTable("sessions", {
+    id: text("id").primaryKey(),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    deviceInfo: text("device_info"),
+    ipAddress: text("ip_address"),
+    lastActiveAt: integer("last_active_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -64,8 +74,10 @@ export const budgets = sqliteTable("budgets", {
     userId: integer("user_id").references(() => users.id).notNull(), // New: SaaS Isolation
     categoryId: integer("category_id").references(() => categories.id).notNull(),
     amount: real("amount").notNull(),
+    spent: real("spent").notNull().default(0),
     month: integer("month").notNull(),
     year: integer("year").notNull(),
+    enableRollover: integer("enable_rollover", { mode: "boolean" }).notNull().default(false),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 }, (table) => ({
     userIdIdx: index("idx_budgets_user_id").on(table.userId),
@@ -109,6 +121,19 @@ export const userSettings = sqliteTable("user_settings", {
     hasCompletedOnboarding: integer("has_completed_onboarding", { mode: "boolean" }).notNull().default(false), // New: Track onboarding status
     financialPersona: text("financial_persona"), // AI generated persona
     personaUpdatedAt: integer("persona_updated_at", { mode: "timestamp" }),
+    // Notification preferences
+    dailyReport: integer("daily_report", { mode: "boolean" }).notNull().default(true),
+    budgetAlert: integer("budget_alert", { mode: "boolean" }).notNull().default(true),
+    transactionUpdate: integer("transaction_update", { mode: "boolean" }).notNull().default(true),
+    billReminder: integer("bill_reminder", { mode: "boolean" }).notNull().default(true),
+    goalProgress: integer("goal_progress", { mode: "boolean" }).notNull().default(true),
+    promoNews: integer("promo_news", { mode: "boolean" }).notNull().default(false),
+    pushEnabled: integer("push_enabled", { mode: "boolean" }).notNull().default(true),
+    emailEnabled: integer("email_enabled", { mode: "boolean" }).notNull().default(true),
+    telegramEnabled: integer("telegram_enabled", { mode: "boolean" }).notNull().default(false),
+    quietHoursEnabled: integer("quiet_hours_enabled", { mode: "boolean" }).notNull().default(false),
+    quietHoursStart: text("quiet_hours_start").notNull().default("22:00"),
+    quietHoursEnd: text("quiet_hours_end").notNull().default("08:00"),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -312,6 +337,7 @@ export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
 export type InsertRecurringTransaction = typeof recurringTransactions.$inferInsert;
 export type Streak = typeof streaks.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
