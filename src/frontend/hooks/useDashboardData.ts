@@ -36,6 +36,8 @@ interface DashboardStats {
     fees?: number;
     healthScore?: any;
     streak?: { current: number; longest: number };
+    weeklyBudgetRemaining?: number;
+    weeklyBudgetTotal?: number;
 }
 
 interface Anomaly {
@@ -162,7 +164,7 @@ export function useDashboardData() {
 
     // Merge Offline Stats
     const stats = useMemo(() => {
-        const base = serverStats || { income: 0, expense: 0, balance: 0, fees: 0 };
+        const base = serverStats || { income: 0, expense: 0, balance: 0, fees: 0, weeklyBudgetRemaining: 0, weeklyBudgetTotal: 0 };
         if (offlineTrans.length === 0) return base;
 
         const offlineIncome = offlineTrans.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
