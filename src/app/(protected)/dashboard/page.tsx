@@ -199,7 +199,7 @@ function HeroBalanceCard({ stats, mounted, onBalanceClick, onTransferClick, hide
                 className="mt-4 w-full py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-sm hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
             >
                 <ArrowRightLeft size={16} />
-                {t("common.confirm")}
+                {t("common.transfer")}
             </button>
         </div>
     );
