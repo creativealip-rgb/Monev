@@ -53,6 +53,8 @@ COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
 COPY --from=builder /app/node_modules/drizzle-zod ./node_modules/drizzle-zod
 COPY --from=builder /app/node_modules/zod ./node_modules/zod
+COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
+COPY --from=builder /app/node_modules/next-auth ./node_modules/next-auth
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
