@@ -11,6 +11,8 @@ import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { SplitBillFlow } from "./SplitBillFlow";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
+import { useSecurity } from "@/components/SecurityProvider";
+import { encryptData } from "@/lib/encryption";
 
 
 interface Category {
@@ -54,6 +56,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     const [showSplit, setShowSplit] = useState(false);
     const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
     const { accounts, isLoading: accountsLoading } = useAccountsData();
+    const { encryptionKey } = useSecurity();
 
     const [lastAddedTransaction, setLastAddedTransaction] = useState<any>(null);
     const { success: toastSuccess } = useToast();
@@ -137,9 +140,21 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         setError(null);
 
         const parsedAmount = parseFloat(amount);
+        let finalDescription = description;
+
+        // Encrypt description if key is available
+        if (encryptionKey) {
+            try {
+                const encrypted = await encryptData(description, encryptionKey);
+                finalDescription = `enc:${encrypted}`; // Mark as encrypted
+            } catch (e) {
+                console.error("Encryption failed", e);
+            }
+        }
+
         const transData = {
             amount: parsedAmount,
-            description,
+            description: finalDescription,
             categoryId: selectedCategory,
             type: transactionType,
             paymentMethod: "cash",

@@ -7,42 +7,50 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { useMemo } from "react";
 
-interface Bill {
-    id: string;
-    name: string;
-    amount: number;
-    dueDate: Date;
-    category?: string;
-}
+import { Bill } from "@/types";
 
 interface BillReminderWidgetProps {
     bills?: Bill[];
 }
 
 function getDefaultBills(): Bill[] {
-    const now = new Date();
     return [
         {
-            id: "1",
+            id: 1,
             name: "Netflix",
             amount: 54000,
-            dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
-            category: "Hiburan"
-        },
+            dueDate: 15,
+            category: "Hiburan",
+            isPaid: false,
+            color: "#e11d48",
+            userId: 1,
+            createdAt: new Date(),
+            frequency: "monthly",
+            icon: "Receipt",
+            isActive: true,
+            isSubscription: true,
+            lastPaidAt: null,
+            lastDetectedDate: null,
+            notes: null
+        } as unknown as Bill,
         {
-            id: "2",
+            id: 2,
             name: "Listrik PLN",
             amount: 350000,
-            dueDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-            category: "Tagihan"
-        },
-        {
-            id: "3",
-            name: "Internet Indihome",
-            amount: 450000,
-            dueDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
-            category: "Tagihan"
-        }
+            dueDate: 20,
+            category: "Tagihan",
+            isPaid: false,
+            color: "#eab308",
+            userId: 1,
+            createdAt: new Date(),
+            frequency: "monthly",
+            icon: "Receipt",
+            isActive: true,
+            isSubscription: false,
+            lastPaidAt: null,
+            lastDetectedDate: null,
+            notes: null
+        } as unknown as Bill
     ];
 }
 
@@ -51,16 +59,28 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
 
     const { nearestBill, daysRemaining } = useMemo(() => {
         const now = new Date();
-        const upcoming = bills
-            .filter(bill => new Date(bill.dueDate) > now)
-            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const upcoming = (bills || [])
+            .filter(bill => !bill.isPaid)
+            .map(bill => {
+                let dueDate = new Date(currentYear, currentMonth, bill.dueDate);
+                if (bill.dueDate < currentDay) {
+                    // It's for next month
+                    dueDate.setMonth(currentMonth + 1);
+                }
+                return { ...bill, calculatedDueDate: dueDate };
+            })
+            .sort((a, b) => a.calculatedDueDate.getTime() - b.calculatedDueDate.getTime());
 
         if (upcoming.length === 0) {
             return { nearestBill: null, daysRemaining: 0 };
         }
 
         const nearest = upcoming[0];
-        const diff = new Date(nearest.dueDate).getTime() - now.getTime();
+        const diff = nearest.calculatedDueDate.getTime() - now.getTime();
         const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
         return { nearestBill: nearest, daysRemaining: days };

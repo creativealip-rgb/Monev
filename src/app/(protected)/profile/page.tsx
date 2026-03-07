@@ -1,8 +1,8 @@
 "use client";
 
 import {
-    ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check, Globe,
-    User as UserIcon, MessageCircle, Smartphone, Crown,
+    ChevronLeft, ChevronRight, LogOut, Bell, Shield, Moon, Wallet, X, Check, Globe,
+    User as UserIcon, MessageCircle, Smartphone, Crown, ShieldCheck, Database, FileJson, FileSpreadsheet, Upload,
     CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame, Download,
     Tag, Plus, Trash2
 } from "lucide-react";
@@ -35,7 +35,7 @@ const menuItems = [
     { id: "notifications", icon: Bell, label: "Notifikasi", color: "purple", hasArrow: true },
     { id: "integrations", icon: MessageCircle, label: "Integrasi Bot", color: "indigo", hasArrow: true },
     { id: "security", icon: Shield, label: "Keamanan", color: "amber", hasArrow: true },
-    { id: "export", icon: Download, label: "Export Data", color: "sky", hasArrow: true },
+    { id: "export", icon: Database, label: "Data & Backup", color: "sky", hasArrow: true },
     { id: "download", icon: Smartphone, label: "Download Aplikasi Android", color: "sky", hasArrow: true, isDownload: true },
 ];
 
@@ -72,7 +72,7 @@ export default function ProfilePage() {
     const [achievements, setAchievements] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const { isStealthMode, toggleStealth } = useSecurity();
+    const { isStealthMode, toggleStealth, reauthenticate, deleteLocalData, autoLockTimeout } = useSecurity();
     const toast = useToast();
 
     // Modals
@@ -98,9 +98,11 @@ export default function ProfilePage() {
         hourlyRate: "",
         primaryGoalId: "",
         securityPin: "",
+        decoyPin: "",
         isAppLockEnabled: false,
         isBiometricEnabled: false,
         hideBalance: false,
+        autoLockTimeout: 300000,
         financialPersona: null as any
     });
 
@@ -150,8 +152,10 @@ export default function ProfilePage() {
                     primaryGoalId: data.settings.primaryGoalId?.toString() || "",
                     // Don't load existing PIN for security - user must enter new one
                     securityPin: "",
+                    decoyPin: "",
                     isAppLockEnabled: data.settings.isAppLockEnabled || false,
                     isBiometricEnabled: data.settings.isBiometricEnabled || false,
+                    autoLockTimeout: data.settings.autoLockTimeout ?? 300000,
                     financialPersona: data.settings.financialPersona ? JSON.parse(data.settings.financialPersona) : null
                 }));
             }
@@ -170,7 +174,7 @@ export default function ProfilePage() {
         }
     };
 
-const handleMenuClick = (id: string) => {
+    const handleMenuClick = (id: string) => {
         if (id === "account" || id === "financial" || id === "integrations" || id === "security" || id === "notifications" || id === "categories" || id === "export") {
             setActiveModal(id as any);
         }
@@ -286,6 +290,7 @@ const handleMenuClick = (id: string) => {
             body: JSON.stringify({
                 type: "settings",
                 securityPin: formData.securityPin,
+                decoyPin: formData.decoyPin,
                 isAppLockEnabled: formData.isAppLockEnabled,
                 isBiometricEnabled: formData.isBiometricEnabled
             })
@@ -293,6 +298,44 @@ const handleMenuClick = (id: string) => {
         toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
         setActiveModal(null);
         loadData();
+    };
+
+    const handleExport = async (format: 'json' | 'csv' = 'json') => {
+        try {
+            window.location.href = `/api/export?format=${format}`;
+            toast.success("Mengekspor...", "Data Bos sedang dipersiapkan.");
+        } catch (error) {
+            toast.error("Gagal", "Gagal mengekspor data.");
+        }
+    };
+
+    const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target?.result as string);
+                setLoading(true);
+                const response = await apiFetch("/api/export", {
+                    method: "POST",
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    toast.success("Berhasil!", "Data berhasil di-restore.");
+                    loadData();
+                } else {
+                    toast.error("Gagal", result.error || "Format backup tidak cocok.");
+                }
+            } catch (err) {
+                toast.error("Error", "Bukan file JSON yang valid.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        reader.readAsText(file);
     };
 
     const handleGeneratePersona = async () => {
@@ -679,7 +722,7 @@ const handleMenuClick = (id: string) => {
                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                 className="w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 relative"
                             >
-<div className="flex justify-between items-center p-6 pb-4 shrink-0">
+                                <div className="flex justify-between items-center p-6 pb-4 shrink-0">
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                         {activeModal === "account" ? "Edit Profil" :
                                             activeModal === "integrations" ? "Integrasi Bot" :
@@ -1077,6 +1120,51 @@ const handleMenuClick = (id: string) => {
                                                 </p>
                                             </div>
 
+                                            {/* Decoy PIN Section */}
+                                            <div className="p-6 bg-rose-50/50 dark:bg-rose-900/10 rounded-[2.5rem] border border-rose-100 dark:border-rose-900/20 space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-xl text-rose-500">
+                                                        <ShieldCheck size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-900 dark:text-white text-sm">Decoy PIN (Stealth Mode)</p>
+                                                        <p className="text-[10px] text-slate-500 font-medium">Tunjukkan data palsu jika PIN ini digunakan.</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-center">
+                                                    <div className="flex gap-2">
+                                                        {[0, 1, 2, 3, 4, 5].map((idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                className={cn(
+                                                                    "w-8 h-10 rounded-lg border-2 flex items-center justify-center transition-all",
+                                                                    formData.decoyPin[idx]
+                                                                        ? "bg-rose-500 border-rose-500 shadow-md shadow-rose-500/20"
+                                                                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                                                                )}
+                                                            >
+                                                                {formData.decoyPin[idx] && <div className="w-2 h-2 bg-white rounded-full" />}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <input
+                                                        type="tel"
+                                                        pattern="[0-9]*"
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        value={formData.decoyPin}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                                            if (val.length <= 6) {
+                                                                setFormData(prev => ({ ...prev, decoyPin: val }));
+                                                            }
+                                                        }}
+                                                        className="absolute opacity-0 w-full max-w-[200px] h-10 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </div>
+
                                             <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-amber-200/50 dark:hover:border-amber-900/30 transition-all duration-300">
                                                 <div className="flex items-center gap-4">
                                                     <div className={cn(
@@ -1136,6 +1224,44 @@ const handleMenuClick = (id: string) => {
                                                 </button>
                                             </div>
 
+                                            {/* Auto-lock Timeout */}
+                                            <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-blue-200/50 dark:hover:border-blue-900/30 transition-all duration-300">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-slate-400">
+                                                        <Zap size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-black text-slate-900 dark:text-white text-[13px] tracking-tight">Auto-lock Timeout</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold opacity-70">Kunci otomatis saat standby</p>
+                                                    </div>
+                                                </div>
+                                                <select
+                                                    value={formData.autoLockTimeout}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, autoLockTimeout: parseInt(e.target.value) }))}
+                                                    className="bg-transparent text-sm font-black text-blue-600 focus:outline-none cursor-pointer"
+                                                >
+                                                    <option value={60000}>1 Menit</option>
+                                                    <option value={300000}>5 Menit</option>
+                                                    <option value={900000}>15 Menit</option>
+                                                    <option value={3600000}>1 Jam</option>
+                                                    <option value={-1}>Sultan (Never)</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm("Ingin menghapus data lokal? Kamu perlu login kembali.")) {
+                                                            deleteLocalData();
+                                                        }
+                                                    }}
+                                                    className="w-full py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                >
+                                                    <Trash2 size={14} />
+                                                    Hapus Data Lokal & Reset Sesi
+                                                </button>
+                                            </div>
+
                                             <motion.button
                                                 whileHover={{ scale: 1.02, y: -2 }}
                                                 whileTap={{ scale: 0.98 }}
@@ -1157,7 +1283,97 @@ const handleMenuClick = (id: string) => {
                                                 </motion.div>
                                                 <span className="relative z-10">SIMPAN KEAMANAN</span>
                                             </motion.button>
+
+                                            {/* === SESSION MANAGEMENT === */}
+                                            <div className="mt-6 space-y-3">
+                                                <h5 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Manajemen Sesi</h5>
+                                                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">Log out dari semua perangkat lain yang sedang aktif menggunakan akun kamu.</p>
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                const res = await apiFetch("/api/profile/sessions", {
+                                                                    method: "DELETE",
+                                                                    body: JSON.stringify({ revokeAll: true }),
+                                                                    headers: { "Content-Type": "application/json" }
+                                                                });
+                                                                if (res.ok) {
+                                                                    toast.success("Berhasil!", "Semua sesi lain telah diakhiri");
+                                                                } else {
+                                                                    toast.error("Gagal", "Coba lagi nanti");
+                                                                }
+                                                            } catch {
+                                                                toast.error("Gagal", "Terjadi kesalahan");
+                                                            }
+                                                        }}
+                                                        className="w-full py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-sm font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors flex items-center justify-center gap-2"
+                                                    >
+                                                        <Shield size={15} />
+                                                        Logout Semua Perangkat Lain
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* === ACCOUNT DELETION ZONE === */}
+                                            <div className="mt-4 space-y-3">
+                                                <h5 className="text-[11px] font-black uppercase tracking-widest text-rose-500">Zona Bahaya</h5>
+                                                {user?.deletionRequestedAt ? (
+                                                    <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/30 space-y-3">
+                                                        <p className="text-xs text-rose-700 dark:text-rose-400 font-semibold">
+                                                            ⏳ Akun dijadwalkan dihapus dalam 30 hari sejak permintaan.
+                                                        </p>
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const res = await apiFetch("/api/profile/delete", { method: "DELETE" });
+                                                                    if (res.ok) {
+                                                                        toast.success("Dibatalkan!", "Akun kamu aman kembali");
+                                                                        setUser((prev: any) => ({ ...prev, deletionRequestedAt: null }));
+                                                                    }
+                                                                } catch { toast.error("Gagal", "Coba lagi"); }
+                                                            }}
+                                                            className="w-full py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-sm font-bold hover:bg-emerald-100 transition-colors"
+                                                        >
+                                                            ✅ Batalkan Penghapusan
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/30 space-y-3">
+                                                        <p className="text-xs text-rose-700 dark:text-rose-400 font-medium">
+                                                            Hapus akun dan semua data kamu secara permanen. Kamu punya 30 hari untuk membatalkan setelah request.
+                                                        </p>
+                                                        <button
+                                                            onClick={async () => {
+                                                                const isVerified = await reauthenticate();
+                                                                if (!isVerified) return;
+
+                                                                const confirmText = window.prompt("Ketik 'HAPUS AKUN SAYA' untuk konfirmasi penghapusan:");
+                                                                if (!confirmText) return;
+                                                                try {
+                                                                    const res = await apiFetch("/api/profile/delete", {
+                                                                        method: "POST",
+                                                                        body: JSON.stringify({ confirmText }),
+                                                                        headers: { "Content-Type": "application/json" },
+                                                                    });
+                                                                    const data = await res.json();
+                                                                    if (data.success) {
+                                                                        toast.success("Permintaan diterima", data.message);
+                                                                        setUser((prev: any) => ({ ...prev, deletionRequestedAt: new Date() }));
+                                                                    } else {
+                                                                        toast.error("Gagal", data.error);
+                                                                    }
+                                                                } catch { toast.error("Gagal", "Terjadi kesalahan"); }
+                                                            }}
+                                                            className="w-full py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                            Hapus Akun
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
+
                                     ) : activeModal === "notifications" ? (
                                         <div className="space-y-6">
                                             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-[2rem] p-6 border border-purple-100 dark:border-purple-900/50">
@@ -1362,6 +1578,59 @@ const handleMenuClick = (id: string) => {
                                                 </div>
                                             )}
 
+                                        </div>
+                                    ) : activeModal === "export" ? (
+                                        <div className="space-y-4">
+                                            <div className="bg-sky-50 dark:bg-sky-900/20 p-5 rounded-3xl border border-sky-100 dark:border-sky-800">
+                                                <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl w-fit shadow-sm text-sky-500 mb-4">
+                                                    <Download size={24} />
+                                                </div>
+                                                <h4 className="font-black text-slate-900 dark:text-white text-lg mb-1">Export Data</h4>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Download semua data transaksi dan keuanganmu dengan satu klik.</p>
+
+                                                <div className="grid grid-cols-2 gap-3 mt-5">
+                                                    <button
+                                                        onClick={async () => {
+                                                            const isVerified = await reauthenticate();
+                                                            if (isVerified) window.open("/api/export?format=json", "_blank");
+                                                        }}
+                                                        className="p-4 rounded-2xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:text-sky-600 dark:hover:text-sky-400 transition-all flex flex-col items-center justify-center gap-2 group shadow-sm hover:shadow"
+                                                    >
+                                                        <span className="text-xl group-hover:scale-110 transition-transform">📄</span>
+                                                        <span>Format JSON</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            const isVerified = await reauthenticate();
+                                                            if (isVerified) window.open("/api/export?format=csv", "_blank");
+                                                        }}
+                                                        className="p-4 rounded-2xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all flex flex-col items-center justify-center gap-2 group shadow-sm hover:shadow"
+                                                    >
+                                                        <span className="text-xl group-hover:scale-110 transition-transform">📊</span>
+                                                        <span>Monev CSV</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            const isVerified = await reauthenticate();
+                                                            if (isVerified) window.open("/api/export?format=bca_csv", "_blank");
+                                                        }}
+                                                        className="p-4 rounded-2xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all flex flex-col items-center justify-center gap-2 group shadow-sm hover:shadow"
+                                                    >
+                                                        <span className="text-xl group-hover:scale-110 transition-transform">🏦</span>
+                                                        <span>BCA Template</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            const isVerified = await reauthenticate();
+                                                            if (isVerified) window.open("/api/export?format=mandiri_csv", "_blank");
+                                                        }}
+                                                        className="p-4 rounded-2xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all flex flex-col items-center justify-center gap-2 group shadow-sm hover:shadow"
+                                                    >
+                                                        <span className="text-xl group-hover:scale-110 transition-transform">💳</span>
+                                                        <span>Mandiri Template</span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">

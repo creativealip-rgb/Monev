@@ -54,7 +54,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-intersection-observer": "^10.0.3",
-    "recharts": "^3.7.0",
+    "recharts": "^3.8.0",
     "resend": "^6.9.2",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.4.0",

@@ -31,6 +31,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [enableRollover, setEnableRollover] = useState(true);
 
     const expenseCategories = categories.filter(c => c.type === "expense");
 
@@ -52,6 +53,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                     amount: parseFloat(amount),
                     month,
                     year,
+                    enableRollover
                 }),
             });
 
@@ -151,6 +153,25 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                                     className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 />
                             </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700">
+                            <div>
+                                <p className="text-[13px] font-bold text-slate-900 dark:text-white">Aktifkan Rollover</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400">Sisa budget bulan ini akan ditambah ke bulan depan</p>
+                            </div>
+                            <button
+                                onClick={() => setEnableRollover(!enableRollover)}
+                                className={cn(
+                                    "w-10 h-6 rounded-full transition-all relative",
+                                    enableRollover ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-600"
+                                )}
+                            >
+                                <motion.div
+                                    animate={{ x: enableRollover ? 18 : 2 }}
+                                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                                />
+                            </button>
                         </div>
 
                         <button
@@ -385,6 +406,7 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
     const [amount, setAmount] = useState(budget.limit.toString());
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [enableRollover, setEnableRollover] = useState(budget.enableRollover || false);
 
     const handleSubmit = async () => {
         if (!amount || parseFloat(amount) <= 0) {
@@ -401,6 +423,7 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     amount: parseFloat(amount),
+                    enableRollover
                 }),
             });
 
@@ -470,6 +493,25 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                                     className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 />
                             </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700">
+                            <div>
+                                <p className="text-[13px] font-bold text-slate-900 dark:text-white">Aktifkan Rollover</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400">Sisa budget bulan ini akan ditambah ke bulan depan</p>
+                            </div>
+                            <button
+                                onClick={() => setEnableRollover(!enableRollover)}
+                                className={cn(
+                                    "w-10 h-6 rounded-full transition-all relative",
+                                    enableRollover ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-600"
+                                )}
+                            >
+                                <motion.div
+                                    animate={{ x: enableRollover ? 18 : 2 }}
+                                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                                />
+                            </button>
                         </div>
 
                         <button

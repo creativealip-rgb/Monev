@@ -40,6 +40,7 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
     const {
         step,
         result,
+        setResult,
         error,
         setError,
         isRecording,
@@ -218,6 +219,24 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                                 {isRecording ? "Tekan untuk berhenti" : "Tekan untuk rekam"}
                                             </p>
                                             {isRecording && (
+                                                <div className="mt-4 flex items-center justify-center gap-1 h-12">
+                                                    {[...Array(12)].map((_, i) => (
+                                                        <motion.div
+                                                            key={i}
+                                                            animate={{
+                                                                height: [10, Math.random() * 30 + 10, 10]
+                                                            }}
+                                                            transition={{
+                                                                repeat: Infinity,
+                                                                duration: 0.5,
+                                                                delay: i * 0.05
+                                                            }}
+                                                            className="w-1 bg-rose-500 rounded-full"
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {isRecording && (
                                                 <p className="text-2xl font-bold text-rose-500 mt-2">
                                                     {formatTime(recordingTime)}
                                                 </p>
@@ -278,27 +297,41 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                     <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
                                         <div>
                                             <p className="text-xs text-slate-400 mb-1">Nominal</p>
-                                            <p className="text-2xl font-bold text-slate-900">
-                                                {result.amount > 0 ? formatCurrency(result.amount) : "Rp 0"}
-                                            </p>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">Rp</span>
+                                                <input
+                                                    type="number"
+                                                    value={result.amount || ""}
+                                                    onChange={(e) => setResult({ ...result, amount: Number(e.target.value) })}
+                                                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div>
                                             <p className="text-xs text-slate-400 mb-1">Deskripsi</p>
-                                            <p className="font-medium text-slate-800">
-                                                {result.description || result.merchantName || "-"}
-                                            </p>
+                                            <input
+                                                type="text"
+                                                value={result.description || result.merchantName || ""}
+                                                onChange={(e) => setResult({ ...result, description: e.target.value })}
+                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                            />
                                         </div>
 
                                         <div>
                                             <p className="text-xs text-slate-400 mb-1">Kategori</p>
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-3 h-3 rounded-full"
-                                                    style={{ backgroundColor: categoryColors[result.category] }}
-                                                />
-                                                <span className="font-medium text-slate-800">{result.category}</span>
-                                            </div>
+                                            <select
+                                                value={result.category}
+                                                onChange={(e) => setResult({ ...result, category: e.target.value })}
+                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                            >
+                                                {Object.keys(categoryColors).map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                                {!Object.keys(categoryColors).includes(result.category) && (
+                                                    <option value={result.category}>{result.category}</option>
+                                                )}
+                                            </select>
                                         </div>
                                     </div>
 

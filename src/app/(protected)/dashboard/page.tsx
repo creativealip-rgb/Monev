@@ -54,6 +54,7 @@ import { useDashboardData } from "@/frontend/hooks/useDashboardData";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { QuickStatsSummary } from "@/frontend/components/QuickStatsSummary";
 import { TransactionQuickFilters, filterTransactionsByPeriod } from "@/frontend/components/TransactionQuickFilters";
+import { BillReminderWidget } from "@/frontend/components/BillReminderWidget";
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
     kaya: { label: "Kaya", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
@@ -213,6 +214,7 @@ export default function Home() {
         userTier,
         userImage,
         anomalies,
+        bills,
         loading,
         mounted,
         refresh
@@ -374,6 +376,11 @@ export default function Home() {
                         onToggleHideBalance={handleToggleHideBalance}
                     />
                 </motion.section>
+
+                {/* Bill Reminder Widget */}
+                {mounted && bills && bills.length > 0 && (
+                    <BillReminderWidget bills={bills} />
+                )}
 
                 {/* Health Score Widget */}
                 {stats.healthScore && (

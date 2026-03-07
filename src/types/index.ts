@@ -18,11 +18,13 @@ import type {
     RecurringTransaction,
     Streak,
     Achievement,
+    BillPayment,
     InsertTransaction,
     InsertCategory,
     InsertBudget,
     InsertGoal,
     InsertBill,
+    InsertBillPayment,
     InsertInvestment,
     InsertDebt,
 } from "@/backend/db/schema";
@@ -47,11 +49,13 @@ export type {
     RecurringTransaction,
     Streak,
     Achievement,
+    BillPayment,
     InsertTransaction,
     InsertCategory,
     InsertBudget,
     InsertGoal,
     InsertBill,
+    InsertBillPayment,
     InsertInvestment,
     InsertDebt,
 };
@@ -75,6 +79,7 @@ export type BudgetSummary = {
     spent: number;
     color: string;
     percentage: number;
+    enableRollover?: boolean;
 };
 
 export type TransactionWithCategory = Transaction & {

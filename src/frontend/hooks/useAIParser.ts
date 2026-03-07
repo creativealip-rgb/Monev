@@ -176,6 +176,7 @@ export function useAIParser(onSuccess: (data: AIResult) => void) {
         handleFileSelect,
         startRecording,
         stopRecording,
+        setResult,
         reset
     };
 }

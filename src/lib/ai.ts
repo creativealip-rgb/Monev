@@ -636,7 +636,8 @@ Aturan categorization yang ketat: Selalu gunakan salah satu dari kategori yang t
 export async function askFinanceAgent(
     query: string,
     context: FinancialContext,
-    history: { role: "user" | "assistant", content: string }[] = []
+    history: { role: "user" | "assistant", content: string }[] = [],
+    imageBase64?: string
 ): Promise<{ content: string; toolCall?: any }> {
     const now = new Date();
     const dateStr = now.toLocaleDateString('id-ID', {
@@ -736,7 +737,12 @@ Aturan:
                 })),
                 {
                     role: "user",
-                    content: query
+                    content: imageBase64
+                        ? [
+                            { type: "text", text: query },
+                            { type: "image_url", image_url: { url: imageBase64.startsWith("data:") ? imageBase64 : `data:image/jpeg;base64,${imageBase64}` } }
+                        ]
+                        : query
                 }
             ],
             tools: [

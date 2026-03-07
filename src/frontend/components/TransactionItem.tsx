@@ -7,6 +7,8 @@ import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useSecurity } from "@/components/SecurityProvider";
+import { decryptData } from "@/lib/encryption";
 
 const CATEGORY_STYLES: Record<string, { icon: any, color: string, gradient: string }> = {
     "Makan & Minuman": {
@@ -108,7 +110,32 @@ interface TransactionItemProps {
 
 export function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect }: TransactionItemProps) {
     const [mounted, setMounted] = useState(false);
+    const { encryptionKey } = useSecurity();
+    const [displayDescription, setDisplayDescription] = useState(transaction.description || "Tanpa Deskripsi");
+
     useEffect(() => setMounted(true), []);
+
+    useEffect(() => {
+        const decrypt = async () => {
+            if (transaction.description?.startsWith("enc:")) {
+                if (encryptionKey) {
+                    try {
+                        const encryptedPart = transaction.description.replace("enc:", "");
+                        const decrypted = await decryptData(encryptedPart, encryptionKey);
+                        setDisplayDescription(decrypted);
+                    } catch (e) {
+                        setDisplayDescription("🔒 [Encrypted]");
+                    }
+                } else {
+                    setDisplayDescription("🔒 [Locked]");
+                }
+            } else {
+                setDisplayDescription(transaction.description || "Tanpa Deskripsi");
+            }
+        };
+
+        decrypt();
+    }, [transaction.description, encryptionKey]);
 
     const style = CATEGORY_STYLES[transaction.categoryName] || CATEGORY_STYLES.Default;
     const isExpense = transaction.type === "expense";
@@ -187,7 +214,7 @@ export function TransactionItem({ transaction, onClick, onEdit, onDelete, showCh
 
                 <div className="flex-1 min-w-0 overflow-hidden mr-4">
                     <h4 className="font-bold text-foreground text-[13px] leading-tight line-clamp-1 break-all">
-                        {transaction.description || "Tanpa Deskripsi"}
+                        {displayDescription}
                     </h4>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[11px] font-medium text-muted-foreground truncate">

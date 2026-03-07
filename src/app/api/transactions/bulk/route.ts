@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getCategories, createTransaction } from "@/backend/db/operations";
+import { getCategories, createBulkTransactions } from "@/backend/db/operations";
 
 export async function POST(req: NextRequest) {
     try {
@@ -17,39 +17,28 @@ export async function POST(req: NextRequest) {
         const allCategories = await getCategories();
         const defaultCategory = allCategories.find(c => c.name === "Lainnya") || allCategories[0];
 
-        const imported = [];
-        const failed = [];
-
-        for (const t of transactions) {
-            try {
-                // Find matching category or use default
-                let categoryId = defaultCategory.id;
-                if (t.category) {
-                    const match = allCategories.find(c => c.name.toLowerCase() === t.category.toLowerCase());
-                    if (match) categoryId = match.id;
-                }
-
-                const result = await createTransaction(userId, {
-                    amount: t.amount,
-                    description: t.description,
-                    merchantName: t.merchantName,
-                    categoryId: categoryId,
-                    type: t.type || "expense",
-                    date: t.date ? new Date(t.date) : new Date(),
-                });
-                imported.push(result);
-            } catch (err) {
-                console.error("Failed to import transaction:", t, err);
-                failed.push(t);
+        // Prepare transactions with category IDs
+        const preparedTransactions = transactions.map(t => {
+            let categoryId = defaultCategory.id;
+            if (t.category) {
+                const match = allCategories.find(c => c.name.toLowerCase() === t.category.toLowerCase());
+                if (match) categoryId = match.id;
             }
-        }
+            return {
+                ...t,
+                categoryId,
+                amount: parseFloat(t.amount) || 0
+            };
+        });
+
+        await createBulkTransactions(userId, preparedTransactions);
 
         return NextResponse.json({
             success: true,
             stats: {
                 total: transactions.length,
-                imported: imported.length,
-                failed: failed.length
+                imported: transactions.length,
+                failed: 0
             }
         });
 

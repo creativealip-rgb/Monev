@@ -27,10 +27,10 @@ export async function POST(req: NextRequest) {
         // @ts-ignore
         const userTier = (session.user.tier as UserTier) || "miskin";
 
-        const { message, history } = await req.json();
+        const { message, history, imageBase64 } = await req.json();
 
-        if (!message) {
-            return NextResponse.json({ error: "Message is required" }, { status: 400 });
+        if (!message && !imageBase64) {
+            return NextResponse.json({ error: "Message or image is required" }, { status: 400 });
         }
 
         // 1. Check AI Daily Limit
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Log User Message
-        await logAIChat(userId, "user", message);
+        await logAIChat(userId, "user", message || "[Image]");
 
         // Fetch context data (current month)
         const now = new Date();
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         }).filter(Boolean) as any[];
 
         // Get AI response
-        const aiResponse = await askFinanceAgent(message, {
+        const aiResponse = await askFinanceAgent(message || "Analyze this image", {
             monthlyStats: stats,
             goals: goalsContext,
             budgets: budgetsContext,
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
                 isPaid: b.isPaid,
                 frequency: b.frequency
             }))
-        }, history);
+        }, history, imageBase64);
 
         console.log("AI Response:", aiResponse);
 
