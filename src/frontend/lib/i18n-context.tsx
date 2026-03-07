@@ -35,6 +35,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "common.transfer": "Transfer",
         "common.sourceAccount": "Sumber Saldo",
         "common.targetAccount": "Tujuan Saldo",
+        "common.confirm": "Konfirmasi",
 
         // Dashboard
         "dashboard.title": "Beranda",

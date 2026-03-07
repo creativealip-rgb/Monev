@@ -64,7 +64,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                 onClick={() => haptics.tap()}
                 aria-label={label}
                 className={cn(
-                    "flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative",
+                    "flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative z-[50]",
                     "transition-all duration-300"
                 )}
             >
