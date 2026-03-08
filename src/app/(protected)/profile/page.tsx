@@ -1419,8 +1419,21 @@ export default function ProfilePage() {
                                             </div>
 
                                             <button
-                                                onClick={() => {
-                                                    toast.success("Berhasil", "Preferensi notifikasi disimpan!");
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await apiFetch("/api/user/settings", {
+                                                            method: "POST",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ notifications: notifToggles }),
+                                                        });
+                                                        if (res.ok) {
+                                                            toast.success("Berhasil", "Preferensi notifikasi disimpan!");
+                                                        } else {
+                                                            toast.error("Gagal", "Gagal menyimpan preferensi notifikasi");
+                                                        }
+                                                    } catch {
+                                                        toast.error("Gagal", "Gagal menyimpan preferensi notifikasi");
+                                                    }
                                                     setActiveModal(null);
                                                 }}
                                                 className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95"

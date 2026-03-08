@@ -236,11 +236,11 @@ export default function BudgetsPage() {
                 setBudgets(budgets.filter(b => b.id !== id));
                 toast.success(t("budgets.deleteBudget"));
             } else {
-                toast.error(t("common.failed"), t("budgets.errorAdd"));
+                toast.error(t("common.failed"), t("budgets.errorDelete") || "Gagal menghapus anggaran");
             }
         } catch (error) {
             console.error("Error deleting budget:", error);
-            toast.error(t("common.failed"), t("budgets.errorAdd"));
+            toast.error(t("common.failed"), t("budgets.errorDelete") || "Gagal menghapus anggaran");
         }
     }
 

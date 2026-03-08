@@ -10,6 +10,7 @@ import { useToast } from "@/frontend/components/UI";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { useI18n } from "@/frontend/lib/i18n-context";
+import { useSecurity } from "@/components/SecurityProvider";
 import { ACCOUNT_PRESETS, ACCOUNT_TYPES, QUICK_ADD_PRESETS, AccountPreset } from "@/frontend/data/account-presets";
 
 const accountTypeIcons = {
@@ -45,6 +46,7 @@ export default function SaldoPage() {
     const haptics = useHaptics();
     const { success: toastSuccess, error: toastError } = useToast();
     const { t } = useI18n();
+    const { isStealthMode } = useSecurity();
 
     const accountTypeLabels: Record<string, string> = {
         bank: t("saldo.type.bank"),
@@ -181,7 +183,7 @@ export default function SaldoPage() {
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full -mr-16 -mt-16 blur-3xl" />
                     <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mb-1 relative z-10">{t("saldo.netWorth")}</p>
-                    <h2 className="text-3xl font-black relative z-10">{formatCurrency(netWorth)}</h2>
+                    <h2 className="text-3xl font-black relative z-10">{isStealthMode ? "••••••••" : formatCurrency(netWorth)}</h2>
                     <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 relative z-10">
                         <span>{accounts.length} {t("saldo.accountsCount")}</span>
                     </div>
@@ -302,7 +304,7 @@ export default function SaldoPage() {
                                                 "font-black text-sm",
                                                 acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                             )}>
-                                                {formatCurrency(acc.balance)}
+                                                {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
                                             </p>
                                         </div>
                                         <button className="text-slate-300 dark:text-slate-600" onClick={() => haptics.tap()}>
@@ -359,7 +361,7 @@ export default function SaldoPage() {
                                                     "font-black text-sm",
                                                     typeId === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                 )}>
-                                                    {formatCurrency(Math.abs(groupTotal))}
+                                                    {isStealthMode ? "••••••••" : formatCurrency(Math.abs(groupTotal))}
                                                 </p>
                                             </div>
                                             <motion.div
@@ -408,7 +410,7 @@ export default function SaldoPage() {
                                                                             "font-black text-sm",
                                                                             acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                                         )}>
-                                                                            {formatCurrency(acc.balance)}
+                                                                            {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
                                                                         </p>
                                                                     </div>
                                                                     <button className="text-slate-300 dark:text-slate-600" onClick={(e) => { e.stopPropagation(); haptics.tap(); }}>
@@ -601,7 +603,7 @@ export default function SaldoPage() {
                                             </>
                                         )}
                                         <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mt-4 mb-1">{t("saldo.initialBalance")}</p>
-                                        <p className="text-4xl font-black text-sky-500">{formatCurrency(parseFloat(balance) || 0)}</p>
+                                        <p className="text-4xl font-black text-sky-500">{isStealthMode ? "••••••••" : formatCurrency(parseFloat(balance) || 0)}</p>
                                     </div>
 
                                     <div className="mb-6">

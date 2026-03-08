@@ -80,6 +80,7 @@ export default function Home() {
     const { t } = useI18n();
     const {
         transactions,
+        allTransactions,
         stats,
         userName,
         userTier,
@@ -104,7 +105,7 @@ export default function Home() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const todayTransactions = transactions.filter(t => {
+        const todayTransactions = allTransactions.filter(t => {
             const transDate = new Date(t.createdAt);
             transDate.setHours(0, 0, 0, 0);
             return transDate.getTime() === today.getTime();
@@ -123,7 +124,7 @@ export default function Home() {
             expense,
             count: todayTransactions.length
         };
-    }, [transactions]);
+    }, [allTransactions]);
 
     // Filter transactions based on selected period
     const filteredTransactions = useMemo(() => {
@@ -325,7 +326,7 @@ export default function Home() {
                             <div className="flex-1">
                                 <h3 className="text-sm font-bold text-rose-900 dark:text-rose-100">Lonjakan Pengeluaran Deteksi!</h3>
                                 <p className="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
-                                    Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0].spikePercentage}%** dari biasanya. Yakin aman?
+                                    Bos, pengeluaran di kategori <strong>{anomalies[0].categoryName}</strong> naik <strong>{anomalies[0].spikePercentage}%</strong> dari biasanya. Yakin aman?
                                 </p>
                                 {anomalies.length > 1 && (
                                     <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-2 font-medium">
@@ -379,8 +380,8 @@ export default function Home() {
                     >
                         {mainFeatures.map((feature) => {
                             const isLocked =
-                                (feature.label === "Analitik" && !canAccessAnalytics(userTier)) ||
-                                (feature.label === "Investasi" && !canAccessInvestments(userTier));
+                                (feature.label === "features.analytics" && !canAccessAnalytics(userTier)) ||
+                                (feature.label === "features.investments" && !canAccessInvestments(userTier));
 
                             return (
                                 <Link
