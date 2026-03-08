@@ -305,7 +305,7 @@ Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0
 
 ---
 
-### 3.7 Budgets: Rollover Toggle Tidak Persist
+### ~~3.7 Budgets: Rollover Toggle Tidak Persist~~ FIXED
 
 **File**: `budgets/page.tsx` line 138, lines 265-271
 
@@ -313,7 +313,7 @@ Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0
 
 **Dampak**: User kira rollover aktif. Sebenarnya ephemeral.
 
-**Fix**: Panggil API untuk update rollover setting saat toggle berubah.
+**Fix**: ~~Panggil API untuk update rollover setting saat toggle berubah.~~ DONE - Added call to `/api/budgets/rollover` POST on toggle, plus added `enableRollover` to GET response and POST body.
 
 ---
 
@@ -337,17 +337,17 @@ Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0
 
 ---
 
-### 3.10 Bills: Calendar Click Tidak Berfungsi
+### ~~3.10 Bills: Calendar Click Tidak Berfungsi~~ FIXED
 
 **File**: `bills/page.tsx` lines 560-584
 
 **Problem**: Klik day di calendar tidak melakukan apa-apa. User expect tap day = lihat tagihan hari itu.
 
-**Fix**: Filter bill list berdasarkan hari yang diklik, atau tampilkan tooltip.
+**Fix**: ~~Filter bill list berdasarkan hari yang diklik, atau tampilkan tooltip.~~ DONE - Added `selectedDay` state and click handler that filters bills by selected day. Clear filter button added.
 
 ---
 
-### 3.11 Saldo: MoreVertical Button Broken
+### ~~3.11 Saldo: MoreVertical Button Broken~~ FIXED
 
 **File**: `saldo/page.tsx` lines 308-310, 414-416
 
@@ -361,7 +361,7 @@ Hanya trigger haptic. Tidak ada menu, edit, atau delete.
 
 **Dampak**: User klik expecting context menu, tidak terjadi apa-apa. Broken affordance.
 
-**Fix**: Implementasi dropdown menu dengan opsi Edit dan Delete, atau hapus icon MoreVertical.
+**Fix**: ~~Implementasi dropdown menu dengan opsi Edit dan Delete, atau hapus icon MoreVertical.~~ DONE - Added dropdown menu with Edit and Delete options, plus Edit modal. Created new `/api/accounts/[id]` route for PUT/DELETE.
 
 ---
 
@@ -385,7 +385,7 @@ Hanya trigger haptic. Tidak ada menu, edit, atau delete.
 
 ---
 
-### 3.14 Chat: Dua Tombol Mic Berbeda Fungsi
+### ~~3.14 Chat: Dua Tombol Mic Berbeda Fungsi~~ FIXED
 
 **File**: `chat/page.tsx` lines 555-561 (mic #1) dan lines 576-587 (mic #2)
 
@@ -395,7 +395,7 @@ Hanya trigger haptic. Tidak ada menu, edit, atau delete.
 
 User melihat 2 mic icon berdekatan tanpa cara membedakan fungsi.
 
-**Fix**: Bedakan visual (mis: mic #1 jadi icon Waveform), atau gabungkan ke satu button dengan mode selector.
+**Fix**: ~~Bedakan visual (mis: mic #1 jadi icon Waveform), atau gabungkan ke satu button dengan mode selector.~~ DONE - Changed outer mic to AudioWaveform icon with gradient background, inner mic remains Mic with subtle styling.
 
 ---
 
@@ -852,9 +852,9 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 | 5 | **Hapus redundant sections (streak 3x, spending alert 4x, chart duplikat 2 halaman)** | Cleaner UI, less information overload | Sedang | Dashboard, Budgets, Investments |
 | 6 | **Split mega-files (profile 1696, debts 1021, transactions 988)** | Maintainability, developer experience | Sedang | 4 file |
 | 7 | **Ganti semua `window.confirm()` dengan ConfirmDialog** | UX consistency, mobile-friendly | Rendah | 5 halaman |
-| 8 | **Fix MoreVertical di saldo + tambah menu edit/delete** | Broken affordance yang user pasti encounter | Sedang | Saldo |
+| 8 | ~~**Fix MoreVertical di saldo + tambah menu edit/delete**~~ FIXED | Broken affordance yang user pasti encounter | Sedang | Saldo |
 | 9 | ~~**Fix notification save di profile (persist ke server)**~~ FIXED | Feature yang terlihat berfungsi tapi sebenarnya palsu | Rendah | Profile |
-| 10 | **Augment next-auth Session type + hapus semua @ts-ignore** | Type safety, hapus 8+ suppressions, prevent future bugs | Rendah | Global |
+| 10 | ~~**Augment next-auth Session type + hapus semua @ts-ignore**~~ FIXED | Type safety, hapus 8+ suppressions, prevent future bugs | Rendah | Global |
 
 ### Estimasi Total Effort
 
