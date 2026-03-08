@@ -60,10 +60,10 @@ function LoginButton({ isPending }: { isPending: boolean }) {
             {loading ? (
                 <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Logging in...</span>
+                    <span>Sedang masuk...</span>
                 </>
             ) : (
-                <span>Login</span>
+                <span>Masuk</span>
             )}
         </button>
     );
@@ -136,7 +136,7 @@ export default function LoginPage() {
 
     const validateField = (name: keyof FormData, value: string): string | undefined => {
         if (name === "email") {
-            if (!value) return "Email is required";
+            if (!value) return "Email wajib diisi";
             if (!validateEmail(value)) return "Please enter a valid email address";
         }
         if (name === "password") {
@@ -255,10 +255,10 @@ export default function LoginPage() {
                         priority
                     />
                     <h1 className="text-2xl font-bold text-gradient mb-2">
-                        Welcome Back
+                        Selamat Datang Kembali
                     </h1>
                     <p className="text-slate-500 text-sm">
-                        Sign in to continue to Monev
+                        Masuk untuk melanjutkan ke Monev
                     </p>
                 </div>
 
@@ -270,7 +270,7 @@ export default function LoginPage() {
                             htmlFor="email"
                             className="block text-sm font-semibold text-slate-700"
                         >
-                            Email Address
+                            Alamat Email
                         </label>
                         <div className="relative">
                             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -309,7 +309,7 @@ export default function LoginPage() {
                             htmlFor="password"
                             className="block text-sm font-semibold text-slate-700"
                         >
-                            Password
+                            Kata Sandi
                         </label>
                         <div className="relative">
                             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -319,7 +319,7 @@ export default function LoginPage() {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleInputChange}
-                                placeholder="••••••••"
+                                placeholder="Masukkan kata sandi"
                                 autoComplete="current-password"
                                 aria-invalid={errors.password ? "true" : "false"}
                                 aria-describedby={errors.password ? "password-error" : undefined}
@@ -358,14 +358,14 @@ export default function LoginPage() {
                                 className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500/20 cursor-pointer"
                             />
                             <span className="text-slate-600 group-hover:text-slate-800 transition-colors">
-                                Remember me
+                                Ingat saya
                             </span>
                         </label>
                         <Link
                             href="/forgot-password"
                             className="text-sky-600 hover:text-sky-700 font-medium hover:underline transition-colors"
                         >
-                            Forgot password?
+                            Lupa kata sandi?
                         </Link>
                     </div>
 
@@ -423,12 +423,12 @@ export default function LoginPage() {
 
                     {/* Register Link */}
                     <p className="text-center text-sm text-slate-600 pt-2">
-                        Don't have an account?{" "}
+                        Belum punya akun?{" "}
                         <Link
                             href="/register"
                             className="text-sky-600 hover:text-sky-700 font-semibold hover:underline transition-colors"
                         >
-                            Register here
+                            Daftar di sini
                         </Link>
                     </p>
                 </form>

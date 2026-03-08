@@ -656,7 +656,7 @@ tr:nth-child(even){background:#fafafa}
                             }}
                             className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
                         >
-                            Clear all
+                            Hapus semua filter
                         </button>
                     </motion.div>
                 )}

@@ -69,7 +69,7 @@ export function BalanceDetailModal({
                 </div>
 
                 <div className="text-center mb-6 relative z-10">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">Total Net Worth</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">Total Kekayaan Bersih</p>
                     <h3 className="text-3xl font-black text-foreground tracking-tight tabular-nums">
                         {!mounted ? "..." : formatCurrency(total)}
                     </h3>
@@ -87,7 +87,7 @@ export function BalanceDetailModal({
                             <div className="w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] border-2 border-white dark:border-slate-900" />
                             <div>
                                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Saldo Aktif</p>
-                                <p className="text-[10px] text-muted-foreground font-medium">Liquid assets</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Aset likuid</p>
                             </div>
                         </div>
                         <p className="text-lg font-bold text-foreground tabular-nums">
@@ -100,7 +100,7 @@ export function BalanceDetailModal({
                             <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-2 border-white dark:border-slate-900" />
                             <div>
                                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Tabungan Goals</p>
-                                <p className="text-[10px] text-muted-foreground font-medium">Future plans</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Rencana masa depan</p>
                             </div>
                         </div>
                         <p className="text-lg font-bold text-foreground tabular-nums">
@@ -113,7 +113,7 @@ export function BalanceDetailModal({
                             <div className="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] border-2 border-white dark:border-slate-900" />
                             <div>
                                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Investasi</p>
-                                <p className="text-[10px] text-muted-foreground font-medium">Growth assets</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Aset bertumbuh</p>
                             </div>
                         </div>
                         <p className="text-base font-bold text-foreground tabular-nums">
