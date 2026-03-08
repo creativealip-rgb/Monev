@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
 import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
+import { useI18n } from "@/frontend/lib/i18n-context";
 
 interface Category {
     id: number;
@@ -115,6 +116,7 @@ function getSpendingVelocity(spent: number, limit: number): { projectedDate: str
 }
 
 export default function BudgetsPage() {
+    const { t } = useI18n();
     const [showTemplates, setShowTemplates] = useState(false);
     const [incomeEstimate, setIncomeEstimate] = useState("");
     const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
@@ -178,7 +180,7 @@ export default function BudgetsPage() {
     }
 
     async function handleDeleteBudget(id: number) {
-        if (!confirm("Yakin mau hapus budget ini?")) return;
+        if (!confirm(t("budgets.confirmDelete"))) return;
 
         try {
             const response = await apiFetch(`/api/budgets/${id}`, {
@@ -187,13 +189,13 @@ export default function BudgetsPage() {
 
             if (response.ok) {
                 setBudgets(budgets.filter(b => b.id !== id));
-                toast.success("Budget dihapus");
+                toast.success(t("budgets.deleteBudget"));
             } else {
-                toast.error("Gagal menghapus", "Coba lagi nanti");
+                toast.error(t("common.failed"), t("budgets.errorAdd"));
             }
         } catch (error) {
             console.error("Error deleting budget:", error);
-            toast.error("Gagal menghapus", "Terjadi kesalahan");
+            toast.error(t("common.failed"), t("budgets.errorAdd"));
         }
     }
 
@@ -229,12 +231,12 @@ export default function BudgetsPage() {
             if (result.success) {
                 await loadData();
                 setShowTemplates(false);
-                toast.success("Template diterapkan!", `Budget ${template.name} berhasil dibuat`);
+                toast.success(t("budgets.successAdd"), `${t("budgets.50-30-20")} ${t("common.success")}`);
             } else {
-                toast.error(result.error || "Gagal menerapkan template");
+                toast.error(result.error || t("budgets.errorAdd"));
             }
         } catch (e) {
-            toast.error("Gagal menerapkan template");
+            toast.error(t("budgets.errorAdd"));
         } finally {
             setApplyingTemplate(null);
         }
@@ -257,8 +259,8 @@ export default function BudgetsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-foreground tracking-tight">Anggaran Bulanan</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Kelola Pengeluaran Anda</p>
+                            <h1 className="text-xl font-bold text-foreground tracking-tight">{t("budgets.title")}</h1>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">{t("budgets.subtitle")}</p>
                         </div>
                     </div>
                     <button
@@ -281,15 +283,15 @@ export default function BudgetsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
-                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Budget Bulan Ini</p>
+                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">{t("budgets.monthlyBudget")}</p>
                 <div className="flex items-end justify-between mb-4">
                     <div>
                         <p className="text-2xl font-bold tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
-                        <p className="text-white/60 text-xs tabular-nums">terpakai dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
+                        <p className="text-white/60 text-xs tabular-nums">{t("budgets.used")} {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
-                        <p className="text-white/60 text-xs">limit</p>
+                        <p className="text-white/60 text-xs">{t("budgets.limit")}</p>
                     </div>
                 </div>
                 <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
@@ -324,8 +326,8 @@ export default function BudgetsPage() {
                                     <TrendingUp size={16} className="text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[11px] font-bold">Waspada! Proyeksi belanja melebihi budget.</p>
-                                    <p className="text-[10px] text-white/80">Estimasi total: {formatCurrency(totalProjected)}</p>
+                                    <p className="text-[11px] font-bold">{t("budgets.projectedWarning")}</p>
+                                    <p className="text-[10px] text-white/80">{t("budgets.estimatedTotal")}: {formatCurrency(totalProjected)}</p>
                                 </div>
                             </motion.div>
                         );
@@ -346,15 +348,15 @@ export default function BudgetsPage() {
                             <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
                                 <ShieldAlert size={16} className="text-orange-500 dark:text-orange-400" />
                             </div>
-                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Budget Bulanan</h2>
+                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">{t("budgets.annual")}</h2>
                         </div>
-                        <span className="text-xs text-muted-foreground">{budgets.length} Kategori</span>
+                        <span className="text-xs text-muted-foreground">{budgets.length} {t("budgets.categories")}</span>
                     </div>
 
                     {/* Chart Section */}
                     {budgets.length > 0 && (
                         <div className="mb-6 card-clean p-4">
-                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">Budget vs Pengeluaran Aktual</h3>
+                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">{t("budgets.budgetVsActual")}</h3>
                             <BudgetChart budgets={budgets} />
                         </div>
                     )}
@@ -365,10 +367,10 @@ export default function BudgetsPage() {
                             onClick={() => setShowTemplates(!showTemplates)}
                             className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 border border-sky-200 dark:border-sky-800 text-sm font-semibold text-sky-700 dark:text-sky-300 hover:from-sky-100 dark:hover:from-sky-900/40 transition-all"
                         >
-                            <div className="flex items-center gap-2">
-                                <Zap size={16} />
-                                Gunakan Template Budget
-                            </div>
+                                <div className="flex items-center gap-2">
+                                    <Zap size={16} />
+                                    {t("budgets.useTemplate")}
+                                </div>
                             <span className="text-xs">{showTemplates ? "✕" : "→"}</span>
                         </button>
 
@@ -381,7 +383,7 @@ export default function BudgetsPage() {
                                     className="overflow-hidden"
                                 >
                                     <div className="mt-3 p-4 card-clean">
-                                        <p className="text-xs text-muted-foreground mb-3">Estimasi penghasilan bulanan kamu:</p>
+                                        <p className="text-xs text-muted-foreground mb-3">{t("budgets.estimate")}:</p>
                                         <input
                                             type="text"
                                             placeholder="Rp 5.000.000"
@@ -404,8 +406,8 @@ export default function BudgetsPage() {
                                                 >
                                                     <span className="text-2xl">{tpl.icon}</span>
                                                     <div className="flex-1">
-                                                        <p className="font-bold text-sm">{tpl.name}</p>
-                                                        <p className="text-xs text-white/80">{tpl.description}</p>
+                                                        <p className="font-bold text-sm">{t(`budgets.${tpl.id}`)}</p>
+                                                        <p className="text-xs text-white/80">{t(`budgets.${tpl.id}.desc`)}</p>
                                                     </div>
                                                     {applyingTemplate === tpl.id && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
                                                 </motion.button>
@@ -482,7 +484,7 @@ export default function BudgetsPage() {
                                                     <div className="mt-2 flex items-center gap-1.5">
                                                         <Flame size={12} className="text-orange-500" />
                                                         <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
-                                                            Estimasi habis {velocity.projectedDate} (Rp{Math.round(velocity.dailyRate / 1000)}k/hari)
+                                                            {t("budgets.estimatedDeplete")} {velocity.projectedDate} (Rp{Math.round(velocity.dailyRate / 1000)}k{t("budgets.dailyRate")})
                                                         </p>
                                                     </div>
                                                 );
@@ -490,7 +492,7 @@ export default function BudgetsPage() {
                                             if (isDanger) {
                                                 return (
                                                     <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 mt-2 flex items-center gap-1">
-                                                        ⚠️ Hampir habis
+                                                        ⚠️ {t("budgets.almostDepleted")}
                                                     </p>
                                                 );
                                             }
@@ -511,7 +513,7 @@ export default function BudgetsPage() {
                 onSuccess={() => {
                     loadData();
                     setIsBudgetModalOpen(false);
-                    toast.success("Budget ditambahkan");
+                    toast.success(t("budgets.successAdd"));
                 }}
                 categories={categories}
                 month={currentMonth}
@@ -541,7 +543,7 @@ export default function BudgetsPage() {
                     onSuccess={() => {
                         loadData();
                         setEditingBudget(null);
-                        toast.success("Budget diperbarui");
+                        toast.success(t("budgets.successUpdate"));
                     }}
                     budget={editingBudget}
                 />
