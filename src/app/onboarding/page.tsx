@@ -9,6 +9,7 @@ import { WelcomeScreen } from "./components/WelcomeScreen";
 import { FeatureCarousel } from "./components/FeatureCarousel";
 import { QuickSetup } from "./components/QuickSetup";
 import { InitialBalanceScreen } from "./components/InitialBalanceScreen";
+import { ProgressDots } from "./components/ProgressDots";
 
 import { Suspense } from "react";
 
@@ -22,6 +23,7 @@ function OnboardingContent() {
         isHydrated,
         nextScreen,
         prevScreen,
+        goToScreen,
         updateFormData,
         completeOnboarding,
         skipOnboarding,
@@ -76,8 +78,31 @@ function OnboardingContent() {
         );
     }
 
+    const TOTAL_SCREENS = 4;
+    const screenLabels = ["Selamat Datang", "Fitur", "Pengaturan", "Saldo Awal"];
+
     return (
         <MobileContainer>
+            {/* Global Progress Indicator */}
+            {currentScreen > 0 && (
+                <div className="px-6 pt-4 pb-2">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-slate-500">
+                            Langkah {currentScreen + 1} dari {TOTAL_SCREENS}
+                        </span>
+                        <span className="text-xs font-semibold text-sky-600">
+                            {screenLabels[currentScreen]}
+                        </span>
+                    </div>
+                    <ProgressDots
+                        total={TOTAL_SCREENS}
+                        current={currentScreen}
+                        onDotClick={(i) => {
+                            if (i <= currentScreen) goToScreen(i);
+                        }}
+                    />
+                </div>
+            )}
             <AnimatePresence mode="wait">
                 {currentScreen === 0 && (
                     <WelcomeScreen

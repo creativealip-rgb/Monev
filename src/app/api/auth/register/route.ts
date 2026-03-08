@@ -4,6 +4,8 @@ import { users, verificationTokens } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/lib/mailer";
+import { validatePassword } from "@/lib/password-validation";
+import { isDisposableEmail } from "@/lib/disposable-emails";
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,12 +15,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Semua field wajib diisi" }, { status: 400 });
         }
 
+        if (isDisposableEmail(email)) {
+            return NextResponse.json(
+                { success: false, error: "Email disposable/sementara tidak diperbolehkan" },
+                { status: 400 }
+            );
+        }
+
         if (password !== confirmPassword) {
             return NextResponse.json({ success: false, error: "Password dan konfirmasi password tidak cocok" }, { status: 400 });
         }
 
-        if (password.length < 6) {
-            return NextResponse.json({ success: false, error: "Password minimal 6 karakter" }, { status: 400 });
+        const pwdCheck = validatePassword(password);
+        if (!pwdCheck.valid) {
+            return NextResponse.json(
+                { success: false, error: pwdCheck.error },
+                { status: 400 }
+            );
         }
 
         const db = getDb();

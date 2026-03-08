@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, TrendingUp, ArrowLeft, Target } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import {
+    Plus, TrendingUp, ArrowLeft, Target, Check, AlertTriangle,
+    Shield, Plane, Heart, Smartphone, GraduationCap, Sparkles, Zap
+} from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { AddGoalForm, EditGoalForm } from "@/frontend/components/BudgetForms";
+import {
+    AddGoalForm, EditGoalForm,
+    GoalTemplateData
+} from "@/frontend/components/BudgetForms";
 import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
-import { Goal, GoalWithProgress } from "@/types";
+import { GoalWithProgress } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSavingsData } from "@/frontend/hooks/useSavingsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";
-import { Zap } from "lucide-react";
 
 interface Category {
     id: number;
@@ -37,6 +41,163 @@ const itemVariants = {
     visible: { opacity: 1, y: 0 }
 };
 
+const MILESTONES = [25, 50, 75, 100];
+
+const GOAL_TEMPLATES: Array<{
+    id: string;
+    name: string;
+    icon: string;
+    IconComponent: typeof Shield;
+    target: number;
+    color: string;
+    bgColor: string;
+}> = [
+    {
+        id: "dana-darurat",
+        name: "Dana Darurat",
+        icon: "Shield",
+        IconComponent: Shield,
+        target: 30000000,
+        color: "#3b82f6",
+        bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+        id: "liburan",
+        name: "Liburan",
+        icon: "Plane",
+        IconComponent: Plane,
+        target: 15000000,
+        color: "#10b981",
+        bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+        id: "nikah",
+        name: "Nikah",
+        icon: "Heart",
+        IconComponent: Heart,
+        target: 100000000,
+        color: "#ec4899",
+        bgColor: "bg-pink-50 dark:bg-pink-900/20",
+    },
+    {
+        id: "gadget-baru",
+        name: "Gadget Baru",
+        icon: "Smartphone",
+        IconComponent: Smartphone,
+        target: 10000000,
+        color: "#a855f7",
+        bgColor: "bg-purple-50 dark:bg-purple-900/20",
+    },
+    {
+        id: "pendidikan",
+        name: "Pendidikan",
+        icon: "GraduationCap",
+        IconComponent: GraduationCap,
+        target: 50000000,
+        color: "#f59e0b",
+        bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    },
+];
+
+function calculateEta(
+    currentAmount: number,
+    targetAmount: number,
+    createdAt: string | Date
+): { etaDate: Date | null; monthlyRate: number } {
+    if (currentAmount <= 0 || targetAmount <= 0) {
+        return { etaDate: null, monthlyRate: 0 };
+    }
+    const created = new Date(createdAt);
+    const now = new Date();
+    const monthsElapsed = Math.max(
+        (now.getFullYear() - created.getFullYear()) * 12
+            + (now.getMonth() - created.getMonth()),
+        1
+    );
+    const monthlyRate = currentAmount / monthsElapsed;
+    const remaining = targetAmount - currentAmount;
+    if (remaining <= 0) {
+        return { etaDate: null, monthlyRate };
+    }
+    const monthsNeeded = Math.ceil(remaining / monthlyRate);
+    const etaDate = new Date(now);
+    etaDate.setMonth(etaDate.getMonth() + monthsNeeded);
+    return { etaDate, monthlyRate };
+}
+
+function formatEtaDate(date: Date): string {
+    return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+}
+
+const CONFETTI_COLORS = [
+    "#10b981", "#3b82f6", "#f59e0b",
+    "#ec4899", "#8b5cf6", "#06b6d4",
+];
+
+const confettiVariants = {
+    initial: (i: number) => ({
+        opacity: 1,
+        x: 0,
+        y: 0,
+        scale: 0,
+        rotate: 0,
+    }),
+    animate: (i: number) => {
+        const angle = (i / 12) * Math.PI * 2;
+        const distance = 60 + Math.random() * 40;
+        return {
+            opacity: [1, 1, 0],
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance - 20,
+            scale: [0, 1.2, 0.6],
+            rotate: Math.random() * 360,
+            transition: {
+                duration: 1.2,
+                ease: "easeOut" as const,
+                delay: i * 0.03,
+            },
+        };
+    },
+};
+
+function ConfettiCelebration({ goalId, celebratedRef }: {
+    goalId: number;
+    celebratedRef: React.MutableRefObject<Set<number>>;
+}) {
+    const [show, setShow] = useState(false);
+
+    useEffect(() => {
+        if (celebratedRef.current.has(goalId)) return;
+        celebratedRef.current.add(goalId);
+        setShow(true);
+        const timer = setTimeout(() => setShow(false), 2000);
+        return () => clearTimeout(timer);
+    }, [goalId, celebratedRef]);
+
+    if (!show) return null;
+
+    return (
+        <div className="absolute inset-0 pointer-events-none overflow-visible z-20 flex items-center justify-center">
+            {Array.from({ length: 12 }).map((_, i) => (
+                <motion.div
+                    key={i}
+                    custom={i}
+                    variants={confettiVariants}
+                    initial="initial"
+                    animate="animate"
+                    className={cn(
+                        "absolute",
+                        i % 2 === 0 ? "w-2.5 h-2.5 rounded-full" : "w-2 h-3 rounded-sm"
+                    )}
+                    style={{
+                        backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+                    }}
+                />
+            ))}
+        </div>
+    );
+}
+
 export default function SavingsPage() {
     const { goals, loading, refresh } = useSavingsData() as { goals: GoalWithProgress[], loading: boolean, refresh: () => Promise<void> };
     const { isStealthMode } = useSecurity();
@@ -45,11 +206,33 @@ export default function SavingsPage() {
     // @ts-ignore
     const userTier = (session?.user?.tier as UserTier) || "miskin";
 
+    // Track celebrated goals per session (show confetti only once)
+    const celebratedGoalsRef = useRef<Set<number>>(new Set());
+
     // Modals state
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
     const [detailGoal, setDetailGoal] = useState<GoalWithProgress | null>(null);
     const [editingGoal, setEditingGoal] = useState<GoalWithProgress | null>(null);
+    const [goalInitialData, setGoalInitialData] = useState<GoalTemplateData | null>(null);
+    const [showTemplates, setShowTemplates] = useState(false);
     const toast = useToast();
+
+    function handleTemplateClick(template: typeof GOAL_TEMPLATES[0]) {
+        if (!canCreateGoal(goals.length, userTier)) {
+            toast.error(
+                "Limit Goal tercapai",
+                "Upgrade ke Kaya atau Sultan untuk menambah lebih banyak goals!"
+            );
+            return;
+        }
+        setGoalInitialData({
+            name: template.name,
+            icon: template.icon,
+            color: template.color,
+            targetAmount: String(template.target),
+        });
+        setIsGoalModalOpen(true);
+    }
 
     async function handleDeleteGoal(id: number) {
         if (!confirm("Yakin mau hapus goal ini?")) return;
@@ -143,6 +326,71 @@ export default function SavingsPage() {
                 </div>
             </motion.div>
 
+            {/* Goal Templates Section */}
+            <div className="px-6 mt-4">
+                <button
+                    onClick={() => setShowTemplates(!showTemplates)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 border border-sky-200 dark:border-sky-800 text-sm font-semibold text-sky-700 dark:text-sky-300 hover:from-sky-100 dark:hover:from-sky-900/40 transition-all"
+                >
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={16} />
+                        Template Goal Cepat
+                    </div>
+                    <span className="text-xs">{showTemplates ? "✕" : "→"}</span>
+                </button>
+
+                <AnimatePresence>
+                    {showTemplates && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="mt-3 grid grid-cols-2 gap-2.5">
+                                {GOAL_TEMPLATES.map((tpl, idx) => {
+                                    const Icon = tpl.IconComponent;
+                                    return (
+                                        <motion.button
+                                            key={tpl.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                            whileTap={{ scale: 0.96 }}
+                                            onClick={() => handleTemplateClick(tpl)}
+                                            className={cn(
+                                                "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent",
+                                                "bg-white dark:bg-slate-900 shadow-sm",
+                                                "hover:shadow-md hover:border-sky-200 dark:hover:border-sky-800",
+                                                "transition-all text-center"
+                                            )}
+                                        >
+                                            <div
+                                                className={cn(
+                                                    "w-11 h-11 rounded-xl flex items-center justify-center",
+                                                    tpl.bgColor
+                                                )}
+                                            >
+                                                <Icon
+                                                    size={20}
+                                                    style={{ color: tpl.color }}
+                                                />
+                                            </div>
+                                            <span className="text-xs font-bold text-foreground leading-tight">
+                                                {tpl.name}
+                                            </span>
+                                            <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+                                                {formatCurrency(tpl.target)}
+                                            </span>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -179,14 +427,41 @@ export default function SavingsPage() {
                             {goals.map((g: GoalWithProgress, i: number) => {
                                 const isCompleted = g.percentage >= 100;
                                 const isNearComplete = g.percentage >= 75;
+                                const { etaDate, monthlyRate } = calculateEta(
+                                    g.currentAmount, g.targetAmount, g.createdAt
+                                );
+                                const hasDeadlineWarning = etaDate && g.deadline
+                                    && etaDate.getTime() > new Date(g.deadline).getTime();
 
                                 return (
                                     <motion.div
                                         key={g.id}
                                         whileHover={{ scale: 1.02 }}
                                         onClick={() => setDetailGoal(g)}
-                                        className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-emerald-200/40 dark:hover:shadow-emerald-900/20 transition-all"
+                                        className={cn(
+                                            "card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-emerald-200/40 dark:hover:shadow-emerald-900/20 transition-all",
+                                            isCompleted && "overflow-visible"
+                                        )}
                                     >
+                                        {/* Completed badge */}
+                                        {isCompleted && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="absolute -top-2 -right-2 px-2.5 py-1 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-emerald-500/30 z-10"
+                                            >
+                                                Tercapai!
+                                            </motion.div>
+                                        )}
+
+                                        {/* Confetti celebration for completed goals */}
+                                        {isCompleted && (
+                                            <ConfettiCelebration
+                                                goalId={g.id}
+                                                celebratedRef={celebratedGoalsRef}
+                                            />
+                                        )}
+
                                         <div className="flex items-center gap-3 mb-3">
                                             <div
                                                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
@@ -213,23 +488,107 @@ export default function SavingsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${g.percentage}%` }}
-                                                transition={{ duration: 1, delay: i * 0.1 }}
-                                                className={cn(
-                                                    "h-full rounded-full",
-                                                    isCompleted ? "bg-emerald-500" : isNearComplete ? "bg-sky-500" : "bg-sky-500"
-                                                )}
-                                            />
+                                        {/* Progress bar with milestone markers */}
+                                        <div className="relative w-full mb-1">
+                                            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${Math.min(g.percentage, 100)}%` }}
+                                                    transition={{ duration: 1, delay: i * 0.1 }}
+                                                    className={cn(
+                                                        "h-full rounded-full",
+                                                        isCompleted ? "bg-emerald-500" : isNearComplete ? "bg-sky-500" : "bg-sky-500"
+                                                    )}
+                                                />
+                                            </div>
+                                            {/* Milestone markers */}
+                                            <div className="absolute inset-0 flex items-center pointer-events-none">
+                                                {MILESTONES.map((ms) => (
+                                                    <div
+                                                        key={ms}
+                                                        className="absolute flex flex-col items-center"
+                                                        style={{ left: `${ms}%`, transform: 'translateX(-50%)' }}
+                                                    >
+                                                        <div className={cn(
+                                                            "w-3 h-3 rounded-full border-2 flex items-center justify-center transition-all",
+                                                            g.percentage >= ms
+                                                                ? "bg-emerald-500 border-emerald-400 shadow-sm shadow-emerald-500/30"
+                                                                : "bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600"
+                                                        )}>
+                                                            {g.percentage >= ms && (
+                                                                <Check size={7} className="text-white" strokeWidth={3} />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
 
-                                        {g.deadline && (
-                                            <p className="text-[10px] font-semibold text-muted-foreground mt-2 flex items-center gap-1">
-                                                Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                                            </p>
+                                        {/* Milestone labels */}
+                                        <div className="relative w-full h-3 mb-2">
+                                            {MILESTONES.map((ms) => (
+                                                <span
+                                                    key={ms}
+                                                    className={cn(
+                                                        "absolute text-[8px] font-bold tabular-nums",
+                                                        g.percentage >= ms
+                                                            ? "text-emerald-500 dark:text-emerald-400"
+                                                            : "text-slate-400 dark:text-slate-600"
+                                                    )}
+                                                    style={{ left: `${ms}%`, transform: 'translateX(-50%)' }}
+                                                >
+                                                    {ms}%
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {/* Congratulatory message for completed goals */}
+                                        {isCompleted && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.3 }}
+                                                className="flex items-center gap-2 mt-1 mb-1 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50"
+                                            >
+                                                <Sparkles size={14} className="text-emerald-500 flex-shrink-0" />
+                                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                                    Selamat! Target tercapai!
+                                                </p>
+                                            </motion.div>
                                         )}
+
+                                        {/* ETA and deadline info */}
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                            {g.deadline && (
+                                                <p className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                                                    Deadline: {new Date(g.deadline).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+                                                </p>
+                                            )}
+
+                                            {!isCompleted && g.currentAmount > 0 && etaDate && (
+                                                <p className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1">
+                                                    <TrendingUp size={10} />
+                                                    Estimasi tercapai: {formatEtaDate(etaDate)}
+                                                </p>
+                                            )}
+
+                                            {!isCompleted && g.currentAmount <= 0 && (
+                                                <p className="text-[10px] font-medium text-muted-foreground italic">
+                                                    Mulai menabung untuk melihat estimasi
+                                                </p>
+                                            )}
+
+                                            {!isCompleted && hasDeadlineWarning && (
+                                                <motion.p
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1"
+                                                >
+                                                    <AlertTriangle size={10} />
+                                                    Perlu ditingkatkan!
+                                                </motion.p>
+                                            )}
+                                        </div>
                                     </motion.div>
                                 );
                             })}
@@ -260,12 +619,17 @@ export default function SavingsPage() {
             {/* Add Goal Modal */}
             <AddGoalForm
                 isOpen={isGoalModalOpen}
-                onClose={() => setIsGoalModalOpen(false)}
+                onClose={() => {
+                    setIsGoalModalOpen(false);
+                    setGoalInitialData(null);
+                }}
                 onSuccess={() => {
                     refresh();
                     setIsGoalModalOpen(false);
+                    setGoalInitialData(null);
                     toast.success("Goal dibuat", "Mulai menabung sekarang!");
                 }}
+                initialData={goalInitialData}
             />
 
             {/* Detail Modal */}

@@ -17,6 +17,7 @@ import {
     X
 } from "lucide-react";
 import Link from "next/link";
+import Markdown from "react-markdown";
 import { useToast, ErrorEmpty } from "@/frontend/components/UI";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -80,25 +81,47 @@ export default function ChatPage() {
 
         const storageKey = `monev_chat_history_${session.user.id}`;
 
-        // Load messages from localStorage on mount
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
+        const loadFromServer = async () => {
             try {
-                const parsed = JSON.parse(saved);
-                const revived = parsed.map((m: any) => ({
-                    ...m,
-                    timestamp: new Date(m.timestamp)
-                }));
-                setMessages(revived);
+                const res = await apiFetch("/api/chat/history?limit=50");
+                const data = await res.json();
+                if (data.success && data.data?.length > 0) {
+                    const serverMessages: Message[] = data.data.map(
+                        (m: { id: number; role: string; content: string; createdAt: number }) => ({
+                            id: String(m.id),
+                            role: m.role as "user" | "assistant",
+                            content: m.content,
+                            timestamp: new Date(m.createdAt * 1000),
+                        })
+                    );
+                    setMessages(serverMessages);
+                    localStorage.setItem(storageKey, JSON.stringify(serverMessages));
+                    return;
+                }
             } catch (e) {
-                console.error("Failed to load chat history:", e);
-                // Fallback to initial if corrupted
+                console.error("Failed to load from server, falling back to localStorage:", e);
+            }
+
+            // Fallback to localStorage
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    const revived = parsed.map((m: any) => ({
+                        ...m,
+                        timestamp: new Date(m.timestamp)
+                    }));
+                    setMessages(revived);
+                } catch (e) {
+                    console.error("Failed to load chat history:", e);
+                    initializeChat(storageKey);
+                }
+            } else {
                 initializeChat(storageKey);
             }
-        } else {
-            initializeChat(storageKey);
-        }
-        setIsHistoryLoaded(true);
+        };
+
+        loadFromServer().then(() => setIsHistoryLoaded(true));
     }, [session?.user?.id]);
 
     const initializeChat = (key: string) => {
@@ -402,12 +425,30 @@ export default function ChatPage() {
                                         ? "bg-sky-500 text-white rounded-br-md"
                                         : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-bl-md shadow-sm"
                                 )}>
-                                    <p className={cn(
-                                        "text-sm whitespace-pre-line",
-                                        message.role === "user" ? "text-white" : "text-slate-800 dark:text-slate-200"
-                                    )}>
-                                        {message.content}
-                                    </p>
+                                    {message.role === "assistant" ? (
+                                        <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-slate-800 dark:text-slate-200 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-pre:my-2 prose-pre:bg-slate-100 prose-pre:dark:bg-slate-900 prose-code:text-sky-600 prose-code:dark:text-sky-400 prose-a:text-sky-600 prose-a:dark:text-sky-400 prose-a:underline">
+                                            <Markdown
+                                                components={{
+                                                    a: ({ children, href, ...props }) => (
+                                                        <a
+                                                            href={href}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            {...props}
+                                                        >
+                                                            {children}
+                                                        </a>
+                                                    ),
+                                                }}
+                                            >
+                                                {message.content}
+                                            </Markdown>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm whitespace-pre-line text-white">
+                                            {message.content}
+                                        </p>
+                                    )}
                                     <p className={cn(
                                         "text-[10px] mt-1",
                                         message.role === "user" ? "text-sky-200" : "text-slate-400"

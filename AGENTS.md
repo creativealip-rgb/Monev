@@ -1,166 +1,232 @@
-# AGENTS.md - Coding Guidelines for Monev
+# AGENTS.md
+
+Guidance for AI coding agents working in this repository.
 
 ## Project Overview
-Next.js 16+ financial app with React 19, TypeScript, Tailwind CSS v4, and SQLite + Drizzle ORM backend.
 
-## Build Commands
+**Monev** - Indonesian personal finance app built with Next.js 16, React 19, TypeScript (strict), Tailwind CSS v4, SQLite via Drizzle ORM, and next-auth v5 (beta). UI is in Indonesian. Currency is IDR.
+
+## Build / Lint / Test Commands
 
 ```bash
 # Development
-npm run dev              # Start Next.js dev server
+npm run dev                          # Start dev server (Webpack, 4GB heap)
+npm run dev:clean                    # Kill node processes + restart dev
+npm run dev:reset                    # Kill + clean caches + restart dev
 
-# Production  
-npm run build            # Build for production (uses Webpack)
-npm run start            # Start production server
+# Production
+npm run build                        # Build for production (Webpack)
+npm run start                        # Start production server
 
-# Linting
-npm run lint             # Run ESLint on entire project
-npx eslint src/path/file.tsx     # Lint specific file
-npx eslint --fix src/path/file.tsx  # Fix auto-fixable issues
+# Linting (ESLint 9 flat config)
+npm run lint                         # Lint entire project
+npx eslint src/path/to/file.tsx      # Lint single file
+npx eslint --fix src/path/to/file.tsx  # Auto-fix single file
 
-# Database (Drizzle ORM)
-npx drizzle-kit push     # Push schema to SQLite database
-npx drizzle-kit generate # Generate migrations
-npx drizzle-kit studio   # Open Drizzle Studio
+# Unit tests (Vitest)
+npm run test                         # Run all unit tests once
+npm run test:watch                   # Run tests in watch mode
+npx vitest run src/lib/validations.test.ts          # Run single test file
+npx vitest run -t "test name"                       # Run single test by name
+
+# E2E tests (Playwright) - requires running dev server
+npx playwright test                  # Run all E2E tests
+npx playwright test tests/login.spec.ts              # Run single spec
+npx playwright test --project=chromium               # Run specific browser
+
+# Database (Drizzle ORM + SQLite)
+npx drizzle-kit push                 # Push schema to local sqlite.db
+npx drizzle-kit generate             # Generate migration files
+npx drizzle-kit migrate              # Run migrations (local)
+npx drizzle-kit migrate --config=drizzle.config.prod.ts  # Run migrations (prod)
+npx drizzle-kit studio               # Open Drizzle Studio GUI
 ```
 
-**No test framework is currently configured.**
-
-## Code Style Guidelines
+## Code Style
 
 ### Formatting
-- Indent: 4 spaces
-- Max line length: 100 characters
-- Use double quotes in JSX attributes, single quotes in TypeScript
-- Semicolons: required
-- Trailing commas: use in multi-line objects/arrays
+- **Indent**: 4 spaces (no tabs)
+- **Semicolons**: always required
+- **Quotes**: double quotes (`"`) for imports and JSX attributes; double quotes preferred in TS logic
+- **Trailing commas**: yes, in multi-line objects/arrays
+- **Max line length**: ~100 characters (soft limit)
+- **No Prettier** configured - follow existing patterns
 
 ### Naming Conventions
-- **Components**: PascalCase (e.g., `TransactionItem.tsx`)
-- **Functions/Variables**: camelCase (e.g., `formatCurrency`)
-- **Types/Interfaces**: PascalCase (e.g., `Transaction`, `User`)
-- **Constants**: UPPER_SNAKE_CASE for true constants
-- **Files**: Match the default export name
+| Category | Convention | Example |
+|---|---|---|
+| Component files | PascalCase.tsx | `TransactionItem.tsx` |
+| Non-component files | kebab-case.ts | `api-client.ts`, `cache-manager.ts` |
+| Components | PascalCase, `export function` | `export function TransactionItem()` |
+| Functions/variables | camelCase | `formatCurrency`, `handleSubmit` |
+| Props interfaces | PascalCase + `Props` suffix | `interface TransactionFormProps` |
+| Types (data) | PascalCase | `type TransactionWithCategory` |
+| Schema-inferred types | PascalCase | `type User = typeof users.$inferSelect` |
+| True constants | UPPER_SNAKE_CASE | `CATEGORY_STYLES`, `CURRENCY_CONFIG` |
+| DB table names | camelCase | `userSettings`, `billPayments` |
+| DB column names | snake_case | `user_id`, `created_at` |
+| API route files | `route.ts` in directory | `api/transactions/route.ts` |
 
-### Imports Order
+### Import Order
 ```typescript
-// 1. External libraries (sorted alphabetically)
-import Link from "next/link";
+"use client"; // 1. Directive (only if using hooks/browser APIs)
+
+// 2. React / Next.js built-ins
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Coffee } from "lucide-react";
-import { motion } from "framer-motion";
 
-// 2. Internal absolute imports with @/ alias
+// 3. External libraries
+import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
+import { Wallet, TrendingUp } from "lucide-react";
+
+// 4. Internal @/ alias imports
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
-import { Transaction } from "@/types";
+import { getDb } from "@/backend/db";
+import type { Transaction } from "@/types";
 
-// 3. Relative imports (avoid if possible)
-import { helper } from "../lib/helper";
-
-// Type imports
-import type { Metadata } from "next";
+// 5. Relative imports (avoid when possible)
+import { helper } from "./helper";
 ```
 
-### Component Structure
+### Component Pattern
 ```typescript
-"use client"; // If using hooks/browser APIs
+"use client";
 
-import { cn } from "@/frontend/lib/utils"; // Always import cn utility
+import { useState } from "react";
+import { cn } from "@/frontend/lib/utils";
 
-// Props interface
-interface ComponentProps {
+interface MyComponentProps {
     label: string;
-    onClick?: () => void;
+    variant?: "primary" | "secondary";
+    onAction?: () => void;
 }
 
-// Function declaration (preferred)
-export function ComponentName({ label, onClick }: ComponentProps) {
-    return <div className={cn("...")}>{label}</div>;
+export function MyComponent({ label, variant = "primary", onAction }: MyComponentProps) {
+    const [active, setActive] = useState(false);
+    return (
+        <div className={cn("p-4 rounded-xl", active && "bg-primary/10")}>
+            {label}
+        </div>
+    );
 }
 ```
 
-### Styling (Tailwind v4)
-- Use `cn()` utility from `@/frontend/lib/utils` for conditional classes
-- Order: layout → spacing → sizing → colors → effects → interactions
-- Use `group-hover:` and `active:` for interactive states
-- Custom colors via CSS variables in `globals.css`
-- Avoid arbitrary values (e.g., `w-[100px]`) - use design tokens
-- Use glass utilities: `glass`, `glass-card`, `card-clean`
-- Use component classes: `btn-primary`, `btn-secondary`, `input-modern`
+Key rules:
+- Use `export function` declarations (not arrow functions, not `React.FC`)
+- Props via `interface` with destructuring in the function signature
+- Default values inline in destructuring: `variant = "primary"`
+- `"use client"` only when using hooks or browser APIs
+- Always import `cn` from `@/frontend/lib/utils` for conditional classes
 
 ### TypeScript
-- Strict mode enabled in tsconfig.json
-- Explicit return types on exported functions
-- Use `type` for unions/objects, `interface` for extensible contracts
+- **Strict mode** is on (`tsconfig.json`)
+- Use `interface` for component props (extensible); use `type` for unions, data shapes, inferred types
 - Avoid `any` - use `unknown` with type guards
-- Nullable types: use `?` for optional, `| null` for explicit null
-- Path alias: Use `@/` for src directory
+- Path alias: `@/*` maps to `./src/*`
+- Nullable: `?` for optional props, `| null` for explicit null state
+- Schema types inferred from Drizzle: `typeof table.$inferSelect`, `createInsertSchema(table)`
 
-### Error Handling
+### API Route Pattern
 ```typescript
-try {
-    const result = await asyncOperation();
-    return result;
-} catch (error) {
-    console.error("Operation failed:", error);
-    throw new Error("Failed to process request");
-}
-```
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { getDb } from "@/backend/db";
 
-### API Routes (App Router)
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-
-export async function POST(req: NextRequest) {
+export async function GET(request: Request) {
     try {
-        const body = await req.json();
-        if (!body.field) {
-            return NextResponse.json({ error: "Missing field" }, { status: 400 });
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-        return NextResponse.json({ success: true });
+        const userId = parseInt(session.user.id);
+        const db = getDb();
+        // ... query
+        return NextResponse.json({ success: true, data: result });
     } catch (error) {
         console.error("API Error:", error);
-        return NextResponse.json({ error: "Internal error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Internal error" }, { status: 500 });
     }
 }
 ```
 
-### File Organization
+Key rules:
+- Always check `auth()` session first; return 401 if missing
+- Response envelope: `{ success: boolean, data?: ..., error?: string }`
+- Wrap in try/catch; `console.error` the error; return 500
+- Use `Request` (not `NextRequest`) as parameter type in most cases
+
+### Error Handling
+- **API routes**: try/catch with `console.error` + JSON error response (status 400/401/500)
+- **Components**: try/catch with `console.error` + user-facing state (`useState<string | null>`)
+- **Nested try/catch** for non-critical ops (e.g., email sending) so main flow continues
+- User-facing error messages are in **Indonesian**
+
+### Styling (Tailwind CSS v4)
+- Use `cn()` (clsx + tailwind-merge) for all conditional classes
+- Class order: layout > spacing > sizing > colors > effects > transitions > dark: variants
+- Custom CSS classes in `globals.css`: `glass`, `glass-card`, `card-clean`, `btn-primary`, `btn-secondary`, `input-modern`, `icon-box`
+- Design tokens via CSS variables (`--primary`, `--background`, `--radius`, etc.)
+- Dark mode via `class` strategy; use `dark:` variants
+- Animations: `framer-motion` for page transitions and interactive elements
+
+### Database (Drizzle + SQLite)
+- Schema: `src/backend/db/schema.ts` | Connection: `src/backend/db/index.ts`
+- Operations: `src/backend/db/operations.ts`, `account-operations.ts`, `budget-operations.ts`
+- `getDb()` returns a singleton (survives HMR via `globalThis`)
+- Tables use `sqliteTable()`, auto-increment integer PKs, `integer(..., { mode: "timestamp" })` for dates
+- Booleans: `integer(..., { mode: "boolean" })`; Enums: `text(..., { enum: [...] })`
+- Local DB file: `sqlite.db` (gitignored); Production: `/app/data/sqlite.db`
+
+## File Organization
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── (protected)/       # Route groups
-│   ├── api/               # API routes
-│   ├── globals.css        # Global styles
-│   └── layout.tsx         # Root layout
+├── app/                      # Next.js App Router
+│   ├── (protected)/          # Auth-required routes (dashboard, transactions, etc.)
+│   ├── admin/                # Admin panel routes
+│   ├── api/                  # API route handlers
+│   ├── login/ register/      # Public auth pages
+│   ├── onboarding/           # Onboarding flow
+│   ├── globals.css           # Global styles + Tailwind config
+│   └── layout.tsx            # Root layout (Server Component)
 ├── frontend/
-│   ├── components/        # React components
-│   └── lib/
-│       └── utils.ts       # cn() and formatCurrency()
+│   ├── components/           # ~40 React components (all "use client")
+│   ├── hooks/                # Custom hooks (useAccountsData, useHaptics, etc.)
+│   └── lib/                  # Utils, contexts (utils.ts, theme-context, i18n-context)
 ├── backend/
-│   └── db/
-│       ├── schema.ts      # Drizzle schema
-│       └── index.ts       # Database connection
-├── lib/                   # Shared utilities
-├── types/
-│   └── index.ts          # TypeScript types
-└── components/           # Cross-cutting components
+│   ├── db/                   # Schema, connection, operations
+│   └── actions/              # Server actions (auth, profile, onboarding)
+├── lib/                      # Shared server utilities (AI, rate-limit, encryption, etc.)
+├── types/index.ts            # Shared TypeScript types
+├── components/               # Cross-cutting providers (Providers, SecurityProvider)
+├── auth.ts                   # next-auth configuration
+└── auth.config.ts            # Auth provider config
 ```
 
-### Key Libraries
-- **UI**: Tailwind CSS v4, lucide-react (icons)
-- **Utils**: clsx, tailwind-merge (via `cn()`)
-- **Dates**: date-fns | **Animation**: framer-motion
-- **DB**: drizzle-orm, drizzle-kit, better-sqlite3
-- **Auth**: next-auth v5 (beta) | **AI**: openai, ai SDK
+## Localization
+- All UI text is in **Indonesian** (hardcoded, not i18n keys in most places)
+- Partial i18n via `useI18n()` context and `t()` function (BottomNav, some components)
+- Currency: `formatCurrency()` from `@/frontend/lib/utils` - defaults to IDR, `Intl.NumberFormat("id-ID")`
+- Date formatting: `date-fns` with `{ locale: id }` for Indonesian locale
+- Category names, error messages, and labels are all in Indonesian
 
-### Database
-- Schema: `src/backend/db/schema.ts` | Migrations: `drizzle/`
-- Commands: `npx drizzle-kit push`, `npx drizzle-kit generate`
-- Local file: `sqlite.db` | Studio: `npx drizzle-kit studio`
+## Key Libraries
+| Purpose | Library |
+|---|---|
+| Framework | Next.js 16, React 19 |
+| Styling | Tailwind CSS v4, clsx, tailwind-merge |
+| Icons | lucide-react |
+| Animation | framer-motion |
+| Database | drizzle-orm, better-sqlite3 |
+| Auth | next-auth v5 (beta) |
+| AI | openai, ai SDK (Vercel) |
+| Dates | date-fns |
+| Charts | recharts |
+| Validation | drizzle-zod, zod |
+| PDF | jspdf, jspdf-autotable |
+| Mobile | Capacitor (Android APK) |
+| Email | resend |
 
-### Localization & Config
-- UI: Indonesian ("Selamat Sore", "Riwayat Terbaru")
-- Currency: IDR format with `formatCurrency()` utility
-- ESLint: `eslint.config.mjs` (flat config, extends `eslint-config-next`)
-- Env: `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`
+## Environment Variables (.env.local)
+`OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `AUTH_SECRET`, `DATABASE_URL`, `RESEND_API_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`

@@ -118,6 +118,9 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "saldo.initialBalance": "Saldo Awal",
         "saldo.back": "Kembali",
         "saldo.addAccountSuccess": "Akun berhasil ditambahkan",
+        "saldo.listView": "Daftar",
+        "saldo.groupView": "Grup",
+        "saldo.groupTotal": "Total",
 
         // Budgets
         "budgets.title": "Anggaran Bulanan",
@@ -362,6 +365,9 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         "saldo.initialBalance": "Initial Balance",
         "saldo.back": "Back",
         "saldo.addAccountSuccess": "Account added successfully",
+        "saldo.listView": "List",
+        "saldo.groupView": "Group",
+        "saldo.groupTotal": "Total",
 
         // Budgets
         "budgets.title": "Monthly Budget",

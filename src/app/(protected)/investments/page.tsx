@@ -4,6 +4,13 @@ import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Edit3, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+    PieChart as RechartsPieChart,
+    Pie,
+    Cell,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
 import { useSession } from "next-auth/react";
@@ -136,9 +143,11 @@ export default function InvestmentsPage() {
             const res = await apiFetch(`/api/investments/${id}`, { method: "DELETE" });
             const result = await res.json();
             if (result.success) {
-                setSummary(prev => prev ? { ...prev, items: prev.items.filter(i => i.id !== id) } : prev);
                 closeModals();
                 toast.success("Investasi dihapus");
+                await loadData(); // Full reload to recalculate totals & allocation chart
+            } else {
+                toast.error("Gagal", result.error || "Gagal menghapus");
             }
         } catch (error) {
             console.error("Error deleting investment:", error);
@@ -304,6 +313,54 @@ export default function InvestmentsPage() {
                             Alokasi Aset
                         </h3>
                         <div className="space-y-4">
+                            {/* Pie Chart */}
+                            <div className="w-full h-[220px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RechartsPieChart>
+                                        <Pie
+                                            data={summary.allocation.map((item) => ({
+                                                name: item.label,
+                                                value: item.value,
+                                                color: item.color,
+                                            }))}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={50}
+                                            outerRadius={85}
+                                            paddingAngle={2}
+                                            dataKey="value"
+                                            label={({ name, percent }: any) =>
+                                                `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`
+                                            }
+                                            labelLine={false}
+                                        >
+                                            {summary.allocation.map((item, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={item.color}
+                                                    stroke="none"
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            formatter={(value: any) => [
+                                                isStealthMode
+                                                    ? "••••••••"
+                                                    : formatCurrency(Number(value)),
+                                                "Nilai",
+                                            ]}
+                                            contentStyle={{
+                                                borderRadius: "12px",
+                                                border: "none",
+                                                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                                fontSize: "12px",
+                                            }}
+                                        />
+                                    </RechartsPieChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* Bar visualization */}
                             <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                 {summary.allocation.map((item, i) => (
                                     <motion.div
@@ -316,6 +373,8 @@ export default function InvestmentsPage() {
                                     />
                                 ))}
                             </div>
+
+                            {/* Legend */}
                             <div className="grid grid-cols-2 gap-y-3 gap-x-6">
                                 {summary.allocation.map((item) => (
                                     <div key={item.label} className="flex items-center justify-between">

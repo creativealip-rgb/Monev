@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/frontend/lib/api-client";
 
@@ -26,6 +27,15 @@ export function useAccountsData() {
             return [];
         }
     });
+
+    // Invalidate accounts cache when transactions change (balances update server-side)
+    useEffect(() => {
+        const handleTransactionAdded = () => {
+            queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        };
+        window.addEventListener("transactionAdded", handleTransactionAdded);
+        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
+    }, [queryClient]);
 
     const refresh = () => {
         queryClient.invalidateQueries({ queryKey: ["accounts"] });

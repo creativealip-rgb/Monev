@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { loginAction } from "./actions";
 
 interface FormErrors {
     email?: string;
@@ -168,18 +169,22 @@ export default function LoginPage() {
             const result = await response.json();
 
             if (result.success && result.credentials) {
-                // Sign in with the created credentials
-                const authResult = await signIn("credentials", {
-                    email: result.credentials.email,
-                    password: result.credentials.password,
-                    redirect: false,
-                });
-
-                if (authResult?.ok) {
-                    // Success - redirect to dashboard
+                // Sign in with the created credentials via server action
+                try {
+                    const authResult = await loginAction(
+                        result.credentials.email,
+                        result.credentials.password
+                    );
+                    if (authResult.success) {
+                        router.push("/dashboard");
+                        router.refresh();
+                    } else {
+                        console.error("Guest auth failed:", authResult.error);
+                    }
+                } catch {
+                    // Server action may throw redirect on success
                     router.push("/dashboard");
-                } else {
-                    console.error("Guest auth failed:", authResult?.error);
+                    router.refresh();
                 }
             }
         } catch (error) {
@@ -213,19 +218,20 @@ export default function LoginPage() {
         setErrors({});
 
         try {
-            const result = await signIn("credentials", {
-                email: formData.email,
-                password: formData.password,
-                redirect: false,
-            });
+            const result = await loginAction(formData.email, formData.password);
 
-            if (result?.error) {
-                setErrors({ general: result.error });
+            if (!result.success) {
+                setErrors({ general: result.error || "Login gagal" });
                 setShake(true);
                 setTimeout(() => setShake(false), 500);
-            } else if (result?.ok) {
+            } else {
                 router.push("/dashboard");
+                router.refresh();
             }
+        } catch {
+            // Server action may throw redirect on success
+            router.push("/dashboard");
+            router.refresh();
         } finally {
             setIsPending(false);
         }

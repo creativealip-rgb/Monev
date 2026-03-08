@@ -67,12 +67,31 @@ export async function GET(request: Request) {
             totalOwed
         });
 
+        // Calculate income/expense growth percentages
+        let incomeGrowth = 0;
+        if (prevStats.income !== 0) {
+            incomeGrowth = ((stats.income - prevStats.income) / Math.abs(prevStats.income)) * 100;
+        } else if (stats.income !== 0) {
+            incomeGrowth = 100;
+        }
+
+        let expenseGrowth = 0;
+        if (prevStats.expense !== 0) {
+            expenseGrowth = ((stats.expense - prevStats.expense) / Math.abs(prevStats.expense)) * 100;
+        } else if (stats.expense !== 0) {
+            expenseGrowth = 100;
+        }
+
         return NextResponse.json({
             success: true,
             data: {
                 ...stats,
                 ...assets,
                 growth,
+                incomeGrowth,
+                expenseGrowth,
+                prevIncome: prevStats.income,
+                prevExpense: prevStats.expense,
                 healthScore,
                 streak: {
                     current: streak?.currentStreak || 0,

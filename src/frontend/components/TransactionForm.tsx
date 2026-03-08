@@ -170,13 +170,28 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 body: JSON.stringify(transData),
             });
 
+            if (!response.ok) {
+                // Server error or offline — queue for later
+                await OfflineManager.queueTransaction(transData);
+                window.dispatchEvent(new CustomEvent("transactionAdded"));
+                toastSuccess(
+                    "Antrean Offline",
+                    "Internet bermasalah, transaksi masuk antrean."
+                );
+                onSuccess?.();
+                onClose();
+                setAmount("");
+                setDescription("");
+                setSelectedCategory(null);
+                setTransactionType("expense");
+                return;
+            }
+
             const result = await response.json();
 
-            if (result.success || !response.ok) {
-                if (!response.ok) {
-                    await OfflineManager.queueTransaction(transData);
-                    window.dispatchEvent(new CustomEvent("transactionAdded"));
-                }
+            if (result.success) {
+                // Dispatch event so all hooks (dashboard, transactions, accounts) refresh
+                window.dispatchEvent(new CustomEvent("transactionAdded"));
 
                 // Show success feedback with Time-Cost
                 const settingsRes = await apiFetch("/api/profile");
