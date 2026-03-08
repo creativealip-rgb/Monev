@@ -9,10 +9,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
-import {
-    AddGoalForm, EditGoalForm,
-    GoalTemplateData
-} from "@/frontend/components/BudgetForms";
+import { AddGoalForm, EditGoalForm, GoalTemplateData } from "@/frontend/components/GoalForms";
 import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
@@ -614,18 +611,10 @@ export default function SavingsPage() {
 
             {/* Add Goal Modal */}
             <AddGoalForm
-                isOpen={isGoalModalOpen}
-                onClose={() => {
-                    setIsGoalModalOpen(false);
-                    setGoalInitialData(null);
-                }}
-                onSuccess={() => {
-                    refresh();
-                    setIsGoalModalOpen(false);
-                    setGoalInitialData(null);
-                    toast.success("Goal dibuat", "Mulai menabung sekarang!");
-                }}
-                initialData={goalInitialData}
+                isOpen={!!goalInitialData}
+                onClose={() => setGoalInitialData(null)}
+                onSuccess={refresh}
+                initialData={goalInitialData || undefined}
             />
 
             {/* Detail Modal */}
