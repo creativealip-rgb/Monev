@@ -581,7 +581,7 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 | File | Baris | Komponen di Dalamnya | Rekomendasi Split |
 |---|---|---|---|
 | `profile/page.tsx` | 1,696 | 1 page + 8 inline modals | Extract setiap modal ke file terpisah di `profile/components/` |
-| `debts/page.tsx` | 1,021 | DebtCard, AddDebtSheet, PartialPaymentSheet, DebtsPage | Extract 3 sub-components ke `debts/components/` |
+| ~~`debts/page.tsx`~~ | ~~1,021~~ | ~~DebtCard, AddDebtSheet, PartialPaymentSheet, DebtsPage~~ DONE | ~~Extract 3 sub-components ke `debts/components/`~~ |
 | `transactions/page.tsx` | 988 | Page + undo logic + bulk actions + PDF export | Extract ke hooks: `useUndoDelete`, `useBulkActions`, `useTransactionExport` |
 | `bills/page.tsx` | 816 | Page + inline add form + calendar grid | Extract `AddBillForm` dan `CalendarGrid` ke `bills/components/` |
 | `BudgetForms.tsx` | 749 | AddBudgetForm, EditBudgetForm, AddGoalForm, EditGoalForm | Goal forms tidak related ke budgets. Split ke `GoalForms.tsx` |
@@ -850,7 +850,7 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 | 3 | ~~**Tambah edit functionality (saldo, bills, debts, recurring)**~~ FIXED | 4 halaman tanpa edit = user frustration | Tinggi | 4 halaman |
 | 4 | ~~**Konsistenkan bahasa ke Indonesia (login, landing, dashboard, simulations)**~~ FIXED | Branding consistency, user trust | Rendah | 6 halaman |
 | 5 | **Hapus redundant sections (streak 3x, spending alert 4x, chart duplikat 2 halaman)** | Cleaner UI, less information overload | Sedang | Dashboard, Budgets, Investments |
-| 6 | **Split mega-files (profile 1696, debts 1021, transactions 988)** | Maintainability, developer experience | Sedang | 4 file |
+| 6 | **Split mega-files (debts✅ profile❌ transactions❌)** | Maintainability, developer experience | Sedang | 4 file |
 | 7 | ~~**Ganti semua `window.confirm()` dengan ConfirmDialog**~~ FIXED | UX consistency, mobile-friendly | Rendah | 5 halaman |
 | 8 | ~~**Fix MoreVertical di saldo + tambah menu edit/delete**~~ FIXED | Broken affordance yang user pasti encounter | Sedang | Saldo |
 | 9 | ~~**Fix notification save di profile (persist ke server)**~~ FIXED | Feature yang terlihat berfungsi tapi sebenarnya palsu | Rendah | Profile |
