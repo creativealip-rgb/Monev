@@ -848,7 +848,7 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 | 1 | ~~**Fix `createdAt` vs `created_at` field mismatch**~~ FIXED | Critical -- dashboard today stats & filter broken | Rendah | Dashboard |
 | 2 | ~~**Fix infinite scroll (attach loadMoreRef ke DOM)**~~ FIXED | User tidak bisa load transaksi lebih | Rendah | Transactions |
 | 3 | **Tambah edit functionality ke saldo, debts, recurring, bills** | 4 halaman tanpa edit = user frustration | Tinggi | 4 halaman |
-| 4 | **Konsistenkan bahasa ke Indonesia (login, landing, dashboard, simulations)** | Branding consistency, user trust | Rendah | 6 halaman |
+| 4 | ~~**Konsistenkan bahasa ke Indonesia (login, landing, dashboard, simulations)**~~ FIXED | Branding consistency, user trust | Rendah | 6 halaman |
 | 5 | **Hapus redundant sections (streak 3x, spending alert 4x, chart duplikat 2 halaman)** | Cleaner UI, less information overload | Sedang | Dashboard, Budgets, Investments |
 | 6 | **Split mega-files (profile 1696, debts 1021, transactions 988)** | Maintainability, developer experience | Sedang | 4 file |
 | 7 | **Ganti semua `window.confirm()` dengan ConfirmDialog** | UX consistency, mobile-friendly | Rendah | 5 halaman |
