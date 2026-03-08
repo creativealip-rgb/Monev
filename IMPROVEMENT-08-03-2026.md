@@ -437,10 +437,10 @@ User melihat 2 mic icon berdekatan tanpa cara membedakan fungsi.
 
 | # | Halaman | Missing Feature | Deskripsi |
 |---|---|---|---|
-| 1 | **Saldo** | Edit & delete akun | Setelah dibuat, akun tidak bisa diedit atau dihapus. MoreVertical button tidak berfungsi. |
+| 1 | ~~**Saldo**~~ | ~~Edit & delete akun~~ DONE | ~~Setelah dibuat, akun tidak bisa diedit atau dihapus. MoreVertical button tidak berfungsi.~~ FIXED - Dropdown menu with Edit/Delete added, API route created |
 | 2 | **Debts** | Edit hutang | User tidak bisa ubah nama debitur, jumlah, deskripsi, atau due date setelah dibuat. |
 | 3 | **Recurring** | Edit transaksi berulang | User hanya bisa toggle on/off dan delete. Tidak bisa ubah jumlah, deskripsi, frekuensi, atau kategori. |
-| 4 | **Bills** | Edit tagihan | Tidak ada cara edit nama, jumlah, due date, atau field lain setelah tagihan dibuat. |
+| 4 | ~~**Bills**~~ | ~~Edit tagihan~~ DONE | ~~Tidak ada cara edit nama, jumlah, due date, atau field lain setelah tagihan dibuat.~~ FIXED - Pencil button added to BillItem, edit modal implemented |
 | 5 | **Budgets** | Navigasi bulan | Hanya bisa lihat budget bulan ini. Tidak ada cara melihat budget bulan lalu atau merencanakan bulan depan. |
 | 6 | **Transactions** | ~~Infinite scroll / pagination~~ FIXED | ~~`loadMoreRef` tidak ter-attach. User hanya lihat halaman pertama.~~ |
 
@@ -847,11 +847,11 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 |---|---|---|---|---|
 | 1 | ~~**Fix `createdAt` vs `created_at` field mismatch**~~ FIXED | Critical -- dashboard today stats & filter broken | Rendah | Dashboard |
 | 2 | ~~**Fix infinite scroll (attach loadMoreRef ke DOM)**~~ FIXED | User tidak bisa load transaksi lebih | Rendah | Transactions |
-| 3 | **Tambah edit functionality ke saldo, debts, recurring, bills** | 4 halaman tanpa edit = user frustration | Tinggi | 4 halaman |
+| 3 | **Tambah edit functionality (saldo✅ bills✅ debts❌ recurring❌)** | 2 of 4 pages done | Tinggi | 4 halaman |
 | 4 | ~~**Konsistenkan bahasa ke Indonesia (login, landing, dashboard, simulations)**~~ FIXED | Branding consistency, user trust | Rendah | 6 halaman |
 | 5 | **Hapus redundant sections (streak 3x, spending alert 4x, chart duplikat 2 halaman)** | Cleaner UI, less information overload | Sedang | Dashboard, Budgets, Investments |
 | 6 | **Split mega-files (profile 1696, debts 1021, transactions 988)** | Maintainability, developer experience | Sedang | 4 file |
-| 7 | **Ganti semua `window.confirm()` dengan ConfirmDialog** | UX consistency, mobile-friendly | Rendah | 5 halaman |
+| 7 | ~~**Ganti semua `window.confirm()` dengan ConfirmDialog**~~ FIXED | UX consistency, mobile-friendly | Rendah | 5 halaman |
 | 8 | ~~**Fix MoreVertical di saldo + tambah menu edit/delete**~~ FIXED | Broken affordance yang user pasti encounter | Sedang | Saldo |
 | 9 | ~~**Fix notification save di profile (persist ke server)**~~ FIXED | Feature yang terlihat berfungsi tapi sebenarnya palsu | Rendah | Profile |
 | 10 | ~~**Augment next-auth Session type + hapus semua @ts-ignore**~~ FIXED | Type safety, hapus 8+ suppressions, prevent future bugs | Rendah | Global |
