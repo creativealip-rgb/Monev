@@ -790,6 +790,27 @@ export async function GET() {
 }
 ```
 
+### Session Type Augmentation
+
+Session type diperluas di `src/types/next-auth.d.ts` untuk menambahkan field custom:
+
+```typescript
+import { DefaultSession } from "next-auth";
+import type { UserTier } from "@/lib/tier-gate";
+
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string;
+            tier: UserTier;
+            sessionToken?: string;
+        } & DefaultSession["user"];
+    }
+}
+```
+
+Ini memungkinkan akses type-safe ke `session.user.tier` tanpa `@ts-ignore`.
+
 ---
 
 ## 9. API Endpoints
@@ -850,10 +871,10 @@ Semua API route berada di `src/app/api/`. Format response standar:
 | POST | `/api/budgets` | Buat anggaran baru |
 | PUT | `/api/budgets/[id]` | Edit anggaran |
 | DELETE | `/api/budgets/[id]` | Hapus anggaran |
+| POST | `/api/budgets/rollover` | Simpan pengaturan rollover |
 | GET | `/api/budgets/stats` | Statistik anggaran |
 | GET | `/api/budgets/template` | Template anggaran tunggal |
 | GET | `/api/budgets/templates` | Koleksi template |
-| POST | `/api/budgets/rollover` | Rollover manual |
 
 ### Target Tabungan (Goals)
 
@@ -883,6 +904,8 @@ Semua API route berada di `src/app/api/`. Format response standar:
 |---|---|---|
 | GET | `/api/accounts` | Daftar akun |
 | POST | `/api/accounts` | Tambah akun baru |
+| PUT | `/api/accounts/[id]` | Edit akun (nama, saldo, warna) |
+| DELETE | `/api/accounts/[id]` | Hapus akun |
 | POST | `/api/transfer` | Transfer antar akun |
 
 ### Investasi
@@ -1170,6 +1193,29 @@ Semua komponen di `src/frontend/components/` menggunakan `"use client"`.
 ## 12. Custom Hooks
 
 Semua hooks di `src/frontend/hooks/`.
+
+### Split Components Structure
+
+Untuk maintainability, beberapa halaman besar telah dipecah menjadi komponen terpisah:
+
+#### Debts Page Structure
+
+```
+src/app/(protected)/debts/
+├── page.tsx                    # Main page (~325 lines)
+├── components/
+│   ├── index.ts                # Exports
+│   ├── DebtCard.tsx            # Kartu hutang/piutang
+│   ├── AddDebtSheet.tsx        # Form tambah/edit hutang
+│   └── PartialPaymentSheet.tsx # Form pembayaran sebagian
+├── types.ts                    # Debt interface
+└── utils.ts                    # Helper functions
+```
+
+Komponen yang di-extract:
+- `DebtCard` - Display kartu dengan partial payment progress
+- `AddDebtSheet` - Form tambah/edit dengan auto-populate
+- `PartialPaymentSheet` - Sheet pembayaran bertahap
 
 ### `useDashboardData`
 
