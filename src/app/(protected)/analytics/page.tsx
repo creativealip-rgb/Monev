@@ -34,8 +34,7 @@ const [activeTab, setActiveTab] = useState("overview");
     const [error, setError] = useState<string | null>(null);
     const { data: session } = useSession();
     const { isStealthMode } = useSecurity();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
     const toast = useToast();
     // Use data.canAccessAIInsights from API (reads from DB) as primary source,
     // fall back to session-based check. This prevents lock when session fetch fails transiently.

@@ -313,8 +313,7 @@ import { LanguageSelector } from "@/frontend/components/LanguageSelector";
 export default function FiturPage() {
     const { data: session } = useSession();
     const { t } = useI18n();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
 
     return (
         <div className="min-h-screen pb-28 bg-sky-50 dark:bg-slate-950">

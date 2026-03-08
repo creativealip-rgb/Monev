@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check, List, LayoutGrid, ChevronDown } from "lucide-react";
+import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check, List, LayoutGrid, ChevronDown, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
@@ -42,6 +42,11 @@ export default function SaldoPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [viewMode, setViewMode] = useState<"list" | "group">("list");
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+    const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+    const [showAccountMenu, setShowAccountMenu] = useState<number | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ name: "", balance: "", color: "", icon: "" });
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const haptics = useHaptics();
     const { success: toastSuccess, error: toastError } = useToast();
@@ -307,9 +312,67 @@ export default function SaldoPage() {
                                                 {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
                                             </p>
                                         </div>
-                                        <button className="text-slate-300 dark:text-slate-600" onClick={() => haptics.tap()}>
-                                            <MoreVertical size={16} />
-                                        </button>
+                                        <div className="relative">
+                                            <button 
+                                                className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    haptics.tap();
+                                                    setShowAccountMenu(showAccountMenu === acc.id ? null : acc.id);
+                                                    setSelectedAccountId(acc.id);
+                                                }}
+                                            >
+                                                <MoreVertical size={16} />
+                                            </button>
+                                            <AnimatePresence>
+                                                {showAccountMenu === acc.id && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.95 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        exit={{ opacity: 0, scale: 0.95 }}
+                                                        className="absolute right-0 top-8 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
+                                                    >
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
+                                                                setIsEditOpen(true);
+                                                                setShowAccountMenu(null);
+                                                            }}
+                                                            className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                                                        >
+                                                            <Pencil size={14} /> Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (confirm("Yakin hapus akun ini? Transaksi terkait tidak akan dihapus.")) {
+                                                                    setIsDeleting(true);
+                                                                    try {
+                                                                        const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
+                                                                        const result = await res.json();
+                                                                        if (result.success) {
+                                                                            toastSuccess("Akun dihapus");
+                                                                            refresh();
+                                                                        } else {
+                                                                            toastError("Gagal menghapus");
+                                                                        }
+                                                                    } catch (err) {
+                                                                        toastError("Gagal menghapus");
+                                                                    } finally {
+                                                                        setIsDeleting(false);
+                                                                    }
+                                                                }
+                                                                setShowAccountMenu(null);
+                                                            }}
+                                                            className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                                        >
+                                                            <Trash2 size={14} /> Hapus
+                                                        </button>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
                                     </motion.div>
                                 );
                             })
@@ -413,9 +476,67 @@ export default function SaldoPage() {
                                                                             {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
                                                                         </p>
                                                                     </div>
-                                                                    <button className="text-slate-300 dark:text-slate-600" onClick={(e) => { e.stopPropagation(); haptics.tap(); }}>
-                                                                        <MoreVertical size={14} />
-                                                                    </button>
+                                                                    <div className="relative">
+                                                                        <button 
+                                                                            className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                haptics.tap();
+                                                                                setShowAccountMenu(showAccountMenu === acc.id ? null : acc.id);
+                                                                                setSelectedAccountId(acc.id);
+                                                                            }}
+                                                                        >
+                                                                            <MoreVertical size={14} />
+                                                                        </button>
+                                                                        <AnimatePresence>
+                                                                            {showAccountMenu === acc.id && (
+                                                                                <motion.div
+                                                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                                                    animate={{ opacity: 1, scale: 1 }}
+                                                                                    exit={{ opacity: 0, scale: 0.95 }}
+                                                                                    className="absolute right-0 top-6 w-28 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
+                                                                                >
+                                                                                    <button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
+                                                                                            setIsEditOpen(true);
+                                                                                            setShowAccountMenu(null);
+                                                                                        }}
+                                                                                        className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                                                                                    >
+                                                                                        <Pencil size={12} /> Edit
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={async (e) => {
+                                                                                            e.stopPropagation();
+                                                                                            if (confirm("Yakin hapus akun ini?")) {
+                                                                                                setIsDeleting(true);
+                                                                                                try {
+                                                                                                    const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
+                                                                                                    const result = await res.json();
+                                                                                                    if (result.success) {
+                                                                                                        toastSuccess("Akun dihapus");
+                                                                                                        refresh();
+                                                                                                    } else {
+                                                                                                        toastError("Gagal menghapus");
+                                                                                                    }
+                                                                                                } catch (err) {
+                                                                                                    toastError("Gagal menghapus");
+                                                                                                } finally {
+                                                                                                    setIsDeleting(false);
+                                                                                                }
+                                                                                            }
+                                                                                            setShowAccountMenu(null);
+                                                                                        }}
+                                                                                        className="w-full px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                                                                    >
+                                                                                        <Trash2 size={12} /> Hapus
+                                                                                    </button>
+                                                                                </motion.div>
+                                                                            )}
+                                                                        </AnimatePresence>
+                                                                    </div>
                                                                 </motion.div>
                                                             );
                                                         })}
@@ -649,6 +770,116 @@ export default function SaldoPage() {
                                     </div>
                                 </motion.div>
                             )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Account Modal */}
+            <AnimatePresence>
+                {isEditOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[10002] flex items-end sm:items-center justify-center p-0 sm:p-4"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsEditOpen(false)}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl card-clean p-6"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-black text-slate-900 dark:text-white">Edit Akun</h2>
+                                <button onClick={() => setIsEditOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                                    <X size={20} className="text-slate-500" />
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Nama Akun</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                        className="w-full p-4 text-lg font-bold bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Saldo</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={editForm.balance}
+                                        onChange={(e) => {
+                                            const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                                            const cleanValue = rawValue.replace(/^0+/, '') || '0';
+                                            setEditForm({ ...editForm, balance: cleanValue });
+                                        }}
+                                        className="w-full p-4 text-center text-2xl font-bold bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditOpen(false)}
+                                    className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm"
+                                >
+                                    {t("common.cancel")}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!selectedAccountId) return;
+                                        setIsSaving(true);
+                                        try {
+                                            const res = await apiFetch(`/api/accounts/${selectedAccountId}`, {
+                                                method: "PUT",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({
+                                                    name: editForm.name,
+                                                    balance: parseFloat(editForm.balance) || 0,
+                                                }),
+                                            });
+                                            const result = await res.json();
+                                            if (result.success) {
+                                                toastSuccess("Akun diperbarui");
+                                                refresh();
+                                                setIsEditOpen(false);
+                                            } else {
+                                                toastError("Gagal memperbarui");
+                                            }
+                                        } catch (err) {
+                                            toastError("Gagal memperbarui");
+                                        } finally {
+                                            setIsSaving(false);
+                                        }
+                                    }}
+                                    disabled={isSaving}
+                                    className="flex-1 py-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isSaving ? (
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Check size={20} />
+                                            Simpan
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

@@ -125,8 +125,7 @@ export default function BudgetsPage() {
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
     const tierConfig = getTierConfig(userTier);
 
     const [prevBudgets, setPrevBudgets] = useState<BudgetSummary[]>([]);
@@ -207,6 +206,12 @@ export default function BudgetsPage() {
 
             if (budgetsResult.success) {
                 setBudgets(budgetsResult.data);
+                // Initialize rollover state from API response
+                const rolloverState: Record<number, boolean> = {};
+                budgetsResult.data.forEach((b: BudgetSummary & { enableRollover?: boolean }) => {
+                    rolloverState[b.id] = b.enableRollover ?? false;
+                });
+                setRolloverEnabled(rolloverState);
             }
 
             if (prevBudgetsResult.success) {
@@ -257,13 +262,41 @@ export default function BudgetsPage() {
         return budget.limit + getRolloverAmount(budget);
     }, [rolloverEnabled, getRolloverAmount]);
 
-    const toggleRollover = useCallback((budgetId: number, e: React.MouseEvent) => {
+    const toggleRollover = useCallback(async (budgetId: number, e: React.MouseEvent) => {
         e.stopPropagation();
+        const newValue = !rolloverEnabled[budgetId];
+        
+        // Optimistically update UI
         setRolloverEnabled((prev) => ({
             ...prev,
-            [budgetId]: !prev[budgetId],
+            [budgetId]: newValue,
         }));
-    }, []);
+
+        // Persist to server
+        try {
+            const budget = budgets.find(b => b.id === budgetId);
+            if (!budget) return;
+            
+            await apiFetch("/api/budgets/rollover", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryId: budget.categoryId,
+                    enableRollover: newValue,
+                    month: currentMonth,
+                    year: currentYear,
+                }),
+            });
+        } catch (error) {
+            console.error("Failed to persist rollover:", error);
+            // Revert on error
+            setRolloverEnabled((prev) => ({
+                ...prev,
+                [budgetId]: !newValue,
+            }));
+            toast.error("Gagal menyimpan pengaturan rollover");
+        }
+    }, [rolloverEnabled, budgets, currentMonth, currentYear]);
 
     const totalBudget = budgets.reduce((sum, b) => sum + getEffectiveLimit(b), 0);
     const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
