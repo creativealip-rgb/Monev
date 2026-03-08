@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History } from "lucide-react";
+import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
@@ -38,6 +38,7 @@ export interface BillItemProps {
     onDelete: (id: number) => void;
     onToggle: (id: number, e: React.MouseEvent) => void;
     onShowHistory: (bill: Bill) => void;
+    onEdit?: (bill: Bill) => void;
     isStealthMode: boolean;
     t: (key: string) => string;
     showReminder?: boolean;
@@ -49,6 +50,7 @@ export function BillItem({
     onDelete,
     onToggle,
     onShowHistory,
+    onEdit,
     isStealthMode,
     t,
     showReminder = false,
@@ -170,6 +172,18 @@ export function BillItem({
                 >
                     <History size={14} />
                 </button>
+                {onEdit && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(bill);
+                        }}
+                        className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
+                        title="Edit"
+                    >
+                        <Pencil size={14} />
+                    </button>
+                )}
                 <button
                     onClick={(e) => {
                         e.stopPropagation();

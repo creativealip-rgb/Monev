@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell, Clock, X } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell, Clock, X, Pencil } from "lucide-react";
 import { BillHistoryModal } from "@/frontend/components/DetailModalsVerified";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -58,6 +58,7 @@ export default function BillsPage() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
     const filteredBills = useMemo(() => {
         let filtered = bills;
@@ -218,34 +219,45 @@ export default function BillsPage() {
         }
     }
 
-    async function handleAddBill() {
+    async function handleSaveBill() {
         if (!formName || !formAmount) return;
         setIsSubmitting(true);
         try {
-            const res = await apiFetch("/api/bills", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: formName,
-                    amount: Number(formAmount),
-                    dueDate: Number(formDueDate),
-                    frequency: formFrequency,
-                    icon: formIcon,
-                    color: formColor,
-                    notes: formNotes || undefined,
-                }),
-            });
+            let res;
+            const body = {
+                name: formName,
+                amount: Number(formAmount),
+                dueDate: Number(formDueDate),
+                frequency: formFrequency,
+                icon: formIcon,
+                color: formColor,
+                notes: formNotes || undefined,
+            };
+
+            if (editingBill) {
+                res = await apiFetch(`/api/bills/${editingBill.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            } else {
+                res = await apiFetch("/api/bills", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            }
             const result = await res.json();
             if (result.success) {
                 await loadBills();
                 setIsAddModalOpen(false);
                 resetForm();
-                toast.success("Tagihan ditambahkan");
+                toast.success(editingBill ? "Tagihan diperbarui" : "Tagihan ditambahkan");
             } else {
-                toast.error("Gagal", result.error || "Gagal menambahkan tagihan");
+                toast.error("Gagal", result.error || "Gagal menyimpan tagihan");
             }
         } catch (error) {
-            console.error("Error adding bill:", error);
+            console.error("Error saving bill:", error);
             toast.error("Gagal", "Terjadi kesalahan jaringan");
         } finally {
             setIsSubmitting(false);
@@ -260,6 +272,19 @@ export default function BillsPage() {
         setFormIcon("Receipt");
         setFormColor("#6366f1");
         setFormNotes("");
+        setEditingBill(null);
+    }
+
+    function populateEditForm(bill: Bill) {
+        setEditingBill(bill);
+        setFormName(bill.name);
+        setFormAmount(bill.amount.toString());
+        setFormDueDate(bill.dueDate.toString());
+        setFormFrequency(bill.frequency || "monthly");
+        setFormIcon(bill.icon || "Receipt");
+        setFormColor(bill.color || "#6366f1");
+        setFormNotes(bill.notes || "");
+        setIsAddModalOpen(true);
     }
 
     const iconOptions = [
@@ -667,6 +692,7 @@ export default function BillsPage() {
                                                     setSelectedBillHistory(b);
                                                     setIsHistoryModalOpen(true);
                                                 }}
+                                                onEdit={(b) => populateEditForm(b)}
                                                 isStealthMode={isStealthMode}
                                                 t={t}
                                                 showReminder={needsReminder}
@@ -706,7 +732,7 @@ export default function BillsPage() {
                                 className="fixed bottom-0 left-0 right-0 z-[999999] bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl max-w-[500px] mx-auto"
                             >
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-foreground">Tambah Tagihan</h2>
+                                    <h2 className="text-xl font-bold text-foreground">{editingBill ? "Edit Tagihan" : "Tambah Tagihan"}</h2>
                                     <button
                                         onClick={() => { setIsAddModalOpen(false); resetForm(); }}
                                         className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -813,7 +839,7 @@ export default function BillsPage() {
                                     </div>
 
                                     <button
-                                        onClick={handleAddBill}
+                                        onClick={handleSaveBill}
                                         disabled={isSubmitting || !formName || !formAmount}
                                         className={cn(
                                             "w-full py-4 rounded-xl font-bold text-white text-sm mt-2 transition-all",
