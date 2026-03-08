@@ -10,6 +10,7 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/UI";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier } from "@/lib/tier-gate";
@@ -56,6 +57,7 @@ export default function BillsPage() {
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
     const filteredBills = useMemo(() => {
         let filtered = bills;
@@ -199,18 +201,20 @@ export default function BillsPage() {
         }
     }
 
-    async function handleDelete(id: number) {
-        if (!confirm(t("bills.confirmDelete"))) return;
+    async function handleDelete() {
+        if (!confirmDeleteId) return;
         try {
-            const res = await apiFetch(`/api/bills/${id}`, { method: "DELETE" });
+            const res = await apiFetch(`/api/bills/${confirmDeleteId}`, { method: "DELETE" });
             const result = await res.json();
             if (result.success) {
-                setBills(prev => prev.filter(b => b.id !== id));
+                setBills(prev => prev.filter(b => b.id !== confirmDeleteId));
                 toast.success("Tagihan dihapus");
             }
         } catch (error) {
             console.error("Error deleting bill:", error);
-            toast.error(t("bills.errorAdd"));
+            toast.error(t("bills.errorDelete") || "Gagal menghapus tagihan");
+        } finally {
+            setConfirmDeleteId(null);
         }
     }
 
@@ -657,7 +661,7 @@ export default function BillsPage() {
                                                 key={bill.id}
                                                 bill={bill}
                                                 index={i}
-                                                onDelete={handleDelete}
+                                                onDelete={(id) => setConfirmDeleteId(id)}
                                                 onToggle={handleTogglePaid}
                                                 onShowHistory={(b) => {
                                                     setSelectedBillHistory(b);
@@ -825,6 +829,15 @@ export default function BillsPage() {
                     )}
                 </AnimatePresence>
             </Portal>
+
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={handleDelete}
+                title="Hapus Tagihan"
+                description="Yakin ingin menghapus tagihan ini?"
+                confirmText="Hapus"
+            />
         </div>
     );
 }

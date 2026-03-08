@@ -15,6 +15,7 @@ import {
 } from "@/frontend/components/BudgetForms";
 import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { GoalWithProgress } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSavingsData } from "@/frontend/hooks/useSavingsData";
@@ -207,6 +208,7 @@ export default function SavingsPage() {
     const [editingGoal, setEditingGoal] = useState<GoalWithProgress | null>(null);
     const [goalInitialData, setGoalInitialData] = useState<GoalTemplateData | null>(null);
     const [showTemplates, setShowTemplates] = useState(false);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const toast = useToast();
 
     function handleTemplateClick(template: typeof GOAL_TEMPLATES[0]) {
@@ -226,11 +228,11 @@ export default function SavingsPage() {
         setIsGoalModalOpen(true);
     }
 
-    async function handleDeleteGoal(id: number) {
-        if (!confirm("Yakin mau hapus goal ini?")) return;
+    async function handleDeleteGoal() {
+        if (!confirmDeleteId) return;
 
         try {
-            const response = await apiFetch(`/api/goals/${id}`, {
+            const response = await apiFetch(`/api/goals/${confirmDeleteId}`, {
                 method: "DELETE",
             });
 
@@ -243,6 +245,8 @@ export default function SavingsPage() {
         } catch (error) {
             console.error("Error deleting goal:", error);
             toast.error("Gagal menghapus", "Terjadi kesalahan");
+        } finally {
+            setConfirmDeleteId(null);
         }
     }
 
@@ -634,7 +638,7 @@ export default function SavingsPage() {
                     setEditingGoal(g);
                 }}
                 onDelete={(id) => {
-                    handleDeleteGoal(id);
+                    setConfirmDeleteId(id);
                     setDetailGoal(null);
                 }}
             />
@@ -652,6 +656,15 @@ export default function SavingsPage() {
                     goal={editingGoal}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={handleDeleteGoal}
+                title="Hapus Goal"
+                description="Yakin ingin menghapus goal ini? Target yang sudah tercapai tidak akan dikembalikan."
+                confirmText="Hapus"
+            />
         </div>
     );
 }
