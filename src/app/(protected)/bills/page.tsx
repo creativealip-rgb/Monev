@@ -6,15 +6,13 @@ import { BillHistoryModal } from "@/frontend/components/DetailModalsVerified";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/UI";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
-import { UserTier, canCreateBill, getTierConfig } from "@/lib/tier-gate";
-import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
+import { UserTier } from "@/lib/tier-gate";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { BillItem } from "./components/BillItem";
 
@@ -42,8 +40,6 @@ export default function BillsPage() {
     const { data: session } = useSession();
     // @ts-ignore
     const userTier = (session?.user?.tier as UserTier) || "miskin";
-    const tierConfig = getTierConfig(userTier);
-
     // Form state
     const [formName, setFormName] = useState("");
     const [formAmount, setFormAmount] = useState("");
@@ -549,7 +545,6 @@ export default function BillsPage() {
                                     }
 
                                     for (let day = 1; day <= daysInMonth; day++) {
-                                        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                                         const billsOnDay = bills.filter(b => {
                                             const dueDate = new Date(year, month, b.dueDate);
                                             return dueDate.getDate() === day && dueDate.getMonth() === month;

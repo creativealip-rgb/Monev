@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Sparkles, AlertCircle, TrendingUp, RefreshCw } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Plus, ShieldAlert, ArrowLeft, Flame, X, Zap, TrendingUp, RotateCcw } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Plus, ShieldAlert, ArrowLeft, Flame, Zap, TrendingUp, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
@@ -16,7 +15,6 @@ import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
-import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 import { useI18n } from "@/frontend/lib/i18n-context";
 
 interface Category {
@@ -54,11 +52,10 @@ const categoryIcons: Record<string, string> = {
     "Tabungan": "🏦"
 };
 
-const BUDGET_TEMPLATES: Array<{ id: string; name: string; description: string; icon: string; color: string; allocations: Array<{ category: string; pct: number }> }> = [
+const BUDGET_TEMPLATES: Array<{ id: string; name: string; icon: string; color: string; allocations: Array<{ category: string; pct: number }> }> = [
     {
         id: "503020",
         name: "50/30/20",
-        description: "Kebutuhan 50%, Keinginan 30%, Tabungan 20%",
         icon: "⚖️",
         color: "from-sky-500 to-cyan-500",
         allocations: [
@@ -73,7 +70,6 @@ const BUDGET_TEMPLATES: Array<{ id: string; name: string; description: string; i
     {
         id: "minimalist",
         name: "Minimalist",
-        description: "Hemat maksimal, spending minimal",
         icon: "🧘",
         color: "from-emerald-500 to-teal-500",
         allocations: [
@@ -86,7 +82,6 @@ const BUDGET_TEMPLATES: Array<{ id: string; name: string; description: string; i
     {
         id: "aggressive",
         name: "Aggressive Saver",
-        description: "Tabungan & investasi prioritas",
         icon: "🚀",
         color: "from-amber-500 to-orange-500",
         allocations: [

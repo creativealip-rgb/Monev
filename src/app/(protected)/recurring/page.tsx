@@ -3,14 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ArrowLeft, Plus, ToggleLeft, ToggleRight, Trash2, Repeat,
-    Calendar, TrendingDown, TrendingUp, FileText, DollarSign,
-    Tag, Clock, Sparkles, X
+    Calendar, TrendingDown, TrendingUp, X
 } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";

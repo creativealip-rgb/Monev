@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { FeatureItem } from "@/frontend/components/FeatureItem";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { TransferModal } from "@/frontend/components/TransferModal";
-import { useHeroTheme } from "@/frontend/lib/hero-theme";
 import { TransactionListSkeleton, NoTransactionsEmpty, useToast } from "@/frontend/components/UI";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { DailyInsight } from "@/frontend/components/DailyInsight";

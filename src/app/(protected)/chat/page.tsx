@@ -13,17 +13,15 @@ import {
     Camera,
     Mic,
     TrendingUp,
-    Loader2,
     X
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
-import { useToast, ErrorEmpty } from "@/frontend/components/UI";
+import { useToast } from "@/frontend/components/UI";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useSession } from "next-auth/react";
 import { UserTier, canUseAI, getTierConfig } from "@/lib/tier-gate";
-import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 import { QuickReplies } from "@/frontend/components/QuickReplies";
 import { SmartInput } from "@/frontend/components/SmartInput";
 

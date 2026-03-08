@@ -21,13 +21,6 @@ import { useSavingsData } from "@/frontend/hooks/useSavingsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";
 
-interface Category {
-    id: number;
-    name: string;
-    color: string;
-    type: "expense" | "income";
-}
-
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Edit3, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {

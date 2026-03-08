@@ -1,9 +1,9 @@
 "use client";
 
 import {
-    ChevronLeft, ChevronRight, LogOut, Bell, Shield, Moon, Wallet, X, Check, Globe,
-    User as UserIcon, MessageCircle, Smartphone, Crown, ShieldCheck, Database, FileJson, FileSpreadsheet, Upload,
-    CheckCircle2, Copy, AlertCircle, ArrowLeft, Key, Zap, Info, Lock, Sparkles, Fingerprint, Trophy, Flame, Download,
+    ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, X, Check, Globe,
+    User as UserIcon, MessageCircle, Smartphone, Crown, ShieldCheck, Database,
+    CheckCircle2, ArrowLeft, Key, Zap, Lock, Sparkles, Fingerprint, Trophy, Flame, Download,
     Tag, Plus, Trash2
 } from "lucide-react";
 import { LanguageSelector } from "@/frontend/components/LanguageSelector";
