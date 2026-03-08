@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ArrowLeft, Plus, Users, TrendingDown, TrendingUp, Check,
-    Trash2, Calendar, X, Wallet, Banknote
+    Trash2, Calendar, X, Wallet, Banknote, Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -76,11 +76,13 @@ function DebtCard({
     onMarkPaid,
     onDelete,
     onPartialPayment,
+    onEdit,
 }: {
     debt: Debt;
     onMarkPaid: (id: number, status: "unpaid" | "paid", debt?: Debt) => void;
     onDelete: (id: number) => void;
     onPartialPayment: (debt: Debt) => void;
+    onEdit?: (debt: Debt) => void;
 }) {
     const isOwe = debt.direction === "owe";
     const isPaid = debt.status === "paid";
@@ -246,6 +248,15 @@ function DebtCard({
                             <X size={14} className="text-slate-500" />
                         </button>
                     )}
+                    {onEdit && (
+                        <button
+                            onClick={() => onEdit(debt)}
+                            className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/40 flex items-center justify-center transition-colors"
+                            title="Edit"
+                        >
+                            <Pencil size={14} className="text-sky-500" />
+                        </button>
+                    )}
                     <button
                         onClick={() => onDelete(debt.id)}
                         className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center justify-center transition-colors"
@@ -264,10 +275,12 @@ function AddDebtSheet({
     isOpen,
     onClose,
     onSuccess,
+    editingDebt,
 }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    editingDebt?: Debt | null;
 }) {
     const [direction, setDirection] = useState<"owe" | "owed">("owe");
     const [debtorName, setDebtorName] = useState("");
@@ -277,6 +290,18 @@ function AddDebtSheet({
     const [loading, setLoading] = useState(false);
     const toast = useToast();
 
+    useEffect(() => {
+        if (editingDebt) {
+            setDirection(editingDebt.direction);
+            setDebtorName(editingDebt.debtorName);
+            setAmount(editingDebt.amount.toString());
+            setDescription(stripOrigTag(editingDebt.description));
+            setDueDate(editingDebt.dueDate ? new Date(editingDebt.dueDate).toISOString().split("T")[0] : "");
+        } else {
+            reset();
+        }
+    }, [editingDebt]);
+
     const reset = () => {
         setDebtorName(""); setAmount(""); setDescription(""); setDueDate(""); setDirection("owe");
     };
@@ -285,19 +310,30 @@ function AddDebtSheet({
         if (!debtorName.trim() || !amount) return;
         setLoading(true);
         try {
-            const res = await apiFetch("/api/debts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    debtorName,
-                    amount: parseFloat(amount),
-                    description,
-                    dueDate: dueDate || null,
-                    direction,
-                }),
-            });
-            if (res.ok) {
-                toast.success("Berhasil", direction === "owe" ? "Hutang dicatat!" : "Piutang dicatat!");
+            const body = {
+                debtorName,
+                amount: parseFloat(amount),
+                description,
+                dueDate: dueDate || null,
+                direction,
+            };
+
+            let res;
+            if (editingDebt) {
+                res = await apiFetch(`/api/debts/${editingDebt.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            } else {
+                res = await apiFetch("/api/debts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            }
+            if (res.ok || res.status === 200) {
+                toast.success("Berhasil", editingDebt ? "Hutang diperbarui!" : direction === "owe" ? "Hutang dicatat!" : "Piutang dicatat!");
                 reset();
                 onClose();
                 onSuccess();
@@ -325,7 +361,7 @@ function AddDebtSheet({
                             className="fixed bottom-0 left-0 right-0 z-[999999] bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl max-w-[500px] mx-auto"
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-foreground">Catat Hutang / Piutang</h2>
+                                <h2 className="text-xl font-bold text-foreground">{editingDebt ? "Edit" : "Catat"} Hutang / Piutang</h2>
                                 <button
                                     onClick={onClose}
                                     className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -418,7 +454,7 @@ function AddDebtSheet({
                                         (loading || !debtorName.trim() || !amount) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
-                                    {loading ? "Menyimpan..." : "Simpan"}
+                                    {loading ? "Menyimpan..." : editingDebt ? "Perbarui" : "Simpan"}
                                 </button>
                             </div>
                         </motion.div>
@@ -723,6 +759,7 @@ export default function DebtsPage() {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [settleDialog, setSettleDialog] = useState<{ debt: Debt } | null>(null);
     const [partialPaymentDebt, setPartialPaymentDebt] = useState<Debt | null>(null);
+    const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
     const toast = useToast();
 
     const loadDebts = useCallback(async () => {
@@ -941,6 +978,7 @@ export default function DebtsPage() {
                                     onMarkPaid={handleMarkPaid}
                                     onDelete={handleDelete}
                                     onPartialPayment={setPartialPaymentDebt}
+                                    onEdit={(d) => setEditingDebt(d)}
                                 />
                             ))}
                         </AnimatePresence>
@@ -949,9 +987,10 @@ export default function DebtsPage() {
             </div>
 
             <AddDebtSheet
-                isOpen={showAddSheet}
-                onClose={() => setShowAddSheet(false)}
-                onSuccess={loadDebts}
+                isOpen={showAddSheet || !!editingDebt}
+                onClose={() => { setShowAddSheet(false); setEditingDebt(null); }}
+                onSuccess={() => { loadDebts(); setEditingDebt(null); }}
+                editingDebt={editingDebt}
             />
 
             <PartialPaymentSheet
