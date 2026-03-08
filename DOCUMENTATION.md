@@ -1124,7 +1124,8 @@ Semua komponen di `src/frontend/components/` menggunakan `"use client"`.
 
 | Komponen | File | Deskripsi |
 |---|---|---|
-| `BudgetForms` | `BudgetForms.tsx` | Form buat/edit anggaran |
+| `BudgetForms` | `BudgetForms.tsx` (289 lines) | Form buat/edit anggaran (AddBudgetForm, EditBudgetForm) |
+| `GoalForms` | `GoalForms.tsx` (393 lines) | Form tambah/edit goals (AddGoalForm, EditGoalForm) - split dari BudgetForms |
 | `DetailModals` | `DetailModals.tsx` | Modal detail (transaksi, budget, dll) |
 | `DetailModalsVerified` | `DetailModalsVerified.tsx` | Modal detail dengan verifikasi |
 | `SplitBillFlow` | `SplitBillFlow.tsx` | Alur split bill multi-step |
@@ -1216,6 +1217,18 @@ Komponen yang di-extract:
 - `DebtCard` - Display kartu dengan partial payment progress
 - `AddDebtSheet` - Form tambah/edit dengan auto-populate
 - `PartialPaymentSheet` - Sheet pembayaran bertahap
+
+**Result**: debts/page.tsx reduced from 1,059 → 325 lines (69% reduction)
+
+#### BudgetForms Split
+
+```
+src/frontend/components/
+├── BudgetForms.tsx (289 lines)  # AddBudgetForm, EditBudgetForm only
+└── GoalForms.tsx (393 lines)    # AddGoalForm, EditGoalForm (extracted)
+```
+
+**Result**: BudgetForms.tsx reduced from 756 → 289 lines (62% reduction)
 
 ### `useDashboardData`
 
