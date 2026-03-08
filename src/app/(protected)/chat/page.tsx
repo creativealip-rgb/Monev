@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import Markdown from "react-markdown";
 import { useToast } from "@/frontend/components/UI";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useSession } from "next-auth/react";
@@ -70,6 +71,16 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const toast = useToast();
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
+    const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+    const handleClearChat = () => {
+        if (session?.user?.id) {
+            const storageKey = `monev_chat_history_${session.user.id}`;
+            localStorage.removeItem(storageKey);
+            initializeChat(storageKey);
+        }
+        setShowClearConfirm(false);
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -332,15 +343,7 @@ export default function ChatPage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => {
-                            if (confirm("Hapus semua riwayat chat?")) {
-                                if (session?.user?.id) {
-                                    const storageKey = `monev_chat_history_${session.user.id}`;
-                                    localStorage.removeItem(storageKey);
-                                    initializeChat(storageKey); // Reset chat state without page reload
-                                }
-                            }
-                        }}
+                        onClick={() => setShowClearConfirm(true)}
                         className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-all"
                     >
                         <MoreVertical size={16} />
@@ -614,6 +617,15 @@ export default function ChatPage() {
                     }}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={showClearConfirm}
+                onClose={() => setShowClearConfirm(false)}
+                onConfirm={handleClearChat}
+                title="Hapus Riwayat Chat"
+                description="Yakin ingin menghapus semua riwayat chat? Tindakan ini tidak dapat dibatalkan."
+                confirmText="Hapus"
+            />
         </div>
     );
 }

@@ -63,6 +63,7 @@ export default function TransactionsPage() {
 
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<TransactionWithCategory | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<TransactionWithCategory | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -340,9 +341,7 @@ export default function TransactionsPage() {
         setSelectedIds(newSelected);
     }
 
-    async function bulkDelete() {
-        if (!confirm(`Hapus ${selectedIds.size} transaksi?`)) return;
-
+    async function executeBulkDelete() {
         setDeletingId(-1); // Indicate bulk delete
         try {
             const ids = Array.from(selectedIds);
@@ -790,7 +789,7 @@ tr:nth-child(even){background:#fafafa}
                     filteredTransactionsLength={filteredTransactions.length}
                     toggleSelectAll={toggleSelectAll}
                     bulkExport={bulkExport}
-                    bulkDelete={bulkDelete}
+                    bulkDelete={() => setShowBulkDeleteConfirm(true)}
                     deletingId={deletingId}
                 />
             )}
@@ -875,6 +874,16 @@ tr:nth-child(even){background:#fafafa}
                 title="Hapus Transaksi"
                 description="Transaksi ini akan dihapus secara permanen. Anda yakin?"
                 loading={!!deletingId}
+            />
+
+            <ConfirmDialog
+                isOpen={showBulkDeleteConfirm}
+                onClose={() => setShowBulkDeleteConfirm(false)}
+                onConfirm={executeBulkDelete}
+                title="Hapus Beberapa Transaksi"
+                description={`Yakin ingin menghapus ${selectedIds.size} transaksi? Tindakan ini tidak dapat dibatalkan.`}
+                confirmText="Hapus Semua"
+                loading={deletingId === -1}
             />
 
             {/* Undo Delete Banner */}
