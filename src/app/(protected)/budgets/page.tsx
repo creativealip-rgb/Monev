@@ -9,6 +9,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { BudgetChart } from "./components/BudgetChart";
 import { BudgetPieChart } from "./components/BudgetPieChart";
 import { BudgetSummary } from "@/types";
@@ -130,6 +131,7 @@ export default function BudgetsPage() {
 
     const [prevBudgets, setPrevBudgets] = useState<BudgetSummary[]>([]);
     const [rolloverEnabled, setRolloverEnabled] = useState<Record<number, boolean>>({});
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
@@ -224,16 +226,16 @@ export default function BudgetsPage() {
         }
     }
 
-    async function handleDeleteBudget(id: number) {
-        if (!confirm(t("budgets.confirmDelete"))) return;
+    async function handleDeleteBudget() {
+        if (!confirmDeleteId) return;
 
         try {
-            const response = await apiFetch(`/api/budgets/${id}`, {
+            const response = await apiFetch(`/api/budgets/${confirmDeleteId}`, {
                 method: "DELETE",
             });
 
             if (response.ok) {
-                setBudgets(budgets.filter(b => b.id !== id));
+                setBudgets(budgets.filter(b => b.id !== confirmDeleteId));
                 toast.success(t("budgets.deleteBudget"));
             } else {
                 toast.error(t("common.failed"), t("budgets.errorDelete") || "Gagal menghapus anggaran");
@@ -241,6 +243,8 @@ export default function BudgetsPage() {
         } catch (error) {
             console.error("Error deleting budget:", error);
             toast.error(t("common.failed"), t("budgets.errorDelete") || "Gagal menghapus anggaran");
+        } finally {
+            setConfirmDeleteId(null);
         }
     }
 
@@ -674,7 +678,7 @@ export default function BudgetsPage() {
                     setEditingBudget(b);
                 }}
                 onDelete={(id) => {
-                    handleDeleteBudget(id);
+                    setConfirmDeleteId(id);
                     setDetailBudget(null);
                 }}
             />
@@ -692,6 +696,15 @@ export default function BudgetsPage() {
                     budget={editingBudget}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={handleDeleteBudget}
+                title="Hapus Anggaran"
+                description={t("budgets.confirmDelete") || "Yakin ingin menghapus anggaran ini?"}
+                confirmText="Hapus"
+            />
         </div>
     );
 }
