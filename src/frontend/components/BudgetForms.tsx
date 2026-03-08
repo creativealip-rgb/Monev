@@ -8,6 +8,7 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import { BudgetSummary, Goal } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useI18n } from "@/frontend/lib/i18n-context";
 
 interface Category {
     id: number;
@@ -27,6 +28,7 @@ interface AddBudgetFormProps {
 
 // Portal helper safely handled within the component or usage
 export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, year }: AddBudgetFormProps) {
+    const { t } = useI18n();
     const [amount, setAmount] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
@@ -37,7 +39,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
 
     const handleSubmit = async () => {
         if (!selectedCategory || !amount || parseFloat(amount) <= 0) {
-            setError("Pilih kategori dan masukkan nominal");
+            setError(t("budgets.errorSelect"));
             return;
         }
 
@@ -65,10 +67,10 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                 setAmount("");
                 setSelectedCategory(null);
             } else {
-                setError(result.error || "Gagal menambah budget");
+                setError(result.error || t("budgets.errorAdd"));
             }
         } catch (err) {
-            setError("Gagal menambah budget");
+            setError(t("budgets.errorAdd"));
         } finally {
             setLoading(false);
         }
@@ -97,7 +99,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Budget</h2>
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{t("budgets.addBudget")}</h2>
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             <X size={16} />
                         </button>
@@ -113,7 +115,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                     <div className="space-y-4">
                         <div>
                             <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
-                                Pilih Kategori
+                                {t("budgets.selectCategory")}
                             </label>
                             <div className="flex gap-2 overflow-x-auto pb-3 -mx-1 px-1">
                                 {expenseCategories.map((cat) => (
@@ -141,7 +143,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
 
                         <div>
                             <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">
-                                Target Budget (Bulanan)
+                                {t("budgets.targetBudget")}
                             </label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
@@ -157,8 +159,8 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700">
                             <div>
-                                <p className="text-[13px] font-bold text-slate-900 dark:text-white">Aktifkan Rollover</p>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400">Sisa budget bulan ini akan ditambah ke bulan depan</p>
+                                <p className="text-[13px] font-bold text-slate-900 dark:text-white">{t("budgets.rollover")}</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400">{t("budgets.rolloverHint")}</p>
                             </div>
                             <button
                                 onClick={() => setEnableRollover(!enableRollover)}
@@ -184,7 +186,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                                     : "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/30 active:scale-[0.98]"
                             )}
                         >
-                            {loading ? "Menyimpan..." : "Simpan Budget"}
+                            {loading ? t("budgets.saving") : t("budgets.save")}
                         </button>
                     </div>
                 </motion.div>

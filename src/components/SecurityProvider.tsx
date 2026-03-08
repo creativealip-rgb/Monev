@@ -324,7 +324,7 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
 
     // RE-AUTHENTICATION MODAL
     const ReauthModal = reauthPromise && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center px-6">
+        <div className="fixed inset-0 z-[2000000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center px-6">
             <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-white/20">
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-amber-500 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg shadow-amber-500/20">
@@ -390,7 +390,7 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
 
     // LOCK SCREEN UI
     const LockScreen = (isLocked && isEnabled && hasPin) && (
-        <div className="fixed inset-0 z-[99999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-6">
+        <div className="fixed inset-0 z-[2000000] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-6">
             <div className="w-full max-w-sm">
                 <div className="text-center mb-10">
                     <div className="w-20 h-20 bg-blue-600 rounded-3xl mx-auto flex items-center justify-center text-white mb-6 shadow-xl shadow-blue-500/30">

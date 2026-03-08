@@ -15,6 +15,7 @@ import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBill, getTierConfig } from "@/lib/tier-gate";
 import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
+import { useI18n } from "@/frontend/lib/i18n-context";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     Receipt, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle,
@@ -38,20 +39,20 @@ function BillIcon({ name, color, size = 20 }: { name: string; color: string; siz
     return <Icon size={size} color={color} />;
 }
 
-function getStatusInfo(bill: Bill) {
+function getStatusInfo(bill: Bill, t: (key: string) => string) {
     const today = new Date().getDate();
     const daysUntilDue = bill.dueDate - today;
 
     if (bill.isPaid) {
-        return { label: "Lunas", color: "emerald", badge: "bg-emerald-50 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" };
+        return { label: t("bills.paid"), color: "emerald", badge: "bg-emerald-50 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" };
     }
     if (daysUntilDue < 0) {
-        return { label: "Terlambat", color: "rose", badge: "bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800" };
+        return { label: t("bills.overdue"), color: "rose", badge: "bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800" };
     }
     if (daysUntilDue <= 3) {
-        return { label: `${daysUntilDue} hari lagi`, color: "amber", badge: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" };
+        return { label: `${daysUntilDue} ${t("bills.daysLeft")}`, color: "amber", badge: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" };
     }
-    return { label: `Tgl ${bill.dueDate}`, color: "slate", badge: "bg-slate-50 dark:bg-slate-800 text-muted-foreground border-slate-200 dark:border-slate-700" };
+    return { label: `${t("bills.dueDateLabel")} ${bill.dueDate}`, color: "slate", badge: "bg-slate-50 dark:bg-slate-800 text-muted-foreground border-slate-200 dark:border-slate-700" };
 }
 
 function BillItem({
@@ -60,7 +61,8 @@ function BillItem({
     onDelete,
     onToggle,
     onShowHistory,
-    isStealthMode
+    isStealthMode,
+    t
 }: {
     bill: Bill;
     index: number;
@@ -68,11 +70,12 @@ function BillItem({
     onToggle: (id: number, e: React.MouseEvent) => void;
     onShowHistory: (bill: Bill) => void;
     isStealthMode: boolean;
+    t: (key: string) => string;
 }) {
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
-    const status = getStatusInfo(bill);
+    const status = getStatusInfo(bill, t);
     const today = new Date().getDate();
     const daysLeft = bill.dueDate - today;
     const isOverdue = daysLeft < 0 && !bill.isPaid;
@@ -116,7 +119,7 @@ function BillItem({
                         {bill.name}
                     </span>
                     <p className="text-xs text-muted-foreground tabular-nums">
-                        {bill.frequency === "monthly" ? "Bulanan" : bill.frequency === "weekly" ? "Mingguan" : "Tahunan"}
+                        {bill.frequency === "monthly" ? t("bills.frequency.monthly") : bill.frequency === "weekly" ? t("bills.frequency.weekly") : t("bills.frequency.yearly")}
                     </p>
                 </div>
                 <div className="text-right pr-2">
@@ -152,7 +155,7 @@ function BillItem({
 
             {bill.isPaid && (
                 <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
-                    <Check size={12} /> Lunas
+                    <Check size={12} /> {t("bills.paid")}
                 </p>
             )}
 
@@ -164,7 +167,7 @@ function BillItem({
                         onShowHistory(bill);
                     }}
                     className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
-                    title="Riwayat"
+                    title={t("bills.history")}
                 >
                     <History size={14} />
                 </button>
@@ -174,7 +177,7 @@ function BillItem({
                         onDelete(bill.id);
                     }}
                     className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center transition-colors"
-                    title="Hapus"
+                    title={t("bills.deleteBill")}
                 >
                     <Trash2 size={14} />
                 </button>
@@ -184,6 +187,7 @@ function BillItem({
 }
 
 export default function BillsPage() {
+    const { t } = useI18n();
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all");
@@ -282,7 +286,7 @@ export default function BillsPage() {
             if (result.success) {
                 const bill = bills.find(b => b.id === id);
                 setBills(prev => prev.map(b => b.id === id ? { ...b, isPaid: !b.isPaid } : b));
-                toast.success(bill?.isPaid ? "Tagihan dibatalkan" : "Tagihan lunas!");
+                toast.success(bill?.isPaid ? t("bills.markAsUnpaid") : t("bills.markAsPaid"));
             }
         } catch (error) {
             console.error("Error toggling bill:", error);
@@ -291,7 +295,7 @@ export default function BillsPage() {
     }
 
     async function handleDelete(id: number) {
-        if (!confirm("Yakin mau hapus tagihan ini?")) return;
+        if (!confirm(t("bills.confirmDelete"))) return;
         try {
             const res = await apiFetch(`/api/bills/${id}`, { method: "DELETE" });
             const result = await res.json();
@@ -301,7 +305,7 @@ export default function BillsPage() {
             }
         } catch (error) {
             console.error("Error deleting bill:", error);
-            toast.error("Gagal menghapus");
+            toast.error(t("bills.errorAdd"));
         }
     }
 
@@ -346,8 +350,8 @@ export default function BillsPage() {
     }
 
     const iconOptions = [
-        { name: "Receipt", label: "Tagihan" },
-        { name: "Zap", label: "Listrik" },
+        { name: "Receipt", label: t("bills.title") },
+        { name: "Zap", label: t("bills.frequency.yearly") },
         { name: "Wifi", label: "Internet" },
         { name: "Tv", label: "Streaming" },
         { name: "Music", label: "Musik" },
@@ -691,6 +695,7 @@ export default function BillsPage() {
                                                     setIsHistoryModalOpen(true);
                                                 }}
                                                 isStealthMode={isStealthMode}
+                                                t={t}
                                             />
                                         );
                                     })}

@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next dev",
+    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next dev --webpack",
     "dev:clean": "npm run kill && npm run dev",
     "dev:reset": "npm run kill && npm run clean && npm run dev",
     "kill": "taskkill /F /IM node.exe",
