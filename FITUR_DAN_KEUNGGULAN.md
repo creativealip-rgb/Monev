@@ -1394,7 +1394,9 @@ OUTCOME:
 ✅ **Indonesia-First** - UI in Indonesian, pricing in IDR, payment methods lokal
 ✅ **Affordable Pricing** - Tier gratis generous, Pro cuma Rp 50k/bulan
 ✅ **Full Edit Support** - Edit semua entri: akun, budget, hutang, tagihan, recurring, goals
-✅ **Modular Architecture** - Split components untuk maintainability (debts: 1059→325 lines)
+✅ **Modular Architecture** - Split components untuk maintainability:
+   - Debts page: 1,059 → 325 lines (69% reduction)
+   - BudgetForms: 756 → 289 lines (62% reduction)
 ✅ **Type-Safe Auth** - Session type augmentation tanpa @ts-ignore
 
 ### Target Market
