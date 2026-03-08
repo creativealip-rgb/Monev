@@ -609,7 +609,7 @@ export default function BillsPage() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <div className="w-2 h-2 rounded-full bg-amber-400" />
-                                    <span className="text-[10px] text-muted-foreground">Upcoming</span>
+                                    <span className="text-[10px] text-muted-foreground">Mendatang</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <div className="w-2 h-2 rounded-full bg-rose-400" />

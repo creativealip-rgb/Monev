@@ -401,7 +401,7 @@ export default function SimulationsPage() {
                                             result.riskLevel === "high" ? "bg-rose-500" :
                                                 result.riskLevel === "medium" ? "bg-amber-500" : "bg-emerald-500"
                                         )}>
-                                            Risk: {result.riskLevel}
+                                            Risiko: {result.riskLevel}
                                         </div>
 
                                         <div className="space-y-6 pt-4">
@@ -418,14 +418,14 @@ export default function SimulationsPage() {
                                                     <p className="text-xs font-bold">{result.runwayImpact}</p>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Financial Goals</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Target Keuangan</p>
                                                     <p className="text-xs font-bold">{result.goalImpact}</p>
                                                 </div>
                                             </div>
 
                                             <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20">
                                                 <h3 className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase mb-2 flex items-center gap-1.5">
-                                                    <CheckCircle2 size={14} /> AI Advisor Advice
+                                                    <CheckCircle2 size={14} /> Saran AI Advisor
                                                 </h3>
                                                 <p className="text-xs font-medium italic text-purple-800 dark:text-purple-300 leading-relaxed">
                                                     &ldquo;{result.advice}&rdquo;
@@ -559,7 +559,7 @@ export default function SimulationsPage() {
                                                                         )}
                                                                         {item.result.goalImpact && (
                                                                             <div className="space-y-0.5">
-                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase">Financial Goals</p>
+                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase">Target Keuangan</p>
                                                                                 <p className="text-[11px] font-bold">{item.result.goalImpact}</p>
                                                                             </div>
                                                                         )}

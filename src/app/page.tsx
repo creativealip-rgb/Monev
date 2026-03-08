@@ -191,9 +191,9 @@ export default function LandingPage() {
                         transition={{ delay: 0.1 }}
                         className="text-6xl md:text-8xl font-black text-slate-900 dark:text-white tracking-[ -0.04em] mb-8 leading-[0.95]"
                     >
-                        Master Your Money <br />
+                        Kuasai Keuanganmu <br />
                         <span className="text-sky-500 bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-indigo-600">
-                            with AI Logic.
+                            dengan AI Cerdas.
                         </span>
                     </motion.h1>
 
@@ -228,10 +228,10 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] mb-12">DIBUAT UNTUK GENERASI MODERN</p>
                     <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
-                        <div className="text-2xl font-black text-slate-400">FREELANCERS</div>
-                        <div className="text-2xl font-black text-slate-400">FOUNDERS</div>
-                        <div className="text-2xl font-black text-slate-400">SAVERS</div>
-                        <div className="text-2xl font-black text-slate-400">INVESTORS</div>
+                        <div className="text-2xl font-black text-slate-400">PEKERJA LEPAS</div>
+                        <div className="text-2xl font-black text-slate-400">PENDIRI</div>
+                        <div className="text-2xl font-black text-slate-400">PENABUNG</div>
+                        <div className="text-2xl font-black text-slate-400">INVESTOR</div>
                     </div>
                 </div>
             </section>
@@ -308,7 +308,7 @@ export default function LandingPage() {
                                 {[
                                     { step: "01", title: "Registrasi", desc: "Buat akun dalam hitungan detik." },
                                     { step: "02", title: "Smart Setup", desc: "Hubungkan dengan Telegram Bot atau pilih kategori." },
-                                    { step: "03", title: "Master Your Money", desc: "Mulai mencatat dan raih kebebasan finansial." }
+                                    { step: "03", title: "Kuasai Keuanganmu", desc: "Mulai mencatat dan raih kebebasan finansial." }
                                 ].map((item, i) => (
                                     <div key={i} className="flex gap-6 items-start">
                                         <span className="text-4xl font-black opacity-30 tracking-tighter">{item.step}</span>
@@ -355,7 +355,7 @@ export default function LandingPage() {
                         <Link href="/pricing" className="hover:text-sky-500 transition-colors">Harga</Link>
                     </div>
                     <p className="text-sm text-slate-400 font-bold">
-                        &copy; {new Date().getFullYear()} Monev. All rights reserved.
+                        &copy; {new Date().getFullYear()} Monev. Hak cipta dilindungi.
                     </p>
                 </div>
             </footer>

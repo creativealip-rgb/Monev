@@ -356,7 +356,7 @@ export default function RegisterPage() {
                                 value={formData.name}
                                 onChange={handleInputChange}
                                 onBlur={handleBlur}
-                                placeholder="John Doe"
+                                placeholder="Budi Santoso"
                                 autoComplete="name"
                                 aria-invalid={errors.name ? "true" : "false"}
                                 aria-describedby={errors.name ? "name-error" : undefined}

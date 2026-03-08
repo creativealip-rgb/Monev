@@ -244,7 +244,7 @@ export default function PricingPage() {
                         <span className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">Monev</span>
                     </div>
                     <p className="text-sm text-slate-400 font-bold">
-                        &copy; {new Date().getFullYear()} Monev. All rights reserved.
+                        &copy; {new Date().getFullYear()} Monev. Hak cipta dilindungi.
                     </p>
                 </div>
             </footer>
