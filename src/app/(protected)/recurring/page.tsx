@@ -13,6 +13,7 @@ import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 
 interface RecurringTx {
     id: number;
@@ -47,6 +48,9 @@ export default function RecurringPage() {
     const [showForm, setShowForm] = useState(false);
     const toast = useToast();
 
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
     const [form, setForm] = useState({
         description: "",
         amount: "",
@@ -74,37 +78,70 @@ export default function RecurringPage() {
     useEffect(() => { load(); }, [load]);
 
     const handleToggle = async (item: RecurringTx) => {
-        await apiFetch(`/api/recurring/${item.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isActive: !item.isActive }),
-        });
-        toast.success(item.isActive ? "Dinonaktifkan" : "Diaktifkan", item.description);
-        load();
+        try {
+            const res = await apiFetch(`/api/recurring/${item.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isActive: !item.isActive }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success(item.isActive ? "Dinonaktifkan" : "Diaktifkan", item.description);
+                load();
+            } else {
+                toast.error("Gagal", result.error || "Gagal mengubah status");
+            }
+        } catch {
+            toast.error("Gagal", "Terjadi kesalahan jaringan");
+        }
     };
 
-    const handleDelete = async (id: number) => {
-        await apiFetch(`/api/recurring/${id}`, { method: "DELETE" });
-        toast.success("Dihapus", "Transaksi berulang dihapus");
-        load();
+    const handleDelete = (id: number) => {
+        setConfirmDeleteId(id);
+    };
+
+    const executeDelete = async (id: number) => {
+        setDeletingId(id);
+        try {
+            const res = await apiFetch(`/api/recurring/${id}`, { method: "DELETE" });
+            const result = await res.json();
+            if (result.success) {
+                toast.success("Dihapus", "Transaksi berulang dihapus");
+                load();
+            } else {
+                toast.error("Gagal", result.error || "Gagal menghapus");
+            }
+        } catch {
+            toast.error("Gagal", "Terjadi kesalahan jaringan");
+        } finally {
+            setDeletingId(null);
+            setConfirmDeleteId(null);
+        }
     };
 
     const handleCreate = async () => {
         if (!form.description || !form.amount) return;
-        const res = await apiFetch("/api/recurring", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                ...form,
-                amount: parseFloat(form.amount),
-                categoryId: form.categoryId ? parseInt(form.categoryId) : undefined,
-            }),
-        });
-        if (res.ok) {
-            toast.success("Berhasil! 🎉", "Transaksi berulang ditambahkan");
-            setShowForm(false);
-            setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
-            load();
+        try {
+            const res = await apiFetch("/api/recurring", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...form,
+                    amount: parseFloat(form.amount),
+                    categoryId: form.categoryId ? parseInt(form.categoryId) : undefined,
+                }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success("Berhasil!", "Transaksi berulang ditambahkan");
+                setShowForm(false);
+                setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+                load();
+            } else {
+                toast.error("Gagal", result.error || "Gagal menambahkan");
+            }
+        } catch {
+            toast.error("Gagal", "Terjadi kesalahan jaringan");
         }
     };
 
@@ -367,6 +404,15 @@ export default function RecurringPage() {
                     )}
                 </AnimatePresence>
             </Portal>
+
+            <ConfirmDialog
+                isOpen={!!confirmDeleteId}
+                onClose={() => setConfirmDeleteId(null)}
+                onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
+                title="Hapus Transaksi Berulang"
+                description="Transaksi berulang ini akan dihapus secara permanen. Lanjutkan?"
+                loading={!!deletingId}
+            />
         </div>
     );
 }

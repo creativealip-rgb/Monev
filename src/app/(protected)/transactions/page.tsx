@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { EditTransactionForm } from "@/frontend/components/EditTransactionForm";
 import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
-import { Filter, Search, ArrowLeft, X, Check, Loader2, Download, ChevronDown, Trash2, Square, CheckSquare, Calendar, ArrowUpDown, Upload } from "lucide-react";
+import { Filter, Search, ArrowLeft, X, Check, Loader2, Download, ChevronDown, Trash2, Square, CheckSquare, Calendar, ArrowUpDown, Upload, Undo2, FileText, FileSpreadsheet, AlertTriangle, Eye } from "lucide-react";
 import { CSVImportWizard } from "@/frontend/components/CSVImportWizard";
-import { cn } from "@/frontend/lib/utils";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,13 +23,11 @@ import { useTransactionsData } from "@/frontend/hooks/useTransactionsData";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { enUS, id as idLocale } from "date-fns/locale";
 
-interface Category {
-    id: number;
-    name: string;
-    color: string;
-    icon: string;
-    type: "expense" | "income";
-}
+import { TransactionFilterModal } from "./components/TransactionFilterModal";
+import { TransactionSortMenu } from "./components/TransactionSortMenu";
+import { BulkActionsBar } from "./components/BulkActionsBar";
+
+import type { Category } from "./components/TransactionFilterModal";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -70,7 +68,20 @@ export default function TransactionsPage() {
     const [detailTransaction, setDetailTransaction] = useState<TransactionWithCategory | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const exportMenuRef = useRef<HTMLDivElement>(null);
     const toast = useToast();
+
+    // Undo delete state
+    const [undoBanner, setUndoBanner] = useState(false);
+    const [undoCountdown, setUndoCountdown] = useState(5);
+    const undoTransactionRef = useRef<TransactionWithCategory | null>(null);
+    const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const undoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    // Duplicate detection
+    const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
 
     const { ref: loadMoreRef, inView } = useInView();
 
@@ -93,6 +104,67 @@ export default function TransactionsPage() {
         isFetchingNextPage: boolean;
         refresh: () => Promise<void>;
     };
+
+    const clearUndoTimers = useCallback(() => {
+        if (undoTimerRef.current) {
+            clearTimeout(undoTimerRef.current);
+            undoTimerRef.current = null;
+        }
+        if (undoIntervalRef.current) {
+            clearInterval(undoIntervalRef.current);
+            undoIntervalRef.current = null;
+        }
+    }, []);
+
+    const dismissUndo = useCallback(() => {
+        clearUndoTimers();
+        setUndoBanner(false);
+        undoTransactionRef.current = null;
+    }, [clearUndoTimers]);
+
+    const handleUndo = useCallback(async () => {
+        const txn = undoTransactionRef.current;
+        if (!txn) return;
+
+        clearUndoTimers();
+        setIsRestoring(true);
+
+        try {
+            const response = await apiFetch("/api/transactions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount: txn.amount,
+                    description: txn.description,
+                    merchantName: txn.merchantName,
+                    categoryId: txn.categoryId,
+                    type: txn.type,
+                    paymentMethod: txn.paymentMethod || "cash",
+                    accountId: txn.accountId,
+                    date: txn.createdAt,
+                }),
+            });
+
+            if (response.ok) {
+                toast.success("Transaksi dikembalikan");
+                refresh();
+            } else {
+                toast.error("Gagal mengembalikan", "Coba lagi nanti");
+            }
+        } catch (error) {
+            console.error("Error restoring transaction:", error);
+            toast.error("Gagal mengembalikan", "Terjadi kesalahan");
+        } finally {
+            setIsRestoring(false);
+            setUndoBanner(false);
+            undoTransactionRef.current = null;
+        }
+    }, [clearUndoTimers, toast, refresh]);
+
+    // Cleanup undo timers on unmount
+    useEffect(() => {
+        return () => clearUndoTimers();
+    }, [clearUndoTimers]);
 
     useEffect(() => {
         if (inView && !loading && hasNextPage && !isFetchingNextPage) {
@@ -144,8 +216,42 @@ export default function TransactionsPage() {
         return result;
     }, [transactions, filterCategory, filterType, dateRange, amountRange, sortBy, sortOrder]);
 
+    // Duplicate detection: same amount + same category + same day
+    const duplicateIds = useMemo(() => {
+        const ids = new Set<number>();
+        const seen = new Map<string, number[]>();
+
+        for (const t of transactions) {
+            const dateKey = new Date(t.createdAt)
+                .toISOString().slice(0, 10);
+            const key = `${t.amount}-${t.categoryId}-${dateKey}`;
+            const group = seen.get(key);
+            if (group) {
+                group.push(t.id);
+            } else {
+                seen.set(key, [t.id]);
+            }
+        }
+
+        for (const group of seen.values()) {
+            if (group.length > 1) {
+                group.forEach(id => ids.add(id));
+            }
+        }
+
+        return ids;
+    }, [transactions]);
+
+    const duplicateCount = duplicateIds.size;
+
+    // Apply duplicate filter on top of existing filtered transactions
+    const displayTransactions = useMemo(() => {
+        if (!showDuplicatesOnly) return filteredTransactions;
+        return filteredTransactions.filter(t => duplicateIds.has(t.id));
+    }, [filteredTransactions, showDuplicatesOnly, duplicateIds]);
+
     const groupedTransactions = useMemo(() => {
-        return filteredTransactions.reduce((groups: Record<string, TransactionWithCategory[]>, transaction: TransactionWithCategory) => {
+        return displayTransactions.reduce((groups: Record<string, TransactionWithCategory[]>, transaction: TransactionWithCategory) => {
             try {
                 const dateObj = new Date(transaction.createdAt);
                 const date = isNaN(dateObj.getTime())
@@ -163,7 +269,7 @@ export default function TransactionsPage() {
             }
             return groups;
         }, {} as Record<string, TransactionWithCategory[]>);
-    }, [filteredTransactions]);
+    }, [displayTransactions]);
 
     function handleDelete(id: number) {
         setConfirmDeleteId(id);
@@ -171,6 +277,10 @@ export default function TransactionsPage() {
 
     async function executeDelete(id: number) {
         setDeletingId(id);
+
+        // Find and store the transaction before deleting
+        const deletedTxn = transactions.find(t => t.id === id) || null;
+
         try {
             const response = await apiFetch(`/api/transactions/${id}`, {
                 method: "DELETE",
@@ -178,7 +288,30 @@ export default function TransactionsPage() {
 
             if (response.ok) {
                 refresh();
-                toast.success("Transaksi dihapus");
+
+                // Show undo banner instead of simple toast
+                if (deletedTxn) {
+                    // Clear any existing undo timers
+                    clearUndoTimers();
+                    undoTransactionRef.current = deletedTxn;
+                    setUndoCountdown(5);
+                    setUndoBanner(true);
+
+                    // Countdown interval
+                    undoIntervalRef.current = setInterval(() => {
+                        setUndoCountdown(prev => {
+                            if (prev <= 1) return 0;
+                            return prev - 1;
+                        });
+                    }, 1000);
+
+                    // Auto-dismiss after 5 seconds
+                    undoTimerRef.current = setTimeout(() => {
+                        dismissUndo();
+                    }, 5000);
+                } else {
+                    toast.success("Transaksi dihapus");
+                }
             } else {
                 toast.error("Gagal menghapus", "Coba lagi nanti");
             }
@@ -257,6 +390,107 @@ export default function TransactionsPage() {
         toast.success("Transaksi diperbarui");
     }
 
+    // Close export menu on outside click
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(e.target as Node)
+            ) {
+                setShowExportMenu(false);
+            }
+        }
+        if (showExportMenu) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showExportMenu]);
+
+    function handleExportCSV() {
+        setShowExportMenu(false);
+        const params = new URLSearchParams();
+        if (searchQuery) params.append("search", searchQuery);
+        if (filterCategory !== "all") {
+            params.append("categoryId", filterCategory.toString());
+        }
+
+        const a = document.createElement("a");
+        a.href = `/api/transactions/export/csv?${params.toString()}`;
+        a.download = `transaksi_${format(new Date(), "yyyyMMdd")}.csv`;
+        a.click();
+        toast.success("CSV berhasil diunduh");
+    }
+
+    function handleExportPDF() {
+        setShowExportMenu(false);
+        if (filteredTransactions.length === 0) {
+            toast.error("Tidak ada data", "Tidak ada transaksi untuk diexport");
+            return;
+        }
+
+        const dateLocale = locale === "id" ? idLocale : enUS;
+        const rows = filteredTransactions.map((t) => {
+            const dateStr = format(new Date(t.createdAt), "dd MMM yyyy", {
+                locale: dateLocale,
+            });
+            const type = t.type === "expense"
+                ? "Pengeluaran"
+                : t.type === "income"
+                    ? "Pemasukan"
+                    : "Lainnya";
+            return { dateStr, desc: t.description || "-", cat: t.categoryName || "Lainnya", type, amount: formatCurrency(t.amount) };
+        });
+
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+            toast.error("Popup diblokir", "Izinkan popup untuk export PDF");
+            return;
+        }
+
+        const totalIncome = filteredTransactions
+            .filter((t) => t.type === "income")
+            .reduce((s, t) => s + t.amount, 0);
+        const totalExpense = filteredTransactions
+            .filter((t) => t.type === "expense")
+            .reduce((s, t) => s + t.amount, 0);
+
+        const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>
+<title>Laporan Transaksi - Monev</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;margin:40px;color:#1e293b}
+h1{font-size:20px;margin-bottom:4px}
+.subtitle{color:#64748b;font-size:12px;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f1f5f9;text-align:left;padding:10px 12px;border-bottom:2px solid #e2e8f0;font-weight:600}
+td{padding:8px 12px;border-bottom:1px solid #f1f5f9}
+tr:nth-child(even){background:#fafafa}
+.amount{text-align:right;font-variant-numeric:tabular-nums}
+.summary{margin-top:24px;display:flex;gap:32px;font-size:13px}
+.summary span{font-weight:600}
+.income{color:#16a34a}
+.expense{color:#dc2626}
+@media print{body{margin:20px}button{display:none!important}}
+</style></head><body>
+<h1>Laporan Transaksi</h1>
+<p class="subtitle">Diekspor pada ${format(new Date(), "dd MMMM yyyy, HH:mm", { locale: dateLocale })} &bull; ${filteredTransactions.length} transaksi</p>
+<table>
+<thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Kategori</th><th>Tipe</th><th class="amount">Jumlah</th></tr></thead>
+<tbody>${rows.map(r => `<tr><td>${r.dateStr}</td><td>${r.desc}</td><td>${r.cat}</td><td>${r.type}</td><td class="amount">${r.amount}</td></tr>`).join("")}</tbody>
+</table>
+<div class="summary">
+<div>Pemasukan: <span class="income">${formatCurrency(totalIncome)}</span></div>
+<div>Pengeluaran: <span class="expense">${formatCurrency(totalExpense)}</span></div>
+<div>Selisih: <span>${formatCurrency(totalIncome - totalExpense)}</span></div>
+</div>
+<script>window.onload=function(){window.print()}</script>
+</body></html>`;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        toast.success("PDF siap dicetak");
+    }
+
     return (
         <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
@@ -282,59 +516,14 @@ export default function TransactionsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Sort Button */}
-                        <div className="relative">
-                            <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => setShowSortMenu(!showSortMenu)}
-                                className={cn(
-                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                                    sortBy !== "date" || sortOrder !== "desc"
-                                        ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
-                                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400"
-                                )}
-                            >
-                                <ArrowUpDown size={20} />
-                            </motion.button>
-                            {showSortMenu && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[160px] z-50"
-                                >
-                                    <p className="text-xs font-bold text-muted-foreground px-2 py-1 uppercase">Urutkan</p>
-                                    {[
-                                        { id: "date", label: "Tanggal" },
-                                        { id: "amount", label: "Jumlah" },
-                                        { id: "category", label: "Kategori" }
-                                    ].map((option) => (
-                                        <button
-                                            key={option.id}
-                                            onClick={() => {
-                                                if (sortBy === option.id) {
-                                                    setSortOrder(sortOrder === "desc" ? "asc" : "desc");
-                                                } else {
-                                                    setSortBy(option.id as typeof sortBy);
-                                                    setSortOrder("desc");
-                                                }
-                                                setShowSortMenu(false);
-                                            }}
-                                            className={cn(
-                                                "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between",
-                                                sortBy === option.id
-                                                    ? "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400"
-                                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-                                            )}
-                                        >
-                                            {option.label}
-                                            {sortBy === option.id && (
-                                                <span className="text-xs">{sortOrder === "desc" ? "↓" : "↑"}</span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </motion.div>
-                            )}
-                        </div>
+                        <TransactionSortMenu
+                            sortBy={sortBy}
+                            setSortBy={setSortBy}
+                            sortOrder={sortOrder}
+                            setSortOrder={setSortOrder}
+                            showSortMenu={showSortMenu}
+                            setShowSortMenu={setShowSortMenu}
+                        />
 
                         {/* Bulk Select Toggle */}
                         <motion.button
@@ -355,24 +544,50 @@ export default function TransactionsPage() {
                             {showBulkActions ? <CheckSquare size={20} /> : <Square size={20} />}
                         </motion.button>
 
-                        <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => {
-                                const params = new URLSearchParams();
-                                if (searchQuery) params.append("search", searchQuery);
-                                if (filterCategory !== "all") params.append("categoryId", filterCategory.toString());
-
-                                const a = document.createElement("a");
-                                a.href = `/api/transactions/export/csv?${params.toString()}`;
-                                a.download = "monev_transaksi.csv";
-                                a.click();
-                            }}
-                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
-                            title="Export CSV"
-                        >
-                            <Download size={20} />
-                        </motion.button>
+                        {/* Export Dropdown */}
+                        <div className="relative" ref={exportMenuRef}>
+                            <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setShowExportMenu(!showExportMenu)}
+                                className={cn(
+                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                    showExportMenu
+                                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
+                                )}
+                                title="Export"
+                            >
+                                <Download size={20} />
+                            </motion.button>
+                            <AnimatePresence>
+                                {showExportMenu && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute right-0 top-12 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-[200]"
+                                    >
+                                        <button
+                                            onClick={handleExportCSV}
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                        >
+                                            <FileSpreadsheet size={18} className="text-emerald-500" />
+                                            Export CSV
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                                        <button
+                                            onClick={handleExportPDF}
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        >
+                                            <FileText size={18} className="text-red-500" />
+                                            Export PDF
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -448,23 +663,63 @@ export default function TransactionsPage() {
                         </button>
                     </motion.div>
                 )}
+                {/* Duplicate Detection Banner */}
+                <AnimatePresence>
+                    {!loading && duplicateCount > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-4"
+                        >
+                            <div className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-2xl",
+                                "bg-amber-50 dark:bg-amber-900/20",
+                                "border border-amber-200 dark:border-amber-800/50"
+                            )}>
+                                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+                                    <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <p className="flex-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                    Ditemukan {duplicateCount} transaksi yang mungkin duplikat
+                                </p>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+                                    className={cn(
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors",
+                                        showDuplicatesOnly
+                                            ? "bg-amber-500 text-white"
+                                            : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60"
+                                    )}
+                                >
+                                    <Eye size={14} />
+                                    {showDuplicatesOnly ? "Semua" : "Lihat"}
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex items-center justify-between mb-4"
                 >
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        {searchQuery ? t("transactions.searchResults") : t("transactions.allTransactions")}
+                        {showDuplicatesOnly
+                            ? "Transaksi Duplikat"
+                            : searchQuery ? t("transactions.searchResults") : t("transactions.allTransactions")}
                     </p>
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-                        {loading ? "..." : `${filteredTransactions.length} ${t("transactions.count")}`}
+                        {loading ? "..." : `${displayTransactions.length} ${t("transactions.count")}`}
                     </span>
                 </motion.div>
 
                 {
                     loading ? (
                         <TransactionListSkeleton count={5} />
-                    ) : filteredTransactions.length === 0 ? (
+                    ) : displayTransactions.length === 0 ? (
                         searchQuery ? (
                             <NoSearchResultsEmpty query={searchQuery} />
                         ) : (
@@ -489,7 +744,11 @@ export default function TransactionsPage() {
                                             <motion.div
                                                 key={t.id}
                                                 variants={itemVariants}
-                                                className="group"
+                                                className={cn(
+                                                    "group",
+                                                    showDuplicatesOnly && duplicateIds.has(t.id)
+                                                        && "ring-2 ring-amber-400/60 rounded-2xl"
+                                                )}
                                             >
                                                 <TransactionItem
                                                     transaction={t}
@@ -514,234 +773,29 @@ export default function TransactionsPage() {
 
             {/* Bulk Action Bar */}
             {showBulkActions && selectedIds.size > 0 && (
-                <motion.div
-                    initial={{ opacity: 0, y: 100 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 100 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 pb-8 z-50"
-                >
-                    <div className="max-w-[500px] mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={toggleSelectAll}
-                                className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400"
-                            >
-                                {selectedIds.size === filteredTransactions.length ? (
-                                    <CheckSquare size={20} className="text-sky-500" />
-                                ) : (
-                                    <Square size={20} />
-                                )}
-                                Pilih Semua
-                            </button>
-                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                                {selectedIds.size} dipilih
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={bulkExport}
-                                className="px-4 py-2 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-colors flex items-center gap-2"
-                            >
-                                <Download size={16} />
-                                Export
-                            </button>
-                            <button
-                                onClick={bulkDelete}
-                                disabled={deletingId !== null}
-                                className="px-4 py-2 bg-rose-500 text-white font-semibold rounded-xl hover:bg-rose-600 transition-colors flex items-center gap-2 disabled:opacity-50"
-                            >
-                                <Trash2 size={16} />
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                </motion.div>
+                <BulkActionsBar
+                    selectedIds={selectedIds}
+                    filteredTransactionsLength={filteredTransactions.length}
+                    toggleSelectAll={toggleSelectAll}
+                    bulkExport={bulkExport}
+                    bulkDelete={bulkDelete}
+                    deletingId={deletingId}
+                />
             )}
 
-            < Portal >
-                <AnimatePresence>
-                    {isFilterModalOpen && (
-                        <>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setIsFilterModalOpen(false)}
-                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
-                            />
-                            <motion.div
-                                initial={{ opacity: 0, y: "100%" }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: "100%" }}
-                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px]"
-                            >
-                                <div className="flex items-center justify-between mb-8">
-                                    <h2 className="text-xl font-bold text-foreground">Filter Transaksi</h2>
-                                    <button
-                                        onClick={() => setIsFilterModalOpen(false)}
-                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-8">
-                                    <div>
-                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Tipe Transaksi</p>
-                                        <div className="flex gap-3">
-                                            {[
-                                                { id: "all", label: "Semua" },
-                                                { id: "expense", label: "Pengeluaran" },
-                                                { id: "income", label: "Pemasukan" }
-                                            ].map((type) => (
-                                                <button
-                                                    key={type.id}
-                                                    onClick={() => setFilterType(type.id as "all" | "expense" | "income")}
-                                                    className={cn(
-                                                        "flex-1 py-3 px-4 rounded-2xl text-sm font-semibold transition-all border-2",
-                                                        filterType === type.id
-                                                            ? "bg-sky-50 dark:bg-sky-900/50 border-sky-500 text-sky-600 dark:text-sky-400"
-                                                            : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
-                                                    )}
-                                                >
-                                                    {type.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Kategori</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            <button
-                                                onClick={() => setFilterCategory("all")}
-                                                className={cn(
-                                                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2",
-                                                    filterCategory === "all"
-                                                        ? "bg-sky-500 border-sky-500 text-white"
-                                                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
-                                                )}
-                                            >
-                                                Semua
-                                            </button>
-                                            {categories.map((cat) => (
-                                                <button
-                                                    key={cat.id}
-                                                    onClick={() => setFilterCategory(cat.id)}
-                                                    className={cn(
-                                                        "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 flex items-center gap-2",
-                                                        filterCategory === cat.id
-                                                            ? "bg-sky-500 border-sky-500 text-white"
-                                                            : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
-                                                    )}
-                                                >
-                                                    {filterCategory === cat.id && <Check size={12} />}
-                                                    {cat.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Date Range */}
-                                    <div>
-                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Rentang Tanggal</p>
-                                        <div className="flex gap-3">
-                                            <div className="flex-1">
-                                                <label className="text-xs text-muted-foreground mb-1 block">Mulai</label>
-                                                <input
-                                                    type="date"
-                                                    value={dateRange?.start || ""}
-                                                    onChange={(e) => setDateRange(prev => prev ? { ...prev, start: e.target.value } : { start: e.target.value, end: e.target.value })}
-                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="text-xs text-muted-foreground mb-1 block">Akhir</label>
-                                                <input
-                                                    type="date"
-                                                    value={dateRange?.end || ""}
-                                                    onChange={(e) => setDateRange(prev => prev ? { ...prev, end: e.target.value } : { start: e.target.value, end: e.target.value })}
-                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2 mt-2">
-                                            {[
-                                                { label: "Hari ini", days: 0 },
-                                                { label: "Minggu ini", days: 7 },
-                                                { label: "Bulan ini", days: 30 },
-                                            ].map((preset) => (
-                                                <button
-                                                    key={preset.label}
-                                                    onClick={() => {
-                                                        const end = new Date();
-                                                        const start = new Date();
-                                                        start.setDate(end.getDate() - preset.days);
-                                                        setDateRange({
-                                                            start: start.toISOString().split("T")[0],
-                                                            end: end.toISOString().split("T")[0]
-                                                        });
-                                                    }}
-                                                    className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 transition-colors"
-                                                >
-                                                    {preset.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Amount Range */}
-                                    <div>
-                                        <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Rentang Jumlah</p>
-                                        <div className="flex gap-3">
-                                            <div className="flex-1">
-                                                <label className="text-xs text-muted-foreground mb-1 block">Min (Rp)</label>
-                                                <input
-                                                    type="number"
-                                                    placeholder="0"
-                                                    value={amountRange?.min || ""}
-                                                    onChange={(e) => setAmountRange(prev => prev ? { ...prev, min: Number(e.target.value) } : { min: Number(e.target.value), max: 999999999 })}
-                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="text-xs text-muted-foreground mb-1 block">Max (Rp)</label>
-                                                <input
-                                                    type="number"
-                                                    placeholder="999999999"
-                                                    value={amountRange?.max || ""}
-                                                    onChange={(e) => setAmountRange(prev => prev ? { ...prev, max: Number(e.target.value) } : { min: 0, max: Number(e.target.value) })}
-                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-4 pt-4">
-                                        <button
-                                            onClick={() => {
-                                                setFilterCategory("all");
-                                                setFilterType("all");
-                                                setDateRange(null);
-                                                setAmountRange(null);
-                                            }}
-                                            className="flex-1 py-4 px-6 rounded-2xl text-sm font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-                                        >
-                                            Reset Filter
-                                        </button>
-                                        <button
-                                            onClick={() => setIsFilterModalOpen(false)}
-                                            className="flex-[2] py-4 px-6 rounded-2xl text-sm font-bold text-white bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-500/25 transition-all"
-                                        >
-                                            Terapkan Filter
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-            </Portal >
+            <TransactionFilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                filterType={filterType}
+                setFilterType={setFilterType}
+                filterCategory={filterCategory}
+                setFilterCategory={setFilterCategory}
+                categories={categories}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                amountRange={amountRange}
+                setAmountRange={setAmountRange}
+            />
 
             {/* Detail Modal */}
             < TransactionDetailModal
@@ -810,6 +864,125 @@ export default function TransactionsPage() {
                 description="Transaksi ini akan dihapus secara permanen. Anda yakin?"
                 loading={!!deletingId}
             />
+
+            {/* Undo Delete Banner */}
+            <AnimatePresence>
+                {undoBanner && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 80 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 80 }}
+                        transition={{
+                            type: "spring",
+                            damping: 25,
+                            stiffness: 300
+                        }}
+                        className="fixed bottom-24 left-4 right-4 z-[9999] max-w-[500px] mx-auto"
+                    >
+                        <div className={cn(
+                            "bg-slate-900 dark:bg-slate-800",
+                            "rounded-2xl shadow-2xl",
+                            "border border-slate-700/50",
+                            "px-4 py-3.5",
+                            "flex items-center gap-3"
+                        )}>
+                            {/* Progress ring */}
+                            <div className="relative w-9 h-9 flex-shrink-0">
+                                <svg
+                                    className="w-9 h-9 -rotate-90"
+                                    viewBox="0 0 36 36"
+                                >
+                                    <circle
+                                        cx="18"
+                                        cy="18"
+                                        r="15"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        className="text-slate-700"
+                                    />
+                                    <motion.circle
+                                        cx="18"
+                                        cy="18"
+                                        r="15"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        className="text-amber-400"
+                                        strokeDasharray={2 * Math.PI * 15}
+                                        initial={{
+                                            strokeDashoffset: 0
+                                        }}
+                                        animate={{
+                                            strokeDashoffset:
+                                                2 * Math.PI * 15
+                                        }}
+                                        transition={{
+                                            duration: 5,
+                                            ease: "linear"
+                                        }}
+                                    />
+                                </svg>
+                                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                                    {undoCountdown}
+                                </span>
+                            </div>
+
+                            {/* Message */}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-white truncate">
+                                    Transaksi dihapus
+                                </p>
+                                <p className="text-xs text-slate-400 truncate">
+                                    {undoTransactionRef.current?.description
+                                        || "Transaksi"}
+                                    {" \u2022 "}
+                                    {formatCurrency(
+                                        undoTransactionRef.current
+                                            ?.amount ?? 0
+                                    )}
+                                </p>
+                            </div>
+
+                            {/* Undo button */}
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleUndo}
+                                disabled={isRestoring}
+                                className={cn(
+                                    "flex items-center gap-1.5",
+                                    "px-4 py-2 rounded-xl",
+                                    "text-sm font-bold",
+                                    "transition-colors",
+                                    isRestoring
+                                        ? "bg-slate-700 text-slate-400 cursor-not-allowed"
+                                        : "bg-amber-500 text-slate-900 hover:bg-amber-400 active:bg-amber-600"
+                                )}
+                            >
+                                {isRestoring ? (
+                                    <Loader2
+                                        size={16}
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    <Undo2 size={16} />
+                                )}
+                                Batalkan
+                            </motion.button>
+
+                            {/* Dismiss */}
+                            <button
+                                onClick={dismissUndo}
+                                className="w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 transition-colors flex-shrink-0"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div >
     );
 }

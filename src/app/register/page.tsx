@@ -7,12 +7,15 @@ import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, MailCheck } from "lucide-react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { validatePassword, PASSWORD_MIN_LENGTH, HAS_UPPERCASE, HAS_DIGIT, HAS_SPECIAL } from "@/lib/password-validation";
+import { isDisposableEmail } from "@/lib/disposable-emails";
 
 interface FormErrors {
     name?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
+    acceptTerms?: string;
     general?: string;
 }
 
@@ -21,16 +24,17 @@ interface FormData {
     email: string;
     password: string;
     confirmPassword: string;
+    acceptTerms: boolean;
 }
 
 function PasswordStrength({ password }: { password: string }) {
     const getStrength = (pwd: string): number => {
         let strength = 0;
-        if (pwd.length >= 6) strength += 1;
-        if (pwd.length >= 10) strength += 1;
-        if (/[A-Z]/.test(pwd)) strength += 1;
-        if (/[0-9]/.test(pwd)) strength += 1;
-        if (/[^A-Za-z0-9]/.test(pwd)) strength += 1;
+        if (pwd.length >= PASSWORD_MIN_LENGTH) strength += 1;
+        if (pwd.length >= 12) strength += 1;
+        if (HAS_UPPERCASE.test(pwd)) strength += 1;
+        if (HAS_DIGIT.test(pwd)) strength += 1;
+        if (HAS_SPECIAL.test(pwd)) strength += 1;
         return strength;
     };
 
@@ -154,7 +158,8 @@ export default function RegisterPage() {
         name: "",
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        acceptTerms: false,
     });
     const [errors, setErrors] = useState<FormErrors>({});
     const [showPassword, setShowPassword] = useState(false);
@@ -174,22 +179,29 @@ export default function RegisterPage() {
         return emailRegex.test(email);
     };
 
-    const validateField = (name: keyof FormData, value: string): string | undefined => {
+    const validateField = (name: keyof FormData, value: string | boolean): string | undefined => {
         if (name === "name") {
             if (!value) return "Nama lengkap wajib diisi";
-            if (value.length < 2) return "Nama minimal 2 karakter";
+            if (typeof value === "string" && value.length < 2) return "Nama minimal 2 karakter";
         }
         if (name === "email") {
             if (!value) return "Email wajib diisi";
-            if (!validateEmail(value)) return "Format email tidak valid";
+            if (typeof value === "string" && !validateEmail(value)) return "Format email tidak valid";
+            if (typeof value === "string" && isDisposableEmail(value)) return "Email disposable/sementara tidak diperbolehkan";
         }
         if (name === "password") {
             if (!value) return "Password wajib diisi";
-            if (value.length < 6) return "Password minimal 6 karakter";
+            if (typeof value === "string") {
+                const pwdCheck = validatePassword(value);
+                if (!pwdCheck.valid) return pwdCheck.error;
+            }
         }
         if (name === "confirmPassword") {
             if (!value) return "Konfirmasi password wajib diisi";
             if (value !== formData.password) return "Password tidak cocok";
+        }
+        if (name === "acceptTerms") {
+            if (!value) return "Anda harus menyetujui syarat & ketentuan";
         }
         return undefined;
     };
@@ -233,10 +245,13 @@ export default function RegisterPage() {
         const passwordError = validateField("password", formData.password);
         const confirmPasswordError = validateField("confirmPassword", formData.confirmPassword);
 
+        const termsError = validateField("acceptTerms", formData.acceptTerms);
+
         if (nameError) newErrors.name = nameError;
         if (emailError) newErrors.email = emailError;
         if (passwordError) newErrors.password = passwordError;
         if (confirmPasswordError) newErrors.confirmPassword = confirmPasswordError;
+        if (termsError) newErrors.acceptTerms = termsError;
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -498,6 +513,46 @@ export default function RegisterPage() {
                             <p id="confirmPassword-error" className="text-red-500 text-xs flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />
                                 {errors.confirmPassword}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Terms & Conditions */}
+                    <div className="space-y-1">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={formData.acceptTerms}
+                                onChange={(e) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        acceptTerms: e.target.checked,
+                                    }));
+                                    if (errors.acceptTerms) {
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            acceptTerms: undefined,
+                                        }));
+                                    }
+                                }}
+                                className="mt-1 w-4 h-4 rounded border-slate-300 text-sky-500 focus:ring-sky-500/20"
+                            />
+                            <span className="text-xs text-slate-600 leading-relaxed">
+                                Saya menyetujui{" "}
+                                <span className="text-sky-600 font-semibold hover:underline">
+                                    Syarat & Ketentuan
+                                </span>{" "}
+                                dan{" "}
+                                <span className="text-sky-600 font-semibold hover:underline">
+                                    Kebijakan Privasi
+                                </span>{" "}
+                                Monev
+                            </span>
+                        </label>
+                        {errors.acceptTerms && (
+                            <p className="text-red-500 text-xs flex items-center gap-1 ml-7">
+                                <AlertCircle className="w-3 h-3" />
+                                {errors.acceptTerms}
                             </p>
                         )}
                     </div>

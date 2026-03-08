@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Plus, Receipt, Check, Clock, AlertTriangle, Zap, Wifi, Tv, Music, Heart, Bike, X, Trash2, RefreshCw, LayoutGrid, List, ChevronRight, History } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell, Clock, X } from "lucide-react";
 import { BillHistoryModal } from "@/frontend/components/DetailModalsVerified";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -16,10 +16,7 @@ import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBill, getTierConfig } from "@/lib/tier-gate";
 import { TierLimitBanner } from "@/frontend/components/TierGateOverlay";
 import { useI18n } from "@/frontend/lib/i18n-context";
-
-const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
-    Receipt, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle,
-};
+import { BillItem } from "./components/BillItem";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -33,158 +30,6 @@ const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
 };
-
-function BillIcon({ name, color, size = 20 }: { name: string; color: string; size?: number }) {
-    const Icon = iconMap[name] || Receipt;
-    return <Icon size={size} color={color} />;
-}
-
-function getStatusInfo(bill: Bill, t: (key: string) => string) {
-    const today = new Date().getDate();
-    const daysUntilDue = bill.dueDate - today;
-
-    if (bill.isPaid) {
-        return { label: t("bills.paid"), color: "emerald", badge: "bg-emerald-50 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" };
-    }
-    if (daysUntilDue < 0) {
-        return { label: t("bills.overdue"), color: "rose", badge: "bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800" };
-    }
-    if (daysUntilDue <= 3) {
-        return { label: `${daysUntilDue} ${t("bills.daysLeft")}`, color: "amber", badge: "bg-amber-50 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" };
-    }
-    return { label: `${t("bills.dueDateLabel")} ${bill.dueDate}`, color: "slate", badge: "bg-slate-50 dark:bg-slate-800 text-muted-foreground border-slate-200 dark:border-slate-700" };
-}
-
-function BillItem({
-    bill,
-    index,
-    onDelete,
-    onToggle,
-    onShowHistory,
-    isStealthMode,
-    t
-}: {
-    bill: Bill;
-    index: number;
-    onDelete: (id: number) => void;
-    onToggle: (id: number, e: React.MouseEvent) => void;
-    onShowHistory: (bill: Bill) => void;
-    isStealthMode: boolean;
-    t: (key: string) => string;
-}) {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-
-    const status = getStatusInfo(bill, t);
-    const today = new Date().getDate();
-    const daysLeft = bill.dueDate - today;
-    const isOverdue = daysLeft < 0 && !bill.isPaid;
-
-    return (
-        <motion.div
-            key={bill.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.06 }}
-            whileHover={{ scale: 1.02 }}
-            className={cn(
-                "card-clean p-5 group relative cursor-pointer transition-all",
-                bill.isPaid
-                    ? "bg-emerald-50/30 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50"
-                    : "hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20"
-            )}
-        >
-            <div className="flex items-center gap-3 mb-3">
-                <button
-                    onClick={(e) => onToggle(bill.id, e)}
-                    className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-all",
-                        bill.isPaid
-                            ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-900/30"
-                    )}
-                    style={!bill.isPaid ? { backgroundColor: bill.color + "20" } : {}}
-                >
-                    {bill.isPaid ? (
-                        <Check size={20} strokeWidth={3} />
-                    ) : (
-                        <BillIcon name={bill.icon} color={bill.color} size={18} />
-                    )}
-                </button>
-                <div className="flex-1">
-                    <span className={cn(
-                        "font-bold text-foreground text-[13px] block transition-all",
-                        bill.isPaid ? "text-muted-foreground line-through" : ""
-                    )}>
-                        {bill.name}
-                    </span>
-                    <p className="text-xs text-muted-foreground tabular-nums">
-                        {bill.frequency === "monthly" ? t("bills.frequency.monthly") : bill.frequency === "weekly" ? t("bills.frequency.weekly") : t("bills.frequency.yearly")}
-                    </p>
-                </div>
-                <div className="text-right pr-2">
-                    <span className={cn(
-                        "font-bold text-[13px] block tabular-nums",
-                        bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
-                    )}>
-                        {isStealthMode ? "******" : formatCurrency(bill.amount)}
-                    </span>
-                    <span className={cn(
-                        "text-[10px] tabular-nums",
-                        isOverdue ? "text-rose-500 font-semibold" : "text-muted-foreground"
-                    )}>
-                        {!mounted ? "..." : status.label}
-                    </span>
-                </div>
-            </div>
-
-            {/* Days remaining bar */}
-            {!bill.isPaid && (
-                <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.max(0, Math.min(100, (daysLeft / 30) * 100))}%` }}
-                        transition={{ duration: 1, delay: index * 0.1 }}
-                        className={cn(
-                            "h-full rounded-full",
-                            isOverdue ? "bg-rose-500" : daysLeft <= 3 ? "bg-amber-500" : "bg-sky-500"
-                        )}
-                    />
-                </div>
-            )}
-
-            {bill.isPaid && (
-                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
-                    <Check size={12} /> {t("bills.paid")}
-                </p>
-            )}
-
-            {/* Actions - positioned absolute top-right */}
-            <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onShowHistory(bill);
-                    }}
-                    className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
-                    title={t("bills.history")}
-                >
-                    <History size={14} />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(bill.id);
-                    }}
-                    className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center transition-colors"
-                    title={t("bills.deleteBill")}
-                >
-                    <Trash2 size={14} />
-                </button>
-            </div>
-        </motion.div>
-    );
-}
 
 export default function BillsPage() {
     const { t } = useI18n();
@@ -227,10 +72,65 @@ export default function BillsPage() {
     const totalUnpaid = useMemo(() => bills.filter(b => !b.isPaid).reduce((s, b) => s + b.amount, 0), [bills]);
     const paidCount = useMemo(() => bills.filter(b => b.isPaid).length, [bills]);
 
+    // Bill reminder notifications
+    const notifiedBillsRef = useRef<Set<string>>(new Set());
+
+    const overdueBills = useMemo(() => {
+        const today = new Date().getDate();
+        return bills.filter(b => !b.isPaid && b.dueDate < today);
+    }, [bills]);
+
+    const urgentBills = useMemo(() => {
+        const today = new Date().getDate();
+        return bills.filter(b => !b.isPaid && b.dueDate >= today && b.dueDate - today <= 3);
+    }, [bills]);
+
     useEffect(() => {
         loadBills();
         loadSubscriptions();
     }, []);
+
+    // Show toast reminders for bills due soon, due today, or overdue
+    useEffect(() => {
+        if (loading || bills.length === 0) return;
+
+        const today = new Date().getDate();
+
+        bills.forEach(bill => {
+            if (bill.isPaid) return;
+
+            const daysUntilDue = bill.dueDate - today;
+
+            if (daysUntilDue < 0) {
+                const key = `overdue-${bill.id}`;
+                if (!notifiedBillsRef.current.has(key)) {
+                    notifiedBillsRef.current.add(key);
+                    toast.error(
+                        "Tagihan Terlambat!",
+                        `${bill.name} sudah lewat jatuh tempo!`
+                    );
+                }
+            } else if (daysUntilDue === 0) {
+                const key = `today-${bill.id}`;
+                if (!notifiedBillsRef.current.has(key)) {
+                    notifiedBillsRef.current.add(key);
+                    toast.error(
+                        "Tagihan Jatuh Tempo!",
+                        `${bill.name} jatuh tempo hari ini!`
+                    );
+                }
+            } else if (daysUntilDue <= 3) {
+                const key = `soon-${bill.id}`;
+                if (!notifiedBillsRef.current.has(key)) {
+                    notifiedBillsRef.current.add(key);
+                    toast.warning(
+                        "Tagihan Segera!",
+                        `${bill.name} jatuh tempo dalam ${daysUntilDue} hari`
+                    );
+                }
+            }
+        });
+    }, [bills, loading]);
 
     // Subscription detection
     interface DetectedSub {
@@ -331,9 +231,13 @@ export default function BillsPage() {
                 await loadBills();
                 setIsAddModalOpen(false);
                 resetForm();
+                toast.success("Tagihan ditambahkan");
+            } else {
+                toast.error("Gagal", result.error || "Gagal menambahkan tagihan");
             }
         } catch (error) {
             console.error("Error adding bill:", error);
+            toast.error("Gagal", "Terjadi kesalahan jaringan");
         } finally {
             setIsSubmitting(false);
         }
@@ -442,6 +346,53 @@ export default function BillsPage() {
                     />
                 </div>
             </motion.div>
+
+            {/* Bill Reminder Summary Banner */}
+            {!loading && (overdueBills.length > 0 || urgentBills.length > 0) && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="mx-6 mt-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+                >
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
+                            <Bell size={14} className="text-rose-500 dark:text-rose-400" />
+                        </div>
+                        <h3 className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">
+                            Pengingat Tagihan
+                        </h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 text-center p-2 rounded-xl bg-sky-50 dark:bg-sky-900/20">
+                            <p className="text-lg font-bold text-sky-600 dark:text-sky-400 tabular-nums">
+                                {isStealthMode ? "***" : formatCurrency(totalBills)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground font-medium">
+                                Total tagihan bulan ini
+                            </p>
+                        </div>
+                        <div className="flex-1 text-center p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20">
+                            <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+                                {bills.length - paidCount}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground font-medium">
+                                Belum dibayar
+                            </p>
+                        </div>
+                        {overdueBills.length > 0 && (
+                            <div className="flex-1 text-center p-2 rounded-xl bg-rose-50 dark:bg-rose-900/20">
+                                <p className="text-lg font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+                                    {overdueBills.length}
+                                </p>
+                                <p className="text-[10px] text-rose-500 dark:text-rose-400 font-medium">
+                                    Terlambat
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+            )}
 
             {/* Detected Subscriptions Section */}
             {(subscriptions.length > 0 || subsLoading) && (
@@ -683,6 +634,10 @@ export default function BillsPage() {
                             ) : (
                                 <div className="space-y-4">
                                     {filteredBills.map((bill, i) => {
+                                        const today = new Date().getDate();
+                                        const daysUntilDue = bill.dueDate - today;
+                                        const needsReminder = !bill.isPaid
+                                            && (daysUntilDue <= 3);
                                         return (
                                             <BillItem
                                                 key={bill.id}
@@ -696,6 +651,7 @@ export default function BillsPage() {
                                                 }}
                                                 isStealthMode={isStealthMode}
                                                 t={t}
+                                                showReminder={needsReminder}
                                             />
                                         );
                                     })}
@@ -711,6 +667,150 @@ export default function BillsPage() {
                 onClose={() => setIsHistoryModalOpen(false)}
                 bill={selectedBillHistory}
             />
+
+            {/* Add Bill Modal */}
+            <Portal>
+                <AnimatePresence>
+                    {isAddModalOpen && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => { setIsAddModalOpen(false); resetForm(); }}
+                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999998]"
+                            />
+                            <motion.div
+                                initial={{ y: "100%" }}
+                                animate={{ y: 0 }}
+                                exit={{ y: "100%" }}
+                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                className="fixed bottom-0 left-0 right-0 z-[999999] bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl max-w-[500px] mx-auto"
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold text-foreground">Tambah Tagihan</h2>
+                                    <button
+                                        onClick={() => { setIsAddModalOpen(false); resetForm(); }}
+                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Tagihan</label>
+                                        <input
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
+                                            placeholder="Listrik, Internet, Netflix..."
+                                            value={formName}
+                                            onChange={e => setFormName(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
+                                            placeholder="0"
+                                            value={formAmount}
+                                            onChange={e => setFormAmount(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Tanggal Jatuh Tempo</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="31"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
+                                                value={formDueDate}
+                                                onChange={e => setFormDueDate(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Frekuensi</label>
+                                            <select
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
+                                                value={formFrequency}
+                                                onChange={e => setFormFrequency(e.target.value as "monthly" | "weekly" | "yearly")}
+                                            >
+                                                <option value="monthly">Bulanan</option>
+                                                <option value="weekly">Mingguan</option>
+                                                <option value="yearly">Tahunan</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Ikon</label>
+                                        <div className="flex gap-2 flex-wrap">
+                                            {iconOptions.map(opt => (
+                                                <button
+                                                    key={opt.name}
+                                                    onClick={() => setFormIcon(opt.name)}
+                                                    className={cn(
+                                                        "px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all",
+                                                        formIcon === opt.name
+                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-600"
+                                                            : "border-slate-100 dark:border-slate-700 text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Warna</label>
+                                        <div className="flex gap-3">
+                                            {colorOptions.map(c => (
+                                                <button
+                                                    key={c}
+                                                    onClick={() => setFormColor(c)}
+                                                    className={cn(
+                                                        "w-8 h-8 rounded-full transition-all flex-shrink-0",
+                                                        formColor === c ? "ring-2 ring-offset-2 ring-sky-500 scale-110 dark:ring-offset-slate-900" : ""
+                                                    )}
+                                                    style={{ backgroundColor: c }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">
+                                            Catatan <span className="normal-case font-medium text-muted-foreground">(opsional)</span>
+                                        </label>
+                                        <input
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
+                                            placeholder="Catatan tambahan..."
+                                            value={formNotes}
+                                            onChange={e => setFormNotes(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={handleAddBill}
+                                        disabled={isSubmitting || !formName || !formAmount}
+                                        className={cn(
+                                            "w-full py-4 rounded-xl font-bold text-white text-sm mt-2 transition-all",
+                                            "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20",
+                                            (isSubmitting || !formName || !formAmount) && "opacity-50 cursor-not-allowed"
+                                        )}
+                                    >
+                                        {isSubmitting ? "Menyimpan..." : "Simpan Tagihan"}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            </Portal>
         </div>
     );
 }

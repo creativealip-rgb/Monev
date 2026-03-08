@@ -32,6 +32,10 @@ interface DashboardStats {
     expense: number;
     balance: number;
     growth?: number;
+    incomeGrowth?: number;
+    expenseGrowth?: number;
+    prevIncome?: number;
+    prevExpense?: number;
     totalGoals?: number;
     totalInvestments?: number;
     fees?: number;
@@ -73,6 +77,7 @@ export function useDashboardData() {
             loadOffline();
             // Invalidate queries so React Query knows to refetch in the background
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["accounts"] });
         };
 
         window.addEventListener("transactionAdded", handleTransactionAdded);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Wallet, TrendingUp, PiggyBank, Target, Calendar, DollarSign } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
@@ -195,10 +195,18 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
     );
 }
 
+export interface GoalTemplateData {
+    name: string;
+    icon: string;
+    color: string;
+    targetAmount: string;
+}
+
 interface AddGoalFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    initialData?: GoalTemplateData | null;
 }
 
 const goalIcons = [
@@ -212,7 +220,7 @@ const goalIcons = [
     { icon: "Heart", label: "Kesehatan", color: "#ef4444" },
 ];
 
-export function AddGoalForm({ isOpen, onClose, onSuccess }: AddGoalFormProps) {
+export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoalFormProps) {
     const [name, setName] = useState("");
     const [targetAmount, setTargetAmount] = useState("");
     const [currentAmount, setCurrentAmount] = useState("");
@@ -220,6 +228,26 @@ export function AddGoalForm({ isOpen, onClose, onSuccess }: AddGoalFormProps) {
     const [selectedIcon, setSelectedIcon] = useState(goalIcons[0]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Pre-fill from template data
+    useEffect(() => {
+        if (initialData && isOpen) {
+            setName(initialData.name);
+            setTargetAmount(initialData.targetAmount);
+            const matchedIcon = goalIcons.find(
+                (ic) => ic.icon === initialData.icon
+            );
+            if (matchedIcon) {
+                setSelectedIcon(matchedIcon);
+            } else {
+                setSelectedIcon({
+                    icon: initialData.icon,
+                    label: initialData.name,
+                    color: initialData.color,
+                });
+            }
+        }
+    }, [initialData, isOpen]);
 
     const handleSubmit = async () => {
         if (!name || !targetAmount || parseFloat(targetAmount) <= 0) {

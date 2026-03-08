@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Plus, ShieldAlert, ArrowLeft, Flame, X, Zap, TrendingUp } from "lucide-react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { Plus, ShieldAlert, ArrowLeft, Flame, X, Zap, TrendingUp, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -11,6 +11,7 @@ import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms
 import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { BudgetChart } from "./components/BudgetChart";
+import { BudgetPieChart } from "./components/BudgetPieChart";
 import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
@@ -133,6 +134,9 @@ export default function BudgetsPage() {
     const userTier = (session?.user?.tier as UserTier) || "miskin";
     const tierConfig = getTierConfig(userTier);
 
+    const [prevBudgets, setPrevBudgets] = useState<BudgetSummary[]>([]);
+    const [rolloverEnabled, setRolloverEnabled] = useState<Record<number, boolean>>({});
+
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
 
@@ -150,19 +154,56 @@ export default function BudgetsPage() {
         };
     }, []);
 
+    // Budget threshold toast notifications (once per session per budget per threshold)
+    const notifiedBudgetsRef = useRef<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (loading || budgets.length === 0) return;
+
+        budgets.forEach((b) => {
+            const pct = b.limit > 0 ? (b.spent / b.limit) * 100 : 0;
+            const overKey = `${b.id}-over`;
+            const warnKey = `${b.id}-warn`;
+
+            if (pct >= 100 && !notifiedBudgetsRef.current.has(overKey)) {
+                notifiedBudgetsRef.current.add(overKey);
+                toast.error(
+                    "Budget Terlampaui!",
+                    `Budget ${b.category} sudah melebihi batas!`
+                );
+            } else if (
+                pct >= 80 &&
+                pct < 100 &&
+                !notifiedBudgetsRef.current.has(warnKey)
+            ) {
+                notifiedBudgetsRef.current.add(warnKey);
+                toast.warning(
+                    "Budget Hampir Habis",
+                    `Budget ${b.category} sudah terpakai ${Math.round(pct)}%`
+                );
+            }
+        });
+    }, [loading, budgets]);
+
     async function loadData() {
         try {
             setLoading(true);
 
-            // Optimized: Fetch categories and budgets in parallel
-            const [catsResponse, budgetsResponse] = await Promise.all([
+            // Calculate previous month/year
+            const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+
+            // Optimized: Fetch categories, budgets, and previous month budgets in parallel
+            const [catsResponse, budgetsResponse, prevBudgetsResponse] = await Promise.all([
                 apiFetch("/api/categories"),
-                apiFetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`)
+                apiFetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`),
+                apiFetch(`/api/budgets?month=${prevMonth}&year=${prevYear}`)
             ]);
 
-            const [catsResult, budgetsResult] = await Promise.all([
+            const [catsResult, budgetsResult, prevBudgetsResult] = await Promise.all([
                 catsResponse.json(),
-                budgetsResponse.json()
+                budgetsResponse.json(),
+                prevBudgetsResponse.json()
             ]);
 
             if (catsResult.success) {
@@ -171,6 +212,10 @@ export default function BudgetsPage() {
 
             if (budgetsResult.success) {
                 setBudgets(budgetsResult.data);
+            }
+
+            if (prevBudgetsResult.success) {
+                setPrevBudgets(prevBudgetsResult.data);
             }
         } catch (error) {
             console.error("Error loading data:", error);
@@ -203,7 +248,29 @@ export default function BudgetsPage() {
         return categoryIcons[category] || "📦";
     };
 
-    const totalBudget = budgets.reduce((sum, b) => sum + b.limit, 0);
+    const getRolloverAmount = useCallback((budget: BudgetSummary): number => {
+        const prev = prevBudgets.find(
+            (pb) => pb.categoryId === budget.categoryId
+        );
+        if (!prev) return 0;
+        const unused = prev.limit - prev.spent;
+        return unused > 0 ? unused : 0;
+    }, [prevBudgets]);
+
+    const getEffectiveLimit = useCallback((budget: BudgetSummary): number => {
+        if (!rolloverEnabled[budget.id]) return budget.limit;
+        return budget.limit + getRolloverAmount(budget);
+    }, [rolloverEnabled, getRolloverAmount]);
+
+    const toggleRollover = useCallback((budgetId: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRolloverEnabled((prev) => ({
+            ...prev,
+            [budgetId]: !prev[budgetId],
+        }));
+    }, []);
+
+    const totalBudget = budgets.reduce((sum, b) => sum + getEffectiveLimit(b), 0);
     const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
     const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
 
@@ -336,6 +403,13 @@ export default function BudgetsPage() {
                 })()}
             </motion.div>
 
+            {/* Budget Allocation Pie Chart */}
+            {budgets.length > 0 && (
+                <div className="mx-6 mt-4">
+                    <BudgetPieChart budgets={budgets} />
+                </div>
+            )}
+
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -430,8 +504,14 @@ export default function BudgetsPage() {
                     ) : (
                         <div className="space-y-4">
                             {budgets.map((b, i) => {
-                                const isDanger = b.percentage > 90;
-                                const isWarning = b.percentage > 75;
+                                const effectiveLimit = getEffectiveLimit(b);
+                                const effectivePct = effectiveLimit > 0
+                                    ? Math.min((b.spent / effectiveLimit) * 100, 100)
+                                    : 0;
+                                const isDanger = effectivePct > 90;
+                                const isWarning = effectivePct > 75;
+                                const rolloverAmt = getRolloverAmount(b);
+                                const isRollover = rolloverEnabled[b.id] ?? false;
 
                                 return (
                                     <motion.div
@@ -449,7 +529,9 @@ export default function BudgetsPage() {
                                             </div>
                                             <div className="flex-1">
                                                 <span className="font-bold text-foreground text-[13px]">{b.category}</span>
-                                                <p className="text-xs text-muted-foreground tabular-nums">Limit: {isStealthMode ? "******" : formatCurrency(b.limit)}</p>
+                                                <p className="text-xs text-muted-foreground tabular-nums">
+                                                    Limit: {isStealthMode ? "******" : formatCurrency(effectiveLimit)}
+                                                </p>
                                             </div>
                                             <div className="text-right pr-2">
                                                 <span className={cn(
@@ -459,7 +541,7 @@ export default function BudgetsPage() {
                                                     {isStealthMode ? "******" : formatCurrency(b.spent)}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground tabular-nums">
-                                                    {Math.round(b.percentage)}%
+                                                    {Math.round(effectivePct)}%
                                                 </span>
                                             </div>
                                         </div>
@@ -467,7 +549,7 @@ export default function BudgetsPage() {
                                         <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <motion.div
                                                 initial={{ width: 0 }}
-                                                animate={{ width: `${b.percentage}%` }}
+                                                animate={{ width: `${effectivePct}%` }}
                                                 transition={{ duration: 1, delay: i * 0.1 }}
                                                 className={cn(
                                                     "h-full rounded-full",
@@ -476,9 +558,43 @@ export default function BudgetsPage() {
                                             />
                                         </div>
 
+                                        {/* Rollover Toggle */}
+                                        {rolloverAmt > 0 && (
+                                            <div className="mt-3 flex items-center justify-between">
+                                                <button
+                                                    onClick={(e) => toggleRollover(b.id, e)}
+                                                    className={cn(
+                                                        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
+                                                        isRollover
+                                                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                                                            : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "w-7 h-4 rounded-full relative transition-colors",
+                                                        isRollover
+                                                            ? "bg-emerald-500"
+                                                            : "bg-slate-300 dark:bg-slate-600"
+                                                    )}>
+                                                        <div className={cn(
+                                                            "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform",
+                                                            isRollover ? "translate-x-3.5" : "translate-x-0.5"
+                                                        )} />
+                                                    </div>
+                                                    <RotateCcw size={12} />
+                                                    <span>Rollover sisa bulan lalu</span>
+                                                </button>
+                                                {isRollover && (
+                                                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                        Sisa bulan lalu: +{isStealthMode ? "******" : formatCurrency(rolloverAmt)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
                                         {/* Spending Velocity */}
                                         {(() => {
-                                            const velocity = getSpendingVelocity(b.spent, b.limit);
+                                            const velocity = getSpendingVelocity(b.spent, effectiveLimit);
                                             if (velocity.projectedDate) {
                                                 return (
                                                     <div className="mt-2 flex items-center gap-1.5">

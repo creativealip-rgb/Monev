@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Edit2, Trash2, Calendar, Tag, TrendingUp, Check } from "lucide-react";
+import { X, Edit2, Trash2, Calendar, Tag, TrendingUp, Check, AlertTriangle, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
@@ -223,6 +223,48 @@ export function BudgetDetailModal({ isOpen, onClose, budget, onEdit, onDelete }:
     );
 }
 
+const GOAL_MILESTONES = [25, 50, 75, 100];
+
+function calculateGoalEta(
+    currentAmount: number,
+    targetAmount: number,
+    createdAt: string | Date
+): { etaDate: Date | null; monthlyRate: number } {
+    if (currentAmount <= 0 || targetAmount <= 0) {
+        return { etaDate: null, monthlyRate: 0 };
+    }
+    const created = new Date(createdAt);
+    const now = new Date();
+    const monthsElapsed = Math.max(
+        (now.getFullYear() - created.getFullYear()) * 12
+            + (now.getMonth() - created.getMonth()),
+        1
+    );
+    const monthlyRate = currentAmount / monthsElapsed;
+    const remaining = targetAmount - currentAmount;
+    if (remaining <= 0) {
+        return { etaDate: null, monthlyRate };
+    }
+    const monthsNeeded = Math.ceil(remaining / monthlyRate);
+    const etaDate = new Date(now);
+    etaDate.setMonth(etaDate.getMonth() + monthsNeeded);
+    return { etaDate, monthlyRate };
+}
+
+function estimateMilestoneDate(
+    milestonePercent: number,
+    targetAmount: number,
+    monthlyRate: number,
+    createdAt: string | Date
+): Date | null {
+    if (monthlyRate <= 0) return null;
+    const milestoneAmount = (milestonePercent / 100) * targetAmount;
+    const monthsNeeded = Math.ceil(milestoneAmount / monthlyRate);
+    const date = new Date(createdAt);
+    date.setMonth(date.getMonth() + monthsNeeded);
+    return date;
+}
+
 interface GoalDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -233,6 +275,13 @@ interface GoalDetailModalProps {
 
 export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: GoalDetailModalProps) {
     if (!isOpen || !goal) return null;
+
+    const isCompleted = goal.percentage >= 100;
+    const { etaDate, monthlyRate } = calculateGoalEta(
+        goal.currentAmount, goal.targetAmount, goal.createdAt
+    );
+    const hasDeadlineWarning = etaDate && goal.deadline
+        && etaDate.getTime() > new Date(goal.deadline).getTime();
 
     return (
         <Portal>
@@ -260,7 +309,17 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex flex-col items-center py-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl">
+                            <div className="flex flex-col items-center py-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl relative">
+                                {isCompleted && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="absolute -top-2 -right-2 px-2.5 py-1 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-emerald-500/30 flex items-center gap-1"
+                                    >
+                                        <Trophy size={10} />
+                                        Tercapai!
+                                    </motion.div>
+                                )}
                                 <div
                                     className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-3"
                                     style={{ backgroundColor: goal.color + "20" }}
@@ -268,9 +327,24 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                     <span style={{ color: goal.color }}>{goal.icon}</span>
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{goal.name}</h3>
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white dark:bg-slate-700 rounded-full border border-slate-100 dark:border-slate-600 mt-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Goal</span>
+                                <div className={cn(
+                                    "flex items-center gap-1.5 px-2 py-0.5 rounded-full border mt-1",
+                                    isCompleted
+                                        ? "bg-emerald-50 dark:bg-emerald-900/50 border-emerald-200 dark:border-emerald-700"
+                                        : "bg-white dark:bg-slate-700 border-slate-100 dark:border-slate-600"
+                                )}>
+                                    <span className={cn(
+                                        "w-1.5 h-1.5 rounded-full",
+                                        isCompleted ? "bg-emerald-500" : "bg-emerald-500 animate-pulse"
+                                    )} />
+                                    <span className={cn(
+                                        "text-[10px] font-bold uppercase tracking-wider",
+                                        isCompleted
+                                            ? "text-emerald-600 dark:text-emerald-400"
+                                            : "text-slate-500 dark:text-slate-400"
+                                    )}>
+                                        {isCompleted ? "Goal Tercapai" : "Active Goal"}
+                                    </span>
                                 </div>
                             </div>
 
@@ -280,16 +354,135 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                         <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider">Progress Menabung</span>
                                         <span className="text-slate-900 dark:text-white">{Math.round(goal.percentage)}%</span>
                                     </div>
-                                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${goal.percentage}%` }}
-                                            transition={{ duration: 1, ease: "easeOut" }}
-                                            className="h-full rounded-full"
-                                            style={{ backgroundColor: goal.color }}
-                                        />
+                                    <div className="relative w-full">
+                                        <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${Math.min(goal.percentage, 100)}%` }}
+                                                transition={{ duration: 1, ease: "easeOut" }}
+                                                className="h-full rounded-full"
+                                                style={{ backgroundColor: goal.color }}
+                                            />
+                                        </div>
+                                        {/* Milestone markers on progress bar */}
+                                        <div className="absolute inset-0 flex items-center pointer-events-none">
+                                            {GOAL_MILESTONES.map((ms) => (
+                                                <div
+                                                    key={ms}
+                                                    className="absolute"
+                                                    style={{ left: `${ms}%`, transform: 'translateX(-50%)' }}
+                                                >
+                                                    <div className={cn(
+                                                        "w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center",
+                                                        goal.percentage >= ms
+                                                            ? "bg-emerald-500 border-emerald-400 shadow-sm"
+                                                            : "bg-white dark:bg-slate-600 border-slate-300 dark:border-slate-500"
+                                                    )}>
+                                                        {goal.percentage >= ms && (
+                                                            <Check size={8} className="text-white" strokeWidth={3} />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* Milestone progress section */}
+                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                                        Pencapaian Milestone
+                                    </span>
+                                    <div className="space-y-2">
+                                        {GOAL_MILESTONES.map((ms) => {
+                                            const reached = goal.percentage >= ms;
+                                            const msDate = reached && monthlyRate > 0
+                                                ? estimateMilestoneDate(ms, goal.targetAmount, monthlyRate, goal.createdAt)
+                                                : null;
+                                            return (
+                                                <div key={ms} className="flex items-center gap-2.5">
+                                                    <div className={cn(
+                                                        "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0",
+                                                        reached
+                                                            ? "bg-emerald-500"
+                                                            : "bg-slate-200 dark:bg-slate-700"
+                                                    )}>
+                                                        {reached ? (
+                                                            <Check size={10} className="text-white" strokeWidth={3} />
+                                                        ) : (
+                                                            <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500">{ms}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 flex items-center justify-between">
+                                                        <span className={cn(
+                                                            "text-[11px] font-bold",
+                                                            reached
+                                                                ? "text-emerald-600 dark:text-emerald-400"
+                                                                : "text-slate-400 dark:text-slate-500"
+                                                        )}>
+                                                            {ms}% — {formatCurrency((ms / 100) * goal.targetAmount)}
+                                                        </span>
+                                                        {reached && msDate && (
+                                                            <span className="text-[9px] text-slate-400 dark:text-slate-500 tabular-nums">
+                                                                ~{format(msDate, "MMM yyyy", { locale: id })}
+                                                            </span>
+                                                        )}
+                                                        {!reached && (
+                                                            <span className="text-[9px] text-slate-300 dark:text-slate-600 italic">
+                                                                Belum tercapai
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* ETA Section */}
+                                {!isCompleted && (
+                                    <div className={cn(
+                                        "p-3 rounded-xl border text-[11px]",
+                                        hasDeadlineWarning
+                                            ? "bg-amber-50/80 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800"
+                                            : "bg-sky-50/80 dark:bg-sky-900/30 border-sky-200 dark:border-sky-800"
+                                    )}>
+                                        <div className={cn(
+                                            "flex items-center gap-1.5 font-bold mb-1",
+                                            hasDeadlineWarning
+                                                ? "text-amber-600 dark:text-amber-400"
+                                                : "text-sky-600 dark:text-sky-400"
+                                        )}>
+                                            <TrendingUp size={12} />
+                                            <span>Estimasi Pencapaian</span>
+                                        </div>
+                                        {goal.currentAmount > 0 && etaDate ? (
+                                            <div className="space-y-1">
+                                                <p className={cn(
+                                                    "font-bold text-[13px]",
+                                                    hasDeadlineWarning
+                                                        ? "text-amber-700 dark:text-amber-300"
+                                                        : "text-sky-700 dark:text-sky-300"
+                                                )}>
+                                                    {etaDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                </p>
+                                                <p className="text-slate-500 dark:text-slate-400">
+                                                    Rata-rata nabung: <b className="tabular-nums">{formatCurrency(monthlyRate)}</b>/bulan
+                                                </p>
+                                                {hasDeadlineWarning && (
+                                                    <div className="flex items-center gap-1 mt-1 text-amber-600 dark:text-amber-400 font-bold">
+                                                        <AlertTriangle size={11} />
+                                                        <span>Perlu ditingkatkan! ETA melebihi deadline.</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-slate-500 dark:text-slate-400 italic">
+                                                Mulai menabung untuk melihat estimasi
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">

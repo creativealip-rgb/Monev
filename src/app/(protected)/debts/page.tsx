@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ArrowLeft, Plus, Users, TrendingDown, TrendingUp, Check,
-    Trash2, Calendar, Edit3, X, ChevronRight, Wallet
+    Trash2, Calendar, Edit3, X, ChevronRight, Wallet, Banknote
 } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -27,6 +27,41 @@ interface Debt {
     createdAt: Date;
 }
 
+// --- Partial payment helpers ---
+// Original amount is stored in description as [ORIG:123456]
+function parseOriginalAmount(description: string): number | null {
+    const match = description?.match(/\[ORIG:(\d+(?:\.\d+)?)\]/);
+    return match ? parseFloat(match[1]) : null;
+}
+
+function stripOrigTag(description: string): string {
+    return (description || "").replace(/\s*\[ORIG:\d+(?:\.\d+)?\]/, "").trim();
+}
+
+function addOrigTag(description: string, originalAmount: number): string {
+    // Only add if not already present
+    if (/\[ORIG:\d+(?:\.\d+)?\]/.test(description || "")) return description;
+    return `${description || ""} [ORIG:${originalAmount}]`.trim();
+}
+
+function getDebtAmounts(debt: Debt): {
+    originalAmount: number;
+    remainingAmount: number;
+    paidAmount: number;
+    hasPartialPayment: boolean;
+} {
+    const orig = parseOriginalAmount(debt.description);
+    const originalAmount = orig ?? debt.amount;
+    const remainingAmount = debt.amount;
+    const paidAmount = originalAmount - remainingAmount;
+    return {
+        originalAmount,
+        remainingAmount,
+        paidAmount,
+        hasPartialPayment: orig !== null && paidAmount > 0,
+    };
+}
+
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.07 } }
@@ -41,15 +76,23 @@ function DebtCard({
     debt,
     onMarkPaid,
     onDelete,
+    onPartialPayment,
 }: {
     debt: Debt;
     onMarkPaid: (id: number, status: "unpaid" | "paid", debt?: Debt) => void;
     onDelete: (id: number) => void;
+    onPartialPayment: (debt: Debt) => void;
 }) {
     const isOwe = debt.direction === "owe";
     const isPaid = debt.status === "paid";
     const hasDueDate = !!debt.dueDate;
     const isOverdue = hasDueDate && !isPaid && new Date(debt.dueDate!) < new Date();
+    const { originalAmount, remainingAmount, paidAmount, hasPartialPayment } =
+        getDebtAmounts(debt);
+    const progressPercent = hasPartialPayment
+        ? Math.round((paidAmount / originalAmount) * 100)
+        : 0;
+    const displayDescription = stripOrigTag(debt.description);
 
     return (
         <motion.div
@@ -78,26 +121,52 @@ function DebtCard({
                         }
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-foreground truncate">{debt.debtorName}</p>
-                        {debt.description && (
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">{debt.description}</p>
+                        <p className="font-bold text-sm text-foreground truncate">
+                            {debt.debtorName}
+                        </p>
+                        {displayDescription && (
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                {displayDescription}
+                            </p>
                         )}
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className={cn(
-                                "text-xs font-bold",
-                                isPaid ? "text-emerald-600" : isOwe ? "text-rose-600" : "text-sky-600"
-                            )}>
-                                {formatCurrency(debt.amount)}
-                            </span>
+                            {hasPartialPayment && !isPaid ? (
+                                <span className={cn(
+                                    "text-xs font-bold",
+                                    isOwe ? "text-rose-600" : "text-sky-600"
+                                )}>
+                                    {formatCurrency(remainingAmount)}
+                                    <span className="text-muted-foreground font-medium">
+                                        {" / "}
+                                        {formatCurrency(originalAmount)}
+                                    </span>
+                                </span>
+                            ) : (
+                                <span className={cn(
+                                    "text-xs font-bold",
+                                    isPaid
+                                        ? "text-emerald-600"
+                                        : isOwe
+                                            ? "text-rose-600"
+                                            : "text-sky-600"
+                                )}>
+                                    {formatCurrency(debt.amount)}
+                                </span>
+                            )}
                             {hasDueDate && (
                                 <span className={cn(
-                                    "text-[10px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1",
+                                    "text-[10px] px-1.5 py-0.5 rounded-full",
+                                    "font-medium flex items-center gap-1",
                                     isOverdue
                                         ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                                         : "bg-slate-100 dark:bg-slate-800 text-muted-foreground"
                                 )}>
                                     <Calendar size={9} />
-                                    {format(new Date(debt.dueDate!), "d MMM yy", { locale: id })}
+                                    {format(
+                                        new Date(debt.dueDate!),
+                                        "d MMM yy",
+                                        { locale: id }
+                                    )}
                                 </span>
                             )}
                             {isPaid && (
@@ -106,10 +175,60 @@ function DebtCard({
                                 </span>
                             )}
                         </div>
+
+                        {/* Progress bar for partial payments */}
+                        {hasPartialPayment && !isPaid && (
+                            <div className="mt-2">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                        Terbayar {progressPercent}%
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                        {formatCurrency(paidAmount)}
+                                    </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{
+                                            width: `${progressPercent}%`
+                                        }}
+                                        transition={{
+                                            duration: 0.6,
+                                            ease: "easeOut"
+                                        }}
+                                        className={cn(
+                                            "h-full rounded-full",
+                                            isOwe
+                                                ? "bg-rose-400"
+                                                : "bg-sky-400"
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0">
+                    {!isPaid && (
+                        <button
+                            onClick={() => onPartialPayment(debt)}
+                            className={cn(
+                                "w-8 h-8 rounded-xl flex items-center",
+                                "justify-center transition-colors",
+                                isOwe
+                                    ? "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                                    : "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                            )}
+                            title="Bayar Sebagian"
+                        >
+                            <Banknote
+                                size={16}
+                                className="text-amber-600"
+                            />
+                        </button>
+                    )}
                     {!isPaid && (
                         <button
                             onClick={() => onMarkPaid(debt.id, "paid", debt)}
@@ -311,6 +430,291 @@ function AddDebtSheet({
     );
 }
 
+function PartialPaymentSheet({
+    debt,
+    onClose,
+    onSuccess,
+}: {
+    debt: Debt | null;
+    onClose: () => void;
+    onSuccess: () => void;
+}) {
+    const [paymentAmount, setPaymentAmount] = useState("");
+    const [loading, setLoading] = useState(false);
+    const toast = useToast();
+
+    const { originalAmount, remainingAmount } = debt
+        ? getDebtAmounts(debt)
+        : { originalAmount: 0, remainingAmount: 0 };
+
+    const parsedAmount = parseFloat(paymentAmount) || 0;
+    const isValid = parsedAmount > 0 && parsedAmount <= remainingAmount;
+    const isFullPayment = parsedAmount === remainingAmount;
+
+    const handleSubmit = async () => {
+        if (!debt || !isValid) return;
+        setLoading(true);
+        try {
+            const newRemaining = remainingAmount - parsedAmount;
+            const descWithOrig = addOrigTag(
+                debt.description,
+                originalAmount
+            );
+
+            if (newRemaining <= 0) {
+                // Fully paid — mark as paid, update description
+                const res = await apiFetch(`/api/debts/${debt.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        status: "paid",
+                        description: descWithOrig,
+                        direction: debt.direction,
+                    }),
+                });
+                const result = await res.json();
+                if (!result.success && !res.ok) {
+                    toast.error("Gagal", "Gagal memperbarui data");
+                    return;
+                }
+                toast.success(
+                    "Lunas!",
+                    `${debt.debtorName} sudah lunas sepenuhnya`
+                );
+            } else {
+                // Partial — reduce amount, keep unpaid
+                const res = await apiFetch(`/api/debts/${debt.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: newRemaining,
+                        description: descWithOrig,
+                        direction: debt.direction,
+                    }),
+                });
+                const result = await res.json();
+                if (!result.success && !res.ok) {
+                    toast.error("Gagal", "Gagal memperbarui data");
+                    return;
+                }
+                toast.success(
+                    "Pembayaran Dicatat",
+                    `Sisa: ${formatCurrency(newRemaining)}`
+                );
+            }
+            setPaymentAmount("");
+            onClose();
+            onSuccess();
+        } catch {
+            toast.error("Gagal", "Coba lagi");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Portal>
+            <AnimatePresence>
+                {debt && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className={cn(
+                                "fixed inset-0 bg-slate-900/60",
+                                "dark:bg-slate-950/80 backdrop-blur-md",
+                                "z-[999998]"
+                            )}
+                            onClick={onClose}
+                        />
+                        <motion.div
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{
+                                type: "spring",
+                                damping: 25,
+                                stiffness: 300,
+                            }}
+                            className={cn(
+                                "fixed bottom-0 left-0 right-0",
+                                "z-[999999] bg-white dark:bg-slate-900",
+                                "rounded-t-[2.5rem] p-8 pb-12",
+                                "max-h-[90vh] overflow-y-auto",
+                                "border border-slate-200",
+                                "dark:border-slate-700 shadow-2xl",
+                                "max-w-[500px] mx-auto"
+                            )}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-foreground">
+                                    Bayar Sebagian
+                                </h2>
+                                <button
+                                    onClick={onClose}
+                                    className={cn(
+                                        "w-10 h-10 rounded-full",
+                                        "bg-slate-100 dark:bg-slate-800",
+                                        "flex items-center justify-center",
+                                        "text-slate-500 dark:text-slate-400",
+                                        "hover:bg-slate-200",
+                                        "dark:hover:bg-slate-700",
+                                        "transition-colors"
+                                    )}
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Debt info summary */}
+                            <div className={cn(
+                                "p-4 rounded-2xl mb-5",
+                                "bg-slate-50 dark:bg-slate-800/50"
+                            )}>
+                                <p className="text-sm font-bold text-foreground">
+                                    {debt.debtorName}
+                                </p>
+                                <div className="flex items-center justify-between mt-2">
+                                    <span className="text-xs text-muted-foreground">
+                                        Total hutang
+                                    </span>
+                                    <span className="text-sm font-bold text-foreground">
+                                        {formatCurrency(originalAmount)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs text-muted-foreground">
+                                        Sisa belum dibayar
+                                    </span>
+                                    <span className={cn(
+                                        "text-sm font-bold",
+                                        debt.direction === "owe"
+                                            ? "text-rose-600"
+                                            : "text-sky-600"
+                                    )}>
+                                        {formatCurrency(remainingAmount)}
+                                    </span>
+                                </div>
+                                {originalAmount !== remainingAmount && (
+                                    <div className="mt-3">
+                                        <div className={cn(
+                                            "w-full h-2 rounded-full",
+                                            "bg-slate-200 dark:bg-slate-700",
+                                            "overflow-hidden"
+                                        )}>
+                                            <div
+                                                className={cn(
+                                                    "h-full rounded-full transition-all",
+                                                    debt.direction === "owe"
+                                                        ? "bg-rose-400"
+                                                        : "bg-sky-400"
+                                                )}
+                                                style={{
+                                                    width: `${Math.round(
+                                                        ((originalAmount - remainingAmount)
+                                                            / originalAmount) * 100
+                                                    )}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className={cn(
+                                        "text-xs font-bold text-foreground",
+                                        "uppercase tracking-wider mb-2 block"
+                                    )}>
+                                        Jumlah Pembayaran (Rp)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        className={cn(
+                                            "w-full px-4 py-3 rounded-xl",
+                                            "border-2 border-slate-100",
+                                            "dark:border-slate-700",
+                                            "dark:bg-slate-800 dark:text-white",
+                                            "focus:border-amber-500",
+                                            "focus:outline-none transition-colors",
+                                            "text-sm"
+                                        )}
+                                        placeholder={`Maks ${formatCurrency(remainingAmount)}`}
+                                        value={paymentAmount}
+                                        onChange={e => setPaymentAmount(
+                                            e.target.value
+                                        )}
+                                        max={remainingAmount}
+                                        min={1}
+                                    />
+                                    {paymentAmount && !isValid && (
+                                        <p className="text-xs text-red-500 mt-1.5">
+                                            {parsedAmount <= 0
+                                                ? "Jumlah harus lebih dari 0"
+                                                : `Maksimal ${formatCurrency(remainingAmount)}`}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Quick amount buttons */}
+                                <div className="flex gap-2 flex-wrap">
+                                    {[0.25, 0.5, 0.75, 1].map(fraction => {
+                                        const val = Math.round(
+                                            remainingAmount * fraction
+                                        );
+                                        const label = fraction === 1
+                                            ? "Semua"
+                                            : `${fraction * 100}%`;
+                                        return (
+                                            <button
+                                                key={fraction}
+                                                onClick={() => setPaymentAmount(
+                                                    String(val)
+                                                )}
+                                                className={cn(
+                                                    "px-3 py-1.5 rounded-xl",
+                                                    "text-xs font-bold",
+                                                    "transition-all",
+                                                    parsedAmount === val
+                                                        ? "bg-amber-500 text-white"
+                                                        : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
+                                                )}
+                                            >
+                                                {label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={loading || !isValid}
+                                    className={cn(
+                                        "w-full py-4 rounded-xl font-bold",
+                                        "text-white text-sm mt-2 transition-all",
+                                        "bg-amber-500 hover:bg-amber-600",
+                                        "shadow-lg shadow-amber-500/20",
+                                        (loading || !isValid) &&
+                                            "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    {loading
+                                        ? "Memproses..."
+                                        : isFullPayment
+                                            ? "Bayar Lunas"
+                                            : `Bayar ${parsedAmount > 0 ? formatCurrency(parsedAmount) : ""}`}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </Portal>
+    );
+}
+
 export default function DebtsPage() {
     const [debts, setDebts] = useState<Debt[]>([]);
     const [loading, setLoading] = useState(true);
@@ -319,6 +723,7 @@ export default function DebtsPage() {
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [settleDialog, setSettleDialog] = useState<{ debt: Debt } | null>(null);
+    const [partialPaymentDebt, setPartialPaymentDebt] = useState<Debt | null>(null);
     const toast = useToast();
 
     const loadDebts = useCallback(async () => {
@@ -342,12 +747,17 @@ export default function DebtsPage() {
         }
         // For hutang OR plain status toggle — just update status
         try {
-            await apiFetch(`/api/debts/${id}`, {
+            const res = await apiFetch(`/api/debts/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status }),
             });
-            toast.success(status === "paid" ? "Lunas! 🎉" : "Dibatalkan", "Status diperbarui");
+            const result = await res.json();
+            if (result.success || res.ok) {
+                toast.success(status === "paid" ? "Lunas!" : "Dibatalkan", "Status diperbarui");
+            } else {
+                toast.error("Gagal", result.error || "Gagal memperbarui status");
+            }
             await loadDebts();
         } catch {
             toast.error("Gagal", "Coba lagi");
@@ -363,7 +773,9 @@ export default function DebtsPage() {
                 body: JSON.stringify({ debtId: settleDialog.debt.id, createTx }),
             });
             if (res.ok) {
-                toast.success("Lunas! 🎉", createTx ? "Saldo bertambah sesuai piutang" : "Ditandai lunas");
+                toast.success("Lunas!", createTx ? "Saldo bertambah sesuai piutang" : "Ditandai lunas");
+            } else {
+                toast.error("Gagal", "Gagal memproses pelunasan");
             }
         } catch {
             toast.error("Gagal", "Coba lagi");
@@ -379,8 +791,13 @@ export default function DebtsPage() {
     const executeDelete = async (id: number) => {
         setDeletingId(id);
         try {
-            await apiFetch(`/api/debts/${id}`, { method: "DELETE" });
-            toast.success("Dihapus", "Catatan hutang dihapus");
+            const res = await apiFetch(`/api/debts/${id}`, { method: "DELETE" });
+            const result = await res.json();
+            if (result.success || res.ok) {
+                toast.success("Dihapus", "Catatan hutang dihapus");
+            } else {
+                toast.error("Gagal", result.error || "Gagal menghapus");
+            }
             await loadDebts();
         } catch {
             toast.error("Gagal", "Coba lagi");
@@ -524,6 +941,7 @@ export default function DebtsPage() {
                                     debt={debt}
                                     onMarkPaid={handleMarkPaid}
                                     onDelete={handleDelete}
+                                    onPartialPayment={setPartialPaymentDebt}
                                 />
                             ))}
                         </AnimatePresence>
@@ -534,6 +952,12 @@ export default function DebtsPage() {
             <AddDebtSheet
                 isOpen={showAddSheet}
                 onClose={() => setShowAddSheet(false)}
+                onSuccess={loadDebts}
+            />
+
+            <PartialPaymentSheet
+                debt={partialPaymentDebt}
+                onClose={() => setPartialPaymentDebt(null)}
                 onSuccess={loadDebts}
             />
 

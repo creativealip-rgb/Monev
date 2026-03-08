@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check } from "lucide-react";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check, List, LayoutGrid, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
@@ -28,6 +28,8 @@ const iconMap: Record<string, React.ElementType> = {
     Wallet,
 };
 
+const GROUP_ORDER = ["bank", "emoney", "cash", "credit_card", "investment_wallet"];
+
 export default function SaldoPage() {
     const { accounts, isLoading, refresh } = useAccountsData();
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -37,7 +39,9 @@ export default function SaldoPage() {
     const [balance, setBalance] = useState<string>("0");
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [isSaving, setIsSaving] = useState(false);
-    
+    const [viewMode, setViewMode] = useState<"list" | "group">("list");
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
     const haptics = useHaptics();
     const { success: toastSuccess, error: toastError } = useToast();
     const { t } = useI18n();
@@ -54,6 +58,38 @@ export default function SaldoPage() {
         if (acc.type === 'credit_card') return sum - acc.balance;
         return sum + acc.balance;
     }, 0);
+
+    const toggleGroup = (typeId: string) => {
+        haptics.tap();
+        setExpandedGroups(prev => {
+            const next = new Set(prev);
+            if (next.has(typeId)) {
+                next.delete(typeId);
+            } else {
+                next.add(typeId);
+            }
+            return next;
+        });
+    };
+
+    const groupedAccounts = React.useMemo(() => {
+        const groups: Record<string, typeof accounts> = {};
+        for (const acc of accounts) {
+            const type = acc.type || "bank";
+            if (!groups[type]) groups[type] = [];
+            groups[type].push(acc);
+        }
+        return groups;
+    }, [accounts]);
+
+    const sortedGroupKeys = React.useMemo(() => {
+        const keys = Object.keys(groupedAccounts);
+        return keys.sort((a, b) => {
+            const idxA = GROUP_ORDER.indexOf(a);
+            const idxB = GROUP_ORDER.indexOf(b);
+            return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+        });
+    }, [groupedAccounts]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -180,60 +216,217 @@ export default function SaldoPage() {
                         </motion.button>
                     </div>
                 </div>
+
+                {/* View Toggle */}
+                {accounts.length > 0 && (
+                    <div className="mt-6 flex items-center gap-2">
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                                haptics.tap();
+                                setViewMode("list");
+                            }}
+                            className={cn(
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                                viewMode === "list"
+                                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
+                                    : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
+                            )}
+                        >
+                            <List size={16} />
+                            {t("saldo.listView")}
+                        </motion.button>
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                                haptics.tap();
+                                setViewMode("group");
+                            }}
+                            className={cn(
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                                viewMode === "group"
+                                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
+                                    : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
+                            )}
+                        >
+                            <LayoutGrid size={16} />
+                            {t("saldo.groupView")}
+                        </motion.button>
+                    </div>
+                )}
             </header>
 
             <main className="px-6 mt-8">
-                <div className="grid gap-4">
-                    {isLoading ? (
-                        [1, 2, 3].map(i => (
-                            <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
-                        ))
-                    ) : accounts.length === 0 ? (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-12"
-                        >
-                            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Wallet className="text-slate-400" size={32} />
-                            </div>
-                            <h3 className="text-slate-900 dark:text-white font-bold">{t("saldo.noAccounts")}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.addSample")}</p>
-                        </motion.div>
-                    ) : (
-                        accounts.map((acc, idx) => {
-                            const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
-                            return (
-                                <motion.div
-                                    key={acc.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: idx * 0.05 }}
-                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group"
-                                >
-                                    <div
-                                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
-                                        style={{ backgroundColor: acc.color }}
+                <LayoutGroup>
+                    <div className="grid gap-4">
+                        {isLoading ? (
+                            [1, 2, 3].map(i => (
+                                <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
+                            ))
+                        ) : accounts.length === 0 ? (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-center py-12"
+                            >
+                                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Wallet className="text-slate-400" size={32} />
+                                </div>
+                                <h3 className="text-slate-900 dark:text-white font-bold">{t("saldo.noAccounts")}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.addSample")}</p>
+                            </motion.div>
+                        ) : viewMode === "list" ? (
+                            accounts.map((acc, idx) => {
+                                const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
+                                return (
+                                    <motion.div
+                                        key={acc.id}
+                                        layout
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group"
                                     >
-                                        <Icon size={24} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h3>
-                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{accountTypeLabels[acc.type]}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className={`font-black text-sm ${acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
-                                            {formatCurrency(acc.balance)}
-                                        </p>
-                                    </div>
-                                    <button className="text-slate-300 dark:text-slate-600" onClick={() => haptics.tap()}>
-                                        <MoreVertical size={16} />
-                                    </button>
-                                </motion.div>
-                            );
-                        })
-                    )}
-                </div>
+                                        <div
+                                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
+                                            style={{ backgroundColor: acc.color }}
+                                        >
+                                            <Icon size={24} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h3>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{accountTypeLabels[acc.type]}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={cn(
+                                                "font-black text-sm",
+                                                acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
+                                            )}>
+                                                {formatCurrency(acc.balance)}
+                                            </p>
+                                        </div>
+                                        <button className="text-slate-300 dark:text-slate-600" onClick={() => haptics.tap()}>
+                                            <MoreVertical size={16} />
+                                        </button>
+                                    </motion.div>
+                                );
+                            })
+                        ) : (
+                            /* Group View */
+                            sortedGroupKeys.map((typeId, groupIdx) => {
+                                const groupAccounts = groupedAccounts[typeId];
+                                const GroupIcon = accountTypeIcons[typeId as keyof typeof accountTypeIcons] || Wallet;
+                                const isExpanded = expandedGroups.has(typeId);
+                                const groupTotal = groupAccounts.reduce((sum, acc) => {
+                                    if (acc.type === 'credit_card') return sum - acc.balance;
+                                    return sum + acc.balance;
+                                }, 0);
+                                const typeConfig = ACCOUNT_TYPES.find(at => at.id === typeId);
+
+                                return (
+                                    <motion.div
+                                        key={typeId}
+                                        layout
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: groupIdx * 0.08 }}
+                                        className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+                                    >
+                                        {/* Group Header */}
+                                        <motion.button
+                                            onClick={() => toggleGroup(typeId)}
+                                            className="w-full p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                                        >
+                                            <div
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm"
+                                                style={{ backgroundColor: typeConfig?.color || "#3b82f6" }}
+                                            >
+                                                <GroupIcon size={20} />
+                                            </div>
+                                            <div className="flex-1 text-left">
+                                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                                                    {accountTypeLabels[typeId] || typeId}
+                                                </h3>
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">
+                                                    {groupAccounts.length} {t("saldo.accountsCount")}
+                                                </p>
+                                            </div>
+                                            <div className="text-right mr-2">
+                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                                                    {t("saldo.groupTotal")}
+                                                </p>
+                                                <p className={cn(
+                                                    "font-black text-sm",
+                                                    typeId === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
+                                                )}>
+                                                    {formatCurrency(Math.abs(groupTotal))}
+                                                </p>
+                                            </div>
+                                            <motion.div
+                                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                <ChevronDown size={18} className="text-slate-400 dark:text-slate-500" />
+                                            </motion.div>
+                                        </motion.button>
+
+                                        {/* Group Content */}
+                                        <AnimatePresence initial={false}>
+                                            {isExpanded && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{
+                                                        height: { duration: 0.3, ease: "easeInOut" },
+                                                        opacity: { duration: 0.2 },
+                                                    }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <div className="px-4 pb-3 grid gap-2">
+                                                        {groupAccounts.map((acc, idx) => {
+                                                            const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
+                                                            return (
+                                                                <motion.div
+                                                                    key={acc.id}
+                                                                    initial={{ opacity: 0, x: -10 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: idx * 0.04 }}
+                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                >
+                                                                    <div
+                                                                        className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-sm"
+                                                                        style={{ backgroundColor: acc.color }}
+                                                                    >
+                                                                        <Icon size={18} />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h4>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className={cn(
+                                                                            "font-black text-sm",
+                                                                            acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
+                                                                        )}>
+                                                                            {formatCurrency(acc.balance)}
+                                                                        </p>
+                                                                    </div>
+                                                                    <button className="text-slate-300 dark:text-slate-600" onClick={(e) => { e.stopPropagation(); haptics.tap(); }}>
+                                                                        <MoreVertical size={14} />
+                                                                    </button>
+                                                                </motion.div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                );
+                            })
+                        )}
+                    </div>
+                </LayoutGroup>
             </main>
 
             {/* Add Account Modal */}

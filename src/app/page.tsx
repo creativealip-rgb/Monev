@@ -11,10 +11,119 @@ import {
 import { cn } from "@/frontend/lib/utils";
 import dynamic from "next/dynamic";
 
-const AppScreenshots = dynamic(() => import("./components/AppScreenshots").then(mod => mod.AppScreenshots), { ssr: false });
-const TestimonialSection = dynamic(() => import("./components/TestimonialSection").then(mod => mod.TestimonialSection), { ssr: false });
-const FAQSection = dynamic(() => import("./components/FAQSection").then(mod => mod.FAQSection), { ssr: false });
-const StickyCTA = dynamic(() => import("./components/StickyCTA").then(mod => mod.StickyCTA), { ssr: false });
+function ScreenshotsSkeleton() {
+    return (
+        <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900/30">
+            <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-16 space-y-4">
+                    <div className="mx-auto w-40 h-8 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                    <div className="mx-auto w-96 max-w-full h-12 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                    <div className="mx-auto w-80 max-w-full h-6 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                </div>
+                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                    <div className="mx-auto w-[300px] h-[600px] bg-slate-200 dark:bg-slate-700 rounded-[3rem] animate-pulse" />
+                    <div className="space-y-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex items-start gap-4 p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl">
+                                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse flex-shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="w-32 h-5 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                    <div className="w-56 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function TestimonialSkeleton() {
+    return (
+        <section className="py-24 px-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-16 space-y-4">
+                    <div className="mx-auto w-44 h-8 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                    <div className="mx-auto w-80 max-w-full h-12 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                    <div className="mx-auto w-72 max-w-full h-6 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="text-center p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div className="mx-auto w-20 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse mb-2" />
+                            <div className="mx-auto w-24 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                        </div>
+                    ))}
+                </div>
+                <div className="grid md:grid-cols-3 gap-6">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800">
+                            <div className="flex gap-1 mb-4">
+                                {Array.from({ length: 5 }).map((_, j) => (
+                                    <div key={j} className="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                                ))}
+                            </div>
+                            <div className="space-y-2 mb-6">
+                                <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                <div className="w-3/4 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                                <div className="space-y-2">
+                                    <div className="w-28 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                    <div className="w-20 h-3 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function FAQSkeleton() {
+    return (
+        <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900/30">
+            <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-16 space-y-4">
+                    <div className="mx-auto w-20 h-8 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                    <div className="mx-auto w-96 max-w-full h-12 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                    <div className="mx-auto w-72 max-w-full h-6 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                </div>
+                <div className="space-y-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                            <div className="flex items-center justify-between">
+                                <div className="w-3/4 h-5 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                                <div className="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded animate-pulse flex-shrink-0 ml-4" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
+const AppScreenshots = dynamic(
+    () => import("./components/AppScreenshots").then(mod => mod.AppScreenshots),
+    { ssr: false, loading: () => <ScreenshotsSkeleton /> }
+);
+const TestimonialSection = dynamic(
+    () => import("./components/TestimonialSection").then(mod => mod.TestimonialSection),
+    { ssr: false, loading: () => <TestimonialSkeleton /> }
+);
+const FAQSection = dynamic(
+    () => import("./components/FAQSection").then(mod => mod.FAQSection),
+    { ssr: false, loading: () => <FAQSkeleton /> }
+);
+const StickyCTA = dynamic(
+    () => import("./components/StickyCTA").then(mod => mod.StickyCTA),
+    { ssr: false }
+);
 
 function FeatureCard({ icon, title, desc, className, delay = 0 }: { icon: React.ReactNode, title: string, desc: string, className?: string, delay?: number }) {
     return (

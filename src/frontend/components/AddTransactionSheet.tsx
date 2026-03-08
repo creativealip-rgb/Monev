@@ -53,6 +53,7 @@ const actions = [
 export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransactionSheetProps) {
     const [showForm, setShowForm] = useState(false);
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
+    const [y, setY] = useState(0);
     const { data: session } = useSession();
     // @ts-ignore
     const userTier = (session?.user?.tier as UserTier) || "miskin";
@@ -135,8 +136,6 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
             />
         );
     }
-
-    const [y, setY] = useState(0);
 
     return (
         <AnimatePresence>
@@ -258,10 +257,23 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                         <button
                                             key={template.label}
                                             onClick={async () => {
+                                                // Resolve category name to ID first
+                                                let categoryId: number | undefined;
+                                                try {
+                                                    const catRes = await apiFetch("/api/categories");
+                                                    const catData = await catRes.json();
+                                                    if (catData.success) {
+                                                        const matched = catData.data.find((c: { name: string }) => c.name === template.category);
+                                                        categoryId = matched?.id;
+                                                    }
+                                                } catch {
+                                                    // Fall through without categoryId
+                                                }
+
                                                 const transData = {
                                                     amount: template.amount,
                                                     description: template.desc,
-                                                    categoryName: template.category,
+                                                    categoryId,
                                                     type: "expense",
                                                     paymentMethod: "cash",
                                                     date: new Date().toISOString(),
