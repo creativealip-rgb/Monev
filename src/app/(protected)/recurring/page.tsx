@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ArrowLeft, Plus, ToggleLeft, ToggleRight, Trash2, Repeat,
-    Calendar, TrendingDown, TrendingUp, X
+    Calendar, TrendingDown, TrendingUp, X, Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -48,6 +48,7 @@ export default function RecurringPage() {
 
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [editingItem, setEditingItem] = useState<RecurringTx | null>(null);
 
     const [form, setForm] = useState({
         description: "",
@@ -120,23 +121,35 @@ export default function RecurringPage() {
     const handleCreate = async () => {
         if (!form.description || !form.amount) return;
         try {
-            const res = await apiFetch("/api/recurring", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...form,
-                    amount: parseFloat(form.amount),
-                    categoryId: form.categoryId ? parseInt(form.categoryId) : undefined,
-                }),
-            });
+            const body = {
+                ...form,
+                amount: parseFloat(form.amount),
+                categoryId: form.categoryId ? parseInt(form.categoryId) : undefined,
+            };
+
+            let res;
+            if (editingItem) {
+                res = await apiFetch(`/api/recurring/${editingItem.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            } else {
+                res = await apiFetch("/api/recurring", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            }
             const result = await res.json();
             if (result.success) {
-                toast.success("Berhasil!", "Transaksi berulang ditambahkan");
+                toast.success("Berhasil!", editingItem ? "Transaksi berulang diperbarui" : "Transaksi berulang ditambahkan");
                 setShowForm(false);
                 setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+                setEditingItem(null);
                 load();
             } else {
-                toast.error("Gagal", result.error || "Gagal menambahkan");
+                toast.error("Gagal", result.error || "Gagal menyimpan");
             }
         } catch {
             toast.error("Gagal", "Terjadi kesalahan jaringan");
@@ -146,6 +159,7 @@ export default function RecurringPage() {
     const closeForm = () => {
         setShowForm(false);
         setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+        setEditingItem(null);
     };
 
     const filtered = { active: items.filter(i => i.isActive), inactive: items.filter(i => !i.isActive) };
@@ -244,7 +258,7 @@ export default function RecurringPage() {
                                 </div>
                                 <div className="space-y-2.5">
                                     {filtered.active.map(item => (
-                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} />
+                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} onEdit={(i) => { setEditingItem(i); setForm({ description: i.description, amount: i.amount.toString(), type: i.type, frequency: i.frequency, categoryId: i.categoryId?.toString() || "" }); setShowForm(true); }} />
                                     ))}
                                 </div>
                             </section>
@@ -259,7 +273,7 @@ export default function RecurringPage() {
                                 </div>
                                 <div className="space-y-2.5 opacity-55">
                                     {filtered.inactive.map(item => (
-                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} />
+                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} onEdit={(i) => { setEditingItem(i); setForm({ description: i.description, amount: i.amount.toString(), type: i.type, frequency: i.frequency, categoryId: i.categoryId?.toString() || "" }); setShowForm(true); }} />
                                     ))}
                                 </div>
                             </section>
@@ -286,7 +300,7 @@ export default function RecurringPage() {
                             >
                                 {/* Title row */}
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-foreground">Transaksi Berulang Baru</h2>
+                                    <h2 className="text-xl font-bold text-foreground">{editingItem ? "Edit Transaksi" : "Transaksi Berulang Baru"}</h2>
                                     <button
                                         onClick={closeForm}
                                         className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -394,7 +408,7 @@ export default function RecurringPage() {
                                             (!form.description || !form.amount) && "opacity-40 cursor-not-allowed"
                                         )}
                                     >
-                                        Simpan Transaksi
+                                        {editingItem ? "Perbarui Transaksi" : "Simpan Transaksi"}
                                     </button>
                                 </div>
                             </motion.div>
@@ -416,11 +430,12 @@ export default function RecurringPage() {
 }
 
 function RecurringItem({
-    item, onToggle, onDelete
+    item, onToggle, onDelete, onEdit
 }: {
     item: RecurringTx;
     onToggle: (item: RecurringTx) => void;
     onDelete: (id: number) => void;
+    onEdit?: (item: RecurringTx) => void;
 }) {
     const isIncome = item.type === "income";
     const freq = FREQ_LABELS[item.frequency];
@@ -480,6 +495,14 @@ function RecurringItem({
                             : <ToggleLeft size={24} className="text-slate-300 dark:text-slate-600" />
                         }
                     </button>
+                    {onEdit && (
+                        <button
+                            onClick={() => onEdit(item)}
+                            className="p-2 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+                        >
+                            <Pencil size={15} className="text-sky-400" />
+                        </button>
+                    )}
                     <button
                         onClick={() => onDelete(item.id)}
                         className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
