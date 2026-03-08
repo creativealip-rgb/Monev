@@ -23,8 +23,8 @@ interface Transaction {
     description: string;
     category: string;
     type: "expense" | "income";
-    created_at: string;
-    is_verified: boolean;
+    createdAt: string;
+    isVerified: boolean;
 }
 
 interface DashboardStats {
@@ -209,23 +209,23 @@ export function useDashboardData() {
         };
     }, [serverStats, offlineTrans, isDecoyMode]);
 
-    // Merge Offline Transactions
-    const transactions = useMemo(() => {
+    // Merge Offline Transactions - all for stats, sliced for display
+    const allTransactions = useMemo(() => {
         if (isDecoyMode) {
             return [
-                { id: "fake-1", amount: 50000, description: "Makan Siang", category: "Makan", type: "expense", created_at: new Date().toISOString(), is_verified: true },
-                { id: "fake-2", amount: 15000, description: "Parkir", category: "Transportasi", type: "expense", created_at: new Date().toISOString(), is_verified: true },
-                { id: "fake-3", amount: 2500000, description: "Gaji", category: "Gaji", type: "income", created_at: new Date().toISOString(), is_verified: true },
+                { id: "fake-1", amount: 50000, description: "Makan Siang", category: "Makan", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
+                { id: "fake-2", amount: 15000, description: "Parkir", category: "Transportasi", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
+                { id: "fake-3", amount: 2500000, description: "Gaji", category: "Gaji", type: "income", createdAt: new Date().toISOString(), isVerified: true },
             ];
         }
-        const mappedServer = serverTransactions.slice(0, 5).map(t => ({
+        const mappedServer = serverTransactions.map(t => ({
             id: t.id.toString(),
             amount: t.amount,
             description: t.description,
             category: categories.find(c => c.id === t.categoryId)?.name || "Lainnya",
             type: t.type,
-            created_at: t.date,
-            is_verified: t.isVerified,
+            createdAt: t.date,
+            isVerified: t.isVerified,
         }));
 
         const mappedOffline = offlineTrans.map(t => ({
@@ -233,8 +233,10 @@ export function useDashboardData() {
             category: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
         }));
 
-        return [...mappedOffline, ...mappedServer].slice(0, 5);
+        return [...mappedOffline, ...mappedServer];
     }, [serverTransactions, offlineTrans, categories, isDecoyMode]);
+
+    const transactions = useMemo(() => allTransactions.slice(0, 5), [allTransactions]);
 
     const loading = !mounted || (profileLoading && !profile) || (statsLoading && !serverStats);
 
@@ -246,6 +248,7 @@ export function useDashboardData() {
 
     return {
         transactions,
+        allTransactions,
         stats,
         userName,
         userTier,

@@ -42,7 +42,7 @@
 | Halaman | Baris | Bugs | Redundansi | Missing Feature | Skor |
 |---|---|---|---|---|---|
 | Dashboard | 800 | 5 | Tinggi (streak 3x, alert 4x) | - | D |
-| Transactions | 1,377 | 3 | Sedang | Infinite scroll broken | D |
+| Transactions | 1,377 | 3 | Sedang | ~~Infinite scroll broken~~ FIXED | D |
 | Budgets | 1,646 | 4 | Tinggi (3 chart duplikat) | Navigasi bulan | D |
 | Savings | 665 | 1 | Rendah | Filter/sort | B |
 | Bills | 816 | 2 | Sedang (banner duplikat) | Edit bill, calendar click | C |
@@ -228,7 +228,7 @@ Total 242 baris dead code.
 
 ## 3. Critical Bugs
 
-### 3.1 Dashboard: Field Mismatch `createdAt` vs `created_at`
+### ~~3.1 Dashboard: Field Mismatch `createdAt` vs `created_at`~~ FIXED
 
 **File**: `dashboard/page.tsx` line 108 + `useDashboardData.ts`
 
@@ -239,11 +239,11 @@ Total 242 baris dead code.
 - Filter "Hari Ini" selalu menampilkan 0 transaksi
 - QuickStatsSummary widget broken
 
-**Fix**: Seragamkan field name ke `createdAt` di hook mapping.
+**Fix**: ~~Seragamkan field name ke `createdAt` di hook mapping.~~ DONE - Interface Transaction dan mapping di `useDashboardData.ts` diubah dari `created_at`/`is_verified` ke `createdAt`/`isVerified`.
 
 ---
 
-### 3.2 Dashboard: Feature Lock Check Tidak Berfungsi
+### ~~3.2 Dashboard: Feature Lock Check Tidak Berfungsi~~ FIXED
 
 **File**: `dashboard/page.tsx` lines 382-383
 
@@ -255,11 +255,11 @@ Tapi `mainFeatures` mendefinisikan label sebagai i18n key: `"features.analytics"
 
 **Dampak**: User tier gratis bisa akses fitur premium tanpa pembatasan visual.
 
-**Fix**: Compare terhadap i18n key, bukan translated string.
+**Fix**: ~~Compare terhadap i18n key, bukan translated string.~~ DONE - Diubah ke `feature.label === "features.analytics"` dan `feature.label === "features.investments"`.
 
 ---
 
-### 3.3 Dashboard: Markdown Syntax di JSX
+### ~~3.3 Dashboard: Markdown Syntax di JSX~~ FIXED
 
 **File**: `dashboard/page.tsx` lines 328-329
 
@@ -269,21 +269,21 @@ Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0
 ```
 `**text**` di JSX render sebagai literal asterisk, bukan bold.
 
-**Fix**: Gunakan `<strong>` tag.
+**Fix**: ~~Gunakan `<strong>` tag.~~ DONE - Diganti dengan `<strong>` tag.
 
 ---
 
-### 3.4 Dashboard: todayStats Dihitung dari Max 5 Transaksi
+### ~~3.4 Dashboard: todayStats Dihitung dari Max 5 Transaksi~~ FIXED
 
 **File**: `useDashboardData.ts` line 236, `dashboard/page.tsx` line 107
 
 **Problem**: Hook return `.slice(0, 5)` transaksi. Page menghitung today income/expense dari 5 transaksi ini. Jika user punya 20 transaksi hari ini, stats salah.
 
-**Fix**: Hitung todayStats di server-side (API `/api/stats`), atau hook return semua transaksi tanpa slice.
+**Fix**: ~~Hitung todayStats di server-side (API `/api/stats`), atau hook return semua transaksi tanpa slice.~~ DONE - Hook sekarang return `allTransactions` (tanpa slice) dan `transactions` (sliced untuk display). `todayStats` dihitung dari `allTransactions`.
 
 ---
 
-### 3.5 Transactions: Infinite Scroll Broken
+### ~~3.5 Transactions: Infinite Scroll Broken~~ FIXED
 
 **File**: `transactions/page.tsx` line 86
 
@@ -291,17 +291,17 @@ Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0
 
 **Dampak**: User hanya bisa melihat halaman pertama transaksi. Tidak ada "load more".
 
-**Fix**: Tambahkan `<div ref={loadMoreRef} />` di akhir transaction list.
+**Fix**: ~~Tambahkan `<div ref={loadMoreRef} />` di akhir transaction list.~~ DONE - Sentinel element `<div ref={loadMoreRef} />` ditambahkan setelah transaction list, plus loading spinner dan pesan "Semua transaksi sudah ditampilkan".
 
 ---
 
-### 3.6 Transactions: Search Tanpa Debounce
+### ~~3.6 Transactions: Search Tanpa Debounce~~ FIXED
 
 **File**: `transactions/page.tsx` line 624
 
 **Problem**: `setSearchQuery` dipanggil langsung setiap keystroke. Jika search query dikirim ke API, setiap karakter = 1 API call.
 
-**Fix**: Wrap dengan debounce (300-500ms).
+**Fix**: ~~Wrap dengan debounce (300-500ms).~~ DONE - Dibuat hook `useDebouncedValue` (300ms) dan `debouncedSearchQuery` dikirim ke `useTransactionsData` bukan raw `searchQuery`.
 
 ---
 
@@ -317,28 +317,23 @@ Bos, pengeluaran di kategori **{anomalies[0].categoryName}** naik **{anomalies[0
 
 ---
 
-### 3.8 Budgets: Wrong Error Toast Key
+### ~~3.8 Budgets: Wrong Error Toast Key~~ FIXED
 
 **File**: `budgets/page.tsx` lines 238-239
 
 **Problem**: Delete error menampilkan `t("budgets.errorAdd")` -- key untuk error "tambah", bukan "hapus".
 
-**Fix**: Gunakan key yang benar, mis. `t("budgets.errorDelete")`.
+**Fix**: ~~Gunakan key yang benar, mis. `t("budgets.errorDelete")`.~~ DONE - Diganti ke `t("budgets.errorDelete")` dengan fallback "Gagal menghapus anggaran".
 
 ---
 
-### 3.9 Budgets: AnimatePresence Exit Broken
+### ~~3.9 Budgets: AnimatePresence Exit Broken~~ FIXED
 
 **File**: `BudgetForms.tsx` (4 form modals)
 
 **Problem**: Setiap form menggunakan `if (!isOpen) return null` sebelum `<AnimatePresence>`. Modal langsung unmount tanpa exit animation.
 
-**Fix**: Pindahkan pattern ke:
-```tsx
-<AnimatePresence>
-  {isOpen && <motion.div exit={...} />}
-</AnimatePresence>
-```
+**Fix**: ~~Pindahkan pattern ke `<AnimatePresence>{isOpen && ...}</AnimatePresence>`~~ DONE - Semua 4 form (AddBudgetForm, AddGoalForm, EditBudgetForm, EditGoalForm) diperbaiki dengan pattern `{isOpen && (<>...</>)}` di dalam `<AnimatePresence>`.
 
 ---
 
@@ -370,23 +365,23 @@ Hanya trigger haptic. Tidak ada menu, edit, atau delete.
 
 ---
 
-### 3.12 Saldo: Tidak Ada Stealth Mode
+### ~~3.12 Saldo: Tidak Ada Stealth Mode~~ FIXED
 
 **File**: `saldo/page.tsx`
 
 **Problem**: Halaman ini tidak import `useSecurity` dan tidak mask value apapun. Saldo selalu terlihat bahkan saat user mengaktifkan stealth mode di halaman lain.
 
-**Fix**: Import `useSecurity`, replace amounts dengan `"••••••••"` saat stealth aktif.
+**Fix**: ~~Import `useSecurity`, replace amounts dengan `"••••••••"` saat stealth aktif.~~ DONE - Import `useSecurity` ditambahkan, 5 lokasi amount display di-mask dengan `isStealthMode ? "••••••••" : formatCurrency(...)`.
 
 ---
 
-### 3.13 Chat: Hardcoded "Halo Alip!"
+### ~~3.13 Chat: Hardcoded "Halo Alip!"~~ FIXED
 
 **File**: `chat/page.tsx` line 131
 
 **Problem**: Welcome message selalu mengatakan "Halo Alip!" terlepas siapa yang login.
 
-**Fix**: Gunakan `session?.user?.name || "Pengguna"`.
+**Fix**: ~~Gunakan `session?.user?.name || "Pengguna"`.~~ DONE - Diganti ke template literal dengan `session?.user?.name || "Pengguna"`.
 
 ---
 
@@ -404,27 +399,27 @@ User melihat 2 mic icon berdekatan tanpa cara membedakan fungsi.
 
 ---
 
-### 3.15 Profile: Notification Save Palsu
+### ~~3.15 Profile: Notification Save Palsu~~ FIXED
 
 **File**: `profile/page.tsx` lines 82-87, 1421-1425
 
 **Problem**: Toggle notifikasi hanya mengubah local state. Tombol "Simpan" hanya menampilkan toast "Preferensi notifikasi disimpan!" tanpa API call. Data tidak pernah persist ke server. Refresh = reset ke default.
 
-**Fix**: Panggil `PUT /api/user/settings` atau `PUT /api/profile/notifications` saat simpan.
+**Fix**: ~~Panggil `PUT /api/user/settings` atau `PUT /api/profile/notifications` saat simpan.~~ DONE - Tombol simpan sekarang POST ke `/api/user/settings` dengan `notifToggles` data, dengan error handling.
 
 ---
 
-### 3.16 Login & Register: `useFormStatus` Misused
+### ~~3.16 Login & Register: `useFormStatus` Misused~~ FIXED
 
 **File**: `login/page.tsx` line 49, `register/page.tsx` line 98
 
 **Problem**: `useFormStatus` hanya bekerja dengan React Server Actions via `<form action={...}>`. Kedua form menggunakan `onSubmit={handleSubmit}` (client-side handler). `pending` dari `useFormStatus()` selalu `false`.
 
-**Fix**: Hapus `useFormStatus`, gunakan local `isPending` state saja (yang sudah ada).
+**Fix**: ~~Hapus `useFormStatus`, gunakan local `isPending` state saja (yang sudah ada).~~ DONE - Import dan penggunaan `useFormStatus` dihapus dari kedua file. `loading` langsung menggunakan prop `isPending`.
 
 ---
 
-### 3.17 Register: Terms Link Bukan Clickable
+### ~~3.17 Register: Terms Link Bukan Clickable~~ FIXED
 
 **File**: `register/page.tsx` lines 542-548
 
@@ -432,7 +427,7 @@ User melihat 2 mic icon berdekatan tanpa cara membedakan fungsi.
 
 **Dampak**: Legal compliance issue -- user tidak bisa membaca terms sebelum agree.
 
-**Fix**: Ganti `<span>` dengan `<Link>` ke halaman terms/privacy yang sebenarnya.
+**Fix**: ~~Ganti `<span>` dengan `<Link>` ke halaman terms/privacy yang sebenarnya.~~ DONE - `<span>` diganti dengan `<a href="/terms">` dan `<a href="/privacy">` dengan `target="_blank" rel="noopener noreferrer"`.
 
 ---
 
@@ -447,7 +442,7 @@ User melihat 2 mic icon berdekatan tanpa cara membedakan fungsi.
 | 3 | **Recurring** | Edit transaksi berulang | User hanya bisa toggle on/off dan delete. Tidak bisa ubah jumlah, deskripsi, frekuensi, atau kategori. |
 | 4 | **Bills** | Edit tagihan | Tidak ada cara edit nama, jumlah, due date, atau field lain setelah tagihan dibuat. |
 | 5 | **Budgets** | Navigasi bulan | Hanya bisa lihat budget bulan ini. Tidak ada cara melihat budget bulan lalu atau merencanakan bulan depan. |
-| 6 | **Transactions** | Infinite scroll / pagination | `loadMoreRef` tidak ter-attach. User hanya lihat halaman pertama. |
+| 6 | **Transactions** | ~~Infinite scroll / pagination~~ FIXED | ~~`loadMoreRef` tidak ter-attach. User hanya lihat halaman pertama.~~ |
 
 ### Prioritas Sedang
 
@@ -850,15 +845,15 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 
 | # | Task | Impact | Effort | Halaman |
 |---|---|---|---|---|
-| 1 | **Fix `createdAt` vs `created_at` field mismatch** | Critical -- dashboard today stats & filter broken | Rendah | Dashboard |
-| 2 | **Fix infinite scroll (attach loadMoreRef ke DOM)** | User tidak bisa load transaksi lebih | Rendah | Transactions |
+| 1 | ~~**Fix `createdAt` vs `created_at` field mismatch**~~ FIXED | Critical -- dashboard today stats & filter broken | Rendah | Dashboard |
+| 2 | ~~**Fix infinite scroll (attach loadMoreRef ke DOM)**~~ FIXED | User tidak bisa load transaksi lebih | Rendah | Transactions |
 | 3 | **Tambah edit functionality ke saldo, debts, recurring, bills** | 4 halaman tanpa edit = user frustration | Tinggi | 4 halaman |
 | 4 | **Konsistenkan bahasa ke Indonesia (login, landing, dashboard, simulations)** | Branding consistency, user trust | Rendah | 6 halaman |
 | 5 | **Hapus redundant sections (streak 3x, spending alert 4x, chart duplikat 2 halaman)** | Cleaner UI, less information overload | Sedang | Dashboard, Budgets, Investments |
 | 6 | **Split mega-files (profile 1696, debts 1021, transactions 988)** | Maintainability, developer experience | Sedang | 4 file |
 | 7 | **Ganti semua `window.confirm()` dengan ConfirmDialog** | UX consistency, mobile-friendly | Rendah | 5 halaman |
 | 8 | **Fix MoreVertical di saldo + tambah menu edit/delete** | Broken affordance yang user pasti encounter | Sedang | Saldo |
-| 9 | **Fix notification save di profile (persist ke server)** | Feature yang terlihat berfungsi tapi sebenarnya palsu | Rendah | Profile |
+| 9 | ~~**Fix notification save di profile (persist ke server)**~~ FIXED | Feature yang terlihat berfungsi tapi sebenarnya palsu | Rendah | Profile |
 | 10 | **Augment next-auth Session type + hapus semua @ts-ignore** | Type safety, hapus 8+ suppressions, prevent future bugs | Rendah | Global |
 
 ### Estimasi Total Effort

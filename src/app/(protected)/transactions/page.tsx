@@ -21,6 +21,7 @@ import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { useTransactionsData } from "@/frontend/hooks/useTransactionsData";
 import { useI18n } from "@/frontend/lib/i18n-context";
+import { useDebouncedValue } from "@/frontend/hooks/useDebouncedValue";
 import { enUS, id as idLocale } from "date-fns/locale";
 
 import { TransactionFilterModal } from "./components/TransactionFilterModal";
@@ -45,6 +46,7 @@ const itemVariants = {
 export default function TransactionsPage() {
     const { t, locale } = useI18n();
     const [searchQuery, setSearchQuery] = useState("");
+    const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
     const [filterCategory, setFilterCategory] = useState<number | "all">("all");
     const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -94,7 +96,7 @@ export default function TransactionsPage() {
         hasNextPage,
         isFetchingNextPage,
         refresh
-    } = useTransactionsData(searchQuery) as {
+    } = useTransactionsData(debouncedSearchQuery) as {
         transactions: TransactionWithCategory[];
         categories: Category[];
         loading: boolean;
@@ -726,47 +728,62 @@ tr:nth-child(even){background:#fafafa}
                             <NoTransactionsEmpty />
                         )
                     ) : (
-                        <motion.div
-                            key={`list-${filterCategory}-${filterType}-${searchQuery}`}
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                            className="space-y-6"
-                        >
-                            {(Object.entries(groupedTransactions) as [string, TransactionWithCategory[]][]).map(([date, dayTransactions]) => (
-                                <div key={date}>
-                                    <h3 className="text-xs font-bold text-muted-foreground mb-3 py-1 px-2 uppercase tracking-widest">
-                                        {date}
-                                    </h3>
-                                    <div className="space-y-3">
+                        <>
+                            <motion.div
+                                key={`list-${filterCategory}-${filterType}-${searchQuery}`}
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className="space-y-6"
+                            >
+                                {(Object.entries(groupedTransactions) as [string, TransactionWithCategory[]][]).map(([date, dayTransactions]) => (
+                                    <div key={date}>
+                                        <h3 className="text-xs font-bold text-muted-foreground mb-3 py-1 px-2 uppercase tracking-widest">
+                                            {date}
+                                        </h3>
+                                        <div className="space-y-3">
 
-                                        {dayTransactions.map((t) => (
-                                            <motion.div
-                                                key={t.id}
-                                                variants={itemVariants}
-                                                className={cn(
-                                                    "group",
-                                                    showDuplicatesOnly && duplicateIds.has(t.id)
-                                                        && "ring-2 ring-amber-400/60 rounded-2xl"
-                                                )}
-                                            >
-                                                <TransactionItem
-                                                    transaction={t}
-                                                    showCheckbox={showBulkActions}
-                                                    isSelected={selectedIds.has(t.id)}
-                                                    onSelect={toggleSelect}
-                                                    onClick={() => {
-                                                        if (!showBulkActions) {
-                                                            setDetailTransaction(t);
-                                                        }
-                                                    }}
-                                                />
-                                            </motion.div>
-                                        ))}
+                                            {dayTransactions.map((t) => (
+                                                <motion.div
+                                                    key={t.id}
+                                                    variants={itemVariants}
+                                                    className={cn(
+                                                        "group",
+                                                        showDuplicatesOnly && duplicateIds.has(t.id)
+                                                            && "ring-2 ring-amber-400/60 rounded-2xl"
+                                                    )}
+                                                >
+                                                    <TransactionItem
+                                                        transaction={t}
+                                                        showCheckbox={showBulkActions}
+                                                        isSelected={selectedIds.has(t.id)}
+                                                        onSelect={toggleSelect}
+                                                        onClick={() => {
+                                                            if (!showBulkActions) {
+                                                                setDetailTransaction(t);
+                                                            }
+                                                        }}
+                                                    />
+                                                </motion.div>
+                                            ))}
+                                        </div>
                                     </div>
+                                ))}
+                            </motion.div>
+
+                            {/* Sentinel for infinite scroll */}
+                            <div ref={loadMoreRef} className="h-10" />
+                            {isFetchingNextPage && (
+                                <div className="flex justify-center py-4">
+                                    <Loader2 className="animate-spin text-muted-foreground" size={24} />
                                 </div>
-                            ))}
-                        </motion.div>
+                            )}
+                            {!hasNextPage && transactions.length > 0 && (
+                                <p className="text-center text-xs text-muted-foreground py-4">
+                                    Semua transaksi sudah ditampilkan
+                                </p>
+                            )}
+                        </>
                     )
                 }
             </div>

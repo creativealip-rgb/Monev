@@ -125,10 +125,11 @@ export default function ChatPage() {
     }, [session?.user?.id]);
 
     const initializeChat = (key: string) => {
+        const userName = session?.user?.name || "Pengguna";
         const initialMessage: Message = {
             id: generateMessageId(),
             role: "assistant",
-            content: "Halo Alip! Saya Monev AI Assistant. Saya siap membantumu menganalisis pengeluaran, memantau target tabungan, atau sekadar memberikan tips hemat hari ini. 💰✨\n\nApa yang ingin kamu diskusikan pertama kali?",
+            content: `Halo ${userName}! Saya Monev AI Assistant. Saya siap membantumu menganalisis pengeluaran, memantau target tabungan, atau sekadar memberikan tips hemat hari ini. 💰✨\n\nApa yang ingin kamu diskusikan pertama kali?`,
             timestamp: new Date(),
         };
         setMessages([initialMessage]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useFormStatus } from "react-dom";
+
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -46,8 +46,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 function LoginButton({ isPending }: { isPending: boolean }) {
-    const { pending } = useFormStatus();
-    const loading = pending || isPending;
+    const loading = isPending;
 
     return (
         <button

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useFormStatus } from "react-dom";
+
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
@@ -95,8 +95,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 function RegisterButton({ isPending }: { isPending: boolean }) {
-    const { pending } = useFormStatus();
-    const loading = pending || isPending;
+    const loading = isPending;
 
     return (
         <button
@@ -539,13 +538,13 @@ export default function RegisterPage() {
                             />
                             <span className="text-xs text-slate-600 leading-relaxed">
                                 Saya menyetujui{" "}
-                                <span className="text-sky-600 font-semibold hover:underline">
+                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-sky-600 font-semibold hover:underline cursor-pointer">
                                     Syarat & Ketentuan
-                                </span>{" "}
+                                </a>{" "}
                                 dan{" "}
-                                <span className="text-sky-600 font-semibold hover:underline">
+                                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-sky-600 font-semibold hover:underline cursor-pointer">
                                     Kebijakan Privasi
-                                </span>{" "}
+                                </a>{" "}
                                 Monev
                             </span>
                         </label>

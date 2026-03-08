@@ -76,21 +76,21 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
         }
     };
 
-    if (!isOpen) return null;
-
     return (
         <Portal>
             <AnimatePresence>
-                <motion.div
-                    key="add-budget-backdrop"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                    onClick={onClose}
-                />
-                <motion.div
-                    key="add-budget-modal"
+                {isOpen && (
+                    <>
+                        <motion.div
+                            key="add-budget-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                            onClick={onClose}
+                        />
+                        <motion.div
+                            key="add-budget-modal"
                     initial={{ opacity: 0, y: "100%" }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
@@ -189,7 +189,9 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                             {loading ? t("budgets.saving") : t("budgets.save")}
                         </button>
                     </div>
-                </motion.div>
+                        </motion.div>
+                    </>
+                )}
             </AnimatePresence>
         </Portal>
     );
@@ -291,21 +293,21 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
         }
     };
 
-    if (!isOpen) return null;
-
     return (
         <Portal>
             <AnimatePresence>
-                <motion.div
-                    key="add-goal-backdrop"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                    onClick={onClose}
-                />
-                <motion.div
-                    key="add-goal-modal"
+                {isOpen && (
+                    <>
+                        <motion.div
+                            key="add-goal-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                            onClick={onClose}
+                        />
+                        <motion.div
+                            key="add-goal-modal"
                     initial={{ opacity: 0, y: "100%" }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
@@ -419,7 +421,9 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                             {loading ? "Menyimpan..." : "Simpan Goal"}
                         </button>
                     </div>
-                </motion.div>
+                        </motion.div>
+                    </>
+                )}
             </AnimatePresence>
         </Portal>
     );
@@ -472,21 +476,21 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
         }
     };
 
-    if (!isOpen) return null;
-
     return (
         <Portal>
             <AnimatePresence>
-                <motion.div
-                    key="edit-budget-backdrop"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                    onClick={onClose}
-                />
-                <motion.div
-                    key="edit-budget-modal"
+                {isOpen && (
+                    <>
+                        <motion.div
+                            key="edit-budget-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                            onClick={onClose}
+                        />
+                        <motion.div
+                            key="edit-budget-modal"
                     initial={{ opacity: 0, y: "100%" }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
@@ -557,7 +561,9 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                             {loading ? "Menyimpan..." : "Update Budget"}
                         </button>
                     </div>
-                </motion.div>
+                        </motion.div>
+                    </>
+                )}
             </AnimatePresence>
         </Portal>
     );
@@ -617,21 +623,21 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
         }
     };
 
-    if (!isOpen) return null;
-
     return (
         <Portal>
             <AnimatePresence>
-                <motion.div
-                    key="edit-goal-backdrop"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                    onClick={onClose}
-                />
-                <motion.div
-                    key="edit-goal-modal"
+                {isOpen && (
+                    <>
+                        <motion.div
+                            key="edit-goal-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                            onClick={onClose}
+                        />
+                        <motion.div
+                            key="edit-goal-modal"
                     initial={{ opacity: 0, y: "100%" }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: "100%" }}
@@ -742,7 +748,9 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                             {loading ? "Menyimpan..." : "Update Goal"}
                         </button>
                     </div>
-                </motion.div>
+                        </motion.div>
+                    </>
+                )}
             </AnimatePresence>
         </Portal>
     );
