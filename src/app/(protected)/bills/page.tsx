@@ -38,8 +38,7 @@ export default function BillsPage() {
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
     // Form state
     const [formName, setFormName] = useState("");
     const [formAmount, setFormAmount] = useState("");
@@ -56,12 +55,22 @@ export default function BillsPage() {
     // View mode
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
     const filteredBills = useMemo(() => {
-        if (activeTab === "unpaid") return bills.filter(b => !b.isPaid);
-        if (activeTab === "paid") return bills.filter(b => b.isPaid);
-        return bills;
-    }, [bills, activeTab]);
+        let filtered = bills;
+        if (activeTab === "unpaid") filtered = filtered.filter(b => !b.isPaid);
+        if (activeTab === "paid") filtered = filtered.filter(b => b.isPaid);
+        if (selectedDay !== null) {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            filtered = filtered.filter(b => {
+                const dueDate = new Date(year, month, b.dueDate);
+                return dueDate.getDate() === selectedDay;
+            });
+        }
+        return filtered;
+    }, [bills, activeTab, selectedDay, currentMonth]);
 
     const totalBills = useMemo(() => bills.reduce((s, b) => s + b.amount, 0), [bills]);
     const totalPaid = useMemo(() => bills.filter(b => b.isPaid).reduce((s, b) => s + b.amount, 0), [bills]);
@@ -489,6 +498,14 @@ export default function BillsPage() {
                                 {tab.label} ({loading ? "..." : tab.count})
                             </button>
                         ))}
+                        {selectedDay !== null && (
+                            <button
+                                onClick={() => setSelectedDay(null)}
+                                className="ml-auto py-2 px-3 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 transition-all"
+                            >
+                                Filter: hari {selectedDay} ✕
+                            </button>
+                        )}
                     </div>
 
                     {/* Calendar View */}
@@ -555,8 +572,10 @@ export default function BillsPage() {
                                         cells.push(
                                             <div
                                                 key={day}
+                                                onClick={() => setSelectedDay(selectedDay === day ? null : day)}
                                                 className={cn(
-                                                    "h-10 relative rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-colors",
+                                                    "h-10 relative rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-colors cursor-pointer",
+                                                    selectedDay === day ? "ring-2 ring-sky-500" : "",
                                                     isToday ? "bg-sky-500 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-800",
                                                     isPast && !isToday ? "text-muted-foreground" : "text-foreground"
                                                 )}

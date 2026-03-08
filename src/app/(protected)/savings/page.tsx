@@ -196,8 +196,7 @@ export default function SavingsPage() {
     const { isStealthMode } = useSecurity();
 
     const { data: session } = useSession();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
 
     // Track celebrated goals per session (show confetti only once)
     const celebratedGoalsRef = useRef<Set<number>>(new Set());

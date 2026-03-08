@@ -59,8 +59,7 @@ const TIER_CARDS = [
 
 export default function UpgradePage() {
     const { data: session, update: updateSession } = useSession();
-    // @ts-ignore
-    const currentTier = (session?.user?.tier || "miskin") as UserTier;
+    const currentTier: UserTier = session?.user?.tier || "miskin";
     const toast = useToast();
     const router = useRouter();
 

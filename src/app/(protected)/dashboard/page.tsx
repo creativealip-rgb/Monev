@@ -44,7 +44,9 @@ import { BillReminderWidget } from "@/frontend/components/BillReminderWidget";
 import { HeroBalanceCard } from "./components/HeroBalanceCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
 
-const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: any; border: string }> = {
+import type { LucideIcon } from "lucide-react";
+
+const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; icon: LucideIcon; border: string }> = {
     miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
     kaya: { label: "Kaya", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
     sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },

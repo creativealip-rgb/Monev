@@ -42,8 +42,7 @@ export default function InvestmentsPage() {
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
     const tierConfig = getTierConfig(userTier);
 
     // Form state

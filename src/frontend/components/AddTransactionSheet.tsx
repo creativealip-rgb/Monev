@@ -55,8 +55,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
     const [y, setY] = useState(0);
     const { data: session } = useSession();
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
     const hasSmartAccess = canAccessSmartInput(userTier);
     const haptics = useHaptics();
     const { success: toastSuccess } = useToast();

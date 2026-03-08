@@ -19,8 +19,7 @@ export async function GET(req: NextRequest) {
         const session = await auth();
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
-        // @ts-ignore
-        const userTier = (session.user.tier as UserTier) || "miskin";
+        const userTier: UserTier = session.user.tier || "miskin";
 
         // PRIORITY: Check for scheduled stock opname/reconciliation messages
         const scheduledMessages = await getPendingScheduledMessages();

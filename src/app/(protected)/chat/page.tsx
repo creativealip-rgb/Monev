@@ -13,7 +13,8 @@ import {
     Camera,
     Mic,
     TrendingUp,
-    X
+    X,
+    AudioWaveform
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
@@ -146,8 +147,7 @@ export default function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
-    // @ts-ignore
-    const userTier = (session?.user?.tier as UserTier) || "miskin";
+    const userTier: UserTier = session?.user?.tier || "miskin";
     const tierConfig = getTierConfig(userTier);
 
     const getDailyUsage = (): number => {
@@ -553,10 +553,10 @@ export default function ChatPage() {
                         </button>
                         <button
                             onClick={() => setSmartInputMode("voice")}
-                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            title="Catat Suara"
+                            className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500/10 to-cyan-500/10 dark:from-sky-500/20 dark:to-cyan-500/20 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:from-sky-500/20 hover:to-cyan-500/20 transition-colors border border-sky-200 dark:border-sky-800"
+                            title="Catat Transaksi Suara"
                         >
-                            <Mic size={18} />
+                            <AudioWaveform size={18} />
                         </button>
                     </div>
                     <div className="flex-1 relative flex items-center">
@@ -574,15 +574,15 @@ export default function ChatPage() {
                         <div className="absolute right-2 flex items-center gap-1">
                             <button
                                 onClick={toggleListening}
-                                title="Dikte Suara"
+                                title="Ketik dengan suara"
                                 className={cn(
                                     "w-8 h-8 rounded-full flex items-center justify-center transition-all",
                                     isListening
                                         ? "bg-rose-500 text-white animate-pulse"
-                                        : "text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                        : "text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 bg-slate-100 dark:bg-slate-800/50"
                                 )}
                             >
-                                <Mic size={16} />
+                                <Mic size={14} />
                             </button>
                         </div>
                     </div>

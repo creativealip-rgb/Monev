@@ -3,6 +3,7 @@ import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { z } from "zod";
+import type { UserTier } from "@/lib/tier-gate";
 import { users } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/backend/db";
@@ -213,8 +214,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                         console.log("[Session] Found user in DB:", { id: dbUser.id, name: dbUser.name, tier: dbUser.tier });
                         session.user.name = dbUser.name;
                         session.user.image = dbUser.image;
-                        // @ts-ignore
-                        session.user.tier = dbUser.tier || "miskin";
+                        session.user.tier = (dbUser.tier as UserTier) || "miskin";
                     } else {
                         console.log("[Session] User not found in DB for ID:", userId);
                     }

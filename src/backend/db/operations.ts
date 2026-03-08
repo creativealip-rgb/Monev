@@ -614,6 +614,7 @@ export async function createBudget(userId: number, data: {
     amount: number;
     month: number;
     year: number;
+    enableRollover?: boolean;
 }): Promise<Budget> {
     const db = getDb();
     return db.insert(budgets).values({ ...data, userId }).returning().get();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getGoals, createGoal } from "@/backend/db/operations";
+import type { UserTier } from "@/lib/tier-gate";
 
 // Map icon names to emojis
 const iconToEmoji: Record<string, string> = {
@@ -56,8 +57,7 @@ export async function POST(request: Request) {
 
         // Tier limit check
         const currentGoals = await getGoals(userId);
-        // @ts-ignore
-        const userTier = session.user.tier || "miskin";
+        const userTier: UserTier = session.user.tier || "miskin";
 
         const { canCreateGoal } = await import("@/lib/tier-gate");
         if (!canCreateGoal(currentGoals.length, userTier)) {

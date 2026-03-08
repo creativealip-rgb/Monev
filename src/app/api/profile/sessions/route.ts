@@ -17,8 +17,7 @@ export async function GET(req: NextRequest) {
         .where(eq(sessions.userId, userId))
         .orderBy();
 
-    // @ts-ignore - sessionToken may exist as extended field
-    const currentSessionToken = session.sessionToken as string | undefined;
+    const currentSessionToken = session.user.sessionToken;
 
     const result = userSessions.map(s => ({
         id: s.id,
@@ -45,8 +44,7 @@ export async function DELETE(req: NextRequest) {
     const { sessionId, revokeAll } = body;
 
     if (revokeAll) {
-        // @ts-ignore
-        const currentSessionToken = session.sessionToken as string | undefined;
+        const currentSessionToken = session.user.sessionToken;
         if (currentSessionToken) {
             await db.delete(sessions).where(
                 and(eq(sessions.userId, userId), ne(sessions.id, currentSessionToken))

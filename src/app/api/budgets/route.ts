@@ -23,6 +23,7 @@ export async function GET(request: Request) {
             spent: b.spent,
             color: b.category.color,
             percentage: Math.min((b.spent / b.amount) * 100, 100),
+            enableRollover: b.enableRollover,
         }));
 
         return NextResponse.json({ success: true, data: mappedBudgets });
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
             amount: body.amount,
             month: body.month,
             year: body.year,
+            enableRollover: body.enableRollover ?? false,
         });
 
         return NextResponse.json({ success: true, data: budget });
