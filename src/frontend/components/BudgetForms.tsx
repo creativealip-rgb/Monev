@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Wallet, TrendingUp, PiggyBank, Target, Calendar, DollarSign } from "lucide-react";
-import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { X } from "lucide-react";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { BudgetSummary, Goal } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { apiFetch } from "@/frontend/lib/api-client";

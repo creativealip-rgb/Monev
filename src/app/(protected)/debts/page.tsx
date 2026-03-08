@@ -3,13 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ArrowLeft, Plus, Users, TrendingDown, TrendingUp, Check,
-    Trash2, Calendar, Edit3, X, ChevronRight, Wallet, Banknote
+    Trash2, Calendar, X, Wallet, Banknote
 } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";

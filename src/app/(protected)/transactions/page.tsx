@@ -7,18 +7,15 @@ import { TransactionDetailModal } from "@/frontend/components/DetailModalsVerifi
 import { TransactionListSkeleton, NoTransactionsEmpty, NoSearchResultsEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
-import { Filter, Search, ArrowLeft, X, Check, Loader2, Download, ChevronDown, Trash2, Square, CheckSquare, Calendar, ArrowUpDown, Upload, Undo2, FileText, FileSpreadsheet, AlertTriangle, Eye } from "lucide-react";
+import { Filter, Search, ArrowLeft, X, Loader2, Download, Square, CheckSquare, Calendar, Upload, Undo2, FileText, FileSpreadsheet, AlertTriangle, Eye } from "lucide-react";
 import { CSVImportWizard } from "@/frontend/components/CSVImportWizard";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
 import { TransactionWithCategory } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { OfflineManager } from "@/frontend/lib/offline-manager";
-import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { useTransactionsData } from "@/frontend/hooks/useTransactionsData";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { useDebouncedValue } from "@/frontend/hooks/useDebouncedValue";
@@ -91,7 +88,6 @@ export default function TransactionsPage() {
         transactions,
         categories,
         loading,
-        mounted,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
@@ -100,7 +96,6 @@ export default function TransactionsPage() {
         transactions: TransactionWithCategory[];
         categories: Category[];
         loading: boolean;
-        mounted: boolean;
         fetchNextPage: () => void;
         hasNextPage: boolean;
         isFetchingNextPage: boolean;

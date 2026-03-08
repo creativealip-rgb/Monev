@@ -799,45 +799,45 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 
 ## 9. Dead Code & Unused Imports
 
-### Unused Imports Per File
+### ~~Unused Imports Per File~~ FIXED - ALL REMOVED
 
-| File | Unused Imports |
-|---|---|
-| `dashboard/page.tsx` | `useHeroTheme` |
-| `dashboard/DailyInsight.tsx` | `AnimatePresence` |
-| `transactions/page.tsx` | `OfflineManager`, `useHaptics`, `id` (date-fns duplicate), `ChevronDown`, `Trash2`, `ArrowUpDown` |
-| `budgets/page.tsx` | `useMemo`, `X`, `TierLimitBanner` |
-| `budgets/BudgetForms.tsx` | `Wallet`, `TrendingUp`, `PiggyBank`, `Target`, `Calendar`, `DollarSign` |
-| `bills/page.tsx` | `TierLimitBanner`, `canCreateBill` |
-| `investments/page.tsx` | `useMemo`, `Edit3` |
-| `debts/page.tsx` | `Edit3`, `ChevronRight` |
-| `recurring/page.tsx` | `FileText`, `DollarSign`, `Tag`, `Clock`, `Sparkles` |
-| `chat/page.tsx` | `Loader2`, `ErrorEmpty`, `TierLimitBanner` |
-| `simulations/page.tsx` | `Send`, `AlertTriangle` |
-| `profile/page.tsx` | `ChevronRight`, `Copy`, `AlertCircle`, `Info`, `FileJson`, `FileSpreadsheet`, `Upload` |
-
-**Total: 30+ unused imports** yang memperbesar bundle size.
-
-### Dead Variables
-
-| File | Variable | Alasan |
+| File | Unused Imports | Status |
 |---|---|---|
-| `bills/page.tsx` | `tierConfig` (line 45) | Computed tapi tidak pernah digunakan |
-| `bills/page.tsx` | `dateStr` (line 552) | Computed di calendar loop tapi tidak digunakan |
-| `transactions/page.tsx` | `mounted` (line 92) | Destructured tapi tidak pernah dipakai |
-| `savings/page.tsx` | `Category` interface (lines 24-29) | Defined tapi tidak pernah dipakai |
-| `budgets/page.tsx` | `BUDGET_TEMPLATES.description` | Field didefinisikan tapi tidak pernah dirender |
+| `dashboard/page.tsx` | `useHeroTheme` | REMOVED |
+| `dashboard/DailyInsight.tsx` | `AnimatePresence` | REMOVED |
+| `transactions/page.tsx` | `OfflineManager`, `useHaptics`, `id` (date-fns duplicate), `ChevronDown`, `Trash2`, `ArrowUpDown` | REMOVED |
+| `budgets/page.tsx` | `useMemo`, `X`, `TierLimitBanner` | REMOVED |
+| `budgets/BudgetForms.tsx` | `Wallet`, `TrendingUp`, `PiggyBank`, `Target`, `Calendar`, `DollarSign` | REMOVED |
+| `bills/page.tsx` | `TierLimitBanner`, `canCreateBill`, `getTierConfig` | REMOVED |
+| `investments/page.tsx` | `useMemo`, `Edit3` | REMOVED |
+| `debts/page.tsx` | `Edit3`, `ChevronRight` | REMOVED |
+| `recurring/page.tsx` | `FileText`, `DollarSign`, `Tag`, `Clock`, `Sparkles` | REMOVED |
+| `chat/page.tsx` | `Loader2`, `ErrorEmpty`, `TierLimitBanner` | REMOVED |
+| `simulations/page.tsx` | `Send`, `AlertTriangle` | REMOVED |
+| `profile/page.tsx` | `ChevronRight`, `Copy`, `AlertCircle`, `Info`, `FileJson`, `FileSpreadsheet`, `Upload` | REMOVED |
 
-### Dead Components/Files
+**Bonus**: Duplicate imports dari `@/frontend/lib/utils` digabung di budgets, BudgetForms, bills, debts, recurring (6.2 pattern fix).
 
-| File | Baris | Alasan |
+### ~~Dead Variables~~ FIXED - ALL REMOVED
+
+| File | Variable | Status |
 |---|---|---|
-| `onboarding/components/CTAScreen.tsx` | 216 | Tidak pernah diimport |
-| `onboarding/components/OnboardingCard.tsx` | 26 | Tidak pernah diimport |
-| `analytics/components/AnalyticsTabs.tsx` | ~100 | Page buat tab bar sendiri secara inline |
-| `analytics/components/MonthComparison.tsx` | ~100 | Tidak pernah diimport |
-| `analytics/components/SpendingHeatmap.tsx` | ~100 | Tidak pernah diimport |
-| `analytics/components/CalendarHeatmap.tsx` | ~100 | Tidak pernah diimport |
+| `bills/page.tsx` | `tierConfig` (line 45) | REMOVED (+ `getTierConfig` import) |
+| `bills/page.tsx` | `dateStr` (line 552) | REMOVED |
+| `transactions/page.tsx` | `mounted` (line 92) | REMOVED |
+| `savings/page.tsx` | `Category` interface (lines 24-29) | REMOVED |
+| `budgets/page.tsx` | `BUDGET_TEMPLATES.description` | REMOVED (type + 3 values) |
+
+### ~~Dead Components/Files~~ FIXED (3 of 6 confirmed dead, deleted)
+
+| File | Baris | Status |
+|---|---|---|
+| `onboarding/components/CTAScreen.tsx` | 216 | DELETED |
+| `onboarding/components/OnboardingCard.tsx` | 26 | DELETED |
+| `analytics/components/AnalyticsTabs.tsx` | ~100 | DELETED |
+| `analytics/components/MonthComparison.tsx` | ~100 | ALIVE - digunakan di TrendsTab.tsx |
+| `analytics/components/SpendingHeatmap.tsx` | ~100 | ALIVE - digunakan di TrendsTab.tsx |
+| `analytics/components/CalendarHeatmap.tsx` | ~100 | ALIVE - digunakan di OverviewTab.tsx |
 
 ---
 

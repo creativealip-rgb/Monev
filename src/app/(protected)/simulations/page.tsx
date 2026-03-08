@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Zap, ArrowLeft, Send, AlertTriangle, CheckCircle2, Info,
+    Zap, ArrowLeft, CheckCircle2, Info,
     TrendingUp, PiggyBank, Receipt, Wallet, Clock, Trash2,
     ChevronDown, ChevronUp, Sparkles
 } from "lucide-react";
