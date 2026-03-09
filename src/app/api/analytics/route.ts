@@ -107,8 +107,8 @@ export async function GET(req: NextRequest) {
 
         const settings = await getUserSettings(userId);
 
-        const userTier = user?.tier || "miskin";
-        const canAccessAIInsights = userTier === "kaya" || userTier === "sultan";
+        const userTier = user?.tier || "starter";
+        const canAccessAIInsights = userTier === "pro" || userTier === "sultan";
         const hideBalance = settings?.hideBalance || false;
 
         const [

@@ -179,7 +179,7 @@ export function useDashboardData() {
     // Derived states
     const fullName = profile ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() : null;
     const userName = fullName || profile?.name || "Sultan";
-    const userTier = profile?.tier || "miskin";
+    const userTier = profile?.tier || "starter";
     const userImage = profile?.image || null;
 
     // Merge Offline Stats

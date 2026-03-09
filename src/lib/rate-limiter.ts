@@ -28,7 +28,7 @@ export interface RateLimitResult {
 }
 
 export function checkAIRateLimit(userId: number, tier: UserTier): RateLimitResult {
-    const config = TIER_CONFIGS[tier] || TIER_CONFIGS.miskin;
+    const config = TIER_CONFIGS[tier] || TIER_CONFIGS.starter;
     const limit = config.aiDailyLimit;
     const used = getAIUsage(userId);
 

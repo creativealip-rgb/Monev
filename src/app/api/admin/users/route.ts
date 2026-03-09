@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         }
         
         if (tier) {
-            const tierValue = tier as "miskin" | "kaya" | "sultan";
+            const tierValue = tier as "starter" | "pro" | "sultan";
             conditions.push(eq(users.tier, tierValue));
         }
         
@@ -87,8 +87,8 @@ export async function GET(req: NextRequest) {
             .all();
 
         const tierDistribution = {
-            miskin: 0,
-            kaya: 0,
+            starter: 0,
+            pro: 0,
             sultan: 0,
         };
         
@@ -144,10 +144,10 @@ export async function PATCH(req: NextRequest) {
         const updateData: Record<string, any> = {};
         
         if (tier) {
-            if (!["miskin", "kaya", "sultan"].includes(tier)) {
+            if (!["starter", "pro", "sultan"].includes(tier)) {
                 return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
             }
-            updateData.tier = tier as "miskin" | "kaya" | "sultan";
+            updateData.tier = tier as "starter" | "pro" | "sultan";
         }
         
         if (isActive !== undefined) {

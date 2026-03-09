@@ -214,7 +214,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                         console.log("[Session] Found user in DB:", { id: dbUser.id, name: dbUser.name, tier: dbUser.tier });
                         session.user.name = dbUser.name;
                         session.user.image = dbUser.image;
-                        session.user.tier = (dbUser.tier as UserTier) || "miskin";
+                        session.user.tier = (dbUser.tier as UserTier) || "starter";
                     } else {
                         console.log("[Session] User not found in DB for ID:", userId);
                     }

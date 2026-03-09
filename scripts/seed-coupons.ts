@@ -5,20 +5,20 @@ async function seed() {
     console.log("Seeding coupons...");
     const db = getDb();
     const testCoupons = [
-        // Kaya tier coupons
+        // Pro tier coupons
         {
-            code: "KAYA-TRIAL",
-            tier: "kaya" as const,
+            code: "PRO-TRIAL",
+            tier: "pro" as const,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
         {
-            code: "MONEV-KAYA-VIP",
-            tier: "kaya" as const,
+            code: "MONEV-PRO-VIP",
+            tier: "pro" as const,
             expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         },
         {
-            code: "KAYA-2026",
-            tier: "kaya" as const,
+            code: "PRO-2026",
+            tier: "pro" as const,
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         },
         // Sultan tier coupons

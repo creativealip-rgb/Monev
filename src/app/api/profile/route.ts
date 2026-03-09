@@ -33,11 +33,11 @@ export async function GET() {
         }
 
         // ── Tier Expiry Check ─────────────────────────────────────────
-        if (user.tierExpiresAt && user.tier !== "miskin") {
+        if (user.tierExpiresAt && user.tier !== "starter") {
             const now = new Date();
             if (new Date(user.tierExpiresAt) < now) {
-                // Tier expired → auto-downgrade to miskin
-                const updatedUser = await updateUser(userId, { tier: "miskin", tierExpiresAt: null });
+                // Tier expired → auto-downgrade to starter
+                const updatedUser = await updateUser(userId, { tier: "starter", tierExpiresAt: null });
                 if (updatedUser) user = updatedUser;
             }
         }
@@ -65,10 +65,10 @@ export async function GET() {
         return NextResponse.json({
             success: true,
             data: {
-                user: {
-                    ...user,
-                    tier: user.tier || "miskin"
-                },
+            user: {
+                ...user,
+                tier: user.tier || "starter"
+            },
                 settings: {
                     id: settings.id,
                     userId: settings.userId,

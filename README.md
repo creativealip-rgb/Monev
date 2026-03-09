@@ -4,16 +4,26 @@ Asisten keuangan pribadi berbasis AI. Catat transaksi, analisa pengeluaran, dan 
 
 ## ✨ Features
 
-| Feature | Description |
-|---------|-------------|
-| 💬 **AI Chat** | Tanya asisten AI tentang kondisi keuanganmu |
-| 📊 **Analytics** | Grafik pengeluaran, perbandingan bulanan, heatmap spending |
-| 🔔 **Smart Notifications** | Pengingat tagihan, daily recap, dan push notifications |
-| 💱 **Multi-Currency** | Support IDR, USD, EUR, SGD, MYR |
-| 🌐 **Multi-Language** | Indonesia & English |
-| 🎯 **Goal Tracking** | Target tabungan dan investasi |
-| 📱 **PWA + Android** | Install as app, offline support |
-| 🤖 **Telegram Bot** | Catat transaksi via Telegram |
+| Feature | Starter | Pro | Sultan |
+|---------|---------|-----|--------|
+| 💬 **AI Chat** | 5/hari | 100/hari | Unlimited |
+| 📊 **Analytics** | Basic | Full & Trends | Predictive |
+| 📅 **Budgeting** | 3 categories | 20 categories | Unlimited |
+| 🎯 **Goals** | 1 goal | 10 goals | Unlimited |
+| 📈 **Investment Tracking** | ❌ | Manual | Real-time Sync |
+| 💬 **Telegram Bot** | ❌ | Command-based | AI Conversational |
+| 📤 **Export Formats** | CSV | CSV + Excel | CSV + Excel + PDF |
+| 👀 **Ad-Free Experience** | ❌ | ✅ | ✅ |
+| ☑️ **Unlimited Transactions** | 100/month | ✅ | ✅ |
+
+## 📋 Tier System
+
+| Tier | Price | Features |
+|------|-------|----------|
+| **Starter** | Rp 0/month | Essential features to get started with finance tracking |
+| **Pro** | Rp 29.000/month | Advanced analytics and productivity tools |
+| **Sultan** | Rp 49.000/month | Complete financial AI assistant with premium features |
+
 
 ## 🚀 Quick Start
 

@@ -159,7 +159,7 @@ export default function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
-    const userTier: UserTier = session?.user?.tier || "miskin";
+    const userTier: UserTier = session?.user?.tier || "starter";
     const tierConfig = getTierConfig(userTier);
 
     const getDailyUsage = (): number => {

@@ -166,7 +166,7 @@ export const users = sqliteTable("users", {
 	firstName: text("first_name"),
 	lastName: text("last_name"),
 	whatsappId: text("whatsapp_id"),
-	tier: text().default("miskin").notNull(),
+	tier: text().default("starter").notNull(),
 	tierExpiresAt: integer("tier_expires_at"),
 	isAdmin: integer("is_admin").default(0).notNull(),
 	isActive: integer("is_active").default(1).notNull(),

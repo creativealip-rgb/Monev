@@ -126,7 +126,7 @@ export default function BudgetsPage() {
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
-    const userTier: UserTier = session?.user?.tier || "miskin";
+    const userTier: UserTier = session?.user?.tier || "starter";
     const tierConfig = getTierConfig(userTier);
 
     const [prevBudgets, setPrevBudgets] = useState<BudgetSummary[]>([]);
