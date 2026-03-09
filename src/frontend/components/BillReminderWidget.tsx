@@ -66,7 +66,7 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
         const upcoming = (bills || [])
             .filter(bill => !bill.isPaid)
             .map(bill => {
-                let dueDate = new Date(currentYear, currentMonth, bill.dueDate);
+                const dueDate = new Date(currentYear, currentMonth, bill.dueDate);
                 if (bill.dueDate < currentDay) {
                     // It's for next month
                     dueDate.setMonth(currentMonth + 1);

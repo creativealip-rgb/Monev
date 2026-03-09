@@ -313,7 +313,7 @@ import { LanguageSelector } from "@/frontend/components/LanguageSelector";
 export default function FiturPage() {
     const { data: session } = useSession();
     const { t } = useI18n();
-    const userTier: UserTier = session?.user?.tier || "miskin";
+    const userTier: UserTier = session?.user?.tier || "starter";
 
     return (
         <div className="min-h-screen pb-28 bg-sky-50 dark:bg-slate-950">
@@ -380,7 +380,7 @@ export default function FiturPage() {
                                                     )}
                                                     {feature.status === "ready" && feature.requiredTier && !isTierSufficient(userTier, feature.requiredTier) && (
                                                         <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-bold rounded-md border border-amber-100 tracking-tighter uppercase flex items-center gap-0.5">
-                                                            <Lock size={8} /> {feature.requiredTier === "kaya" ? "Kaya" : "Sultan"}
+                                                            <Lock size={8} /> {feature.requiredTier === "pro" ? "Pro" : "Sultan"}
                                                         </span>
                                                     )}
                                                     {feature.status === "ready" && feature.requiredTier && isTierSufficient(userTier, feature.requiredTier) && (

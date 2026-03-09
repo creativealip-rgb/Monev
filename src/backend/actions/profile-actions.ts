@@ -64,7 +64,7 @@ export async function fetchProfileData() {
     return {
         user: {
             ...user,
-            tier: user.tier || "miskin"
+            tier: user.tier || "starter"
         },
         settings: {
             id: settings.id,

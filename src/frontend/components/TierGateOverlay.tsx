@@ -14,19 +14,19 @@ interface TierGateOverlayProps {
 }
 
 const TIER_ICONS: Record<UserTier, typeof Lock> = {
-    miskin: Lock,
-    kaya: Sparkles,
+    starter: Lock,
+    pro: Sparkles,
     sultan: Crown,
 };
 
 const TIER_COLORS: Record<UserTier, { bg: string; text: string; border: string; button: string }> = {
-    miskin: {
+    starter: {
         bg: "bg-slate-50 dark:bg-slate-900",
         text: "text-slate-600 dark:text-slate-400",
         border: "border-slate-200 dark:border-slate-800",
         button: "bg-slate-900 dark:bg-white text-white dark:text-slate-900",
     },
-    kaya: {
+    pro: {
         bg: "bg-sky-50/80 dark:bg-sky-900/20",
         text: "text-sky-700 dark:text-sky-300",
         border: "border-sky-200/50 dark:border-sky-800/50",
@@ -136,7 +136,7 @@ export function TierLimitBanner({
     if (maxCount === null) return null; // unlimited
     if (currentCount < maxCount) return null; // still within limit
 
-    const nextTier = tier === "miskin" ? "kaya" : "sultan";
+    const nextTier = tier === "starter" ? "pro" : "sultan";
     const colors = TIER_COLORS[nextTier];
 
     return (

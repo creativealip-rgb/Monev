@@ -48,7 +48,7 @@ export default function InvestmentsPage() {
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
-    const userTier: UserTier = session?.user?.tier || "miskin";
+    const userTier: UserTier = session?.user?.tier || "starter";
     const tierConfig = getTierConfig(userTier);
 
     // Form state
@@ -257,7 +257,7 @@ export default function InvestmentsPage() {
 
     return (
         <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
-            <TierGateOverlay requiredTier="kaya" currentTier={userTier} featureName="Investasi" />
+            <TierGateOverlay requiredTier="pro" currentTier={userTier} featureName="Investasi" />
 
             {/* Header */}
             <motion.header

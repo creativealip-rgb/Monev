@@ -194,7 +194,7 @@ export default function SavingsPage() {
     const { isStealthMode } = useSecurity();
 
     const { data: session } = useSession();
-    const userTier: UserTier = session?.user?.tier || "miskin";
+    const userTier: UserTier = session?.user?.tier || "starter";
 
     // Filter & Sort state
     const [filterStatus, setFilterStatus] = useState<"all" | "active" | "completed">("all");
@@ -437,7 +437,7 @@ export default function SavingsPage() {
                                 <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
                             </div>
                             <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Daftar Impian</h2>
-                            {userTier === "miskin" && (
+                             {userTier === "starter" && (
                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                     <Zap size={10} className="text-slate-500" />
                                     <span className="text-[9px] font-bold text-slate-500 uppercase">Limit: 1</span>

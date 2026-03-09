@@ -19,9 +19,9 @@ import { ProfileModals } from "./components/ProfileModals";
 import { UserTier, canUseTelegram } from "@/lib/tier-gate";
 
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; border: string; icon: any }> = {
-    miskin: { label: "Miskin", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
-    kaya: { label: "Kaya", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
-    sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
+    starter: { label: "Starter", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
+    pro: { label: "Pro", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
+    sultan: { label: "Sulton", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
 };
 
 const ALL_BADGES = [
@@ -225,25 +225,25 @@ export default function ProfilePage() {
 
                     <div className="flex flex-col items-center gap-3">
                         <div className={cn("inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border backdrop-blur-md shadow-xl transition-transform hover:scale-105",
-                            user?.tier === "kaya" ? "bg-sky-500/30 border-sky-300" : user?.tier === "sultan" ? "bg-amber-500/30 border-amber-300" : "bg-white/20 border-white/30"
+                             user?.tier === "pro" ? "bg-sky-500/30 border-sky-300" : user?.tier === "sultan" ? "bg-amber-500/30 border-amber-300" : "bg-white/20 border-white/30"
                         )}>
                             {(() => {
-                                const tier = (user?.tier || "miskin") as UserTier;
+                                const tier = (user?.tier || "starter") as UserTier;
                                 const tierStyle = TIER_STYLES[tier];
                                 const Icon = tierStyle.icon;
                                 return (
-                                    <><Icon size={14} className={tier === "miskin" ? "text-white" : tierStyle.color} /><span className="text-[11px] font-bold text-white tracking-widest uppercase">{tierStyle.label} Tier</span></>
+                                    <><Icon size={14} className={tier === "starter" ? "text-white" : tierStyle.color} /><span className="text-[11px] font-bold text-white tracking-widest uppercase">{tierStyle.label} Tier</span></>
                                 );
                             })()}
                         </div>
 
-                        {user?.tier === "miskin" && (
+                        {user?.tier === "starter" && (
                             <Link href="/fitur/upgrade" className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-white to-sky-50 text-sky-700 rounded-2xl text-xs font-black shadow-xl shadow-sky-950/20 active:scale-95 transition-all outline-none ring-2 ring-white/50">
                                 <Sparkles size={14} fill="currentColor" />
-                                UPGRADE KE KAYA
+                                UPGRADE KE PRO
                             </Link>
                         )}
-                        {user?.tier === "kaya" && (
+                        {user?.tier === "pro" && (
                             <Link href="/fitur/upgrade" className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-2xl text-xs font-black shadow-xl shadow-amber-950/20 active:scale-95 transition-all outline-none ring-2 ring-amber-400/50">
                                 <Crown size={14} fill="currentColor" />
                                 JADI SULTAN

@@ -1957,7 +1957,7 @@ export async function getCouponClaimCount(couponId: number): Promise<number> {
     return result?.count || 0;
 }
 
-export async function useCoupon(couponId: number, userId: number, tier: "kaya" | "sultan"): Promise<void> {
+export async function useCoupon(couponId: number, userId: number, tier: "pro" | "sultan"): Promise<void> {
     const db = getDb();
 
     const coupon = await db.select().from(coupons).where(eq(coupons.id, couponId)).get();

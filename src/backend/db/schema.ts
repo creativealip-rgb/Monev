@@ -23,7 +23,7 @@ export const users = sqliteTable("users", {
     firstName: text("first_name"),
     lastName: text("last_name"),
     whatsappId: text("whatsapp_id"),
-    tier: text("tier", { enum: ["miskin", "kaya", "sultan"] }).notNull().default("miskin"),
+    tier: text("tier", { enum: ["starter", "pro", "sultan"] }).notNull().default("starter"),
     tierExpiresAt: integer("tier_expires_at", { mode: "timestamp" }),
     isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
@@ -245,7 +245,7 @@ export const investments = sqliteTable("investments", {
 export const coupons = sqliteTable("coupons", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     code: text("code").unique().notNull(),
-    tier: text("tier", { enum: ["kaya", "sultan"] }).notNull(),
+    tier: text("tier", { enum: ["pro", "sultan"] }).notNull(),
     quota: integer("quota").notNull().default(1),
     claimedCount: integer("claimed_count").notNull().default(0),
     expiresAt: integer("expires_at", { mode: "timestamp" }),
@@ -329,6 +329,23 @@ export const achievements = sqliteTable("achievements", {
     icon: text("icon"),
     unlockedAt: integer("unlocked_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
+// Usage tracking table
+export const usageTracking = sqliteTable("usage_tracking", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").notNull().references(() => users.id),
+    month: integer("month").notNull(),
+    year: integer("year").notNull(),
+    transactionsCount: integer("transactions_count").notNull(),
+    aiChatsCount: integer("ai_chats_count").notNull(),
+    ocrScansCount: integer("ocr_scans_count").notNull(),
+    telegramMessagesCount: integer("telegram_messages_count").notNull(),
+}, (table) => [
+    index("idx_usage_tracking_user_month_year").on(table.userId, table.month, table.year),
+]);
+
+export type UsageTracking = typeof usageTracking.$inferSelect;
+export type InsertUsageTracking = typeof usageTracking.$inferInsert;
 
 // Types
 export type Category = typeof categories.$inferSelect;

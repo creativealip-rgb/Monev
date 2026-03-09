@@ -102,12 +102,12 @@ export async function POST(req: NextRequest) {
             const allUsers = await db.select({ id: users.id }).from(users).where(eq(users.isActive, true)).all();
             userIds = allUsers.map(u => u.id);
         } else if (target === "tier" && tier) {
-            if (!["miskin", "kaya", "sultan"].includes(tier)) {
+            if (!["starter", "pro", "sultan"].includes(tier)) {
                 return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
             }
             const tierUsers = await db.select({ id: users.id })
                 .from(users)
-                .where(eq(users.tier, tier as "miskin" | "kaya" | "sultan"))
+                .where(eq(users.tier, tier as "starter" | "pro" | "sultan"))
                 .all();
             userIds = tierUsers.map(u => u.id);
         }

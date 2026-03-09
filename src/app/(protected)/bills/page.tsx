@@ -39,7 +39,7 @@ export default function BillsPage() {
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
-    const userTier: UserTier = session?.user?.tier || "miskin";
+    const userTier: UserTier = session?.user?.tier || "starter";
     // Form state
     const [formName, setFormName] = useState("");
     const [formAmount, setFormAmount] = useState("");

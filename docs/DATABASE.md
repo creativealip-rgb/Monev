@@ -52,7 +52,7 @@ Data user termasuk auth info dan tier.
 | `name` | TEXT | nullable | Nama display |
 | `password_hash` | TEXT | nullable | Bcrypt hash |
 | `is_guest` | BOOLEAN | default false | Akun guest? |
-| `tier` | TEXT | enum: hemat/kaya/sultan, default "hemat" | Subscription tier |
+| `tier` | TEXT | enum: starter/pro/sultan, default "starter" | Subscription tier |
 | `tier_expires_at` | TIMESTAMP | nullable | Kapan tier expired |
 | `created_at` | TIMESTAMP | NOT NULL | — |
 
@@ -229,7 +229,7 @@ Kupon untuk aktivasi subscription tier.
 |--------|------|------------|-----------|
 | `id` | INTEGER | PK | — |
 | `code` | TEXT | UNIQUE, NOT NULL | Kode kupon |
-| `tier` | TEXT | enum: kaya/sultan | Tier yang di-unlock |
+| `tier` | TEXT | enum: pro/sultan | Tier yang di-unlock |
 | `is_used` | BOOLEAN | default false | Sudah dipakai? |
 | `used_by` | INTEGER | FK → users | User yang memakai |
 | `used_at` | TIMESTAMP | nullable | Kapan dipakai |

@@ -26,19 +26,19 @@ const itemVariants = {
 
 const TIER_CARDS = [
     {
-        id: "miskin" as UserTier,
+        id: "starter" as UserTier,
         price: "Rp 0",
-        description: "Untuk kamu yang baru mulai belajar hemat",
+        description: "Akses dasar aplikasi, cocok untuk pemula",
         icon: Zap,
         color: "slate",
         gradient: "from-slate-400 to-slate-600",
         highlight: false,
     },
     {
-        id: "kaya" as UserTier,
+        id: "pro" as UserTier,
         price: "Rp 29k",
         period: "/bulan",
-        description: "Pilihan paling cerdas untuk pengelolaan serius",
+        description: "Untuk profesional dan pengguna serius",
         icon: Sparkles,
         color: "sky",
         gradient: "from-sky-500 to-cyan-600",
@@ -47,9 +47,9 @@ const TIER_CARDS = [
     },
     {
         id: "sultan" as UserTier,
-        price: "Rp 59k",
+        price: "Rp 49k",
         period: "/bulan",
-        description: "Akses eksklusif tanpa batas untuk sang Sultan",
+        description: "Akses lengkap tanpa batas untuk para sultan",
         icon: Crown,
         color: "amber",
         gradient: "from-amber-400 to-orange-600",
@@ -59,7 +59,7 @@ const TIER_CARDS = [
 
 export default function UpgradePage() {
     const { data: session, update: updateSession } = useSession();
-    const currentTier: UserTier = session?.user?.tier || "miskin";
+    const currentTier: UserTier = session?.user?.tier || "starter";
     const toast = useToast();
     const router = useRouter();
 
@@ -271,35 +271,43 @@ export default function UpgradePage() {
                     {/* Table Header */}
                     <div className="grid grid-cols-4 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-2">Fitur</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Miskin</div>
-                        <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider text-center">Kaya</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Starter</div>
+                        <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider text-center">Pro</div>
                         <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-center">Sultan</div>
                     </div>
 
                     {/* Matrix Rows */}
                     {(() => {
                         const allRows = [
-                            { feature: "Transaksi", miskin: "50/bln", kaya: "Unlimited", sultan: "Unlimited" },
-                            { feature: "Anggaran", miskin: "2", kaya: "10", sultan: "Unlimited" },
-                            { feature: "Target Tabungan", miskin: "1", kaya: "10", sultan: "Unlimited" },
-                            { feature: "Tagihan", miskin: "3", kaya: "20", sultan: "Unlimited" },
-                            { feature: "AI Chat", miskin: "3/hari", kaya: "Unlimited", sultan: "Prioritas" },
-                            { feature: "Analisa Keuangan", miskin: false, kaya: true, sultan: true },
-                            { feature: "Investasi", miskin: false, kaya: "5 aset", sultan: "Unlimited" },
-                            { feature: "Smart Input", miskin: false, kaya: true, sultan: true },
-                            { feature: "Export", miskin: false, kaya: "CSV/Excel", sultan: "CSV/Excel/PDF" },
-                            { feature: "Bebas Iklan", miskin: false, kaya: true, sultan: true },
-                            { feature: "Telegram Bot", miskin: false, kaya: false, sultan: true },
-                            { feature: "Smart Agents", miskin: false, kaya: true, sultan: true },
-                            { feature: "Laporan PDF", miskin: false, kaya: false, sultan: true },
-                            { feature: "Support 24/7", miskin: false, kaya: false, sultan: true },
+                            { feature: "Transaksi", starter: "100/bln", pro: "Unlimited", sultan: "Unlimited" },
+                            { feature: "Akun Bank", starter: "2", pro: "10", sultan: "Unlimited" },
+                            { feature: "Kategori Anggaran", starter: "3", pro: "20", sultan: "Unlimited" },
+                            { feature: "Target Tabungan", starter: "1", pro: "10", sultan: "Unlimited" },
+                            { feature: "Tagihan", starter: "3", pro: "20", sultan: "Unlimited" },
+                            { feature: "Track Investasi", starter: false, pro: "Manual", sultan: "Real-time Sync" },
+                            { feature: "AI Chats Web", starter: "5/hari", pro: "100/hari", sultan: "Unlimited" },
+                            { feature: "OCR Scans", starter: "5/bln", pro: "100/bln", sultan: "Unlimited" },
+                            { feature: "Export Format", starter: "CSV", pro: "CSV + Excel", sultan: "CSV + Excel + PDF" },
+                            { feature: "Analitik Lanjutan", starter: false, pro: true, sultan: "Prediksi AI" },
+                            { feature: "Telegram Bot", starter: false, pro: "Command-based", sultan: "AI Conversational" },
+                            { feature: "Laporan Pajak", starter: false, pro: false, sultan: true },
+                            { feature: "Cloud Backup", starter: false, pro: false, sultan: true },
+                            { feature: "Support Prioritas", starter: false, pro: "Email", sultan: "WhatsApp" },
+                            { feature: "Iklan", starter: true, pro: false, sultan: false },
+                            { feature: "Cetak Laporan", starter: false, pro: false, sultan: true },
+                            { feature: "Recurring Transfer", starter: false, pro: true, sultan: true },
+                            { feature: "Catatan Hutang", starter: false, pro: true, sultan: true },
+                            { feature: "Kontrol Keluarga", starter: false, pro: "1 pasangan", sultan: "5 pasangan" },
                         ];
 
                         const visibleRows = showFullMatrix ? allRows : allRows.slice(0, 6);
 
                         const renderCell = (value: string | boolean) => {
-                            if (value === true) return <Check size={14} className="text-emerald-500 mx-auto" strokeWidth={3} />;
-                            if (value === false) return <X size={14} className="text-slate-300 dark:text-slate-600 mx-auto" strokeWidth={3} />;
+                            if (typeof value === "boolean") {
+                                if (value === true) return <Check size={14} className="text-emerald-500 mx-auto" strokeWidth={3} />;
+                                if (value === false) return <X size={14} className="text-slate-300 dark:text-slate-600 mx-auto" strokeWidth={3} />;
+                                return <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">-</span>;
+                            }
                             return <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{value}</span>;
                         };
 
@@ -314,8 +322,8 @@ export default function UpgradePage() {
                                         )}
                                     >
                                         <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 pl-2">{row.feature}</div>
-                                        <div className="text-center">{renderCell(row.miskin)}</div>
-                                        <div className="text-center">{renderCell(row.kaya)}</div>
+                                        <div className="text-center">{renderCell(row.starter)}</div>
+                                        <div className="text-center">{renderCell(row.pro)}</div>
                                         <div className="text-center">{renderCell(row.sultan)}</div>
                                     </div>
                                 ))}
@@ -333,8 +341,8 @@ export default function UpgradePage() {
                                             )}
                                         >
                                             <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 pl-2">{row.feature}</div>
-                                            <div className="text-center">{renderCell(row.miskin)}</div>
-                                            <div className="text-center">{renderCell(row.kaya)}</div>
+                                            <div className="text-center">{renderCell(row.starter)}</div>
+                                            <div className="text-center">{renderCell(row.pro)}</div>
                                             <div className="text-center">{renderCell(row.sultan)}</div>
                                         </motion.div>
                                     ))}
