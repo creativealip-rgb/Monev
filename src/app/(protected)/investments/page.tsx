@@ -39,6 +39,12 @@ export default function InvestmentsPage() {
     const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    
+    // Filter & Sort state
+    const [filterType, setFilterType] = useState<"all" | "stock" | "crypto" | "bond" | "mutual_fund" | "gold" | "forex">("all");
+    const [sortBy, setSortBy] = useState<"name" | "value" | "profit" | "type">("name");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+    
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
@@ -68,6 +74,30 @@ export default function InvestmentsPage() {
     const totalCost = summary?.totalCost || 0;
     const totalProfit = summary?.totalProfit || 0;
     const profitPercent = summary?.profitPercent || 0;
+
+    // Filter & Sort investments
+    const displayInvestments = investments
+        .filter(inv => {
+            if (filterType === "all") return true;
+            return inv.type === filterType;
+        })
+        .sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === "name") {
+                comparison = a.name.localeCompare(b.name);
+            } else if (sortBy === "value") {
+                const valueA = (a.quantity || 0) * (a.currentPrice || 0);
+                const valueB = (b.quantity || 0) * (b.currentPrice || 0);
+                comparison = valueA - valueB;
+            } else if (sortBy === "profit") {
+                const profitA = ((a.currentPrice || 0) - (a.avgBuyPrice || 0)) * (a.quantity || 0);
+                const profitB = ((b.currentPrice || 0) - (b.avgBuyPrice || 0)) * (b.quantity || 0);
+                comparison = profitA - profitB;
+            } else if (sortBy === "type") {
+                comparison = a.type.localeCompare(b.type);
+            }
+            return sortOrder === "desc" ? -comparison : comparison;
+        });
 
     async function loadData() {
         setLoading(true);
@@ -248,12 +278,37 @@ export default function InvestmentsPage() {
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Pantau Portfolio Anda</p>
                         </div>
                     </div>
-                    <button
-                        onClick={openAddModal}
-                        className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
-                    >
-                        <Plus size={24} strokeWidth={2.5} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value as any)}
+                            className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                        >
+                            <option value="all">Semua</option>
+                            <option value="stock">Saham</option>
+                            <option value="crypto">Kripto</option>
+                            <option value="bond">Obligasi</option>
+                            <option value="mutual_fund">Reksa Dana</option>
+                            <option value="gold">Emas</option>
+                            <option value="forex">Forex</option>
+                        </select>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                        >
+                            <option value="name">Nama</option>
+                            <option value="value">Nilai</option>
+                            <option value="profit">Profit</option>
+                            <option value="type">Tipe</option>
+                        </select>
+                        <button
+                            onClick={openAddModal}
+                            className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
+                        >
+                            <Plus size={24} strokeWidth={2.5} />
+                        </button>
+                    </div>
                 </div>
             </motion.header>
 
@@ -289,9 +344,11 @@ export default function InvestmentsPage() {
                             {loading ? "..." : (
                                 <>
                                     <span className="text-lg">{totalProfit >= 0 ? "+" : ""}{isStealthMode ? "••••••••" : formatCurrency(totalProfit)}</span>
-                                    <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">
-                                        {profitPercent.toFixed(1)}%
-                                    </span>
+                                    {!isStealthMode && (
+                                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">
+                                            {profitPercent.toFixed(1)}%
+                                        </span>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -405,7 +462,7 @@ export default function InvestmentsPage() {
                     <NoInvestmentsEmpty onAddNew={() => setIsAddModalOpen(true)} />
                 ) : (
                     <div className="space-y-3">
-                        {investments.map((inv, i) => {
+                        {displayInvestments.map((inv, i) => {
                             const value = inv.quantity * inv.currentPrice;
                             const profit = value - (inv.quantity * inv.avgBuyPrice);
                             const profitPct = ((inv.currentPrice - inv.avgBuyPrice) / inv.avgBuyPrice) * 100;
@@ -607,6 +664,50 @@ export default function InvestmentsPage() {
                                                     style={{ backgroundColor: c }}
                                                 />
                                             ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                                        <div>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block flex items-center gap-2">
+                                                <span>💰 Dividen / Passive Income</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={formDividends}
+                                                onChange={(e) => setFormDividends(e.target.value)}
+                                                placeholder="Rp 0"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-emerald-100 dark:border-emerald-900/30 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm text-emerald-600 dark:text-emerald-400"
+                                            />
+                                            <p className="text-[10px] text-slate-500 mt-1">Total dividen yang sudah diterima</p>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block flex items-center gap-2">
+                                                <span>📈 Profit Realisasi</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={formRealizedProfit}
+                                                onChange={(e) => setFormRealizedProfit(e.target.value)}
+                                                placeholder="Rp 0"
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-amber-100 dark:border-amber-900/30 dark:bg-slate-800 dark:text-white focus:border-amber-500 focus:outline-none transition-colors text-sm text-amber-600 dark:text-amber-400"
+                                            />
+                                            <p className="text-[10px] text-slate-500 mt-1">Profit yang sudah direalisasikan dari penjualan</p>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block flex items-center gap-2">
+                                                <span>📝 Catatan</span>
+                                            </label>
+                                            <textarea
+                                                value={formNotes}
+                                                onChange={(e) => setFormNotes(e.target.value)}
+                                                placeholder="Catatan tentang investasi ini..."
+                                                rows={3}
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm resize-none"
+                                            />
+                                            <p className="text-[10px] text-slate-500 mt-1">Tambahkan catatan pribadi untuk investasi ini</p>
                                         </div>
                                     </div>
 

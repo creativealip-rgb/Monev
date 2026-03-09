@@ -1195,9 +1195,52 @@ Semua komponen di `src/frontend/components/` menggunakan `"use client"`.
 
 Semua hooks di `src/frontend/hooks/`.
 
+### Latest Additions (Maret 2026)
+
+#### Profile Hooks
+```typescript
+// useProfileData.ts - Load user, settings, goals, streak, achievements
+const { user, settings, goals, streak, achievements, categories, loading, loadData } = useProfileData();
+
+// useObjectURL.ts - Memory-safe file preview (auto-revoke)
+const imageUrl = useObjectURL(file);
+```
+
+#### Transaction Hooks
+```typescript
+// useTransactionDelete.ts - Delete + undo with countdown
+const { handleDelete, executeDelete, handleUndo, undoBanner, undoCountdown } = useTransactionDelete(refresh);
+
+// useTransactionActions.ts - Bulk actions & export
+const { selectedIds, toggleSelectAll, toggleSelect, exportSelectedCSV, exportFilteredCSV, exportToPDF } = useTransactionActions();
+
+// useTransactionFilters.ts - Filter & sorting logic
+const { filteredTransactions, displayTransactions, duplicateIds, duplicateCount } = useTransactionFilters(options);
+```
+
 ### Split Components Structure
 
 Untuk maintainability, beberapa halaman besar telah dipecah menjadi komponen terpisah:
+
+#### Profile Page Structure (NEW - Maret 2026)
+```
+src/app/(protected)/profile/
+├── page.tsx                    # Main page (~370 lines, refactored from 1,696)
+├── components/
+│   ├── index.ts                # Exports
+│   ├── AccountModal.tsx        # Edit profil, currency, language
+│   ├── IntegrationsModal.tsx   # Telegram/WhatsApp bot
+│   ├── SecurityModal.tsx       # PIN, biometric, app lock
+│   ├── NotificationsModal.tsx  # Notification toggles
+│   ├── CollectionModal.tsx     # Badge/achievements showcase
+│   ├── CategoriesModal.tsx     # Custom category management
+│   ├── ExportModal.tsx         # Data export (JSON, CSV, bank templates)
+│   ├── FinancialModal.tsx      # Hourly rate, primary goal, stealth
+│   └── ProfileModals.tsx       # Wrapper untuk semua modals
+└── page.tsx.backup             # Original backup (1,696 lines)
+```
+
+**Result**: profile/page.tsx reduced from 1,696 → 370 lines (78% reduction)
 
 #### Debts Page Structure
 

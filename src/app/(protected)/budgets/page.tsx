@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, ShieldAlert, ArrowLeft, Flame, Zap, TrendingUp, RotateCcw } from "lucide-react";
+import { Plus, ShieldAlert, ArrowLeft, Flame, Zap, TrendingUp, RotateCcw, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
@@ -133,8 +133,8 @@ export default function BudgetsPage() {
     const [rolloverEnabled, setRolloverEnabled] = useState<Record<number, boolean>>({});
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     useEffect(() => {
         loadData();
@@ -186,13 +186,13 @@ export default function BudgetsPage() {
             setLoading(true);
 
             // Calculate previous month/year
-            const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-            const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+            const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+            const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
 
             // Optimized: Fetch categories, budgets, and previous month budgets in parallel
             const [catsResponse, budgetsResponse, prevBudgetsResponse] = await Promise.all([
                 apiFetch("/api/categories"),
-                apiFetch(`/api/budgets?month=${currentMonth}&year=${currentYear}`),
+                apiFetch(`/api/budgets?month=${selectedMonth}&year=${selectedYear}`),
                 apiFetch(`/api/budgets?month=${prevMonth}&year=${prevYear}`)
             ]);
 
@@ -287,8 +287,8 @@ export default function BudgetsPage() {
                 body: JSON.stringify({
                     categoryId: budget.categoryId,
                     enableRollover: newValue,
-                    month: currentMonth,
-                    year: currentYear,
+                    month: selectedMonth,
+                    year: selectedYear,
                 }),
             });
         } catch (error) {
@@ -300,7 +300,33 @@ export default function BudgetsPage() {
             }));
             toast.error("Gagal menyimpan pengaturan rollover");
         }
-    }, [rolloverEnabled, budgets, currentMonth, currentYear]);
+    }, [rolloverEnabled, budgets, selectedMonth, selectedYear]);
+
+    const navigateMonth = (direction: "prev" | "next") => {
+        let newMonth = selectedMonth + (direction === "prev" ? -1 : 1);
+        let newYear = selectedYear;
+
+        if (newMonth < 1) {
+            newMonth = 12;
+            newYear--;
+        } else if (newMonth > 12) {
+            newMonth = 1;
+            newYear++;
+        }
+
+        setSelectedMonth(newMonth);
+        setSelectedYear(newYear);
+    };
+
+    const goToCurrentMonth = () => {
+        setSelectedMonth(new Date().getMonth() + 1);
+        setSelectedYear(new Date().getFullYear());
+    };
+
+    const monthNames = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
 
     const totalBudget = budgets.reduce((sum, b) => sum + getEffectiveLimit(b), 0);
     const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
@@ -320,8 +346,8 @@ export default function BudgetsPage() {
                 body: JSON.stringify({
                     template: templateId === "503020" ? "50-30-20" : templateId,
                     monthlyIncome,
-                    month: currentMonth,
-                    year: currentYear
+                    month: selectedMonth,
+                    year: selectedYear
                 }),
             });
 
@@ -382,7 +408,37 @@ export default function BudgetsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
-                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">{t("budgets.monthlyBudget")}</p>
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => navigateMonth("prev")}
+                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                            aria-label="Bulan sebelumnya"
+                        >
+                            <ChevronLeft size={18} className="text-white" />
+                        </button>
+                        <div className="text-center">
+                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{t("budgets.monthlyBudget")}</p>
+                            <p className="text-sm font-black text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
+                        </div>
+                        <button
+                            onClick={() => navigateMonth("next")}
+                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                            aria-label="Bulan berikutnya"
+                            disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
+                        >
+                            <ChevronLeft size={18} className="text-white rotate-180" />
+                        </button>
+                    </div>
+                    {(selectedMonth !== new Date().getMonth() + 1 || selectedYear !== new Date().getFullYear()) && (
+                        <button
+                            onClick={goToCurrentMonth}
+                            className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold transition-colors"
+                        >
+                            Hari Ini
+                        </button>
+                    )}
+                </div>
                 <div className="flex items-end justify-between mb-4">
                     <div>
                         <p className="text-2xl font-bold tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
@@ -664,8 +720,8 @@ export default function BudgetsPage() {
                     toast.success(t("budgets.successAdd"));
                 }}
                 categories={categories}
-                month={currentMonth}
-                year={currentYear}
+                month={selectedMonth}
+                year={selectedYear}
             />
 
             {/* Detail Modal */}
