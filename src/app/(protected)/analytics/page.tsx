@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { UserTier, hasFullAnalytics } from "@/lib/tier-gate";
 import { useToast } from "@/frontend/components/UI";
 import { useSecurity } from "@/components/SecurityProvider";
+import { useI18n } from "@/frontend/lib/i18n-context";
 
 // Components
 import { NetWorthCard } from "./components/NetWorthCard";
@@ -35,6 +36,7 @@ const [activeTab, setActiveTab] = useState("overview");
     const [error, setError] = useState<string | null>(null);
     const { data: session } = useSession();
     const { isStealthMode } = useSecurity();
+    const { t } = useI18n();
     const userTier: UserTier = session?.user?.tier || "starter";
     const toast = useToast();
     // Use data.canAccessAIInsights from API (reads from DB) as primary source,
@@ -42,10 +44,10 @@ const [activeTab, setActiveTab] = useState("overview");
     const canSeeFullAnalytics = data?.canAccessAIInsights ?? hasFullAnalytics(userTier);
 
     const tabs = [
-        { id: "overview", label: "Ringkasan" },
-        { id: "map", label: "Peta", locked: false },
-        { id: "trends", label: "Tren", locked: !canSeeFullAnalytics },
-        { id: "insights", label: "Insight", locked: !canSeeFullAnalytics }
+        { id: "overview", label: t("analytics.overview") },
+        { id: "map", label: t("analytics.map"), locked: false },
+        { id: "trends", label: t("analytics.trends"), locked: !canSeeFullAnalytics },
+        { id: "insights", label: t("analytics.insights"), locked: !canSeeFullAnalytics }
     ];
 
     const containerVariants = {
@@ -84,11 +86,11 @@ const fetchData = async () => {
                 url = `/api/analytics?startDate=${dateRange.start}&endDate=${dateRange.end}`;
             }
             const res = await apiFetch(url);
-            if (!res.ok) throw new Error("Gagal memuat data");
+            if (!res.ok) throw new Error(t("analytics.failedToLoad"));
             const jsonData = await res.json();
             setData(jsonData);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+            setError(err instanceof Error ? err.message : t("analytics.errorOccurred"));
         } finally {
             setIsLoading(false);
         }
@@ -96,9 +98,9 @@ const fetchData = async () => {
 
     const handleDownloadReport = async () => {
         if (!data) return;
-        // Tier gate: only Kaya/Sultan
+        // Tier gate: only Pro/Sultan
         if (!canSeeFullAnalytics) {
-            toast.error("Fitur Premium", "Export PDF tersedia untuk tier Kaya dan Sultan.");
+            toast.error(t("analytics.premiumFeature"), t("analytics.pdfExportTier"));
             return;
         }
         setIsDownloading(true);
@@ -118,10 +120,10 @@ const fetchData = async () => {
                     total: cat.total || cat.amount || 0,
                 })),
             });
-            toast.success("Berhasil", "Laporan PDF berhasil diunduh!");
+            toast.success(t("analytics.pdfDownloadSuccess"));
         } catch (err) {
             console.error("PDF export error:", err);
-            toast.error("Gagal Unduh", "Terjadi kesalahan saat membuat laporan.");
+            toast.error(t("analytics.pdfDownloadFailed"), t("analytics.pdfExportError"));
         } finally {
             setIsDownloading(false);
         }
@@ -145,8 +147,8 @@ useEffect(() => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
                 <ErrorEmpty
-                    title="Gagal memuat data"
-                    description={error || "Data analitik tidak tersedia"}
+                    title={t("analytics.failedToLoadTitle")}
+                    description={error || t("analytics.failedToLoadDesc")}
                     onRetry={fetchData}
                 />
             </div>
@@ -271,8 +273,8 @@ useEffect(() => {
                         </div>
                         <div className="flex gap-2 pt-2">
                             {[
-                                { label: "Minggu ini", days: 7 },
-                                { label: "Bulan ini", days: 30 },
+                                { label: t("analytics.thisWeek"), days: 7 },
+                                { label: t("analytics.thisMonth"), days: 30 },
                                 { label: "3 Bulan", days: 90 },
                             ].map((preset) => (
                                 <button
@@ -322,7 +324,7 @@ useEffect(() => {
                                 key={tab.id}
                                 onClick={() => {
                                     if (tab.locked) {
-                                        toast.error("Fitur Terkunci", "Upgrade ke Kaya atau Sultan untuk akses fitur ini! 🚀");
+                                        toast.error(t("analytics.featureLocked"), t("analytics.upgradeForAccess"));
                                         return;
                                     }
                                     setActiveTab(tab.id);

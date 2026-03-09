@@ -35,14 +35,14 @@ const ALL_BADGES = [
 ];
 
 const menuItems = [
-    { id: "account", icon: UserIcon, label: "Pengaturan Akun", color: "blue", hasArrow: true },
-    { id: "financial", icon: Wallet, label: "Konfigurasi Keuangan", color: "emerald", hasArrow: true },
-    { id: "categories", icon: Tag, label: "Kategori Custom", color: "pink", hasArrow: true },
-    { id: "notifications", icon: Bell, label: "Notifikasi", color: "purple", hasArrow: true },
-    { id: "integrations", icon: MessageCircle, label: "Integrasi Bot", color: "indigo", hasArrow: true },
-    { id: "security", icon: Shield, label: "Keamanan", color: "amber", hasArrow: true },
-    { id: "export", icon: Database, label: "Data & Backup", color: "sky", hasArrow: true },
-    { id: "download", icon: Smartphone, label: "Download Aplikasi Android", color: "sky", hasArrow: true, isDownload: true },
+    { id: "account", icon: UserIcon, label: "profile.accountSettings", color: "blue", hasArrow: true },
+    { id: "financial", icon: Wallet, label: "profile.financialConfig", color: "emerald", hasArrow: true },
+    { id: "categories", icon: Tag, label: "profile.customCategories", color: "pink", hasArrow: true },
+    { id: "notifications", icon: Bell, label: "profile.notifications", color: "purple", hasArrow: true },
+    { id: "integrations", icon: MessageCircle, label: "profile.botIntegrations", color: "indigo", hasArrow: true },
+    { id: "security", icon: Shield, label: "profile.security", color: "amber", hasArrow: true },
+    { id: "export", icon: Database, label: "profile.dataBackup", color: "sky", hasArrow: true },
+    { id: "download", icon: Smartphone, label: "profile.downloadApp", color: "sky", hasArrow: true, isDownload: true },
 ];
 
 export default function ProfilePage() {
@@ -260,8 +260,8 @@ export default function ProfilePage() {
                             <Flame size={20} className={streak?.currentStreak > 0 ? "fill-orange-500" : "opacity-30"} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Streak</p>
-                            <p className="text-base font-black text-slate-900 dark:text-white leading-none mt-0.5">{streak?.currentStreak || 0} <span className="text-[10px] font-bold opacity-40">HARI</span></p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t("profile.streak")}</p>
+                            <p className="text-base font-black text-slate-900 dark:text-white leading-none mt-0.5">{streak?.currentStreak || 0} <span className="text-[10px] font-bold opacity-40">{t("profile.days")}</span></p>
                         </div>
                     </div>
                     <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
@@ -270,10 +270,10 @@ export default function ProfilePage() {
                             <Trophy size={20} className={achievements.length > 0 ? "fill-amber-500" : "opacity-30"} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Koleksi</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t("profile.collection")}</p>
                             <div className="flex items-center gap-1 mt-0.5">
                                 {achievements.length === 0 ? (
-                                    <p className="text-base font-black text-slate-300 dark:text-slate-700 leading-none">0 <span className="text-[10px] font-bold font-mono">ITEM</span></p>
+                                    <p className="text-base font-black text-slate-300 dark:text-slate-700 leading-none">0 <span className="text-[10px] font-bold font-mono">{t("profile.items")}</span></p>
                                 ) : (
                                     <div className="flex -space-x-1.5">
                                         {achievements.slice(0, 4).map((ach, i) => (
@@ -311,9 +311,9 @@ export default function ProfilePage() {
                 </motion.div>
             )}
 
-            <motion.div variants={{ hidden: { opacity: 0 }, visible: { transition: { staggerChildren: 0.1 } } }} initial="hidden" animate="visible" className="px-6 pt-6 space-y-3">
-                <motion.div className="card-clean p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Moon size={20} className="text-slate-600 dark:text-slate-300" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p></div></div><ThemeToggleSwitch /></motion.div>
-                <motion.div className="card-clean p-4 space-y-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="px-6 pt-6 space-y-3">
+                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="card-clean p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Moon size={20} className="text-slate-600 dark:text-slate-300" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p></div></div><ThemeToggleSwitch /></motion.div>
+                <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="card-clean p-4 space-y-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
                 {menuItems.map((item, index) => {
                     const Icon = item.icon;
                     const colors: Record<string, { bg: string; text: string }> = {
@@ -329,7 +329,7 @@ export default function ProfilePage() {
 
                     if (item.id === "download") {
                         return (
-                            <motion.a key={index} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
+                            <motion.a key={index} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
                                 <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</span></div>
                                 <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 uppercase tracking-tighter">APK</span><ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" /></div>
                             </motion.a>
@@ -337,14 +337,14 @@ export default function ProfilePage() {
                     }
 
                     return (
-                        <motion.button key={index} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</span></div>
+                        <motion.button key={index} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
+                            <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
                             {item.hasArrow && <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />}
                         </motion.button>
                     );
                 })}
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
-                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center"><LogOut size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-rose-500 dark:text-rose-400 tracking-tight">Keluar</span>
+                <motion.button variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
+                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center"><LogOut size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-rose-500 dark:text-rose-400 tracking-tight">{t("profile.signOut")}</span>
                 </motion.button>
             </motion.div>
 

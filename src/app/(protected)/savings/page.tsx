@@ -18,6 +18,7 @@ import { useSession } from "next-auth/react";
 import { useSavingsData } from "@/frontend/hooks/useSavingsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";
+import { useI18n } from "@/frontend/lib/i18n-context";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -192,6 +193,7 @@ function ConfettiCelebration({ goalId, celebratedRef }: {
 export default function SavingsPage() {
     const { goals, loading, refresh } = useSavingsData() as { goals: GoalWithProgress[], loading: boolean, refresh: () => Promise<void> };
     const { isStealthMode } = useSecurity();
+    const { t } = useI18n();
 
     const { data: session } = useSession();
     const userTier: UserTier = session?.user?.tier || "starter";
@@ -240,13 +242,13 @@ export default function SavingsPage() {
 
             if (response.ok) {
                 refresh();
-                toast.success("Goal dihapus");
+                toast.success(t("savings.goalDeleted"));
             } else {
-                toast.error("Gagal menghapus", "Coba lagi nanti");
+                toast.error(t("savings.failedDelete"), t("savings.tryAgainLater"));
             }
         } catch (error) {
             console.error("Error deleting goal:", error);
-            toast.error("Gagal menghapus", "Terjadi kesalahan");
+            toast.error(t("savings.failedDelete"), t("savings.errorOccurred"));
         } finally {
             setConfirmDeleteId(null);
         }
@@ -680,7 +682,7 @@ export default function SavingsPage() {
                     onSuccess={() => {
                         refresh();
                         setEditingGoal(null);
-                        toast.success("Goal diperbarui");
+                        toast.success(t("savings.goalUpdated"));
                     }}
                     goal={editingGoal}
                 />
@@ -690,9 +692,9 @@ export default function SavingsPage() {
                 isOpen={!!confirmDeleteId}
                 onClose={() => setConfirmDeleteId(null)}
                 onConfirm={handleDeleteGoal}
-                title="Hapus Goal"
-                description="Yakin ingin menghapus goal ini? Target yang sudah tercapai tidak akan dikembalikan."
-                confirmText="Hapus"
+                title={t("savings.deleteTitle")}
+                description={t("savings.deleteConfirm")}
+                confirmText={t("savings.delete")}
             />
         </div>
     );

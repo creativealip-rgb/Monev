@@ -174,7 +174,7 @@ export default function BudgetsPage() {
             ) {
                 notifiedBudgetsRef.current.add(warnKey);
                 toast.warning(
-                    "Budget Hampir Habis",
+                    t("budgets.budgetAlmostEmpty"),
                     `Budget ${b.category} sudah terpakai ${Math.round(pct)}%`
                 );
             }
@@ -238,11 +238,11 @@ export default function BudgetsPage() {
                 setBudgets(budgets.filter(b => b.id !== confirmDeleteId));
                 toast.success(t("budgets.deleteBudget"));
             } else {
-                toast.error(t("common.failed"), t("budgets.errorDelete") || "Gagal menghapus anggaran");
+                toast.error(t("common.failed"), t("budgets.failedDelete"));
             }
         } catch (error) {
             console.error("Error deleting budget:", error);
-            toast.error(t("common.failed"), t("budgets.errorDelete") || "Gagal menghapus anggaran");
+            toast.error(t("common.failed"), t("budgets.failedDelete"));
         } finally {
             setConfirmDeleteId(null);
         }
@@ -298,7 +298,7 @@ export default function BudgetsPage() {
                 ...prev,
                 [budgetId]: !newValue,
             }));
-            toast.error("Gagal menyimpan pengaturan rollover");
+            toast.error(t("budgets.failedSaveRollover"));
         }
     }, [rolloverEnabled, budgets, selectedMonth, selectedYear]);
 
@@ -324,8 +324,10 @@ export default function BudgetsPage() {
     };
 
     const monthNames = [
-        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        t("budgets.january"), t("budgets.february"), t("budgets.march"), t("budgets.april"),
+        t("budgets.may"), t("budgets.june"),
+        t("budgets.july"), t("budgets.august"), t("budgets.september"), t("budgets.october"),
+        t("budgets.november"), t("budgets.december")
     ];
 
     const totalBudget = budgets.reduce((sum, b) => sum + getEffectiveLimit(b), 0);
@@ -391,7 +393,10 @@ export default function BudgetsPage() {
                     <button
                         onClick={() => {
                             if (!canCreateBudget(budgets.length, userTier)) {
-                                toast.error("Batas Tercapai", `Tier ${tierConfig.name} hanya bisa ${tierConfig.maxBudgets} anggaran. Upgrade untuk menambah!`);
+                                const msg = t("budgets.tierLimit")
+                                    .replace("{tierName}", tierConfig.name)
+                                    .replace("{maxBudgets}", String(tierConfig.maxBudgets));
+                                toast.error(t("budgets.limitReached"), msg);
                                 return;
                             }
                             setIsBudgetModalOpen(true);
@@ -413,7 +418,7 @@ export default function BudgetsPage() {
                         <button
                             onClick={() => navigateMonth("prev")}
                             className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                            aria-label="Bulan sebelumnya"
+                            aria-label={t("budgets.previousMonth")}
                         >
                             <ChevronLeft size={18} className="text-white" />
                         </button>
@@ -424,7 +429,7 @@ export default function BudgetsPage() {
                         <button
                             onClick={() => navigateMonth("next")}
                             className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                            aria-label="Bulan berikutnya"
+                            aria-label={t("budgets.nextMonth")}
                             disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
                         >
                             <ChevronLeft size={18} className="text-white rotate-180" />
@@ -757,9 +762,9 @@ export default function BudgetsPage() {
                 isOpen={!!confirmDeleteId}
                 onClose={() => setConfirmDeleteId(null)}
                 onConfirm={handleDeleteBudget}
-                title="Hapus Anggaran"
-                description={t("budgets.confirmDelete") || "Yakin ingin menghapus anggaran ini?"}
-                confirmText="Hapus"
+                title={t("budgets.deleteTitle")}
+                description={t("budgets.deleteConfirm")}
+                confirmText={t("budgets.delete")}
             />
         </div>
     );

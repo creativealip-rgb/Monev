@@ -144,14 +144,14 @@ export default function TransactionsPage() {
             });
 
             if (response.ok) {
-                toast.success("Transaksi dikembalikan");
+                toast.success(t("transactions.transactionRestored"));
                 refresh();
             } else {
-                toast.error("Gagal mengembalikan", "Coba lagi nanti");
+                toast.error(t("transactions.failedToRestore"), t("transactions.tryAgainLater"));
             }
         } catch (error) {
             console.error("Error restoring transaction:", error);
-            toast.error("Gagal mengembalikan", "Terjadi kesalahan");
+            toast.error(t("transactions.failedToRestore"), t("transactions.errorOccurred"));
         } finally {
             setIsRestoring(false);
             setUndoBanner(false);
@@ -253,7 +253,7 @@ export default function TransactionsPage() {
             try {
                 const dateObj = new Date(transaction.createdAt);
                 const date = isNaN(dateObj.getTime())
-                    ? (locale === "id" ? "Tanggal Tidak Valid" : "Invalid Date")
+                    ? t("transactions.invalidDate")
                     : format(dateObj, "dd MMM yyyy", { locale: locale === "id" ? idLocale : enUS });
 
                 if (!groups[date]) {
@@ -261,7 +261,7 @@ export default function TransactionsPage() {
                 }
                 groups[date].push(transaction);
             } catch (e) {
-                const fallbackDate = "Lainnya";
+                const fallbackDate = t("transactions.other");
                 if (!groups[fallbackDate]) groups[fallbackDate] = [];
                 groups[fallbackDate].push(transaction);
             }
@@ -308,14 +308,14 @@ export default function TransactionsPage() {
                         dismissUndo();
                     }, 5000);
                 } else {
-                    toast.success("Transaksi dihapus");
+                    toast.success(t("transactions.transactionDeleted"));
                 }
             } else {
-                toast.error("Gagal menghapus", "Coba lagi nanti");
+                toast.error(t("transactions.failedToDelete"), t("transactions.tryAgainLater"));
             }
         } catch (error) {
             console.error("Error deleting:", error);
-            toast.error("Gagal menghapus", "Terjadi kesalahan");
+            toast.error(t("transactions.failedToDelete"), t("transactions.errorOccurred"));
         } finally {
             setDeletingId(null);
             setConfirmDeleteId(null);
@@ -383,7 +383,7 @@ export default function TransactionsPage() {
         refresh();
         setIsEditModalOpen(false);
         setEditingTransaction(null);
-        toast.success("Transaksi diperbarui");
+        toast.success(t("transactions.transactionUpdated"));
     }
 
     // Close export menu on outside click
@@ -414,13 +414,13 @@ export default function TransactionsPage() {
         a.href = `/api/transactions/export/csv?${params.toString()}`;
         a.download = `transaksi_${format(new Date(), "yyyyMMdd")}.csv`;
         a.click();
-        toast.success("CSV berhasil diunduh");
+        toast.success(t("transactions.exportSuccess"));
     }
 
     function handleExportPDF() {
         setShowExportMenu(false);
         if (filteredTransactions.length === 0) {
-            toast.error("Tidak ada data", "Tidak ada transaksi untuk diexport");
+            toast.error(t("transactions.noDataToExport"));
             return;
         }
 
@@ -439,7 +439,7 @@ export default function TransactionsPage() {
 
         const printWindow = window.open("", "_blank");
         if (!printWindow) {
-            toast.error("Popup diblokir", "Izinkan popup untuk export PDF");
+            toast.error(t("transactions.popupBlocked"), t("transactions.allowPopup"));
             return;
         }
 
@@ -535,7 +535,7 @@ tr:nth-child(even){background:#fafafa}
                                     ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
                                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                             )}
-                            title="Pilih banyak"
+                            title={t("transactions.bulkSelectTitle")}
                         >
                             {showBulkActions ? <CheckSquare size={20} /> : <Square size={20} />}
                         </motion.button>
@@ -552,7 +552,7 @@ tr:nth-child(even){background:#fafafa}
                                         ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
                                         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
                                 )}
-                                title="Export"
+                                title={t("transactions.exportTitle")}
                             >
                                 <Download size={20} />
                             </motion.button>
@@ -690,7 +690,7 @@ tr:nth-child(even){background:#fafafa}
                                     )}
                                 >
                                     <Eye size={14} />
-                                    {showDuplicatesOnly ? "Semua" : "Lihat"}
+                                    {showDuplicatesOnly ? t("transactions.viewAll") : t("transactions.view")}
                                 </motion.button>
                             </div>
                         </motion.div>
@@ -704,7 +704,7 @@ tr:nth-child(even){background:#fafafa}
                 >
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                         {showDuplicatesOnly
-                            ? "Transaksi Duplikat"
+                            ? t("transactions.duplicateTransactions")
                             : searchQuery ? t("transactions.searchResults") : t("transactions.allTransactions")}
                     </p>
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
@@ -871,8 +871,8 @@ tr:nth-child(even){background:#fafafa}
                 isOpen={!!confirmDeleteId}
                 onClose={() => setConfirmDeleteId(null)}
                 onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
-                title="Hapus Transaksi"
-                description="Transaksi ini akan dihapus secara permanen. Anda yakin?"
+                title={t("transactions.deleteTitle")}
+                description={t("transactions.deleteConfirm")}
                 loading={!!deletingId}
             />
 
@@ -880,9 +880,9 @@ tr:nth-child(even){background:#fafafa}
                 isOpen={showBulkDeleteConfirm}
                 onClose={() => setShowBulkDeleteConfirm(false)}
                 onConfirm={executeBulkDelete}
-                title="Hapus Beberapa Transaksi"
-                description={`Yakin ingin menghapus ${selectedIds.size} transaksi? Tindakan ini tidak dapat dibatalkan.`}
-                confirmText="Hapus Semua"
+                title={t("transactions.deleteMultipleTitle")}
+                description={t("transactions.deleteMultipleConfirm").replace("{count}", String(selectedIds.size))}
+                confirmText={t("transactions.deleteAll")}
                 loading={deletingId === -1}
             />
 
@@ -953,11 +953,11 @@ tr:nth-child(even){background:#fafafa}
                             {/* Message */}
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-white truncate">
-                                    Transaksi dihapus
+                                    {t("transactions.transactionDeleted")}
                                 </p>
                                 <p className="text-xs text-slate-400 truncate">
                                     {undoTransactionRef.current?.description
-                                        || "Transaksi"}
+                                        || t("transactions.transaction")}
                                     {" \u2022 "}
                                     {formatCurrency(
                                         undoTransactionRef.current

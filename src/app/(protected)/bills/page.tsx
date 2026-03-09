@@ -198,7 +198,7 @@ export default function BillsPage() {
             }
         } catch (error) {
             console.error("Error toggling bill:", error);
-            toast.error("Gagal mengubah status");
+            toast.error(t("bills.failedUpdateStatus"));
         }
     }
 
@@ -209,7 +209,7 @@ export default function BillsPage() {
             const result = await res.json();
             if (result.success) {
                 setBills(prev => prev.filter(b => b.id !== confirmDeleteId));
-                toast.success("Tagihan dihapus");
+                toast.success(t("bills.billDeleted"));
             }
         } catch (error) {
             console.error("Error deleting bill:", error);
@@ -252,13 +252,13 @@ export default function BillsPage() {
                 await loadBills();
                 setIsAddModalOpen(false);
                 resetForm();
-                toast.success(editingBill ? "Tagihan diperbarui" : "Tagihan ditambahkan");
+                toast.success(editingBill ? t("bills.billUpdated") : t("bills.billAdded"));
             } else {
-                toast.error("Gagal", result.error || "Gagal menyimpan tagihan");
+                toast.error(t("bills.failedSave"), result.error || t("bills.networkError"));
             }
         } catch (error) {
             console.error("Error saving bill:", error);
-            toast.error("Gagal", "Terjadi kesalahan jaringan");
+            toast.error(t("bills.failedSave"), t("bills.networkError"));
         } finally {
             setIsSubmitting(false);
         }
@@ -289,20 +289,20 @@ export default function BillsPage() {
 
     const iconOptions = [
         { name: "Receipt", label: t("bills.title") },
-        { name: "Zap", label: t("bills.frequency.yearly") },
-        { name: "Wifi", label: "Internet" },
-        { name: "Tv", label: "Streaming" },
-        { name: "Music", label: "Musik" },
-        { name: "Heart", label: "Kesehatan" },
-        { name: "Bike", label: "Kendaraan" },
+        { name: "Zap", label: t("bills.bills") },
+        { name: "Wifi", label: t("bills.internet") },
+        { name: "Tv", label: t("bills.streaming") },
+        { name: "Music", label: t("bills.music") },
+        { name: "Heart", label: t("bills.health") },
+        { name: "Bike", label: t("bills.vehicle") },
     ];
 
     const colorOptions = ["#6366f1", "#3b82f6", "#ef4444", "#f59e0b", "#22c55e", "#ec4899", "#8b5cf6", "#06b6d4"];
 
     const tabs = [
-        { id: "all" as const, label: "Semua", count: bills.length },
-        { id: "unpaid" as const, label: "Belum Bayar", count: bills.length - paidCount },
-        { id: "paid" as const, label: "Lunas", count: paidCount },
+        { id: "all" as const, label: t("bills.all"), count: bills.length },
+        { id: "unpaid" as const, label: t("bills.unpaid"), count: bills.length - paidCount },
+        { id: "paid" as const, label: t("bills.paid"), count: paidCount },
     ];
 
     return (
@@ -573,7 +573,7 @@ export default function BillsPage() {
 
                             {/* Calendar Grid */}
                             <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                                {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map(day => (
+                                {[t("bills.sunday"), t("bills.monday"), t("bills.tuesday"), t("bills.wednesday"), t("bills.thursday"), t("bills.friday"), t("bills.saturday")].map(day => (
                                     <div key={day} className="text-[10px] font-bold text-muted-foreground py-1">{day}</div>
                                 ))}
                             </div>
@@ -670,7 +670,7 @@ export default function BillsPage() {
                                             <Receipt size={24} className="text-slate-300 dark:text-slate-500" />
                                         </div>
                                         <p className="text-muted-foreground font-bold">
-                                            {activeTab === "paid" ? "Belum ada yang lunas" : "Semua sudah lunas! 🎉"}
+                                            {activeTab === "paid" ? t("bills.noPaidYet") : t("bills.allPaid")}
                                         </p>
                                     </motion.div>
                                 )
@@ -847,7 +847,7 @@ export default function BillsPage() {
                                             (isSubmitting || !formName || !formAmount) && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
-                                        {isSubmitting ? "Menyimpan..." : "Simpan Tagihan"}
+                                        {isSubmitting ? t("bills.saving") : t("bills.saveBill")}
                                     </button>
                                 </div>
                             </motion.div>
@@ -860,9 +860,9 @@ export default function BillsPage() {
                 isOpen={!!confirmDeleteId}
                 onClose={() => setConfirmDeleteId(null)}
                 onConfirm={handleDelete}
-                title="Hapus Tagihan"
-                description="Yakin ingin menghapus tagihan ini?"
-                confirmText="Hapus"
+                title={t("bills.deleteTitle")}
+                description={t("bills.deleteConfirm")}
+                confirmText={t("bills.delete")}
             />
         </div>
     );
