@@ -43,6 +43,8 @@ interface DashboardStats {
     streak?: { current: number; longest: number };
     weeklyBudgetRemaining?: number;
     weeklyBudgetTotal?: number;
+    totalAccounts?: number; // New: Total from all accounts
+    accountCount?: number; // New: Number of accounts
 }
 
 interface Anomaly {
@@ -73,11 +75,15 @@ export function useDashboardData() {
         };
         loadOffline();
 
-        const handleTransactionAdded = () => {
-            loadOffline();
-            // Invalidate queries so React Query knows to refetch in the background
+        const handleTransactionAdded = async () => {
+            console.log("[useDashboardData] Event received: transactionAdded");
+            await loadOffline();
+            console.log("[useDashboardData] Invalidating and refetching dashboard...");
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
             queryClient.invalidateQueries({ queryKey: ["accounts"] });
+            await queryClient.refetchQueries({ queryKey: ["dashboard"] });
+            await queryClient.refetchQueries({ queryKey: ["accounts"] });
+            console.log("[useDashboardData] Dashboard refetched, offline transactions:", offlineTrans.length);
         };
 
         window.addEventListener("transactionAdded", handleTransactionAdded);
@@ -128,12 +134,15 @@ export function useDashboardData() {
         queryFn: async () => {
             const res = await apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
             const json = await res.json();
+            console.log('[useDashboardData] Stats API response:', json.data);
             if (json.success && json.data) {
                 OfflineManager.setCache("dashboard_stats", json.data);
                 return json.data as DashboardStats;
             }
-            return { income: 0, expense: 0, balance: 0, fees: 0 };
-        }
+            return { income: 0, expense: 0, balance: 0, fees: 0, totalAccounts: 0, accountCount: 0 };
+        },
+        staleTime: 0, // Always refetch on mount
+        gcTime: 5 * 60 * 1000,
     });
 
     // Transactions Query
@@ -146,7 +155,9 @@ export function useDashboardData() {
                 return json.data as any[];
             }
             return [];
-        }
+        },
+        staleTime: 0, // Always refetch on mount
+        gcTime: 5 * 60 * 1000,
     });
 
     // Anomalies Query
@@ -184,6 +195,9 @@ export function useDashboardData() {
 
     // Merge Offline Stats
     const stats = useMemo(() => {
+        console.log('[useDashboardData] serverStats:', serverStats);
+        console.log('[useDashboardData] offlineTrans:', offlineTrans.length);
+        
         if (isDecoyMode) {
             return {
                 income: 1250000,
@@ -192,21 +206,42 @@ export function useDashboardData() {
                 growth: 2.5,
                 totalGoals: 0,
                 totalInvestments: 0,
-                fees: 0
+                fees: 0,
+                totalAccounts: 2500000, // Decoy mode fake total
+                accountCount: 4 // Decoy mode fake count
             };
         }
-        const base = serverStats || { income: 0, expense: 0, balance: 0, fees: 0, weeklyBudgetRemaining: 0, weeklyBudgetTotal: 0 };
-        if (offlineTrans.length === 0) return base;
+        const base = serverStats || { income: 0, expense: 0, balance: 0, fees: 0, weeklyBudgetRemaining: 0, weeklyBudgetTotal: 0, totalAccounts: 0, accountCount: 0 };
+        
+        // Ensure totalAccounts and accountCount from server are preserved
+        const totalAccounts = serverStats?.totalAccounts ?? 0;
+        const accountCount = serverStats?.accountCount ?? 0;
+        
+        console.log('[useDashboardData] Computed totalAccounts:', totalAccounts, 'accountCount:', accountCount);
+        
+        if (offlineTrans.length === 0) {
+            const result = {
+                ...base,
+                totalAccounts,
+                accountCount
+            };
+            console.log('[useDashboardData] Final stats (no offline):', result);
+            return result;
+        }
 
         const offlineIncome = offlineTrans.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
         const offlineExpense = offlineTrans.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
 
-        return {
+        const result = {
             ...base,
+            totalAccounts,
+            accountCount,
             income: base.income + offlineIncome,
             expense: base.expense + offlineExpense,
             balance: base.balance + offlineIncome - offlineExpense,
         };
+        console.log('[useDashboardData] Final stats (with offline):', result);
+        return result;
     }, [serverStats, offlineTrans, isDecoyMode]);
 
     // Merge Offline Transactions - all for stats, sliced for display

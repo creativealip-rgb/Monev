@@ -2,25 +2,30 @@ import { test as setup, expect } from "@playwright/test";
 
 const AUTH_FILE = "tests/.auth/user.json";
 
-setup("authenticate via guest login", async ({ page, request }) => {
+setup("authenticate via register", async ({ page, request }) => {
   setup.setTimeout(300000);
 
   // Step 1: Warm up the server
-  await page.goto("/login", { waitUntil: "domcontentloaded" });
-  await expect(page.getByText("Welcome Back")).toBeVisible({ timeout: 60000 });
+  await page.goto("/register", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Buat Akun")).toBeVisible({ timeout: 60000 });
 
-  // Step 2: Create guest user via API
-  const guestResp = await request.post("/api/auth/guest", {
-    data: { initialBalance: 0 },
+  // Step 2: Register new user via API
+  const testEmail = `test_${Date.now()}@monev.test`;
+  const testPassword = `test_${Math.random().toString(36).substring(2, 15)}_Pass123!`;
+  
+  const registerResp = await request.post("/api/auth/register", {
+    data: { 
+      email: testEmail, 
+      password: testPassword,
+      name: "Test User"
+    },
     timeout: 60000,
   });
 
-  const guestResult = await guestResp.json();
-  if (!guestResult.success || !guestResult.credentials) {
-    throw new Error(`Guest API failed: ${JSON.stringify(guestResult)}`);
+  const registerResult = await registerResp.json();
+  if (!registerResult.success) {
+    throw new Error(`Register API failed: ${JSON.stringify(registerResult)}`);
   }
-
-  const { email, password } = guestResult.credentials;
 
   // Step 3: Sign in via NextAuth
   const csrfResp = await request.get("/api/auth/csrf", { timeout: 30000 });
@@ -28,8 +33,8 @@ setup("authenticate via guest login", async ({ page, request }) => {
 
   await request.post("/api/auth/callback/credentials", {
     form: {
-      email,
-      password,
+      email: testEmail,
+      password: testPassword,
       csrfToken,
       callbackUrl: "/dashboard",
       json: "true",

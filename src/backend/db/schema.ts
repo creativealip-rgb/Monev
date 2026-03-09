@@ -162,6 +162,9 @@ export const debts = sqliteTable("debts", {
     description: text("description"),
     dueDate: integer("due_date", { mode: "timestamp" }),
     status: text("status", { enum: ["unpaid", "paid"] }).notNull().default("unpaid"),
+    splitGroupId: text("split_group_id"),
+    transactionId: integer("transaction_id").references(() => transactions.id),
+    isSplitBill: integer("is_split_bill", { mode: "boolean" }).notNull().default(false),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 

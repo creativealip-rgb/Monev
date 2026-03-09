@@ -43,6 +43,8 @@ import { TransactionQuickFilters, filterTransactionsByPeriod } from "@/frontend/
 import { BillReminderWidget } from "@/frontend/components/BillReminderWidget";
 import { HeroBalanceCard } from "./components/HeroBalanceCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
+import { OnboardingCard } from "./components/OnboardingCard";
+import { StatsSkeleton, FeatureGridSkeleton, ListSkeleton } from "@/frontend/components/Skeleton";
 
 import type { LucideIcon } from "lucide-react";
 
@@ -249,6 +251,9 @@ export default function Home() {
                         onToggleHideBalance={handleToggleHideBalance}
                     />
                 </motion.section>
+
+                {/* Onboarding Card - Show when no accounts */}
+                <OnboardingCard show={stats.accountCount === 0} />
 
                 {/* Spending Alert Banner */}
                 {mounted && stats.income > 0 && stats.expense >= stats.income * 0.8 && (

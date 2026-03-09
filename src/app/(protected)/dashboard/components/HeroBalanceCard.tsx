@@ -24,6 +24,8 @@ export interface HeroBalanceCardProps {
         totalGoals?: number;
         totalInvestments?: number;
         fees?: number;
+        totalAccounts?: number;
+        accountCount?: number;
     };
     mounted: boolean;
     onBalanceClick: () => void;
@@ -60,7 +62,7 @@ export function HeroBalanceCard({
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                        <p className="text-white/70 text-xs font-medium group-hover:text-white transition-colors">{t("dashboard.balance")}</p>
+                        <p className="text-white/70 text-xs font-medium group-hover:text-white transition-colors">{t("dashboard.totalWealth")}</p>
                         <ChevronRight size={14} className="text-white/50 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
                     </div>
                     <div className="flex items-center gap-2">
@@ -99,9 +101,21 @@ export function HeroBalanceCard({
                     </div>
                 </div>
 
-                <h2 className="text-3xl font-bold tracking-tight mb-6 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
-                    {!mounted ? "Loading..." : hideBalance ? "******" : formatCurrency(stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0))}
+                <h2 className="text-3xl font-bold tracking-tight mb-2 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
+                    {!mounted ? "Loading..." : hideBalance ? "******" : formatCurrency(stats.totalAccounts || 0)}
                 </h2>
+                <p className="text-white/60 text-[10px] font-medium mb-6">
+                    {stats.accountCount || 0} {t("dashboard.accountsRegistered")}
+                </p>
+                
+                {/* Empty State Info - Show when no accounts */}
+                {!hideBalance && (stats.accountCount === 0 || stats.accountCount === undefined) && (
+                    <div className="mt-4 p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
+                        <p className="text-[10px] text-white/80 leading-relaxed">
+                            💡 <strong>Tip:</strong> Tambahkan akun bank/e-wallet di halaman <strong>"Balances"</strong> untuk melihat total kekayaan kamu di sini.
+                        </p>
+                    </div>
+                )}
             </div>
 
             <div className="flex gap-3">

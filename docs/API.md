@@ -13,7 +13,7 @@ Semua API endpoints yang tersedia di Monev.
 | Method | Endpoint | Auth | Deskripsi |
 |--------|----------|------|-----------|
 | `*` | `/api/auth/[...nextauth]` | — | NextAuth handler (login, callback, session) |
-| `POST` | `/api/auth/guest` | — | Buat akun guest tanpa registrasi |
+| `POST` | `/api/auth/register` | — | Daftar user baru |
 
 ---
 

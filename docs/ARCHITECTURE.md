@@ -52,7 +52,7 @@ monev/
 │   │   ├── api/                 # API Routes (31 endpoints)
 │   │   │   ├── ai/              #   → AI categorization
 │   │   │   ├── analytics/       #   → Analytics data
-│   │   │   ├── auth/            #   → NextAuth + guest
+│   │   │   ├── auth/            #   → NextAuth + register
 │   │   │   ├── bills/           #   → Bills CRUD
 │   │   │   ├── budgets/         #   → Budgets CRUD
 │   │   │   ├── categories/      #   → Category list

@@ -836,7 +836,6 @@ Semua API route berada di `src/app/api/`. Format response standar:
 |---|---|---|
 | GET/POST | `/api/auth/[...nextauth]` | NextAuth handler |
 | POST | `/api/auth/register` | Registrasi user baru |
-| POST | `/api/auth/guest` | Login sebagai guest |
 | POST | `/api/auth/forgot-password` | Request reset password |
 | POST | `/api/auth/reset-password` | Eksekusi reset password |
 | POST | `/api/auth/verify-email` | Verifikasi email |

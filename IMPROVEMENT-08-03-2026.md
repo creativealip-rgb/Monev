@@ -757,8 +757,7 @@ const [form, setForm] = useState({ name: "", amount: "", type: "stock", ... });
 | # | Problem | Severity |
 |---|---|---|
 | 1 | "Remember me" checkbox non-functional (state tidak pernah dibaca) | Medium |
-| 2 | Guest login error silently redirect ke dashboard | Medium |
-| 3 | Double navigation on success (`push` + `refresh`) | Low |
+| 2 | Double navigation on success (`push` + `refresh`) | Low |
 
 ### Register
 

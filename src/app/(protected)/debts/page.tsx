@@ -13,6 +13,7 @@ import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { Debt } from "./types";
 import { DebtCard, AddDebtSheet, PartialPaymentSheet } from "./components";
+import { SplitBillGroupCard } from "./components/SplitBillGroupCard";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -23,12 +24,13 @@ export default function DebtsPage() {
     const [debts, setDebts] = useState<Debt[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddSheet, setShowAddSheet] = useState(false);
-    const [activeTab, setActiveTab] = useState<"unpaid" | "paid">("unpaid");
+    const [activeTab, setActiveTab] = useState<"all" | "split" | "regular" | "unpaid" | "paid">("unpaid");
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [settleDialog, setSettleDialog] = useState<{ debt: Debt } | null>(null);
     const [partialPaymentDebt, setPartialPaymentDebt] = useState<Debt | null>(null);
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
+    const [splitViewMode, setSplitViewMode] = useState<"all" | "split" | "regular">("all");
     const toast = useToast();
 
     const loadDebts = useCallback(async () => {
@@ -118,6 +120,42 @@ export default function DebtsPage() {
     const totalOwed = owedUnpaid.reduce((s, d) => s + d.amount, 0);
     const netBalance = totalOwed - totalOwe;
 
+    // Group split bills
+    const splitBillsMap = new Map<string, Debt[]>();
+    const regularDebts: Debt[] = [];
+
+    debts.forEach(debt => {
+        if (debt.splitGroupId && debt.status === "unpaid") {
+            const existing = splitBillsMap.get(debt.splitGroupId) || [];
+            splitBillsMap.set(debt.splitGroupId, [...existing, debt]);
+        } else {
+            regularDebts.push(debt);
+        }
+    });
+
+    // Convert map to array
+    const splitBillGroups = Array.from(splitBillsMap.entries()).map(([groupId, participants]) => {
+        const totalAmount = participants.reduce((sum, p) => sum + p.amount, 0);
+        const paidCount = participants.filter(p => p.status === "paid").length;
+        const transactionDescription = participants[0]?.description || "Split Bill";
+        const transactionId = participants[0]?.transactionId;
+        
+        return {
+            groupId,
+            transactionDescription,
+            totalAmount,
+            participants,
+            paidCount,
+            transactionId
+        };
+    });
+
+    // Filter for display
+    const displaySplitBills = activeTab === "unpaid" || activeTab === "split" ? splitBillGroups : [];
+    const displayRegularDebts = activeTab === "unpaid" || activeTab === "regular" || activeTab === "all" 
+        ? regularDebts.filter(d => d.status === "unpaid")
+        : [];
+
     return (
         <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
@@ -190,21 +228,47 @@ export default function DebtsPage() {
                 </motion.div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl">
-                    {(["unpaid", "paid"] as const).map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={cn(
-                                "flex-1 py-2 rounded-xl text-sm font-bold transition-all",
-                                activeTab === tab
-                                    ? "bg-white dark:bg-slate-900 text-foreground shadow-sm"
-                                    : "text-muted-foreground"
-                            )}
+                <div className="space-y-2">
+                    <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl">
+                        {(["unpaid", "paid"] as const).map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={cn(
+                                    "flex-1 py-2 rounded-xl text-sm font-bold transition-all",
+                                    activeTab === tab
+                                        ? "bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                                )}
+                            >
+                                {tab === "unpaid" ? "Belum Lunas" : "Sudah Lunas"}
+                            </button>
+                        ))}
+                    </div>
+                    
+                    {/* Split Bill Filter (only show for unpaid) */}
+                    {activeTab === "unpaid" && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex gap-2 p-1 bg-sky-50 dark:bg-sky-900/20 rounded-2xl border border-sky-100 dark:border-sky-800"
                         >
-                            {tab === "unpaid" ? `Aktif (${unpaid.length})` : "Lunas"}
-                        </button>
-                    ))}
+                            {(["all", "split", "regular"] as const).map(filter => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setSplitViewMode(filter)}
+                                    className={cn(
+                                        "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
+                                        splitViewMode === filter
+                                            ? "bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm"
+                                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                                    )}
+                                >
+                                    {filter === "all" ? "Semua" : filter === "split" ? "Split Bill" : "Biasa"}
+                                </button>
+                            ))}
+                        </motion.div>
+                    )}
                 </div>
 
                 {/* List */}
@@ -214,23 +278,94 @@ export default function DebtsPage() {
                             <div key={i} className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
                         ))}
                     </div>
-                ) : filtered.length === 0 ? (
+                ) : activeTab === "unpaid" ? (
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-col items-center justify-center py-16 text-center"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="space-y-3"
                     >
-                        <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                            <Users size={32} className="text-slate-400" />
-                        </div>
-                        <p className="font-bold text-foreground mb-1">
-                            {activeTab === "unpaid" ? "Tidak ada hutang aktif" : "Belum ada yang lunas"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            {activeTab === "unpaid" ? "Tap + untuk mencatat hutang atau piutang baru" : "Tandai hutang sebagai lunas dari tab Aktif"}
-                        </p>
+                        <AnimatePresence>
+                            {/* Split Bill Groups */}
+                            {(splitViewMode === "all" || splitViewMode === "split") && displaySplitBills.length > 0 && (
+                                <>
+                                    {splitViewMode === "all" && splitBillGroups.length > 0 && (
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 mt-2">
+                                            Split Bills ({splitBillGroups.length})
+                                        </div>
+                                    )}
+                                    {displaySplitBills.map(group => (
+                                        <SplitBillGroupCard
+                                            key={group.groupId}
+                                            groupId={group.groupId}
+                                            transactionDescription={group.transactionDescription}
+                                            totalAmount={group.totalAmount}
+                                            participants={group.participants as any}
+                                            paidCount={group.paidCount}
+                                            transactionId={group.transactionId || undefined}
+                                            onRefresh={loadDebts}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                            
+                            {/* Regular Debts */}
+                            {(splitViewMode === "all" || splitViewMode === "regular") && displayRegularDebts.length > 0 && (
+                                <>
+                                    {splitViewMode === "all" && splitBillGroups.length > 0 && displayRegularDebts.length > 0 && (
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 mt-4">
+                                            Hutang Biasa ({displayRegularDebts.length})
+                                        </div>
+                                    )}
+                                    {displayRegularDebts.map(debt => (
+                                        <DebtCard
+                                            key={debt.id}
+                                            debt={debt as any}
+                                            onMarkPaid={handleMarkPaid}
+                                            onDelete={handleDelete}
+                                            onPartialPayment={setPartialPaymentDebt}
+                                            onEdit={(d) => setEditingDebt(d)}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                            
+                            {/* Empty States */}
+                            {splitViewMode === "split" && displaySplitBills.length === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-col items-center justify-center py-12 text-center"
+                                >
+                                    <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                        <Users size={32} className="text-slate-400" />
+                                    </div>
+                                    <p className="font-bold text-foreground mb-1">Belum ada split bill</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Split bill akan muncul setelah kamu split transaksi makan/belanja
+                                    </p>
+                                </motion.div>
+                            )}
+                            
+                            {splitViewMode === "regular" && displayRegularDebts.length === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-col items-center justify-center py-12 text-center"
+                                >
+                                    <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                        <Users size={32} className="text-slate-400" />
+                                    </div>
+                                    <p className="font-bold text-foreground mb-1">Belum ada hutang biasa</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Tap + untuk mencatat hutang atau piutang baru
+                                    </p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </motion.div>
                 ) : (
+                    /* Paid Tab */
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
@@ -241,7 +376,7 @@ export default function DebtsPage() {
                             {filtered.map(debt => (
                                 <DebtCard
                                     key={debt.id}
-                                    debt={debt}
+                                    debt={debt as any}
                                     onMarkPaid={handleMarkPaid}
                                     onDelete={handleDelete}
                                     onPartialPayment={setPartialPaymentDebt}

@@ -29,9 +29,16 @@ export function useTransactionsData(searchQuery: string = "") {
         };
         loadOffline();
 
-        const handleTransactionAdded = () => {
-            loadOffline();
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        const handleTransactionAdded = async () => {
+            console.log("[useTransactionsData] Event received: transactionAdded");
+            await loadOffline();
+            // Force invalidate and refetch with Promise
+            console.log("[useTransactionsData] Invalidating queries...");
+            await queryClient.invalidateQueries({ 
+                queryKey: ["transactions", "list"],
+                exact: false 
+            });
+            console.log("[useTransactionsData] Queries invalidated, offline transactions:", offlineTrans.length);
         };
 
         window.addEventListener("transactionAdded", handleTransactionAdded);
@@ -65,8 +72,10 @@ export function useTransactionsData(searchQuery: string = "") {
         initialPageParam: 0,
         queryFn: async ({ pageParam = 0 }) => {
             const limit = 20;
+            console.log("[useTransactionsData] Fetching page:", pageParam, "searchQuery:", searchQuery);
             const res = await apiFetch(`/api/transactions?limit=${limit}&offset=${pageParam}&search=${searchQuery}`);
             const json = await res.json();
+            console.log("[useTransactionsData] Response:", json.data?.length, "transactions");
             if (json.success) {
                 if (pageParam === 0 && !searchQuery) {
                     OfflineManager.setCache("transactions_list", json.data);
@@ -83,7 +92,11 @@ export function useTransactionsData(searchQuery: string = "") {
                 return lastPage.pagination.offset + lastPage.pagination.limit;
             }
             return undefined;
-        }
+        },
+        staleTime: 0, // Always refetch on mount
+        gcTime: 5 * 60 * 1000,
+        refetchOnMount: true, // Always refetch when component mounts
+        refetchOnWindowFocus: true, // Refetch when window regains focus
     });
 
     // Flatten and map transactions
@@ -128,10 +141,12 @@ export function useTransactionsData(searchQuery: string = "") {
     }, [data, offlineTrans, categories, searchQuery]);
 
     const refresh = useCallback(async () => {
-        await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        // Reset transaction query to force fresh fetch
+        queryClient.resetQueries({ queryKey: ["transactions", "list", searchQuery] });
+        // Reload offline transactions
         const trans = await OfflineManager.getOptimisticTransactions();
         setOfflineTrans(trans);
-    }, [queryClient]);
+    }, [queryClient, searchQuery]);
 
     return {
         transactions,

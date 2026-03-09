@@ -66,9 +66,13 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
                 const settings = result.data?.settings;
                 const enabled = settings?.isAppLockEnabled || false;
                 const pinExists = settings?.hasPin || false;
-                const stealth = settings?.hideBalance || false;
                 const biometric = settings?.isBiometricEnabled || false;
                 const timeout = settings?.autoLockTimeout ?? 300000;
+
+                // Check localStorage first for stealth mode (user preference)
+                const savedStealth = localStorage.getItem("monev_stealth_mode");
+                const dbStealth = settings?.hideBalance || false;
+                const stealth = savedStealth !== null ? savedStealth === "true" : dbStealth;
 
                 setIsEnabled(enabled);
                 setHasPin(pinExists);
@@ -171,6 +175,8 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
     const toggleStealth = async () => {
         const newValue = !isStealthMode;
         setIsStealthMode(newValue);
+        // Save to localStorage for persistence
+        localStorage.setItem("monev_stealth_mode", newValue.toString());
         try {
             await apiFetch("/api/profile", {
                 method: "POST",
@@ -178,6 +184,8 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
             });
         } catch (e) {
             console.error(e);
+            // Revert localStorage if API fails
+            localStorage.setItem("monev_stealth_mode", (!newValue).toString());
             setIsStealthMode(!newValue);
         }
     };

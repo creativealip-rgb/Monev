@@ -10,6 +10,7 @@ export interface BalanceDetailModalProps {
     mounted: boolean;
     stats: {
         balance: number;
+        totalAccounts?: number;
         totalGoals?: number;
         totalInvestments?: number;
     };
@@ -24,20 +25,23 @@ export function BalanceDetailModal({
 }: BalanceDetailModalProps) {
     if (!show || !mounted) return null;
 
-    const total = stats.balance + (stats.totalGoals || 0) + (stats.totalInvestments || 0);
+    const total = stats.totalAccounts || 0;
+    const transactionBalance = stats.balance;
+    const difference = total - transactionBalance - (stats.totalGoals || 0) - (stats.totalInvestments || 0);
 
     const progressBar = (() => {
         if (total <= 0) {
             return <div className="w-full bg-slate-200/50 dark:bg-slate-700 h-full" />;
         }
-        const p1 = (stats.balance / total) * 100;
-        const p2 = ((stats.totalGoals || 0) / total) * 100;
-        const p3 = ((stats.totalInvestments || 0) / total) * 100;
+        // Show breakdown based on what we have
+        const accountPct = total > 0 ? ((stats.totalAccounts || 0) / total) * 100 : 0;
+        const goalsPct = total > 0 ? ((stats.totalGoals || 0) / total) * 100 : 0;
+        const investmentsPct = total > 0 ? ((stats.totalInvestments || 0) / total) * 100 : 0;
         return (
             <>
-                <div className="h-full bg-sky-500 shadow-[0_0_12px_rgba(14,165,233,0.4)]" style={{ width: `${p1}%` }} />
-                <div className="h-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]" style={{ width: `${p2}%` }} />
-                <div className="h-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]" style={{ width: `${p3}%` }} />
+                <div className="h-full bg-sky-500 shadow-[0_0_12px_rgba(14,165,233,0.4)]" style={{ width: `${accountPct}%` }} />
+                <div className="h-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]" style={{ width: `${goalsPct}%` }} />
+                <div className="h-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]" style={{ width: `${investmentsPct}%` }} />
             </>
         );
     })();
@@ -86,12 +90,25 @@ export function BalanceDetailModal({
                         <div className="flex items-center gap-5">
                             <div className="w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] border-2 border-white dark:border-slate-900" />
                             <div>
-                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Saldo Aktif</p>
-                                <p className="text-[10px] text-muted-foreground font-medium">Aset likuid</p>
+                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Total Akun</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Dari semua dompet & bank</p>
                             </div>
                         </div>
                         <p className="text-lg font-bold text-foreground tabular-nums">
-                            {!mounted ? "..." : formatCurrency(stats.balance)}
+                            {!mounted ? "..." : formatCurrency(stats.totalAccounts || 0)}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center justify-between group transition-all">
+                        <div className="flex items-center gap-5">
+                            <div className="w-4 h-4 rounded-full bg-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.5)] border-2 border-white dark:border-slate-900" />
+                            <div>
+                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Saldo Transaksi</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Pemasukan - Pengeluaran</p>
+                            </div>
+                        </div>
+                        <p className="text-base font-bold text-foreground tabular-nums">
+                            {!mounted ? "..." : formatCurrency(transactionBalance)}
                         </p>
                     </div>
 
@@ -121,6 +138,14 @@ export function BalanceDetailModal({
                         </p>
                     </div>
                 </div>
+
+                {difference !== 0 && (
+                    <div className="mt-6 p-4 bg-sky-50/80 dark:bg-sky-950/30 rounded-xl border border-sky-200/60 dark:border-sky-800/50 relative z-10">
+                        <p className="text-[10px] text-sky-700 dark:text-sky-300 leading-relaxed">
+                            💡 <strong>Info:</strong> Ada selisih karena tidak semua saldo di akun tercatat sebagai transaksi. Total akun menunjukkan uang riil yang kamu punya.
+                        </p>
+                    </div>
+                )}
             </motion.div>
         </div>,
         document.body
