@@ -3,6 +3,7 @@
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { cn } from "@/frontend/lib/utils";
 
 interface PullToRefreshProps {
     onRefresh: () => Promise<void>;
@@ -85,12 +86,40 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
                     transform: `translateY(${pullDistance > 0 ? 10 : 0}px)`
                 }}
             >
-                <div className="bg-white dark:bg-slate-800 shadow-md rounded-full p-2 flex items-center justify-center">
+                <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm shadow-lg rounded-full p-3 flex items-center justify-center border border-slate-200 dark:border-slate-700">
                     <motion.div
-                        animate={isRefreshing ? { rotate: 360 } : { rotate: (pullDistance / pullThreshold) * 180 }}
-                        transition={isRefreshing ? { repeat: Infinity, duration: 1, ease: "linear" } : { type: "spring", damping: 20 }}
+                        animate={
+                            isRefreshing
+                                ? { rotate: 360, scale: [1, 1.1, 1] }
+                                : {
+                                      rotate: (pullDistance / pullThreshold) * 180,
+                                      scale: Math.min(1 + pullDistance / 200, 1.3)
+                                  }
+                        }
+                        transition={
+                            isRefreshing
+                                ? { repeat: Infinity, duration: 0.8, ease: "linear" }
+                                : { type: "spring", damping: 20, stiffness: 300 }
+                        }
+                        className="relative"
                     >
-                        <RefreshCw size={20} className="text-sky-500" />
+                        <RefreshCw
+                            size={24}
+                            className={cn(
+                                "text-sky-500",
+                                isRefreshing && "drop-shadow-lg"
+                            )}
+                            strokeWidth={2.5}
+                        />
+                        {/* Progress ring when refreshing */}
+                        {isRefreshing && (
+                            <motion.div
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="absolute inset-0 rounded-full border-2 border-sky-200 border-t-sky-500"
+                                style={{ width: 40, height: 40 }}
+                            />
+                        )}
                     </motion.div>
                 </div>
             </div>
@@ -98,7 +127,13 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
             {/* Content Container */}
             <motion.div
                 style={{ y: isRefreshing ? 60 : pullDistance }}
-                transition={isPulling.current ? { type: "tween", duration: 0 } : { type: "spring", damping: 25, stiffness: 200 }}
+                transition={
+                    isPulling.current
+                        ? { type: "tween", duration: 0 }
+                        : isRefreshing
+                            ? { type: "spring", damping: 30, stiffness: 400 }
+                            : { type: "spring", damping: 25, stiffness: 200 }
+                }
             >
                 {children}
             </motion.div>

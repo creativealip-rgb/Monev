@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getMonthlyStats, getBudgets, getGoals, getDebts, getUserStreak } from "@/backend/db/operations";
+import { getMonthlyStats, getBudgets, getDebts, getUserStreak, getGoals } from "@/backend/db/operations";
+import { getAccounts } from "@/backend/db/account-operations";
 import { calculateHealthScore } from "@/lib/health-score";
 
 export async function GET(request: Request) {
@@ -18,6 +19,29 @@ export async function GET(request: Request) {
         // Fetch total assets for comprehensive balance
         const { getAssetsValue } = await import("@/backend/db/operations");
         const assets = await getAssetsValue(userId);
+
+        // Fetch total from all accounts (bank, emoney, investments, etc)
+        let totalAccounts = 0;
+        let accountCount = 0;
+        try {
+            const accountsList = await getAccounts(userId);
+            totalAccounts = accountsList.reduce((sum, acc) => {
+                if (acc.type === 'credit_card') return sum - acc.balance;
+                return sum + acc.balance;
+            }, 0);
+            accountCount = accountsList.length;
+            console.log(`[stats] User ${userId}: totalAccounts=${totalAccounts}, accountCount=${accountCount}, accounts=${accountsList.length}`);
+        } catch (error) {
+            console.error('[stats] Error fetching accounts:', error);
+            // Fallback to 0 if accounts table doesn't exist or other error
+        }
+        console.log(`[stats] Response data:`, {
+            balance: stats.balance,
+            totalAccounts,
+            accountCount,
+            totalGoals: assets.totalGoals,
+            totalInvestments: assets.totalInvestments
+        });
 
         // Get previous month stats for comparison
         let prevYear = year;
@@ -49,7 +73,7 @@ export async function GET(request: Request) {
         let totalOwe = 0;
         let totalOwed = 0;
 
-        unpaidDebts.forEach(d => {
+        unpaidDebts.forEach((d: any) => {
             if (d.description?.startsWith("[OWED]")) {
                 totalOwed += d.amount;
             } else {
@@ -61,7 +85,7 @@ export async function GET(request: Request) {
             income: stats.income,
             expense: stats.expense,
             streakDays: streak?.currentStreak || 0,
-            budgets: budgets.map(b => ({ amount: b.amount, spent: b.spent })),
+            budgets: budgets.map((b: any) => ({ amount: b.amount, spent: b.spent })),
             goalsCount: goals.length,
             totalOwe,
             totalOwed
@@ -87,6 +111,8 @@ export async function GET(request: Request) {
             data: {
                 ...stats,
                 ...assets,
+                totalAccounts,
+                accountCount,
                 growth,
                 incomeGrowth,
                 expenseGrowth,

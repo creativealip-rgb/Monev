@@ -190,8 +190,10 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
             const result = await response.json();
 
             if (result.success) {
+                console.log("[TransactionForm] Transaction created successfully, dispatching event...");
                 // Dispatch event so all hooks (dashboard, transactions, accounts) refresh
                 window.dispatchEvent(new CustomEvent("transactionAdded"));
+                console.log("[TransactionForm] Event dispatched");
 
                 // Show success feedback with Time-Cost
                 const settingsRes = await apiFetch("/api/profile");
@@ -216,7 +218,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 // Check if we should show split bill (e.g. amount > 50k and category is Food or Shopping)
                 const selectedCatObj = categories.find(c => c.id === selectedCategory);
                 if (selectedCatObj && (selectedCatObj.name === "Makan & Minuman" || selectedCatObj.name === "Belanja") && parsedAmount > 50000) {
-                    setLastAddedTransaction({ ...transData, id: result.data?.id });
+                    // Get the actual transaction ID from result
+                    const transactionData = result.data?.transaction || result.data;
+                    setLastAddedTransaction({ 
+                        id: transactionData?.id,
+                        amount: parsedAmount, 
+                        description 
+                    });
                     setShowSplit(true);
                 } else {
                     onSuccess?.();
@@ -292,6 +300,11 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                         onClose();
                                     }}
                                     transaction={lastAddedTransaction}
+                                    onSuccess={() => {
+                                        setShowSplit(false);
+                                        onSuccess?.();
+                                        onClose();
+                                    }}
                                 />
                             )}
                         </AnimatePresence>

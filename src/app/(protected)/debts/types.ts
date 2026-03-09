@@ -7,4 +7,7 @@ export interface Debt {
     status: "unpaid" | "paid";
     direction: "owe" | "owed";
     createdAt: Date;
+    splitGroupId?: string | null;
+    transactionId?: number | null;
+    isSplitBill?: boolean;
 }

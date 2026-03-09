@@ -7,8 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
-import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
-import { apiFetch } from "@/frontend/lib/api-client";
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { loginAction } from "./actions";
 
 interface FormErrors {
@@ -119,7 +118,6 @@ export default function LoginPage() {
     const [errors, setErrors] = useState<FormErrors>({});
     const [showPassword, setShowPassword] = useState(false);
     const [isPending, setIsPending] = useState(false);
-    const [isGuestLoading, setIsGuestLoading] = useState(false);
     const [shake, setShake] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const emailInputRef = useRef<HTMLInputElement>(null);
@@ -152,44 +150,6 @@ export default function LoginPage() {
         // Clear field-specific error when user types (only after submit)
         if (submitted && errors[name as keyof FormErrors]) {
             setErrors((prev) => ({ ...prev, [name]: undefined }));
-        }
-    };
-
-    const handleGuestLogin = async () => {
-        setIsGuestLoading(true);
-        try {
-            // Call the guest login API
-            const response = await apiFetch("/api/auth/guest", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ initialBalance: 0 }),
-            });
-
-            const result = await response.json();
-
-            if (result.success && result.credentials) {
-                // Sign in with the created credentials via server action
-                try {
-                    const authResult = await loginAction(
-                        result.credentials.email,
-                        result.credentials.password
-                    );
-                    if (authResult.success) {
-                        router.push("/dashboard");
-                        router.refresh();
-                    } else {
-                        console.error("Guest auth failed:", authResult.error);
-                    }
-                } catch {
-                    // Server action may throw redirect on success
-                    router.push("/dashboard");
-                    router.refresh();
-                }
-            }
-        } catch (error) {
-            console.error("Guest login error:", error);
-        } finally {
-            setIsGuestLoading(false);
         }
     };
 
@@ -393,36 +353,8 @@ export default function LoginPage() {
                     {/* Google Login Button */}
                     <GoogleLoginButton />
 
-                    {/* Guest Login */}
-                    <div className="pt-4 border-t border-slate-100">
-                        <button
-                            type="button"
-                            onClick={handleGuestLogin}
-                            disabled={isGuestLoading}
-                            className={cn(
-                                "w-full text-center text-sm font-medium transition-colors py-2",
-                                isGuestLoading ? "text-slate-300" : "text-slate-400 hover:text-sky-600"
-                            )}
-                        >
-                            {isGuestLoading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Masuk sebagai tamu...
-                                </span>
-                            ) : (
-                                <span className="flex items-center justify-center gap-1">
-                                    Coba Tanpa Akun
-                                    <ArrowRight className="w-4 h-4" />
-                                </span>
-                            )}
-                        </button>
-                        <p className="text-xs text-slate-300 text-center mt-1">
-                            Data tersimpan di perangkat
-                        </p>
-                    </div>
-
                     {/* Register Link */}
-                    <p className="text-center text-sm text-slate-600 pt-2">
+                    <p className="text-center text-sm text-slate-600 pt-4">
                         Belum punya akun?{" "}
                         <Link
                             href="/register"

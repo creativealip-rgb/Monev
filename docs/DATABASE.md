@@ -51,7 +51,6 @@ Data user termasuk auth info dan tier.
 | `email` | TEXT | UNIQUE, nullable | Email login |
 | `name` | TEXT | nullable | Nama display |
 | `password_hash` | TEXT | nullable | Bcrypt hash |
-| `is_guest` | BOOLEAN | default false | Akun guest? |
 | `tier` | TEXT | enum: starter/pro/sultan, default "starter" | Subscription tier |
 | `tier_expires_at` | TIMESTAMP | nullable | Kapan tier expired |
 | `created_at` | TIMESTAMP | NOT NULL | — |

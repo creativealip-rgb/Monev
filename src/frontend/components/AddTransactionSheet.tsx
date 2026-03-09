@@ -297,6 +297,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                             `Dicatat pakai template. Setara ${hours.toFixed(1)} jam kerja.`
                                                         );
                                                         window.dispatchEvent(new CustomEvent("transactionAdded"));
+                                                        onSuccess?.();
                                                         onClose();
                                                     } else {
                                                         // Fail-over to offline queue
@@ -306,12 +307,14 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                             "Internet bermasalah, transaksi masuk antrean."
                                                         );
                                                         window.dispatchEvent(new CustomEvent("transactionAdded"));
+                                                        onSuccess?.();
                                                         onClose();
                                                     }
                                                 } catch (err) {
                                                     // Network error, queue it
                                                     OfflineManager.queueTransaction(transData);
                                                     window.dispatchEvent(new CustomEvent("transactionAdded"));
+                                                    onSuccess?.();
                                                     onClose();
                                                 }
                                             }}

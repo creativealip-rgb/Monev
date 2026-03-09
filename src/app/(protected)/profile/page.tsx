@@ -216,11 +216,11 @@ export default function ProfilePage() {
                     </div>
 
                     <h2 className="text-2xl font-black tracking-tight text-white mb-1.5 shadow-black/10 drop-shadow-sm text-center px-4">
-                        {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Pengguna Baru"}
+                        {user?.firstName || user?.name ? `${user.firstName || user.name} ${user.lastName || ""}`.trim() : "Pengguna Baru"}
                     </h2>
 
                     <span className="text-sky-100/90 text-xs font-bold tracking-widest uppercase mb-5 bg-black/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm shadow-inner">
-                        @{user?.username || "username"}
+                        @{user?.username || user?.email?.split("@")[0] || "username"}
                     </span>
 
                     <div className="flex flex-col items-center gap-3">
@@ -330,7 +330,7 @@ export default function ProfilePage() {
                     if (item.id === "download") {
                         return (
                             <motion.a key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * index + 0.4 }} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
-                                <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</span></div>
+                                <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
                                 <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 uppercase tracking-tighter">APK</span><ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" /></div>
                             </motion.a>
                         );

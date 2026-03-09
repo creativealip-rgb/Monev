@@ -211,10 +211,18 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
                     const dbUser = await db.select().from(users).where(eq(users.id, userId)).get();
                     if (dbUser) {
-                        console.log("[Session] Found user in DB:", { id: dbUser.id, name: dbUser.name, tier: dbUser.tier });
+                        console.log("[Session] Found user in DB:", { id: dbUser.id, name: dbUser.name, firstName: dbUser.firstName, tier: dbUser.tier });
                         session.user.name = dbUser.name;
                         session.user.image = dbUser.image;
                         session.user.tier = (dbUser.tier as UserTier) || "starter";
+                        
+                        // Ensure firstName is always set for profile page
+                        if (!dbUser.firstName && (dbUser.name || dbUser.email)) {
+                            const firstName = dbUser.name || (dbUser.email ? dbUser.email.split("@")[0] : null);
+                            if (firstName) {
+                                await db.update(users).set({ firstName }).where(eq(users.id, userId)).run();
+                            }
+                        }
                     } else {
                         console.log("[Session] User not found in DB for ID:", userId);
                     }
@@ -244,7 +252,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                 token.picture = user.image;
             }
             return token;
-        }
+        },
     },
     providers: [
         Credentials({

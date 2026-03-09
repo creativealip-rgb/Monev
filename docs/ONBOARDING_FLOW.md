@@ -143,16 +143,11 @@ Description: "Informasi keuanganmu dilindungi dengan enkripsi dan privasi terjam
 
 **Alternative Actions**:
 
-3. **Coba Tanpa Akun** (Tertiary Link)
-   - Style: Text link
-   - Subtext: "Data akan tersimpan di perangkat ini"
-   - Action: Start guest mode → Redirect ke `/dashboard`
-   - Note: Nanti bisa export/register untuk cloud backup
-
 **Social Login** (Optional):
 - "Atau login dengan"
 - Google button (jika OAuth enabled)
 - Apple button (untuk iOS)
+
 
 ---
 
@@ -353,7 +348,6 @@ interface OnboardingState {
 const STORAGE_KEYS = {
   HAS_SEEN_ONBOARDING: 'monev_onboarding_complete',
   ONBOARDING_DATA: 'monev_onboarding_data',
-  GUEST_MODE: 'monev_guest_mode'
 };
 ```
 
@@ -398,7 +392,8 @@ function checkOnboardingStatus() {
 
 5. **onboarding_completed**
    - Trigger: Selesai screen 4
-   - Properties: total_duration, chosen_action (register/login/guest)
+    - Properties: total_duration, chosen_action (register/login)
+
 
 6. **onboarding_abandoned**
    - Trigger: User keluar dari aplikasi di tengah onboarding
@@ -446,8 +441,7 @@ function checkOnboardingStatus() {
   "cta": {
     "title": "Siap Memulai?",
     "register": "Buat Akun Baru",
-    "login": "Sudah Punya Akun? Login",
-    "guest": "Coba Tanpa Akun"
+    "login": "Sudah Punya Akun? Login"
   },
   "common": {
     "skip": "Lewati",
@@ -495,8 +489,7 @@ function checkOnboardingStatus() {
   "cta": {
     "title": "Ready to Start?",
     "register": "Create New Account",
-    "login": "Already Have an Account? Login",
-    "guest": "Try Without Account"
+    "login": "Already Have an Account? Login"
   },
   "common": {
     "skip": "Skip",
@@ -519,7 +512,6 @@ function checkOnboardingStatus() {
 - [ ] Tombol navigasi prev/next berfungsi
 - [ ] Form validation pada screen 3
 - [ ] Redirect ke login/register/dashboard berfungsi
-- [ ] Guest mode menyimpan preferensi
 
 ### UI/UX Testing
 

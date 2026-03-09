@@ -1,4 +1,4 @@
-const CACHE_NAME = 'monev-v1';
+const CACHE_NAME = 'monev-v1.1';
 const ASSETS_TO_CACHE = [
     '/',
     '/manifest.json',
@@ -38,13 +38,10 @@ self.addEventListener('fetch', (event) => {
     // Skip chrome-extension and other non-http/https protocols
     if (!event.request.url.startsWith(self.location.origin)) return;
 
+    // Network First Strategy
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-
-            return fetch(event.request).then((response) => {
+        fetch(event.request)
+            .then((response) => {
                 // Check if we received a valid response
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
@@ -56,9 +53,10 @@ self.addEventListener('fetch', (event) => {
                 });
 
                 return response;
-            });
-        }).catch(() => {
-            // Fallback or just let it fail for now
-        })
+            })
+            .catch(() => {
+                // Fallback to cache if network fails
+                return caches.match(event.request);
+            })
     );
 });
