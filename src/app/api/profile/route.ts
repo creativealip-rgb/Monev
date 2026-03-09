@@ -162,21 +162,27 @@ export async function POST(req: NextRequest) {
                 });
             }
         } else {
-            // Handle JSON body
-            try {
-                const body = await req.json();
-                const { type, ...data } = body;
-            
-                if (type === "profile") {
-                    await updateUser(userId, data);
-                } else if (type === "settings") {
-                    await updateUserSettings(userId, data);
-                } else if (type === "disconnectTelegram") {
-                    await unlinkTelegramAccount(userId);
+            // Handle JSON body - wrap in try-catch to handle empty/invalid JSON
+            const contentType = req.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+                // If not JSON and not FormData, skip body parsing
+                console.warn("Unsupported content type:", contentType);
+            } else {
+                try {
+                    const body = await req.json();
+                    const { type, ...data } = body;
+                
+                    if (type === "profile") {
+                        await updateUser(userId, data);
+                    } else if (type === "settings") {
+                        await updateUserSettings(userId, data);
+                    } else if (type === "disconnectTelegram") {
+                        await unlinkTelegramAccount(userId);
+                    }
+                } catch (parseError) {
+                    // Silently handle JSON parse errors - likely empty body
+                    console.warn("Request body is empty or invalid JSON");
                 }
-            } catch (parseError) {
-                console.error("Failed to parse request body:", parseError);
-                // If parsing fails, just skip the update
             }
         }
 
