@@ -14,7 +14,8 @@ import {
     Mic,
     TrendingUp,
     X,
-    AudioWaveform
+    AudioWaveform,
+    Zap
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
@@ -324,7 +325,7 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/"
+                            href="/dashboard"
                             className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
                         >
                             <ArrowLeft size={16} strokeWidth={2.5} />
@@ -349,6 +350,40 @@ export default function ChatPage() {
                         <MoreVertical size={16} />
                     </button>
                 </div>
+                
+                {/* Quota Indicator */}
+                {userTier !== "sultan" && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 p-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-800"
+                    >
+                        <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                                <Zap size={12} className="text-amber-500" />
+                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                                    Sisa Pesan AI Hari Ini
+                                </span>
+                            </div>
+                            <span className="text-[10px] font-black text-slate-900 dark:text-white">
+                                {Math.max(0, (tierConfig.aiDailyLimit ?? 10) - getDailyUsage())} / {tierConfig.aiDailyLimit ?? 10}
+                            </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: "100%" }}
+                                animate={{ 
+                                    width: `${Math.min(100, (((tierConfig.aiDailyLimit ?? 10) - getDailyUsage()) / (tierConfig.aiDailyLimit ?? 10)) * 100)}%`
+                                }}
+                                className={cn(
+                                    "h-full rounded-full transition-colors",
+                                    getDailyUsage() >= (tierConfig.aiDailyLimit ?? 10) - 1 ? "bg-rose-500" :
+                                    getDailyUsage() >= (tierConfig.aiDailyLimit ?? 10) / 2 ? "bg-amber-500" : "bg-emerald-500"
+                                )}
+                            />
+                        </div>
+                    </motion.div>
+                )}
             </motion.header>
 
             {/* Messages */}

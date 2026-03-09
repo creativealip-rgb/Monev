@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
+import { useToast } from "@/frontend/components/UI";
 
 interface SimulationHistoryItem {
     id: string;
@@ -99,6 +100,7 @@ function saveHistory(userId: string, history: SimulationHistoryItem[]) {
 export default function SimulationsPage() {
     const { data: session } = useSession();
     const userId = session?.user?.id ?? "anonymous";
+    const toast = useToast();
 
     const [scenario, setScenario] = useState("");
     const [amount, setAmount] = useState("");
@@ -163,6 +165,8 @@ export default function SimulationsPage() {
             });
         } catch (error) {
             console.error("Simulation failed:", error);
+            toast.error("Gagal simulasi", "Terjadi kesalahan saat menjalankan simulasi. Coba lagi nanti.");
+            setActiveTab("riwayat");
         } finally {
             setLoading(false);
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
 import {
     Calendar, ChevronRight, Lock, ArrowLeft, FileDown, Flame
@@ -29,6 +29,7 @@ const [activeTab, setActiveTab] = useState("overview");
     const [currentDate, setCurrentDate] = useState(new Date());
     const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
     const [showDateRangePicker, setShowDateRangePicker] = useState(false);
+    const dateRangePickerRef = useRef<HTMLDivElement>(null);
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -58,6 +59,21 @@ const [activeTab, setActiveTab] = useState("overview");
     };
 
     const [isDownloading, setIsDownloading] = useState(false);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (
+                showDateRangePicker &&
+                dateRangePickerRef.current &&
+                !dateRangePickerRef.current.contains(event.target as Node)
+            ) {
+                setShowDateRangePicker(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showDateRangePicker]);
 
 const fetchData = async () => {
         setIsLoading(true);
@@ -210,6 +226,7 @@ useEffect(() => {
                             )}
                             <button
                                 onClick={() => setShowDateRangePicker(!showDateRangePicker)}
+                                aria-label="Toggle date picker"
                                 className={cn(
                                     "p-1.5 mx-1 rounded-full transition-all",
                                     showDateRangePicker || dateRange
@@ -227,6 +244,7 @@ useEffect(() => {
             {/* Date Range Picker Dropdown */}
             {showDateRangePicker && (
                 <motion.div
+                    ref={dateRangePickerRef}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute right-6 top-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[200] w-72"

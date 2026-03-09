@@ -196,6 +196,11 @@ export default function SavingsPage() {
     const { data: session } = useSession();
     const userTier: UserTier = session?.user?.tier || "miskin";
 
+    // Filter & Sort state
+    const [filterStatus, setFilterStatus] = useState<"all" | "active" | "completed">("all");
+    const [sortBy, setSortBy] = useState<"name" | "percentage" | "deadline">("name");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
     // Track celebrated goals per session (show confetti only once)
     const celebratedGoalsRef = useRef<Set<number>>(new Set());
 
@@ -251,6 +256,27 @@ export default function SavingsPage() {
     const totalSaved = goals.reduce((sum: number, g: GoalWithProgress) => sum + g.currentAmount, 0);
     const totalPercentage = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
 
+    // Filter & Sort goals
+    const displayGoals = goals
+        .filter(goal => {
+            if (filterStatus === "active") return goal.percentage < 100;
+            if (filterStatus === "completed") return goal.percentage >= 100;
+            return true;
+        })
+        .sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === "name") {
+                comparison = a.name.localeCompare(b.name);
+            } else if (sortBy === "percentage") {
+                comparison = a.percentage - b.percentage;
+            } else if (sortBy === "deadline") {
+                const dateA = a.deadline ? new Date(a.deadline).getTime() : 0;
+                const dateB = b.deadline ? new Date(b.deadline).getTime() : 0;
+                comparison = dateA - dateB;
+            }
+            return sortOrder === "desc" ? -comparison : comparison;
+        });
+
     return (
         <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
@@ -272,18 +298,32 @@ export default function SavingsPage() {
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Wujudkan Impianmu</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => {
-                            if (!canCreateGoal(goals.length, userTier)) {
-                                toast.error("Limit Goal tercapai", "Upgrade ke Kaya atau Sultan untuk menambah lebih banyak goals! 🚀");
-                                return;
-                            }
-                            setIsGoalModalOpen(true);
-                        }}
-                        className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
-                    >
-                        <Plus size={24} strokeWidth={2.5} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value as any)}
+                            className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                        >
+                            <option value="all">Semua</option>
+                            <option value="active">Aktif</option>
+                            <option value="completed">Selesai</option>
+                        </select>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                        >
+                            <option value="name">Nama</option>
+                            <option value="percentage">Progress</option>
+                            <option value="deadline">Deadline</option>
+                        </select>
+                        <button
+                            onClick={() => setIsGoalModalOpen(true)}
+                            className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
+                        >
+                            <Plus size={24} strokeWidth={2.5} />
+                        </button>
+                    </div>
                 </div>
             </motion.header>
 
@@ -417,7 +457,7 @@ export default function SavingsPage() {
                         <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
                     ) : (
                         <div className="space-y-4">
-                            {goals.map((g: GoalWithProgress, i: number) => {
+                            {displayGoals.map((g: GoalWithProgress, i: number) => {
                                 const isCompleted = g.percentage >= 100;
                                 const isNearComplete = g.percentage >= 75;
                                 const { etaDate, monthlyRate } = calculateEta(
