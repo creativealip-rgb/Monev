@@ -1,4 +1,4 @@
-export type UserTier = "miskin" | "kaya" | "sultan";
+export type UserTier = "starter" | "pro" | "sultan";
 
 export interface TierConfig {
     name: string;
@@ -8,7 +8,9 @@ export interface TierConfig {
     maxBudgets: number;
     maxBills: number;
     maxInvestments: number;
+    maxBankAccounts: number;
     aiDailyLimit: number | null; // null = unlimited
+    ocrMonthlyLimit: number | null;
     analyticsLevel: "basic" | "full" | "advanced";
     exportFormats: string[];
     adFree: boolean;
@@ -17,38 +19,55 @@ export interface TierConfig {
     canAccessSmartInput: boolean;
     canAccessSmartAgents: boolean;
     canExport: boolean;
+    canUseTelegramBot: boolean;
+    telegramBotType: "none" | "command" | "ai";
     features: string[];
 }
 
 export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
-    miskin: {
-        name: "Miskin",
+    starter: {
+        name: "Starter",
         maxGoals: 1,
-        maxCategories: 5,
-        maxTransactionsPerMonth: 50,
-        maxBudgets: 2,
+        maxCategories: 3,
+        maxTransactionsPerMonth: 100,
+        maxBudgets: 3,
         maxBills: 3,
         maxInvestments: 0,
-        aiDailyLimit: 3,
+        maxBankAccounts: 2,
+        aiDailyLimit: 5,
+        ocrMonthlyLimit: 5,
         analyticsLevel: "basic",
-        exportFormats: [],
+        exportFormats: ["CSV"],
         adFree: false,
         canAccessAnalytics: true,
         canAccessInvestments: false,
-        canAccessSmartInput: false,
+        canAccessSmartInput: true,
         canAccessSmartAgents: false,
-        canExport: false,
-        features: ["Catat Transaksi (50/bln)", "Dasbor Dasar", "2 Anggaran", "1 Target Tabungan", "3 Tagihan"],
+        canExport: true,
+        canUseTelegramBot: false,
+        telegramBotType: "none",
+        features: [
+            "100 Transaksi/bulan",
+            "2 Akun Bank",
+            "3 Anggaran",
+            "1 Target Tabungan",
+            "3 Tagihan",
+            "5 AI Chats/hari",
+            "Export CSV",
+            "Voice Input",
+        ],
     },
-    kaya: {
-        name: "Kaya",
+    pro: {
+        name: "Pro",
         maxGoals: 10,
-        maxCategories: 100,
+        maxCategories: 20,
         maxTransactionsPerMonth: null,
-        maxBudgets: 10,
+        maxBudgets: 20,
         maxBills: 20,
-        maxInvestments: 5,
-        aiDailyLimit: null,
+        maxInvestments: 100,
+        maxBankAccounts: 10,
+        aiDailyLimit: 100,
+        ocrMonthlyLimit: 100,
         analyticsLevel: "full",
         exportFormats: ["CSV", "Excel"],
         adFree: true,
@@ -57,7 +76,21 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
         canAccessSmartInput: true,
         canAccessSmartAgents: true,
         canExport: true,
-        features: ["Transaksi Unlimited", "Full Analisa", "Smart Input", "10 Anggaran", "Export CSV/Excel"],
+        canUseTelegramBot: true,
+        telegramBotType: "command",
+        features: [
+            "Transaksi Unlimited",
+            "10 Akun Bank",
+            "20 Anggaran",
+            "10 Target Tabungan",
+            "20 Tagihan",
+            "Investasi (Basic)",
+            "100 AI Chats/hari",
+            "100 OCR Scans/bulan",
+            "Export CSV + Excel",
+            "Telegram Bot (Command)",
+            "Full Analytics",
+        ],
     },
     sultan: {
         name: "Sultan",
@@ -67,7 +100,9 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
         maxBudgets: 1000,
         maxBills: 1000,
         maxInvestments: 1000,
+        maxBankAccounts: 1000,
         aiDailyLimit: null,
+        ocrMonthlyLimit: null,
         analyticsLevel: "advanced",
         exportFormats: ["CSV", "Excel", "PDF"],
         adFree: true,
@@ -76,84 +111,131 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
         canAccessSmartInput: true,
         canAccessSmartAgents: true,
         canExport: true,
-        features: ["Semua di Kaya", "Telegram Bot", "Wawasan AI Prioritas", "Laporan PDF Custom", "Support 24/7"],
+        canUseTelegramBot: true,
+        telegramBotType: "ai",
+        features: [
+            "Semua di Pro (Unlimited)",
+            "Investasi (Advanced)",
+            "AI Chat Unlimited",
+            "OCR Scans Unlimited",
+            "Export CSV + Excel + PDF",
+            "Telegram Bot (AI Conversational)",
+            "Predictive Analytics",
+            "Tax Reports",
+            "Auto Cloud Backup",
+            "Priority WhatsApp Support",
+            "Early Access Features",
+        ],
     },
 };
 
 // Tier hierarchy for comparison
 const TIER_LEVELS: Record<UserTier, number> = {
-    miskin: 0,
-    kaya: 1,
+    starter: 0,
+    pro: 1,
     sultan: 2,
 };
 
-export function getTierConfig(tier: UserTier = "miskin"): TierConfig {
-    return TIER_CONFIGS[tier] || TIER_CONFIGS.miskin;
+export function getTierConfig(tier: UserTier = "starter"): TierConfig {
+    return TIER_CONFIGS[tier] || TIER_CONFIGS.starter;
 }
 
 export function getUserTier(user: any): UserTier {
-    if (!user) return "miskin";
-    return (user.tier as UserTier) || "miskin";
+    if (!user) return "starter";
+    return (user.tier as UserTier) || "starter";
 }
 
 export function isTierSufficient(userTier: UserTier, requiredTier: UserTier): boolean {
     return TIER_LEVELS[userTier] >= TIER_LEVELS[requiredTier];
 }
 
-export function canCreateGoal(currentCount: number, tier: UserTier = "miskin"): boolean {
+export function canCreateGoal(currentCount: number, tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     return currentCount < config.maxGoals;
 }
 
-export function canCreateBudget(currentCount: number, tier: UserTier = "miskin"): boolean {
+export function canCreateBudget(currentCount: number, tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     return currentCount < config.maxBudgets;
 }
 
-export function canCreateBill(currentCount: number, tier: UserTier = "miskin"): boolean {
+export function canCreateBill(currentCount: number, tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     return currentCount < config.maxBills;
 }
 
-export function canCreateInvestment(currentCount: number, tier: UserTier = "miskin"): boolean {
+export function canCreateInvestment(currentCount: number, tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     return currentCount < config.maxInvestments;
 }
 
-export function canCreateTransaction(currentMonthCount: number, tier: UserTier = "miskin"): boolean {
+export function canCreateTransaction(currentMonthCount: number, tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     if (config.maxTransactionsPerMonth === null) return true;
     return currentMonthCount < config.maxTransactionsPerMonth;
 }
 
-export function canUseAI(currentUsageToday: number, tier: UserTier = "miskin"): boolean {
+export function canUseAI(currentUsageToday: number, tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     if (config.aiDailyLimit === null) return true;
     return currentUsageToday < config.aiDailyLimit;
 }
 
-export function hasFullAnalytics(tier: UserTier = "miskin"): boolean {
+export function canUseOCR(currentUsageMonth: number, tier: UserTier = "starter"): boolean {
+    const config = getTierConfig(tier);
+    if (config.ocrMonthlyLimit === null) return true;
+    return currentUsageMonth < config.ocrMonthlyLimit;
+}
+
+export function hasFullAnalytics(tier: UserTier = "starter"): boolean {
     const config = getTierConfig(tier);
     return config.analyticsLevel === "full" || config.analyticsLevel === "advanced";
 }
 
-export function canUseTelegram(tier: UserTier = "miskin"): boolean {
-    return tier === "sultan";
+export function canUseTelegram(tier: UserTier = "starter"): boolean {
+    const config = getTierConfig(tier);
+    return config.canUseTelegramBot;
 }
 
-export function canAccessSmartInput(tier: UserTier = "miskin"): boolean {
+export function getTelegramBotType(tier: UserTier = "starter"): "none" | "command" | "ai" {
+    const config = getTierConfig(tier);
+    return config.telegramBotType;
+}
+
+export function canAccessSmartInput(tier: UserTier = "starter"): boolean {
     return getTierConfig(tier).canAccessSmartInput;
 }
 
-export function canAccessAnalytics(tier: UserTier = "miskin"): boolean {
+export function canAccessAnalytics(tier: UserTier = "starter"): boolean {
     return getTierConfig(tier).canAccessAnalytics;
 }
 
-export function canAccessInvestments(tier: UserTier = "miskin"): boolean {
+export function canAccessInvestments(tier: UserTier = "starter"): boolean {
     return getTierConfig(tier).canAccessInvestments;
 }
 
 export function getRemainingLimit(current: number, max: number | null): number | null {
     if (max === null) return null; // unlimited
     return Math.max(0, max - current);
+}
+
+// Helper functions for tier upgrade/downgrade
+export function getTierUpgradePath(currentTier: UserTier): UserTier[] {
+    const path: UserTier[] = [];
+    if (currentTier === "starter") path.push("pro", "sultan");
+    if (currentTier === "pro") path.push("sultan");
+    return path;
+}
+
+export function getTierPrice(tier: UserTier): { monthly: number; annual: number } {
+    switch (tier) {
+        case "starter":
+            return { monthly: 0, annual: 0 };
+        case "pro":
+            return { monthly: 29000, annual: 290000 }; // 17% discount
+        case "sultan":
+            return { monthly: 49000, annual: 490000 }; // 17% discount
+        default:
+            return { monthly: 0, annual: 0 };
+    }
 }
