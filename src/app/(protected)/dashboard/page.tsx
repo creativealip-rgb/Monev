@@ -280,8 +280,8 @@ export default function Home() {
                                         : "text-amber-900 dark:text-amber-100"
                                 )}>
                                     {stats.expense >= stats.income
-                                        ? "Pengeluaran melebihi pemasukan!"
-                                        : "Peringatan Pengeluaran"}
+                                        ? t("dashboard.expenseExceedsIncome")
+                                        : t("dashboard.expenseWarning")}
                                 </p>
                                 <p className={cn(
                                     "text-xs mt-0.5 leading-relaxed",
@@ -289,7 +289,7 @@ export default function Home() {
                                         ? "text-red-700 dark:text-red-300"
                                         : "text-amber-700 dark:text-amber-300"
                                 )}>
-                                    Pengeluaran sudah {Math.round((stats.expense / stats.income) * 100)}% dari pemasukan bulan ini!
+                                    {t("dashboard.expensePercentage").replace("{percentage}", String(Math.round((stats.expense / stats.income) * 100)))}
                                 </p>
                             </div>
                         </div>
@@ -325,9 +325,11 @@ export default function Home() {
                                 <AlertTriangle size={20} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-sm font-bold text-rose-900 dark:text-rose-100">Lonjakan Pengeluaran Deteksi!</h3>
+                                <h3 className="text-sm font-bold text-rose-900 dark:text-rose-100">{t("dashboard.expenseSpikeTitle")}</h3>
                                 <p className="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
-                                    Bos, pengeluaran di kategori <strong>{anomalies[0].categoryName}</strong> naik <strong>{anomalies[0].spikePercentage}%</strong> dari biasanya. Yakin aman?
+                                    {t("dashboard.expenseSpikeMessage")
+                                        .replace("{categoryName}", String(anomalies[0].categoryName))
+                                        .replace("{spikePercentage}", String(anomalies[0].spikePercentage))}
                                 </p>
                                 {anomalies.length > 1 && (
                                     <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-2 font-medium">
@@ -452,7 +454,7 @@ export default function Home() {
                     onClose={() => setShowTransferModal(false)}
                     onSuccess={() => {
                         window.dispatchEvent(new CustomEvent("transactionAdded"));
-                        toast.success("Transfer berhasil", "Saldo telah ditransfer");
+                        toast.success(t("dashboard.transferSuccess"), t("dashboard.transferMessage"));
                     }}
                     currentBalance={stats.balance}
                 />
@@ -487,7 +489,7 @@ export default function Home() {
                         "active:shadow-md",
                         "transition-shadow"
                     )}
-                    aria-label="Tambah Transaksi"
+                    aria-label={t("dashboard.addTransaction")}
                 >
                     <Plus size={28} strokeWidth={2.5} />
                 </motion.button>

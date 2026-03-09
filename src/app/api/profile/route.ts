@@ -162,15 +162,21 @@ export async function POST(req: NextRequest) {
                 });
             }
         } else {
-            const body = await req.json();
-            const { type, ...data } = body;
-
-            if (type === "profile") {
-                await updateUser(userId, data);
-            } else if (type === "settings") {
-                await updateUserSettings(userId, data);
-            } else if (type === "disconnectTelegram") {
-                await unlinkTelegramAccount(userId);
+            // Handle JSON body
+            try {
+                const body = await req.json();
+                const { type, ...data } = body;
+            
+                if (type === "profile") {
+                    await updateUser(userId, data);
+                } else if (type === "settings") {
+                    await updateUserSettings(userId, data);
+                } else if (type === "disconnectTelegram") {
+                    await unlinkTelegramAccount(userId);
+                }
+            } catch (parseError) {
+                console.error("Failed to parse request body:", parseError);
+                // If parsing fails, just skip the update
             }
         }
 
