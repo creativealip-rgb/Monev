@@ -128,29 +128,57 @@ export default function TransactionsPage() {
         setIsRestoring(true);
 
         try {
-            const response = await apiFetch("/api/transactions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amount: txn.amount,
-                    description: txn.description,
-                    merchantName: txn.merchantName,
-                    categoryId: txn.categoryId,
-                    type: txn.type,
-                    paymentMethod: txn.paymentMethod || "cash",
-                    accountId: txn.accountId,
-                    date: txn.createdAt,
-                }),
-            });
-
-            if (response.ok) {
-                toast.success(t("transactions.transactionRestored"));
-                refresh();
+            // Check if bulk delete (id === -1)
+            if (txn.id === -1 && (txn as any).bulkData) {
+                // Restore multiple transactions
+                const bulkData = (txn as any).bulkData as TransactionWithCategory[];
+                
+                const restorePromises = bulkData.map(transaction =>
+                    apiFetch("/api/transactions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            amount: transaction.amount,
+                            description: transaction.description,
+                            merchantName: transaction.merchantName,
+                            categoryId: transaction.categoryId,
+                            type: transaction.type,
+                            paymentMethod: transaction.paymentMethod || "cash",
+                            accountId: transaction.accountId,
+                            date: transaction.createdAt,
+                        }),
+                    })
+                );
+                
+                await Promise.all(restorePromises);
+                toast.success(`${bulkData.length} transaksi dipulihkan`);
             } else {
-                toast.error(t("transactions.failedToRestore"), t("transactions.tryAgainLater"));
+                // Restore single transaction
+                const response = await apiFetch("/api/transactions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: txn.amount,
+                        description: txn.description,
+                        merchantName: txn.merchantName,
+                        categoryId: txn.categoryId,
+                        type: txn.type,
+                        paymentMethod: txn.paymentMethod || "cash",
+                        accountId: txn.accountId,
+                        date: txn.createdAt,
+                    }),
+                });
+
+                if (response.ok) {
+                    toast.success(t("transactions.transactionRestored"));
+                } else {
+                    toast.error(t("transactions.failedToRestore"), t("transactions.tryAgainLater"));
+                }
             }
+            
+            refresh();
         } catch (error) {
-            console.error("Error restoring transaction:", error);
+            console.error("Error restoring transaction(s):", error);
             toast.error(t("transactions.failedToRestore"), t("transactions.errorOccurred"));
         } finally {
             setIsRestoring(false);
@@ -345,12 +373,44 @@ export default function TransactionsPage() {
         setDeletingId(-1); // Indicate bulk delete
         try {
             const ids = Array.from(selectedIds);
+            
+            // Get full transaction data for undo
+            const deletedTransactions = filteredTransactions.filter(t => ids.includes(t.id));
+            
             await Promise.all(
                 ids.map(id =>
                     apiFetch(`/api/transactions/${id}`, { method: "DELETE" })
                 )
             );
             refresh();
+            
+            // Show undo banner for bulk delete
+            setUndoBanner(true);
+            setUndoCountdown(5);
+            undoTransactionRef.current = {
+                id: -1, // -1 indicates bulk delete
+                bulkData: deletedTransactions
+            } as any;
+            
+            // Start countdown
+            setTimeout(() => {
+                setUndoCountdown(4);
+                setTimeout(() => {
+                    setUndoCountdown(3);
+                    setTimeout(() => {
+                        setUndoCountdown(2);
+                        setTimeout(() => {
+                            setUndoCountdown(1);
+                            setTimeout(() => {
+                                setUndoBanner(false);
+                                setUndoCountdown(0);
+                                undoTransactionRef.current = null;
+                            }, 1000);
+                        }, 1000);
+                    }, 1000);
+                }, 1000);
+            }, 1000);
+            
             toast.success(`${ids.length} transaksi dihapus`);
             setSelectedIds(new Set());
             setShowBulkActions(false);

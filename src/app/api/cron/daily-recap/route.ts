@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAllUsers, getMonthlyStats, getPendingScheduledMessages, markScheduledMessageSent, getGoals, updateGoal } from '@/backend/db/operations';
 import { getDb } from '@/backend/db';
-import { transactions } from '@/backend/db/schema';
-import { sql, and, eq, gte, lte } from 'drizzle-orm';
+import { transactions, bills, userSettings } from '@/backend/db/schema';
+import { sql, and, eq, gte, lte, gt, lt } from 'drizzle-orm';
+import { sendDailyRecapEmail } from '@/lib/mailer';
 
 export async function GET() {
     try {
@@ -79,7 +80,35 @@ export async function GET() {
                 message += `\nHati-hati, uang tunai sering "gaib" tanpa jejak! 👻`;
             }
 
-            // 4. Scheduled Messages (Stock Opname, etc)
+            // 4. Bill Reminders - Check for bills due in next 3 days
+            const nowPlus3Days = new Date(now);
+            nowPlus3Days.setDate(nowPlus3Days.getDate() + 3);
+            
+            const dueBills = await db
+                .select()
+                .from(bills)
+                .where(
+                    and(
+                        eq(bills.userId, userId),
+                        eq(bills.isActive, true),
+                        eq(bills.isPaid, false),
+                        gte(bills.dueDate, now.getDate()),
+                        lt(bills.dueDate, now.getDate() + 3)
+                    )
+                )
+                .all();
+            
+            if (dueBills.length > 0) {
+                message += `\n\n⚠️ **TAGIHAN MENDEKAT**\n`;
+                for (const bill of dueBills) {
+                    const daysUntilDue = bill.dueDate - now.getDate();
+                    const urgency = daysUntilDue === 0 ? 'HARI INI' : daysUntilDue === 1 ? 'BESOK' : `${daysUntilDue} hari lagi`;
+                    message += `\n- ${bill.name}: Rp ${bill.amount.toLocaleString('id-ID')} (${urgency})`;
+                }
+                message += `\n\nSegera bayar sebelum denda! 💸`;
+            }
+            
+            // 6. Scheduled Messages (Stock Opname, etc)
             // Filter is handled by DB query usually, but here we can fetch all or specific
             // Let's assume getPendingScheduledMessages handles filtering if we pass userId?
             // Or we filter manually. operations.ts signature unknown.
@@ -99,7 +128,7 @@ export async function GET() {
                 }
             }
 
-            // 5. Inflation Adjuster (1st of Month)
+            // 7. Inflation Adjuster (1st of Month)
             if (now.getDate() === 1) {
                 const goals = await getGoals(userId);
 
@@ -115,8 +144,44 @@ export async function GET() {
                 }
             }
 
-            // 6. Send to Telegram
+            // 8. Send to Telegram
             await sendTelegramMessage(user.telegramId, message);
+            
+            // 9. Send Email (if enabled and has email)
+            const userEmail = user.email;
+            if (userEmail) {
+                try {
+                    // Check user settings for email preference
+                    const userSettingsData = await db
+                        .select()
+                        .from(userSettings)
+                        .where(eq(userSettings.userId, user.id))
+                        .get();
+                    
+                    const emailEnabled = userSettingsData?.dailyReport !== false; // Default true
+                    
+                    if (emailEnabled) {
+                        const dueBillsFormatted = dueBills.map(b => ({
+                            name: b.name,
+                            amount: b.amount,
+                            daysUntilDue: b.dueDate - now.getDate()
+                        }));
+                        
+                        await sendDailyRecapEmail(userEmail, {
+                            date: now.toLocaleDateString('id-ID'),
+                            expense,
+                            income,
+                            saved,
+                            isSafe,
+                            dueBills: dueBillsFormatted
+                        });
+                        results.push({ userId: user.id, status: "email_sent", email: userEmail });
+                    }
+                } catch (emailError) {
+                    console.error(`Failed to send email to ${userEmail}:`, emailError);
+                }
+            }
+            
             results.push({ userId: user.id, status: "sent", expense });
         }
 

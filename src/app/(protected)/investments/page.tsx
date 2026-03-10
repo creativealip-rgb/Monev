@@ -416,22 +416,8 @@ export default function InvestmentsPage() {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Bar visualization */}
-                            <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
-                                {summary.allocation.map((item, i) => (
-                                    <motion.div
-                                        key={item.label}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(item.value / totalValue) * 100}%` }}
-                                        transition={{ duration: 1, delay: 0.2 + (i * 0.1) }}
-                                        style={{ backgroundColor: item.color }}
-                                        className="h-full first:rounded-l-full last:rounded-r-full"
-                                    />
-                                ))}
-                            </div>
-
                             {/* Legend */}
-                            <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-6 pt-2">
                                 {summary.allocation.map((item) => (
                                     <div key={item.label} className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">

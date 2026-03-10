@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
-import { debts, transactions } from "@/backend/db/schema";
+import { debts, transactions, splitBillMembers } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -44,10 +44,10 @@ export async function POST(request: Request) {
                 )
             );
         
-        // Create debt records for each participant
+        // Create debt records and split bill members for each participant
         const debtRecords = await Promise.all(
-            participants.map(async (participant: { name: string; amount: number }) => {
-                const debt = await db
+            participants.map(async (participant: { name: string; amount: number; email?: string; whatsappNumber?: string }) => {
+                const [debt] = await db
                     .insert(debts)
                     .values({
                         userId,
@@ -60,7 +60,24 @@ export async function POST(request: Request) {
                         createdAt: new Date()
                     })
                     .returning()
-                    .get();
+                    .all();
+                
+                // Create split bill member record
+                await db
+                    .insert(splitBillMembers)
+                    .values({
+                        splitGroupId,
+                        userId,
+                        name: participant.name,
+                        email: participant.email || null,
+                        whatsappNumber: participant.whatsappNumber || null,
+                        shareAmount: participant.amount,
+                        paidAmount: 0,
+                        status: "pending",
+                        invitedAt: new Date()
+                    })
+                    .run();
+                
                 return debt;
             })
         );
@@ -147,6 +164,13 @@ export async function GET(request: Request) {
             .reduce((sum, debt) => sum + debt.amount, 0);
         const totalOutstanding = totalOthers - totalReceived;
         
+        // Get members status
+        const members = await db
+            .select()
+            .from(splitBillMembers)
+            .where(eq(splitBillMembers.splitGroupId, splitGroupId || ""))
+            .orderBy(splitBillMembers.invitedAt);
+        
         return NextResponse.json({
             success: true,
             data: {
@@ -164,6 +188,17 @@ export async function GET(request: Request) {
                     status: debt.status,
                     dueDate: debt.dueDate,
                     createdAt: debt.createdAt
+                })),
+                members: members.map(m => ({
+                    id: m.id,
+                    name: m.name,
+                    email: m.email,
+                    whatsappNumber: m.whatsappNumber,
+                    shareAmount: m.shareAmount,
+                    paidAmount: m.paidAmount,
+                    status: m.status,
+                    invitedAt: m.invitedAt,
+                    paidAt: m.paidAt
                 })),
                 summary: {
                     totalAmount: transaction?.amount || 0,

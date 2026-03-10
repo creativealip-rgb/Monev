@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { X, Users, MessageCircle, Send, Check, Divide, Sliders } from "lucide-react";
+import { X, Users, MessageCircle, Send, Check, Divide, Sliders, Share2, Copy } from "lucide-react";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
+import { useToast } from "@/frontend/components/UI";
 
 interface SplitBillFlowProps {
     isOpen: boolean;
@@ -21,17 +22,37 @@ interface Participant {
     id: string;
     name: string;
     amount: number;
+    email?: string;
+    whatsappNumber?: string;
+    phone?: string;
 }
+
+const useSplitBillToast = () => {
+    const toast = useToast();
+    
+    const shareSuccess = () => {
+        toast.success("Link invite berhasil disalin!", "Share ke WhatsApp atau Telegram");
+    };
+    
+    const shareError = () => {
+        toast.error("Gagal menyalin link", "Coba manual atau gunakan WhatsApp");
+    };
+    
+    return { shareSuccess, shareError };
+};
 
 export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: SplitBillFlowProps) {
     const [participants, setParticipants] = useState<Participant[]>([
         { id: "1", name: "Saya", amount: transaction.amount }
     ]);
     const [newName, setNewName] = useState("");
+    const [newPhone, setNewPhone] = useState("");
     const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal");
     const [isSaving, setIsSaving] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
+    const [splitGroupId, setSplitGroupId] = useState<string | null>(null);
     const haptics = useHaptics();
+    const toast = useSplitBillToast();
 
     const totalAssigned = participants.reduce((sum, p) => sum + p.amount, 0);
     const remaining = transaction.amount - totalAssigned;
@@ -40,7 +61,13 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
     const handleAddParticipant = () => {
         if (!newName.trim()) return;
         haptics.tap();
-        const updated = [...participants, { id: Date.now().toString(), name: newName, amount: 0 }];
+        const updated = [...participants, { 
+            id: Date.now().toString(), 
+            name: newName, 
+            amount: 0,
+            phone: newPhone || undefined,
+            whatsappNumber: newPhone || undefined
+        }];
         
         if (splitMode === "equal") {
             const evenAmount = transaction.amount / updated.length;
@@ -49,6 +76,7 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
             setParticipants(updated);
         }
         setNewName("");
+        setNewPhone("");
     };
 
     const handleRemoveParticipant = (id: string) => {
@@ -89,6 +117,37 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
         onSuccess?.();
     };
 
+    const generateShareLink = (participant: Participant) => {
+        if (!transaction.id || !splitGroupId) return null;
+        
+        const shareUrl = `${window.location.origin}/debts?split=${splitGroupId}&member=${participant.id}`;
+        const message = `Halo ${participant.name}! 👋\n\nKamu diminta untuk bayar bagianmu dalam split bill:\n\n📝 *${transaction.description}*\n💰 Bagian kamu: *${formatCurrency(participant.amount)}*\n\nYuk bayar sekarang: ${shareUrl}\n\n_Makasih!_`;
+        
+        const whatsappUrl = `https://wa.me/${participant.whatsappNumber || participant.phone || ''}?text=${encodeURIComponent(message)}`;
+        return { shareUrl, message, whatsappUrl };
+    };
+
+    const handleShareToWhatsapp = (participant: Participant) => {
+        haptics.tap();
+        const shareData = generateShareLink(participant);
+        if (!shareData) return;
+        
+        window.open(shareData.whatsappUrl, '_blank');
+        toast.shareSuccess();
+    };
+
+    const handleCopyLink = (participant: Participant) => {
+        haptics.tap();
+        const shareData = generateShareLink(participant);
+        if (!shareData?.shareUrl) return;
+        
+        navigator.clipboard.writeText(shareData.shareUrl).then(() => {
+            toast.shareSuccess();
+        }).catch(() => {
+            toast.shareError();
+        });
+    };
+
     const handleSave = async () => {
         if (!isValid || !transaction.id) return;
         
@@ -108,7 +167,10 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
                     description: transaction.description,
                     participants: others.map(p => ({
                         name: p.name,
-                        amount: Math.round(p.amount) // Round to avoid decimal issues
+                        amount: p.amount,
+                        phone: p.phone,
+                        whatsappNumber: p.whatsappNumber,
+                        email: p.email
                     }))
                 })
             });
@@ -116,19 +178,17 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
             const result = await response.json();
             
             if (result.success) {
+                setSplitGroupId(result.data.transaction.splitGroupId);
                 setIsComplete(true);
                 haptics.success();
-                setTimeout(() => {
-                    onClose();
-                    onSuccess?.();
-                }, 2500);
+                onSuccess?.();
             } else {
-                alert(result.error || "Gagal menyimpan split bill");
-                setIsSaving(false);
+                throw new Error(result.error || "Failed to create split bill");
             }
         } catch (error) {
-            console.error("Error saving split bill:", error);
-            alert("Terjadi kesalahan. Silakan coba lagi.");
+            console.error("Error creating split bill:", error);
+            alert("Gagal membuat split bill. Coba lagi.");
+        } finally {
             setIsSaving(false);
         }
     };
@@ -248,22 +308,32 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
                                     </div>
 
                                     {/* Add Participant Input */}
-                                    <div className="flex gap-2">
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newName}
+                                                onChange={(e) => setNewName(e.target.value)}
+                                                placeholder="Nama teman..."
+                                                className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 dark:text-white font-medium"
+                                                onKeyDown={(e) => e.key === "Enter" && handleAddParticipant()}
+                                            />
+                                            <button
+                                                onClick={handleAddParticipant}
+                                                disabled={!newName.trim()}
+                                                className="px-4 py-3 bg-sky-500 text-white font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors"
+                                            >
+                                                <Users size={20} />
+                                            </button>
+                                        </div>
                                         <input
-                                            type="text"
-                                            value={newName}
-                                            onChange={(e) => setNewName(e.target.value)}
-                                            placeholder="Nama teman..."
-                                            className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 dark:text-white font-medium"
+                                            type="tel"
+                                            value={newPhone}
+                                            onChange={(e) => setNewPhone(e.target.value)}
+                                            placeholder="No. WhatsApp (opsional) - contoh: 6281234567"
+                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 dark:text-white text-sm"
                                             onKeyDown={(e) => e.key === "Enter" && handleAddParticipant()}
                                         />
-                                        <button
-                                            onClick={handleAddParticipant}
-                                            disabled={!newName.trim()}
-                                            className="px-4 py-3 bg-sky-500 text-white font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors"
-                                        >
-                                            <Users size={20} />
-                                        </button>
                                     </div>
 
                                     {/* Remaining Amount Warning */}
@@ -334,6 +404,43 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
                                 <p className="text-slate-500 text-sm max-w-xs mx-auto">
                                     Tagihan hutang telah dibuat untuk {participants.length - 1} teman kamu
                                 </p>
+                                
+                                {/* Share Section */}
+                                <div className="pt-4 space-y-3">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Invite Participants</p>
+                                    <div className="space-y-2">
+                                        {participants.filter(p => p.id !== "1").map((participant) => (
+                                            <div key={participant.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 font-bold text-xs">
+                                                        {participant.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{participant.name}</p>
+                                                        <p className="text-xs text-slate-500">{formatCurrency(participant.amount)}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleCopyLink(participant)}
+                                                        className="p-2 text-slate-400 hover:text-sky-500 transition-colors"
+                                                        title="Copy payment link"
+                                                    >
+                                                        <Copy size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleShareToWhatsapp(participant)}
+                                                        className="p-2 text-emerald-500 hover:text-emerald-600 transition-colors"
+                                                        title="Share via WhatsApp"
+                                                    >
+                                                        <MessageCircle size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
                                 <div className="flex justify-center gap-3 pt-4">
                                     <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors">
                                         <MessageCircle size={16} /> WA Reminder

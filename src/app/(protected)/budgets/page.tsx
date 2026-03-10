@@ -11,7 +11,6 @@ import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { BudgetChart } from "./components/BudgetChart";
-import { BudgetPieChart } from "./components/BudgetPieChart";
 import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
@@ -495,13 +494,6 @@ export default function BudgetsPage() {
                     return null;
                 })()}
             </motion.div>
-
-            {/* Budget Allocation Pie Chart */}
-            {budgets.length > 0 && (
-                <div className="mx-6 mt-4">
-                    <BudgetPieChart budgets={budgets} />
-                </div>
-            )}
 
             <motion.div
                 variants={containerVariants}

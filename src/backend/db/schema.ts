@@ -168,6 +168,25 @@ export const debts = sqliteTable("debts", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const splitBillMembers = sqliteTable("split_bill_members", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    splitGroupId: text("split_group_id").notNull(),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    name: text("name").notNull(),
+    email: text("email"),
+    whatsappNumber: text("whatsapp_number"),
+    shareAmount: real("share_amount").notNull(),
+    paidAmount: real("paid_amount").notNull().default(0),
+    status: text("status", { enum: ["pending", "paid", "partial"] }).notNull().default("pending"),
+    invitedAt: integer("invited_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    paidAt: integer("paid_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    splitGroupIdIdx: index("idx_split_bill_members_group").on(table.splitGroupId),
+    userIdIdx: index("idx_split_bill_members_user").on(table.userId),
+    statusIdx: index("idx_split_bill_members_status").on(table.status),
+}));
+
 export const scheduledMessages = sqliteTable("scheduled_messages", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id").references(() => users.id).notNull(),
@@ -421,3 +440,5 @@ export const insertAchievementSchema = createInsertSchema(achievements);
 export const selectAchievementSchema = createSelectSchema(achievements);
 export const insertBillPaymentSchema = createInsertSchema(billPayments);
 export const selectBillPaymentSchema = createSelectSchema(billPayments);
+export const insertSplitBillMemberSchema = createInsertSchema(splitBillMembers);
+export const selectSplitBillMemberSchema = createSelectSchema(splitBillMembers);

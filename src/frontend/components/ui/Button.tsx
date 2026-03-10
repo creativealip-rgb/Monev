@@ -105,7 +105,7 @@ export function Button({
                             {leftIcon}
                         </motion.span>
                     )}
-                    <span>{children}</span>
+                    <motion.span>{children}</motion.span>
                     {rightIcon && (
                         <motion.span
                             initial={{ x: 10 }}
