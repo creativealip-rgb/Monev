@@ -1,17 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileText, Camera, Mic, Bell, Sparkles, Lock } from "lucide-react";
+import { X, FileText, Camera, Mic, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
-import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { TransactionForm } from "./TransactionForm";
 import { SmartInput } from "./SmartInput";
 import { useSession } from "next-auth/react";
 import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";
-import { useHaptics } from "@/frontend/hooks/useHaptics";
-import { useToast } from "./UI";
-import { apiFetch } from "@/frontend/lib/api-client";
 
 interface AddTransactionSheetProps {
     isOpen: boolean;
@@ -41,13 +37,6 @@ const actions = [
         description: "Rekam suara perintah",
         color: "purple",
     },
-    {
-        id: "notification",
-        icon: Bell,
-        label: "Import Notifikasi",
-        description: "Scan notif bank/ewallet",
-        color: "orange",
-    },
 ];
 
 export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransactionSheetProps) {
@@ -57,8 +46,6 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
     const { data: session } = useSession();
     const userTier: UserTier = session?.user?.tier || "starter";
     const hasSmartAccess = canAccessSmartInput(userTier);
-    const haptics = useHaptics();
-    const { success: toastSuccess } = useToast();
 
     // Close on escape key
     useEffect(() => {
@@ -93,12 +80,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
         onClose();
     };
 
-    const handleSmartInputSuccess = (data: {
-        merchantName: string;
-        amount: number;
-        description: string;
-        category: string;
-    }) => {
+    const handleSmartInputSuccess = () => {
         // SmartInput saves directly, close everything
         setSmartInputMode(null);
         onClose();
@@ -157,28 +139,26 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                         exit={{ y: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         drag="y"
-                        dragConstraints={{ top: 0, bottom: 500 }}
+                        dragConstraints={{ top: -80, bottom: 0 }}
                         dragElastic={0.1}
                         onDragEnd={(_, info) => {
                             const velocity = info.velocity.y;
                             const offset = info.offset.y;
 
-                            if (offset > 200 || velocity > 500) {
+                            if (offset > 100 || velocity > 500) {
                                 onClose();
-                            } else if (offset > 100) {
-                                setY(200); // Snap to half/lower point
                             } else {
                                 setY(0); // Snap to top
                             }
                         }}
-                        onUpdate={(latest: any) => {
+                        onUpdate={(latest: { y: number }) => {
                             if (typeof latest.y === "number") {
                                 setY(latest.y);
                             }
                         }}
-                        className="fixed bottom-0 left-0 right-0 z-[10001] max-w-[500px] mx-auto cursor-grab active:cursor-grabbing"
+                        className="fixed bottom-0 left-0 right-0 z-[10002] max-w-[500px] mx-auto cursor-grab active:cursor-grabbing"
                     >
-                        <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto pb-24">
                             <div className="flex justify-center pt-3 pb-2 touch-none">
                                 <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
                             </div>
@@ -242,97 +222,6 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                         </motion.button>
                                     );
                                 })}
-                            </div>
-
-                            <div className="px-6 pb-8 pt-2 border-t border-slate-100 dark:border-slate-700">
-                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Template Cepat</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[
-                                        { label: "☕ Kopi (20rb)", amount: 20000, category: "Makan & Minuman", desc: "Beli kopi" },
-                                        { label: "🍱 Makan (35rb)", amount: 35000, category: "Makan & Minuman", desc: "Makan siang" },
-                                        { label: "🚗 Bensin (50rb)", amount: 50000, category: "Transportasi", desc: "Isi bensin" },
-                                        { label: "📱 Pulsa (100rb)", amount: 100000, category: "Tagihan", desc: "Top up pulsa" },
-                                    ].map((template) => (
-                                        <button
-                                            key={template.label}
-                                            onClick={async () => {
-                                                // Resolve category name to ID first
-                                                let categoryId: number | undefined;
-                                                try {
-                                                    const catRes = await apiFetch("/api/categories");
-                                                    const catData = await catRes.json();
-                                                    if (catData.success) {
-                                                        const matched = catData.data.find((c: { name: string }) => c.name === template.category);
-                                                        categoryId = matched?.id;
-                                                    }
-                                                } catch {
-                                                    // Fall through without categoryId
-                                                }
-
-                                                const transData = {
-                                                    amount: template.amount,
-                                                    description: template.desc,
-                                                    categoryId,
-                                                    type: "expense",
-                                                    paymentMethod: "cash",
-                                                    date: new Date().toISOString(),
-                                                };
-                                                try {
-                                                    haptics.tap();
-                                                    const response = await apiFetch("/api/transactions", {
-                                                        method: "POST",
-                                                        headers: { "Content-Type": "application/json" },
-                                                        body: JSON.stringify(transData),
-                                                    });
-
-                                                    // Show Time-Cost
-                                                    const settingsRes = await apiFetch("/api/profile");
-                                                    const profile = await settingsRes.json();
-                                                    const hourlyRate = profile.data?.user?.hourlyRate || 50000;
-                                                    const hours = template.amount / hourlyRate;
-
-                                                    if (response.ok) {
-                                                        toastSuccess(
-                                                            "Berhasil!",
-                                                            `Dicatat pakai template. Setara ${hours.toFixed(1)} jam kerja.`
-                                                        );
-                                                        window.dispatchEvent(new CustomEvent("transactionAdded"));
-                                                        onSuccess?.();
-                                                        onClose();
-                                                    } else {
-                                                        // Fail-over to offline queue
-                                                        OfflineManager.queueTransaction(transData);
-                                                        toastSuccess(
-                                                            "Antrean Offline",
-                                                            "Internet bermasalah, transaksi masuk antrean."
-                                                        );
-                                                        window.dispatchEvent(new CustomEvent("transactionAdded"));
-                                                        onSuccess?.();
-                                                        onClose();
-                                                    }
-                                                } catch (err) {
-                                                    // Network error, queue it
-                                                    OfflineManager.queueTransaction(transData);
-                                                    window.dispatchEvent(new CustomEvent("transactionAdded"));
-                                                    onSuccess?.();
-                                                    onClose();
-                                                }
-                                            }}
-                                            aria-label={`Tambah transaksi ${template.label}`}
-                                            className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl hover:bg-sky-50 dark:hover:bg-sky-900/30 border border-transparent hover:border-sky-200 dark:hover:border-sky-800 transition-all group"
-                                        >
-                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-600 dark:group-hover:text-sky-400">{template.label}</span>
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-500">{template.category}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => handleAction("manual")}
-                                    aria-label="Buat template custom baru"
-                                    className="w-full mt-4 py-3 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-xl hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
-                                >
-                                    + Buat Template Custom
-                                </button>
                             </div>
                         </div>
                     </motion.div>
