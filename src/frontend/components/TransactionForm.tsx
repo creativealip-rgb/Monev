@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, Wallet, TrendingUp, Utensils, Car, Gamepad2, ShoppingBag, Heart, BookOpen, Receipt, TrendingUp as InvestIcon, Banknote, Briefcase, MoreHorizontal } from "lucide-react";
+import { X, Wallet, TrendingUp, Utensils, Car, Gamepad2, ShoppingBag, Heart, BookOpen, Receipt, TrendingUp as InvestIcon, Banknote, Briefcase, MoreHorizontal, Plus, Edit2, Trash2 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { useToast } from "./UI";
@@ -13,6 +13,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { encryptData } from "@/lib/encryption";
+import { createPortal } from "react-dom";
 
 
 interface Category {
@@ -27,6 +28,16 @@ interface TransactionFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+}
+
+interface QuickTemplate {
+    id: string;
+    label: string;
+    amount: number;
+    categoryId: number;
+    categoryName: string;
+    description?: string;
+    type: "expense" | "income";
 }
 
 const categoryIcons: Record<string, typeof Wallet> = {
@@ -58,11 +69,18 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     const { accounts, isLoading: accountsLoading } = useAccountsData();
     const { encryptionKey } = useSecurity();
 
-    const [lastAddedTransaction, setLastAddedTransaction] = useState<any>(null);
+    const [lastAddedTransaction, setLastAddedTransaction] = useState<{ id?: number; amount: number; description: string } | null>(null);
     const { success: toastSuccess } = useToast();
     const haptics = useHaptics();
     const [error, setError] = useState<string | null>(null);
     const [targetAccountId, setTargetAccountId] = useState<number | null>(null);
+    const [quickTemplates, setQuickTemplates] = useState<QuickTemplate[]>([]);
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Load categories when type changes
     const loadCategories = async (type: "expense" | "income" | "transfer") => {
@@ -96,11 +114,25 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         }
     };
 
+    // Load quick templates from localStorage
+    useEffect(() => {
+        const stored = localStorage.getItem("quickTransactionTemplates");
+        if (stored) {
+            try {
+                const templates = JSON.parse(stored);
+                setQuickTemplates(templates);
+            } catch (e) {
+                console.error("Error loading quick templates:", e);
+            }
+        }
+    }, []);
+
     // Load categories on mount and when type changes
     useEffect(() => {
         if (isOpen) {
             loadCategories(transactionType);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, transactionType]);
 
     // Listen for smart input data
@@ -129,8 +161,8 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     };
 
     const handleSubmit = async () => {
-        if (!selectedCategory || !description) {
-            setError("Lengkapi semua field");
+        if (!selectedCategory) {
+            setError("Pilih kategori");
             haptics.error();
             return;
         }
@@ -256,7 +288,63 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         setSelectedCategory(null);
         setTransactionType("expense");
         setError(null);
+        setShowTemplateModal(false);
         onClose();
+    };
+
+    const handleDeleteTemplate = (id: string) => {
+        const updated = quickTemplates.filter(t => t.id !== id);
+        setQuickTemplates(updated);
+        localStorage.setItem("quickTransactionTemplates", JSON.stringify(updated));
+    };
+
+    const handleEditTemplate = (template: QuickTemplate) => {
+        setTransactionType(template.type);
+        setAmount(template.amount.toString());
+        setDescription(template.description || "");
+        setSelectedCategory(template.categoryId);
+        setShowTemplateModal(false);
+    };
+
+    const handleUseQuickTemplate = async (template: QuickTemplate) => {
+        haptics.tap();
+        const transData = {
+            amount: template.amount,
+            description: template.description || template.label,
+            categoryId: template.categoryId,
+            type: template.type,
+            paymentMethod: "cash",
+            accountId: selectedAccountId,
+            date: new Date().toISOString(),
+        };
+
+        try {
+            const response = await apiFetch("/api/transactions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(transData),
+            });
+
+            const settingsRes = await apiFetch("/api/profile");
+            const profile = await settingsRes.json();
+            const hourlyRate = profile.data?.user?.hourlyRate || 50000;
+            const hours = template.amount / hourlyRate;
+
+            if (response.ok) {
+                toastSuccess("Berhasil!", `Dicatat pakai template. Setara ${hours.toFixed(1)} jam kerja.`);
+            } else {
+                await OfflineManager.queueTransaction(transData);
+                toastSuccess("Antrean Offline", "Internet bermasalah, transaksi masuk antrean.");
+            }
+            window.dispatchEvent(new CustomEvent("transactionAdded"));
+            onSuccess?.();
+            onClose();
+        } catch {
+            await OfflineManager.queueTransaction(transData);
+            window.dispatchEvent(new CustomEvent("transactionAdded"));
+            onSuccess?.();
+            onClose();
+        }
     };
 
     if (!isOpen) return null;
@@ -275,7 +363,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-cyan-200/30 via-transparent to-transparent dark:from-cyan-900/20" />
                 </div>
 
-                <div className="min-h-screen max-w-[500px] mx-auto bg-sky-50/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-slate-950/30">
+                <div className="min-h-screen max-w-[500px] mx-auto bg-sky-50/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-slate-950/30 pb-24">
                     <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
                         <button
                             onClick={handleClose}
@@ -308,6 +396,33 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 />
                             )}
                         </AnimatePresence>
+
+                        {quickTemplates.length > 0 && (
+                            <section className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Template Cepat</p>
+                                    <button
+                                        onClick={() => setShowTemplateModal(true)}
+                                        className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:text-sky-700"
+                                    >
+                                        + Kelola Template
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {quickTemplates.slice(0, 4).map((template) => (
+                                        <button
+                                            key={template.id}
+                                            onClick={() => handleUseQuickTemplate(template)}
+                                            className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl hover:bg-sky-50 dark:hover:bg-sky-900/30 border border-transparent hover:border-sky-200 dark:hover:border-sky-800 transition-all group"
+                                        >
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-600 dark:group-hover:text-sky-400">{template.label}</span>
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-500">{formatCurrency(template.amount)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         {error && (
                             <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm">
                                 {error}
@@ -372,13 +487,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     </div>
                                 </div>
 
-                                <div>
-                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Deskripsi</p>
+                                 <div>
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Deskripsi (Opsional)</p>
                                     <input
                                         type="text"
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="Contoh: Makan siang di warteg"
+                                        placeholder="Contoh: Makan siang di warteg (boleh kosong)"
                                         className="w-full p-4 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500 transition-all"
                                     />
                                 </div>
@@ -511,13 +626,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                             </section>
                         )}
 
-                        <div className="pt-4 pb-12 sticky bottom-0 bg-gradient-to-t from-sky-50/80 via-sky-50/40 to-transparent dark:from-slate-900 dark:via-slate-900/40 mt-auto">
+                        <div className="pt-4 pb-8 mt-auto">
                             <button
                                 onClick={handleSubmit}
-                                disabled={loading || !amount || !selectedCategory || !description || (transactionType === 'transfer' && !targetAccountId)}
+                                disabled={loading || !amount || !selectedCategory || (transactionType === 'transfer' && !targetAccountId)}
                                 className={cn(
                                     "w-full py-4 rounded-2xl font-bold text-white shadow-xl transition-all",
-                                    loading || !amount || !selectedCategory || !description || (transactionType === 'transfer' && !targetAccountId)
+                                    loading || !amount || !selectedCategory || (transactionType === 'transfer' && !targetAccountId)
                                         ? "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
                                         : transactionType === "expense"
                                             ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
@@ -533,8 +648,104 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     </div>
                                 ) : "Simpan Transaksi"}
                             </button>
+                            {!showTemplateModal && (
+                                <button
+                                    onClick={() => {
+                                        if (!selectedCategory || !amount) return;
+                                        const selectedCat = categories.find(c => c.id === selectedCategory);
+                                        if (!selectedCat) return;
+
+                                        const newTemplate: QuickTemplate = {
+                                            id: Date.now().toString(),
+                                            label: description || selectedCat.name,
+                                            amount: parseFloat(amount),
+                                            categoryId: selectedCategory,
+                                            categoryName: selectedCat.name,
+                                            description: description || undefined,
+                                            type: transactionType as "expense" | "income",
+                                        };
+
+                                        const updated = [...quickTemplates, newTemplate];
+                                        setQuickTemplates(updated);
+                                        localStorage.setItem("quickTransactionTemplates", JSON.stringify(updated));
+                                        toastSuccess("Template Disimpan", "Template cepat berhasil ditambahkan");
+                                    }}
+                                    className="w-full mt-3 py-3 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-xl hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={14} />
+                                    Simpan Sebagai Template Cepat
+                                </button>
+                            )}
                         </div>
                     </div>
+
+                    {/* Template Management Modal */}
+                    {mounted && showTemplateModal && createPortal(
+                        <AnimatePresence>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[10003] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
+                                onClick={() => setShowTemplateModal(false)}
+                            >
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full max-w-[400px] mx-4 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-h-[80vh] overflow-y-auto"
+                                >
+                                    <div className="flex items-center justify-between px-6 pt-6 pb-4 bg-white dark:bg-slate-900 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Kelola Template Cepat</h3>
+                                        <button
+                                            onClick={() => setShowTemplateModal(false)}
+                                            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+
+                                    <div className="p-6 space-y-4">
+                                        {quickTemplates.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <p className="text-slate-500 dark:text-slate-400 text-sm">Belum ada template cepat</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Isi form transaksi, lalu klik &quot;Simpan Sebagai Template&quot;</p>
+                                            </div>
+                                        ) : (
+                                            quickTemplates.map((template) => (
+                                                <div
+                                                    key={template.id}
+                                                    className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700"
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="font-bold text-slate-900 dark:text-white text-sm">{template.label}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(template.amount)} • {template.categoryName}</p>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleEditTemplate(template)}
+                                                            className="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-200 dark:hover:bg-sky-900/50 transition-colors"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteTemplate(template.id)}
+                                                            className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        </AnimatePresence>,
+                        document.body
+                    )}
 
                 </div>
             </motion.div>
