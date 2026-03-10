@@ -255,52 +255,6 @@ export default function Home() {
                 {/* Onboarding Card - Show when no accounts */}
                 <OnboardingCard show={stats.accountCount === 0} />
 
-                {/* Spending Alert Banner */}
-                {mounted && stats.income > 0 && stats.expense >= stats.income * 0.8 && (
-                    <motion.section
-                        initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        className="px-6 mb-4"
-                    >
-                        <div className={cn(
-                            "p-4 rounded-2xl flex items-center gap-3 border",
-                            stats.expense >= stats.income
-                                ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30"
-                                : "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30"
-                        )}>
-                            <div className={cn(
-                                "p-2 rounded-full shrink-0",
-                                stats.expense >= stats.income
-                                    ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                            )}>
-                                <AlertTriangle size={20} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className={cn(
-                                    "text-sm font-bold",
-                                    stats.expense >= stats.income
-                                        ? "text-red-900 dark:text-red-100"
-                                        : "text-amber-900 dark:text-amber-100"
-                                )}>
-                                    {stats.expense >= stats.income
-                                        ? t("dashboard.expenseExceedsIncome")
-                                        : t("dashboard.expenseWarning")}
-                                </p>
-                                <p className={cn(
-                                    "text-xs mt-0.5 leading-relaxed",
-                                    stats.expense >= stats.income
-                                        ? "text-red-700 dark:text-red-300"
-                                        : "text-amber-700 dark:text-amber-300"
-                                )}>
-                                    {t("dashboard.expensePercentage").replace("{percentage}", String(Math.round((stats.expense / stats.income) * 100)))}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.section>
-                )}
-
                 {/* Bill Reminder Widget */}
                 {mounted && bills && bills.length > 0 && (
                     <BillReminderWidget bills={bills} />
@@ -315,34 +269,6 @@ export default function Home() {
                         className="px-6 mb-6"
                     >
                         <HealthScoreWidget data={stats.healthScore} />
-                    </motion.section>
-                )}
-
-                {/* Spending Anomalies Alert */}
-                {anomalies.length > 0 && (
-                    <motion.section
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="px-6 mb-6"
-                    >
-                        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 flex items-start gap-3">
-                            <div className="p-2 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-                                <AlertTriangle size={20} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-sm font-bold text-rose-900 dark:text-rose-100">{t("dashboard.expenseSpikeTitle")}</h3>
-                                <p className="text-xs text-rose-700 dark:text-rose-300 mt-1 leading-relaxed">
-                                    {t("dashboard.expenseSpikeMessage")
-                                        .replace("{categoryName}", String(anomalies[0].categoryName))
-                                        .replace("{spikePercentage}", String(anomalies[0].spikePercentage))}
-                                </p>
-                                {anomalies.length > 1 && (
-                                    <p className="text-[10px] text-rose-600 dark:text-rose-400 mt-2 font-medium">
-                                        + {anomalies.length - 1} anomali lainnya terdeteksi.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
                     </motion.section>
                 )}
 
