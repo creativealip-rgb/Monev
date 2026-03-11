@@ -83,7 +83,10 @@ export default function TransactionsPage() {
     // Duplicate detection
     const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
 
-    const { ref: loadMoreRef, inView } = useInView();
+    const { ref: loadMoreRef, inView } = useInView({
+        threshold: 0.1,
+        rootMargin: "100px",
+    });
 
     const {
         transactions,
@@ -193,10 +196,10 @@ export default function TransactionsPage() {
     }, [clearUndoTimers]);
 
     useEffect(() => {
-        if (inView && !loading && hasNextPage && !isFetchingNextPage) {
+        if (inView && !loading && hasNextPage && !isFetchingNextPage && !showDuplicatesOnly) {
             fetchNextPage();
         }
-    }, [inView, loading, hasNextPage, isFetchingNextPage, fetchNextPage]);
+    }, [inView, loading, hasNextPage, isFetchingNextPage, fetchNextPage, showDuplicatesOnly]);
 
     // Derived values with useMemo for performance and stability
     const filteredTransactions = useMemo(() => {
@@ -275,6 +278,14 @@ export default function TransactionsPage() {
         if (!showDuplicatesOnly) return filteredTransactions;
         return filteredTransactions.filter(t => duplicateIds.has(t.id));
     }, [filteredTransactions, showDuplicatesOnly, duplicateIds]);
+
+    // Reset display when toggling off duplicates
+    useEffect(() => {
+        if (!showDuplicatesOnly) {
+            // Force re-render by clearing any stale state
+            setSelectedIds(new Set());
+        }
+    }, [showDuplicatesOnly]);
 
     const groupedTransactions = useMemo(() => {
         return displayTransactions.reduce((groups: Record<string, TransactionWithCategory[]>, transaction: TransactionWithCategory) => {
@@ -720,13 +731,13 @@ tr:nth-child(even){background:#fafafa}
                     </motion.div>
                 )}
                 {/* Duplicate Detection Banner */}
-                <AnimatePresence>
+                <AnimatePresence mode="wait">
                     {!loading && duplicateCount > 0 && (
                         <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="mb-4"
+                            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            transition={{ duration: 0.2 }}
                         >
                             <div className={cn(
                                 "flex items-center gap-3 px-4 py-3 rounded-2xl",
@@ -784,10 +795,11 @@ tr:nth-child(even){background:#fafafa}
                     ) : (
                         <>
                             <motion.div
-                                key={`list-${filterCategory}-${filterType}-${searchQuery}`}
+                                key={`list-${filterCategory}-${filterType}-${searchQuery}-${showDuplicatesOnly ? 'dup' : 'all'}`}
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"
+                                exit={{ opacity: 0 }}
                                 className="space-y-6"
                             >
                                 {(Object.entries(groupedTransactions) as [string, TransactionWithCategory[]][]).map(([date, dayTransactions]) => (
@@ -799,12 +811,14 @@ tr:nth-child(even){background:#fafafa}
 
                                             {dayTransactions.map((t) => (
                                                 <motion.div
-                                                    key={t.id}
+                                                    key={`${showDuplicatesOnly ? 'dup-' : ''}${t.id}`}
                                                     variants={itemVariants}
+                                                    layout
                                                     className={cn(
-                                                        "group",
+                                                        "group transition-all duration-200",
                                                         showDuplicatesOnly && duplicateIds.has(t.id)
-                                                            && "ring-2 ring-amber-400/60 rounded-2xl"
+                                                            ? "ring-2 ring-amber-400/60 rounded-2xl"
+                                                            : ""
                                                     )}
                                                 >
                                                     <TransactionItem
@@ -825,14 +839,15 @@ tr:nth-child(even){background:#fafafa}
                                 ))}
                             </motion.div>
 
-                            {/* Sentinel for infinite scroll */}
-                            <div ref={loadMoreRef} className="h-10" />
-                            {isFetchingNextPage && (
-                                <div className="flex justify-center py-4">
-                                    <Loader2 className="animate-spin text-muted-foreground" size={24} />
+                            {/* Sentinel for infinite scroll - only show when not in duplicates mode */}
+                            {!showDuplicatesOnly && (
+                                <div ref={loadMoreRef} className="h-20 min-h-[80px] flex items-center justify-center">
+                                    {isFetchingNextPage && (
+                                        <Loader2 className="animate-spin text-muted-foreground" size={24} />
+                                    )}
                                 </div>
                             )}
-                            {!hasNextPage && transactions.length > 0 && (
+                            {!hasNextPage && transactions.length > 0 && !showDuplicatesOnly && (
                                 <p className="text-center text-xs text-muted-foreground py-4">
                                     Semua transaksi sudah ditampilkan
                                 </p>

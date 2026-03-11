@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, Check, Shield, ShieldCheck, Lock, Zap, Fingerprint, Trash2, Crown } from "lucide-react";
-import { motion } from "framer-motion";
+import { Check, Shield, Lock, Zap, Fingerprint, Trash2, LogOut, Smartphone } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
@@ -18,6 +18,8 @@ interface SecurityModalProps {
 export function SecurityModal({ formData, setFormData, onClose, onSave }: SecurityModalProps) {
     const toast = useToast();
     const { deleteLocalData, reauthenticate } = useSecurity();
+    const [showPinInput, setShowPinInput] = useState(false);
+    const [activeSection, setActiveSection] = useState<string | null>(null);
 
     const handleSaveSecurity = async () => {
         if (formData.isAppLockEnabled && !formData.securityPin) {
@@ -36,7 +38,8 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                 securityPin: formData.securityPin,
                 decoyPin: formData.decoyPin,
                 isAppLockEnabled: formData.isAppLockEnabled,
-                isBiometricEnabled: formData.isBiometricEnabled
+                isBiometricEnabled: formData.isBiometricEnabled,
+                autoLockTimeout: formData.autoLockTimeout
             })
         });
         toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
@@ -84,262 +87,254 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
         }
     };
 
+    const formatTimeout = (ms: number) => {
+        if (ms === -1) return "Tidak pernah";
+        if (ms < 60000) return `${ms / 1000} detik`;
+        if (ms < 3600000) return `${ms / 60000} menit`;
+        return `${ms / 3600000} jam`;
+    };
+
+    const SettingItem = ({ 
+        icon: Icon, 
+        title, 
+        description, 
+        children,
+        onClick,
+        danger
+    }: { 
+        icon: any, 
+        title: string, 
+        description: string, 
+        children?: React.ReactNode,
+        onClick?: () => void,
+        danger?: boolean
+    }) => (
+        <div 
+            className={cn(
+                "flex items-center justify-between py-4 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0",
+                onClick && "cursor-pointer"
+            )}
+            onClick={onClick}
+        >
+            <div className="flex items-center gap-3">
+                <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center",
+                    danger ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                )}>
+                    <Icon size={20} />
+                </div>
+                <div>
+                    <p className={cn(
+                        "font-semibold text-sm",
+                        danger ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"
+                    )}>{title}</p>
+                    <p className="text-xs text-slate-500">{description}</p>
+                </div>
+            </div>
+            {children}
+        </div>
+    );
+
+    const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                onChange();
+            }}
+            className={cn(
+                "relative w-12 h-6 rounded-full transition-colors p-1",
+                checked ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+            )}
+        >
+            <motion.div
+                animate={{ x: checked ? 24 : 0 }}
+                className="w-4 h-4 bg-white rounded-full shadow"
+            />
+        </button>
+    );
+
     return (
-        <div className="space-y-6">
-            <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/10 rounded-[2.5rem] p-8 border border-amber-100 dark:border-amber-800/50 shadow-inner">
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl" />
-                <div className="relative flex items-center gap-5">
-                    <div className="p-4 bg-white dark:bg-amber-800/40 rounded-[1.5rem] text-amber-600 dark:text-amber-400 shadow-xl shadow-amber-500/10 ring-1 ring-amber-100 dark:ring-amber-700/50">
-                        <Shield size={32} strokeWidth={2.5} />
-                    </div>
-                    <div className="flex-1">
-                        <h4 className="font-black text-slate-900 dark:text-white text-xl tracking-tight leading-none">Proteksi Akun</h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-bold leading-relaxed opacity-80">
-                            Gunakan PIN 6 digit unik untuk mengunci akses ke dashboard utama Anda.
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <div className="space-y-2">
+            {/* App Lock */}
+            <SettingItem
+                icon={Lock}
+                title="Kunci Aplikasi"
+                description="PIN saat membuka aplikasi"
+            >
+                <Toggle 
+                    checked={formData.isAppLockEnabled} 
+                    onChange={() => {
+                        if (!formData.isAppLockEnabled && !formData.securityPin) {
+                            setShowPinInput(true);
+                            setActiveSection("pin");
+                        }
+                        setFormData((prev: any) => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }));
+                    }}
+                />
+            </SettingItem>
 
-            <div className="flex flex-col items-center py-2">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">Masukkan 6 Digit PIN</p>
-                <div className="relative flex gap-3 mb-8">
-                    <input
-                        type="tel"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={formData.securityPin}
-                        onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9]/g, '');
-                            if (val.length <= 6) {
-                                setFormData((prev: any) => ({ ...prev, securityPin: val }));
-                            }
-                        }}
-                        autoFocus
-                        className="absolute inset-0 opacity-0 cursor-default"
-                        style={{ fontSize: '16px' }}
-                    />
-                    {[0, 1, 2, 3, 4, 5].map((index) => {
-                        const digit = formData.securityPin[index];
-                        const isActive = formData.securityPin.length === index;
-                        return (
-                            <motion.div
-                                key={index}
-                                whileHover={{ y: -2 }}
-                                animate={digit ? { scale: [1, 1.15, 1], y: [0, -4, 0] } : isActive ? { borderColor: ['#f59e0b', '#fbbf24', '#f59e0b'] } : {}}
-                                transition={{ duration: 0.3, repeat: isActive ? Infinity : 0 }}
-                                className={cn(
-                                    "w-12 h-16 rounded-[1.25rem] flex items-center justify-center border-2 transition-all duration-300 shadow-sm relative overflow-hidden",
-                                    digit
-                                        ? "bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/30"
-                                        : isActive
-                                            ? "bg-white dark:bg-slate-800 border-amber-400 ring-8 ring-amber-400/5"
-                                            : "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800"
-                                )}
-                            >
-                                {digit && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
-                                <div className={cn(
-                                    "w-3 h-3 rounded-full transition-all duration-300 shadow-sm",
-                                    digit ? "bg-white scale-125" : "bg-slate-200 dark:bg-slate-700"
-                                )} />
-                            </motion.div>
-                        );
-                    })}
-                </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold bg-slate-100 dark:bg-slate-800/50 px-4 py-1.5 rounded-full">
-                    PIN dienkripsi secara aman di server kami.
-                </p>
-            </div>
+            {/* PIN Setup */}
+            <SettingItem
+                icon={Shield}
+                title="Atur PIN"
+                description={formData.securityPin ? "PIN sudah diatur" : "Belum diatur"}
+                onClick={() => {
+                    setShowPinInput(!showPinInput);
+                    setActiveSection(showPinInput ? null : "pin");
+                }}
+            >
+                <span className="text-sm font-medium text-sky-600">
+                    {formData.securityPin ? "Ubah" : "Atur"}
+                </span>
+            </SettingItem>
 
-            <div className="p-6 bg-rose-50/50 dark:bg-rose-900/10 rounded-[2.5rem] border border-rose-100 dark:border-rose-900/20 space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-xl text-rose-500">
-                        <ShieldCheck size={20} />
-                    </div>
-                    <div>
-                        <p className="font-bold text-slate-900 dark:text-white text-sm">Decoy PIN (Stealth Mode)</p>
-                        <p className="text-[10px] text-slate-500 font-medium">Tunjukkan data palsu jika PIN ini digunakan.</p>
-                    </div>
-                </div>
-                <div className="flex justify-center">
-                    <div className="flex gap-2">
-                        {[0, 1, 2, 3, 4, 5].map((idx) => (
-                            <div
-                                key={idx}
-                                className={cn(
-                                    "w-8 h-10 rounded-lg border-2 flex items-center justify-center transition-all",
-                                    formData.decoyPin[idx]
-                                        ? "bg-rose-500 border-rose-500 shadow-md shadow-rose-500/20"
-                                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                                )}
-                            >
-                                {formData.decoyPin[idx] && <div className="w-2 h-2 bg-white rounded-full" />}
+            <AnimatePresence>
+                {showPinInput && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 mx-1 mb-4">
+                            <p className="text-xs font-medium text-slate-500 mb-3 text-center">Masukkan 6 digit PIN</p>
+                            <div className="flex justify-center gap-2 mb-4">
+                                {[0, 1, 2, 3, 4, 5].map((i) => (
+                                    <div
+                                        key={i}
+                                        className={cn(
+                                            "w-10 h-12 rounded-lg border-2 flex items-center justify-center transition-all",
+                                            formData.securityPin[i]
+                                                ? "bg-sky-500 border-sky-500"
+                                                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                                        )}
+                                    >
+                                        {formData.securityPin[i] && <div className="w-2 h-2 bg-white rounded-full" />}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <input
-                        type="tel"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={formData.decoyPin}
-                        onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9]/g, '');
-                            if (val.length <= 6) {
-                                setFormData((prev: any) => ({ ...prev, decoyPin: val }));
-                            }
-                        }}
-                        className="absolute opacity-0 w-full max-w-[200px] h-10 cursor-pointer"
-                    />
-                </div>
-            </div>
-
-            <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-amber-200/50 dark:hover:border-amber-900/30 transition-all duration-300">
-                <div className="flex items-center gap-4">
-                    <div className={cn(
-                        "p-3 rounded-2xl transition-all duration-300",
-                        formData.isAppLockEnabled ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "bg-white dark:bg-slate-800 text-slate-400"
-                    )}>
-                        <Lock size={18} />
-                    </div>
-                    <div>
-                        <p className="font-black text-slate-900 dark:text-white text-[13px] tracking-tight">Aktifkan App Lock</p>
-                        <p className="text-[10px] text-slate-500 font-bold opacity-70">Minta PIN setiap kali membuka aplikasi</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setFormData((prev: any) => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }))}
-                    className={cn(
-                        "relative w-14 h-7 rounded-full transition-all duration-500 p-1 shadow-inner",
-                        formData.isAppLockEnabled ? "bg-amber-500 shadow-amber-900/20" : "bg-slate-200 dark:bg-slate-800"
-                    )}
-                >
-                    <motion.div
-                        animate={{ x: formData.isAppLockEnabled ? 28 : 0 }}
-                        className="w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
-                    >
-                        {formData.isAppLockEnabled && <div className="w-1 h-1 bg-amber-500 rounded-full" />}
+                            <input
+                                type="tel"
+                                inputMode="numeric"
+                                maxLength={6}
+                                value={formData.securityPin}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    if (val.length <= 6) {
+                                        setFormData((prev: any) => ({ ...prev, securityPin: val }));
+                                    }
+                                }}
+                                className="absolute opacity-0 w-full h-full inset-0 cursor-pointer"
+                                style={{ position: 'relative', height: '1px', width: '1px', margin: '-1px' }}
+                                autoFocus
+                            />
+                            
+                            {/* Decoy PIN */}
+                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <p className="text-xs font-medium text-slate-500 mb-2">PIN Palsu (Opsional)</p>
+                                <p className="text-[10px] text-slate-400 mb-2">Tampilkan data palsu jika PIN ini digunakan</p>
+                                <div className="flex justify-center gap-2">
+                                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                                        <div
+                                            key={i}
+                                            className={cn(
+                                                "w-8 h-10 rounded-lg border-2 flex items-center justify-center",
+                                                formData.decoyPin[i]
+                                                    ? "bg-rose-400 border-rose-400"
+                                                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                                            )}
+                                        >
+                                            {formData.decoyPin[i] && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                        </div>
+                                    ))}
+                                </div>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    value={formData.decoyPin}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        if (val.length <= 6) {
+                                            setFormData((prev: any) => ({ ...prev, decoyPin: val }));
+                                        }
+                                    }}
+                                    className="absolute opacity-0"
+                                    style={{ position: 'relative', height: '1px', width: '1px', margin: '-1px' }}
+                                />
+                            </div>
+                        </div>
                     </motion.div>
-                </button>
-            </div>
+                )}
+            </AnimatePresence>
 
-            <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-sky-200/50 dark:hover:border-sky-900/30 transition-all duration-300">
-                <div className="flex items-center gap-4">
-                    <div className={cn(
-                        "p-3 rounded-2xl transition-all duration-300",
-                        formData.isBiometricEnabled ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20" : "bg-white dark:bg-slate-800 text-slate-400"
-                    )}>
-                        <Fingerprint size={18} />
-                    </div>
-                    <div>
-                        <p className="font-black text-slate-900 dark:text-white text-[13px] tracking-tight">Aktifkan Biometrik</p>
-                        <p className="text-[10px] text-slate-500 font-bold opacity-70">Gunakan Sidik Jari/Wajah</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setFormData((prev: any) => ({ ...prev, isBiometricEnabled: !prev.isBiometricEnabled }))}
-                    className={cn(
-                        "relative w-14 h-7 rounded-full transition-all duration-500 p-1 shadow-inner",
-                        formData.isBiometricEnabled ? "bg-sky-500 shadow-sky-900/20" : "bg-slate-200 dark:bg-slate-800"
-                    )}
-                >
-                    <motion.div
-                        animate={{ x: formData.isBiometricEnabled ? 28 : 0 }}
-                        className="w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
-                    >
-                        {formData.isBiometricEnabled && <div className="w-1 h-1 bg-sky-500 rounded-full" />}
-                    </motion.div>
-                </button>
-            </div>
+            {/* Biometric */}
+            <SettingItem
+                icon={Fingerprint}
+                title="Sidik Jari / Wajah"
+                description="Login dengan biometrik"
+            >
+                <Toggle 
+                    checked={formData.isBiometricEnabled} 
+                    onChange={() => setFormData((prev: any) => ({ ...prev, isBiometricEnabled: !prev.isBiometricEnabled }))}
+                />
+            </SettingItem>
 
-            <div className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-blue-200/50 dark:hover:border-blue-900/30 transition-all duration-300">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-slate-400">
-                        <Zap size={18} />
-                    </div>
-                    <div>
-                        <p className="font-black text-slate-900 dark:text-white text-[13px] tracking-tight">Auto-lock Timeout</p>
-                        <p className="text-[10px] text-slate-500 font-bold opacity-70">Kunci otomatis saat standby</p>
-                    </div>
-                </div>
+            {/* Auto-lock */}
+            <SettingItem
+                icon={Zap}
+                title="Kunci Otomatis"
+                description="Kunci setelah tidak aktif"
+            >
                 <select
                     value={formData.autoLockTimeout}
                     onChange={(e) => setFormData((prev: any) => ({ ...prev, autoLockTimeout: parseInt(e.target.value) }))}
-                    className="bg-transparent text-sm font-black text-blue-600 focus:outline-none cursor-pointer"
+                    className="bg-transparent text-sm font-medium text-sky-600 focus:outline-none cursor-pointer"
                 >
-                    <option value={60000}>1 Menit</option>
-                    <option value={300000}>5 Menit</option>
-                    <option value={900000}>15 Menit</option>
-                    <option value={3600000}>1 Jam</option>
-                    <option value={-1}>Sultan (Never)</option>
+                    <option value={60000}>1 menit</option>
+                    <option value={300000}>5 menit</option>
+                    <option value={900000}>15 menit</option>
+                    <option value={3600000}>1 jam</option>
+                    <option value={-1}>Tidak pernah</option>
                 </select>
-            </div>
+            </SettingItem>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                <button
-                    onClick={() => {
-                        if (confirm("Ingin menghapus data lokal? Kamu perlu login kembali.")) {
-                            deleteLocalData();
-                        }
-                    }}
-                    className="w-full py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-slate-500 font-bold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                    <Trash2 size={14} />
-                    Hapus Data Lokal & Reset Sesi
-                </button>
-            </div>
+            {/* Sessions */}
+            <SettingItem
+                icon={Smartphone}
+                title="Kelola Sesi"
+                description="Logout dari perangkat lain"
+                onClick={handleRevokeSessions}
+            >
+                <LogOut size={18} className="text-slate-400" />
+            </SettingItem>
 
+            {/* Save Button */}
             <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSaveSecurity}
+                disabled={formData.securityPin && formData.securityPin.length !== 6}
                 className={cn(
-                    "w-full py-5 rounded-[2rem] font-black text-sm tracking-widest transition-all duration-300 flex items-center justify-center gap-3 shadow-2xl overflow-hidden relative group",
-                    formData.securityPin.length === 6
-                        ? "bg-amber-500 text-white shadow-amber-500/30 ring-4 ring-amber-500/10"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                    "w-full mt-4 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all",
+                    formData.securityPin && formData.securityPin.length === 6
+                        ? "bg-sky-500 text-white hover:bg-sky-600"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
                 )}
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <motion.div
-                    animate={formData.securityPin.length === 6 ? { rotate: [0, 10, -10, 0] } : {}}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="relative z-10"
-                >
-                    <Check size={20} strokeWidth={3} />
-                </motion.div>
-                <span className="relative z-10">SIMPAN KEAMANAN</span>
+                <Check size={18} />
+                Simpan Pengaturan
             </motion.button>
 
-            <div className="mt-6 space-y-3">
-                <h5 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Manajemen Sesi</h5>
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">Log out dari semua perangkat lain yang sedang aktif menggunakan akun kamu.</p>
-                    <button
-                        onClick={handleRevokeSessions}
-                        className="w-full py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-sm font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Shield size={15} />
-                        Logout Semua Perangkat Lain
-                    </button>
-                </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-                <h5 className="text-[11px] font-black uppercase tracking-widest text-rose-500">Zona Bahaya</h5>
-                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/30 space-y-3">
-                    <p className="text-xs text-rose-700 dark:text-rose-400 font-medium">
-                        Hapus akun dan semua data kamu secara permanen.
-                    </p>
-                    <button
-                        onClick={handleDeleteAccount}
-                        className="w-full py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Trash2 size={15} />
-                        Hapus Akun
-                    </button>
-                </div>
+            {/* Danger Zone */}
+            <div className="mt-8 pt-6 border-t-2 border-rose-100 dark:border-rose-900/30">
+                <p className="text-xs font-semibold text-rose-500 mb-2">Zona Bahaya</p>
+                <SettingItem
+                    icon={Trash2}
+                    title="Hapus Akun"
+                    description="Hapus akun dan data secara permanen"
+                    danger
+                    onClick={handleDeleteAccount}
+                />
             </div>
         </div>
     );
