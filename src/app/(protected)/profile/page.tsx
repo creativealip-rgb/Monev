@@ -7,6 +7,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { LanguageSelector } from "@/frontend/components/LanguageSelector";
+import { CurrencySelector } from "@/frontend/components/CurrencySelector";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { signOut, useSession } from "next-auth/react";
@@ -314,6 +315,7 @@ export default function ProfilePage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-6 space-y-3">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="card-clean p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Moon size={20} className="text-slate-600 dark:text-slate-300" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p></div></div><ThemeToggleSwitch /></motion.div>
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }} className="card-clean p-4 space-y-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="card-clean p-4 space-y-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center"><span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">$</span></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">Mata Uang</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih mata uang utama</p></div></div><CurrencySelector /></motion.div>
                 {menuItems.map((item, index) => {
                     const Icon = item.icon;
                     const colors: Record<string, { bg: string; text: string }> = {
@@ -329,7 +331,7 @@ export default function ProfilePage() {
 
                     if (item.id === "download") {
                         return (
-                            <motion.a key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * index + 0.4 }} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
+                            <motion.a key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * index + 0.45 }} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
                                 <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
                                 <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 uppercase tracking-tighter">APK</span><ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" /></div>
                             </motion.a>
@@ -337,13 +339,13 @@ export default function ProfilePage() {
                     }
 
                     return (
-                        <motion.button key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * index + 0.4 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
+                        <motion.button key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * index + 0.45 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
                             <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
                             {item.hasArrow && <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />}
                         </motion.button>
                     );
                 })}
-                <motion.button initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.2 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
+                <motion.button initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center"><LogOut size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-rose-500 dark:text-rose-400 tracking-tight">{t("profile.signOut")}</span>
                 </motion.button>
             </motion.div>

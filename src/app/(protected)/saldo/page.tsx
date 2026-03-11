@@ -264,516 +264,504 @@ export default function SaldoPage() {
             </header>
 
             <main className="px-6 mt-8">
-                <LayoutGroup>
-                    <div className="grid gap-4">
-                        {isLoading ? (
-                            [1, 2, 3].map(i => (
-                                <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
-                            ))
-                        ) : accounts.length === 0 ? (
+                {isAddOpen ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+                    >
+                        {/* Progress Bar */}
+                        <div className="px-6 pt-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                    {t("saldo.step")} {step} {t("saldo.of")} 3
+                                </span>
+                                <button
+                                    onClick={resetForm}
+                                    className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1"
+                                >
+                                    <X size={14} />
+                                    {t("common.cancel")}
+                                </button>
+                            </div>
+                            <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <motion.div
+                                    className="h-full bg-gradient-to-r from-sky-500 to-cyan-600 rounded-full"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(step / 3) * 100}%` }}
+                                    transition={{ duration: 0.3 }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Step 1: Select Type */}
+                        {step === 1 && (
                             <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-center py-12"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="p-6"
                             >
-                                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Wallet className="text-slate-400" size={32} />
-                                </div>
-                                <h3 className="text-slate-900 dark:text-white font-bold">{t("saldo.noAccounts")}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.addSample")}</p>
-                            </motion.div>
-                        ) : viewMode === "list" ? (
-                            accounts.map((acc, idx) => {
-                                const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
-                                return (
-                                    <motion.div
-                                        key={acc.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group"
-                                    >
-                                        <div
-                                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
-                                            style={{ backgroundColor: acc.color }}
-                                        >
-                                            <Icon size={24} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h3>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{accountTypeLabels[acc.type]}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className={cn(
-                                                "font-black text-sm",
-                                                acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
-                                            )}>
-                                                {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
-                                            </p>
-                                        </div>
-                                        <div className="relative">
-                                            <button 
-                                                className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
+                                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6">{t("saldo.selectType")}</h2>
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    {ACCOUNT_TYPES.map((type) => {
+                                        const Icon = iconMap[type.icon] || Wallet;
+                                        return (
+                                            <motion.button
+                                                key={type.id}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
                                                     haptics.tap();
-                                                    setShowAccountMenu(showAccountMenu === acc.id ? null : acc.id);
-                                                    setSelectedAccountId(acc.id);
+                                                    setSelectedType(type.id);
+                                                    setStep(2);
                                                 }}
+                                                className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2"
                                             >
-                                                <MoreVertical size={16} />
-                                            </button>
-                                            <AnimatePresence>
-                                                {showAccountMenu === acc.id && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, scale: 0.95 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        exit={{ opacity: 0, scale: 0.95 }}
-                                                        className="absolute right-0 top-8 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
-                                                    >
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
-                                                                setIsEditOpen(true);
-                                                                setShowAccountMenu(null);
-                                                            }}
-                                                            className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                                                <Icon size={28} color={type.color} />
+                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{type.label}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Step 2: Select Provider */}
+                        {step === 2 && selectedType && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="p-6"
+                            >
+                                <button
+                                    onClick={() => {
+                                        haptics.tap();
+                                        setStep(1);
+                                    }}
+                                    className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4 hover:text-slate-700 dark:hover:text-slate-200"
+                                >
+                                    <ChevronLeft size={16} />
+                                    {t("saldo.back")}
+                                </button>
+                                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-4">{getTypeLabel(selectedType)}</h2>
+                                <div className="grid grid-cols-3 gap-4 max-h-64 overflow-y-auto mb-6">
+                                    {ACCOUNT_PRESETS[selectedType]?.map((preset) => {
+                                        const Icon = iconMap[preset.icon] || Wallet;
+                                        return (
+                                            <motion.button
+                                                key={preset.name}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
+                                                    haptics.tap();
+                                                    setSelectedPreset(preset);
+                                                    setStep(3);
+                                                }}
+                                                className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2"
+                                            >
+                                                <Icon size={20} color={preset.color} />
+                                                <span className="font-bold text-xs text-slate-700 dark:text-slate-300">{preset.name}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        haptics.tap();
+                                        setSelectedPreset(null);
+                                        setStep(3);
+                                    }}
+                                    className="w-full py-3 text-sky-500 font-bold border-2 border-dashed border-sky-500 rounded-2xl hover:bg-sky-50 dark:hover:bg-slate-800 transition-all"
+                                >
+                                    + {t("saldo.customOption")}
+                                </button>
+                            </motion.div>
+                        )}
+
+                        {/* Step 3: Input Balance */}
+                        {step === 3 && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="p-6"
+                            >
+                                <button
+                                    onClick={() => {
+                                        haptics.tap();
+                                        if (selectedPreset) {
+                                            setStep(2);
+                                        } else {
+                                            setStep(1);
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6 hover:text-slate-700 dark:hover:text-slate-200"
+                                >
+                                    <ChevronLeft size={16} />
+                                    {t("saldo.back")}
+                                </button>
+                                
+                                <div className="text-center mb-6">
+                                    {selectedPreset ? (
+                                        <>
+                                            <div className="flex items-center justify-center gap-2 mb-2">
+                                                {(() => {
+                                                    const Icon = iconMap[selectedPreset.icon] || Wallet;
+                                                    return <Icon size={24} color={selectedPreset.color} />;
+                                                })()}
+                                            </div>
+                                            <p className="text-2xl font-black text-slate-900 dark:text-white">{selectedPreset.name}</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Custom Account</p>
+                                            <input
+                                                type="text"
+                                                value={customName}
+                                                onChange={(e) => setCustomName(e.target.value)}
+                                                placeholder="Nama Akun (contoh: Bank Jabar)"
+                                                className="w-full p-4 text-2xl font-black text-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
+                                            />
+                                        </>
+                                    )}
+                                    <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mt-4 mb-1">{t("saldo.initialBalance")}</p>
+                                    <p className="text-4xl font-black text-sky-500">{isStealthMode ? "••••••••" : formatCurrency(parseFloat(balance) || 0)}</p>
+                                </div>
+
+                                <div className="mb-6">
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={balance === "0" ? "" : balance}
+                                        onChange={(e) => {
+                                            const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                                            // Remove leading zeros
+                                            const cleanValue = rawValue.replace(/^0+/, '') || '0';
+                                            setBalance(cleanValue);
+                                        }}
+                                        placeholder="0"
+                                        className="w-full p-4 text-center text-2xl font-bold bg-white dark:bg-slate-800 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={resetForm}
+                                        disabled={isSaving}
+                                        className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm disabled:opacity-50"
+                                    >
+                                        {t("common.cancel")}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSave}
+                                        disabled={isSaving || (!selectedPreset && !customName.trim())}
+                                        className="flex-1 py-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {isSaving ? (
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Check size={20} />
+                                                {t("saldo.saveAccount")}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </motion.div>
+                ) : (
+                    <LayoutGroup>
+                        <div className="grid gap-4">
+                            {isLoading ? (
+                                [1, 2, 3].map(i => (
+                                    <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
+                                ))
+                            ) : accounts.length === 0 ? (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-center py-12"
+                                >
+                                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Wallet className="text-slate-400" size={32} />
+                                    </div>
+                                    <h3 className="text-slate-900 dark:text-white font-bold">{t("saldo.noAccounts")}</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.addSample")}</p>
+                                </motion.div>
+                            ) : viewMode === "list" ? (
+                                accounts.map((acc, idx) => {
+                                    const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
+                                    return (
+                                        <motion.div
+                                            key={acc.id}
+                                            layout
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                            className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group"
+                                        >
+                                            <div
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
+                                                style={{ backgroundColor: acc.color }}
+                                            >
+                                                <Icon size={24} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h3>
+                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{accountTypeLabels[acc.type]}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className={cn(
+                                                    "font-black text-sm",
+                                                    acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
+                                                )}>
+                                                    {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
+                                                </p>
+                                            </div>
+                                            <div className="relative">
+                                                <button 
+                                                    className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        haptics.tap();
+                                                        setShowAccountMenu(showAccountMenu === acc.id ? null : acc.id);
+                                                        setSelectedAccountId(acc.id);
+                                                    }}
+                                                >
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {showAccountMenu === acc.id && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, scale: 0.95 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.95 }}
+                                                            className="absolute right-0 top-8 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
                                                         >
-                                                            <Pencil size={14} /> Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                if (confirm("Yakin hapus akun ini? Transaksi terkait tidak akan dihapus.")) {
-                                                                    setIsDeleting(true);
-                                                                    try {
-                                                                        const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
-                                                                        const result = await res.json();
-                                                                        if (result.success) {
-                                                                            toastSuccess("Akun dihapus");
-                                                                            refresh();
-                                                                        } else {
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
+                                                                    setIsEditOpen(true);
+                                                                    setShowAccountMenu(null);
+                                                                }}
+                                                                className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                                                            >
+                                                                <Pencil size={14} /> Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm("Yakin hapus akun ini? Transaksi terkait tidak akan dihapus.")) {
+                                                                        setIsDeleting(true);
+                                                                        try {
+                                                                            const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
+                                                                            const result = await res.json();
+                                                                            if (result.success) {
+                                                                                toastSuccess("Akun dihapus");
+                                                                                refresh();
+                                                                            } else {
+                                                                                toastError("Gagal menghapus");
+                                                                            }
+                                                                        } catch (err) {
                                                                             toastError("Gagal menghapus");
+                                                                        } finally {
+                                                                            setIsDeleting(false);
                                                                         }
-                                                                    } catch (err) {
-                                                                        toastError("Gagal menghapus");
-                                                                    } finally {
-                                                                        setIsDeleting(false);
                                                                     }
-                                                                }
-                                                                setShowAccountMenu(null);
-                                                            }}
-                                                            className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
-                                                        >
-                                                            <Trash2 size={14} /> Hapus
-                                                        </button>
+                                                                    setShowAccountMenu(null);
+                                                                }}
+                                                                className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 size={14} /> Hapus
+                                                            </button>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })
+                            ) : (
+                                /* Group View */
+                                sortedGroupKeys.map((typeId, groupIdx) => {
+                                    const groupAccounts = groupedAccounts[typeId];
+                                    const GroupIcon = accountTypeIcons[typeId as keyof typeof accountTypeIcons] || Wallet;
+                                    const isExpanded = expandedGroups.has(typeId);
+                                    const groupTotal = groupAccounts.reduce((sum, acc) => {
+                                        if (acc.type === 'credit_card') return sum - acc.balance;
+                                        return sum + acc.balance;
+                                    }, 0);
+                                    const typeConfig = ACCOUNT_TYPES.find(at => at.id === typeId);
+
+                                    return (
+                                        <motion.div
+                                            key={typeId}
+                                            layout
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: groupIdx * 0.08 }}
+                                            className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+                                        >
+                                            {/* Group Header */}
+                                            <motion.button
+                                                onClick={() => toggleGroup(typeId)}
+                                                className="w-full p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                                            >
+                                                <div
+                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm"
+                                                    style={{ backgroundColor: typeConfig?.color || "#3b82f6" }}
+                                                >
+                                                    <GroupIcon size={20} />
+                                                </div>
+                                                <div className="flex-1 text-left">
+                                                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                                                        {accountTypeLabels[typeId] || typeId}
+                                                    </h3>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">
+                                                        {groupAccounts.length} {t("saldo.accountsCount")}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right mr-2">
+                                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                                                        {t("saldo.groupTotal")}
+                                                    </p>
+                                                    <p className={cn(
+                                                        "font-black text-sm",
+                                                        typeId === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
+                                                    )}>
+                                                        {isStealthMode ? "••••••••" : formatCurrency(Math.abs(groupTotal))}
+                                                    </p>
+                                                </div>
+                                                <motion.div
+                                                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                >
+                                                    <ChevronDown size={18} className="text-slate-400 dark:text-slate-500" />
+                                                </motion.div>
+                                            </motion.button>
+
+                                            {/* Group Content */}
+                                            <AnimatePresence initial={false}>
+                                                {isExpanded && (
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        transition={{
+                                                            height: { duration: 0.3, ease: "easeInOut" },
+                                                            opacity: { duration: 0.2 },
+                                                        }}
+                                                        className="overflow-hidden"
+                                                    >
+                                                        <div className="px-4 pb-3 grid gap-2">
+                                                            {groupAccounts.map((acc, idx) => {
+                                                                const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
+                                                                return (
+                                                                    <motion.div
+                                                                        key={acc.id}
+                                                                        initial={{ opacity: 0, x: -10 }}
+                                                                        animate={{ opacity: 1, x: 0 }}
+                                                                        transition={{ delay: idx * 0.04 }}
+                                                                        className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                    >
+                                                                        <div
+                                                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-sm"
+                                                                            style={{ backgroundColor: acc.color }}
+                                                                        >
+                                                                            <Icon size={18} />
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h4>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className={cn(
+                                                                                "font-black text-sm",
+                                                                                acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
+                                                                            )}>
+                                                                                {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="relative">
+                                                                            <button 
+                                                                                className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    haptics.tap();
+                                                                                    setShowAccountMenu(showAccountMenu === acc.id ? null : acc.id);
+                                                                                    setSelectedAccountId(acc.id);
+                                                                                }}
+                                                                            >
+                                                                                <MoreVertical size={14} />
+                                                                            </button>
+                                                                            <AnimatePresence>
+                                                                                {showAccountMenu === acc.id && (
+                                                                                    <motion.div
+                                                                                        initial={{ opacity: 0, scale: 0.95 }}
+                                                                                        animate={{ opacity: 1, scale: 1 }}
+                                                                                        exit={{ opacity: 0, scale: 0.95 }}
+                                                                                        className="absolute right-0 top-6 w-28 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
+                                                                                    >
+                                                                                        <button
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
+                                                                                                setIsEditOpen(true);
+                                                                                                setShowAccountMenu(null);
+                                                                                            }}
+                                                                                            className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                                                                                        >
+                                                                                            <Pencil size={12} /> Edit
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={async (e) => {
+                                                                                                e.stopPropagation();
+                                                                                                if (confirm("Yakin hapus akun ini?")) {
+                                                                                                    setIsDeleting(true);
+                                                                                                    try {
+                                                                                                        const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
+                                                                                                        const result = await res.json();
+                                                                                                        if (result.success) {
+                                                                                                            toastSuccess("Akun dihapus");
+                                                                                                            refresh();
+                                                                                                        } else {
+                                                                                                            toastError("Gagal menghapus");
+                                                                                                        }
+                                                                                                    } catch (err) {
+                                                                                                        toastError("Gagal menghapus");
+                                                                                                    } finally {
+                                                                                                        setIsDeleting(false);
+                                                                                                    }
+                                                                                                }
+                                                                                                setShowAccountMenu(null);
+                                                                                            }}
+                                                                                            className="w-full px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                                                                        >
+                                                                                            <Trash2 size={12} /> Hapus
+                                                                                        </button>
+                                                                                    </motion.div>
+                                                                                )}
+                                                                            </AnimatePresence>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })
-                        ) : (
-                            /* Group View */
-                            sortedGroupKeys.map((typeId, groupIdx) => {
-                                const groupAccounts = groupedAccounts[typeId];
-                                const GroupIcon = accountTypeIcons[typeId as keyof typeof accountTypeIcons] || Wallet;
-                                const isExpanded = expandedGroups.has(typeId);
-                                const groupTotal = groupAccounts.reduce((sum, acc) => {
-                                    if (acc.type === 'credit_card') return sum - acc.balance;
-                                    return sum + acc.balance;
-                                }, 0);
-                                const typeConfig = ACCOUNT_TYPES.find(at => at.id === typeId);
-
-                                return (
-                                    <motion.div
-                                        key={typeId}
-                                        layout
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: groupIdx * 0.08 }}
-                                        className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
-                                    >
-                                        {/* Group Header */}
-                                        <motion.button
-                                            onClick={() => toggleGroup(typeId)}
-                                            className="w-full p-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                                        >
-                                            <div
-                                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm"
-                                                style={{ backgroundColor: typeConfig?.color || "#3b82f6" }}
-                                            >
-                                                <GroupIcon size={20} />
-                                            </div>
-                                            <div className="flex-1 text-left">
-                                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-                                                    {accountTypeLabels[typeId] || typeId}
-                                                </h3>
-                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">
-                                                    {groupAccounts.length} {t("saldo.accountsCount")}
-                                                </p>
-                                            </div>
-                                            <div className="text-right mr-2">
-                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                                                    {t("saldo.groupTotal")}
-                                                </p>
-                                                <p className={cn(
-                                                    "font-black text-sm",
-                                                    typeId === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
-                                                )}>
-                                                    {isStealthMode ? "••••••••" : formatCurrency(Math.abs(groupTotal))}
-                                                </p>
-                                            </div>
-                                            <motion.div
-                                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                                transition={{ duration: 0.2 }}
-                                            >
-                                                <ChevronDown size={18} className="text-slate-400 dark:text-slate-500" />
-                                            </motion.div>
-                                        </motion.button>
-
-                                        {/* Group Content */}
-                                        <AnimatePresence initial={false}>
-                                            {isExpanded && (
-                                                <motion.div
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: "auto", opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    transition={{
-                                                        height: { duration: 0.3, ease: "easeInOut" },
-                                                        opacity: { duration: 0.2 },
-                                                    }}
-                                                    className="overflow-hidden"
-                                                >
-                                                    <div className="px-4 pb-3 grid gap-2">
-                                                        {groupAccounts.map((acc, idx) => {
-                                                            const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
-                                                            return (
-                                                                <motion.div
-                                                                    key={acc.id}
-                                                                    initial={{ opacity: 0, x: -10 }}
-                                                                    animate={{ opacity: 1, x: 0 }}
-                                                                    transition={{ delay: idx * 0.04 }}
-                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                                                >
-                                                                    <div
-                                                                        className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-sm"
-                                                                        style={{ backgroundColor: acc.color }}
-                                                                    >
-                                                                        <Icon size={18} />
-                                                                    </div>
-                                                                    <div className="flex-1">
-                                                                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h4>
-                                                                    </div>
-                                                                    <div className="text-right">
-                                                                        <p className={cn(
-                                                                            "font-black text-sm",
-                                                                            acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
-                                                                        )}>
-                                                                            {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="relative">
-                                                                        <button 
-                                                                            className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                haptics.tap();
-                                                                                setShowAccountMenu(showAccountMenu === acc.id ? null : acc.id);
-                                                                                setSelectedAccountId(acc.id);
-                                                                            }}
-                                                                        >
-                                                                            <MoreVertical size={14} />
-                                                                        </button>
-                                                                        <AnimatePresence>
-                                                                            {showAccountMenu === acc.id && (
-                                                                                <motion.div
-                                                                                    initial={{ opacity: 0, scale: 0.95 }}
-                                                                                    animate={{ opacity: 1, scale: 1 }}
-                                                                                    exit={{ opacity: 0, scale: 0.95 }}
-                                                                                    className="absolute right-0 top-6 w-28 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
-                                                                                >
-                                                                                    <button
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
-                                                                                            setIsEditOpen(true);
-                                                                                            setShowAccountMenu(null);
-                                                                                        }}
-                                                                                        className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                                                                                    >
-                                                                                        <Pencil size={12} /> Edit
-                                                                                    </button>
-                                                                                    <button
-                                                                                        onClick={async (e) => {
-                                                                                            e.stopPropagation();
-                                                                                            if (confirm("Yakin hapus akun ini?")) {
-                                                                                                setIsDeleting(true);
-                                                                                                try {
-                                                                                                    const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
-                                                                                                    const result = await res.json();
-                                                                                                    if (result.success) {
-                                                                                                        toastSuccess("Akun dihapus");
-                                                                                                        refresh();
-                                                                                                    } else {
-                                                                                                        toastError("Gagal menghapus");
-                                                                                                    }
-                                                                                                } catch (err) {
-                                                                                                    toastError("Gagal menghapus");
-                                                                                                } finally {
-                                                                                                    setIsDeleting(false);
-                                                                                                }
-                                                                                            }
-                                                                                            setShowAccountMenu(null);
-                                                                                        }}
-                                                                                        className="w-full px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
-                                                                                    >
-                                                                                        <Trash2 size={12} /> Hapus
-                                                                                    </button>
-                                                                                </motion.div>
-                                                                            )}
-                                                                        </AnimatePresence>
-                                                                    </div>
-                                                                </motion.div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </motion.div>
-                                );
-                            })
-                        )}
-                    </div>
-                </LayoutGroup>
-            </main>
-
-            {/* Add Account Modal */}
-            <AnimatePresence>
-                {isAddOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[10002] flex items-end sm:items-center justify-center p-0 sm:p-4"
-                    >
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={resetForm}
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl card-clean"
-                        >
-                            {/* Step 1: Select Type */}
-                            {step === 1 && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="p-6"
-                                >
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6">{t("saldo.selectType")}</h2>
-                                    <div className="grid grid-cols-3 gap-4 mb-6">
-                                        {ACCOUNT_TYPES.map((type) => {
-                                            const Icon = iconMap[type.icon] || Wallet;
-                                            return (
-                                                <motion.button
-                                                    key={type.id}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    onClick={() => {
-                                                        haptics.tap();
-                                                        setSelectedType(type.id);
-                                                        setStep(2);
-                                                    }}
-                                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2"
-                                                >
-                                                    <Icon size={28} color={type.color} />
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{type.label}</span>
-                                                </motion.button>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="pt-4">
-                                        <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            className="w-full py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm"
-                                        >
-                                            {t("common.cancel")}
-                                        </button>
-                                    </div>
-                                </motion.div>
+                                        </motion.div>
+                                    );
+                                })
                             )}
-
-                            {/* Step 2: Select Provider */}
-                            {step === 2 && selectedType && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="p-6"
-                                >
-                                    <button
-                                        onClick={() => {
-                                            haptics.tap();
-                                            setStep(1);
-                                        }}
-                                        className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4 hover:text-slate-700 dark:hover:text-slate-200"
-                                    >
-                                        <ChevronLeft size={16} />
-                                        {t("saldo.back")}
-                                    </button>
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white mb-4">{getTypeLabel(selectedType)}</h2>
-                                    <div className="grid grid-cols-3 gap-4 max-h-64 overflow-y-auto mb-6">
-                                        {ACCOUNT_PRESETS[selectedType]?.map((preset) => {
-                                            const Icon = iconMap[preset.icon] || Wallet;
-                                            return (
-                                                <motion.button
-                                                    key={preset.name}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    onClick={() => {
-                                                        haptics.tap();
-                                                        setSelectedPreset(preset);
-                                                        setStep(3);
-                                                    }}
-                                                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2"
-                                                >
-                                                    <Icon size={20} color={preset.color} />
-                                                    <span className="font-bold text-xs text-slate-700 dark:text-slate-300">{preset.name}</span>
-                                                </motion.button>
-                                            );
-                                        })}
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            haptics.tap();
-                                            setSelectedPreset(null);
-                                            setStep(3);
-                                        }}
-                                        className="w-full py-3 text-sky-500 font-bold border-2 border-dashed border-sky-500 rounded-2xl hover:bg-sky-50 dark:hover:bg-slate-800 transition-all mb-6"
-                                    >
-                                        + {t("saldo.customOption")}
-                                    </button>
-                                    <div className="pt-4">
-                                        <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            className="w-full py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm"
-                                        >
-                                            {t("common.cancel")}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* Step 3: Input Balance */}
-                            {step === 3 && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="p-6"
-                                >
-                                    <button
-                                        onClick={() => {
-                                            haptics.tap();
-                                            if (selectedPreset) {
-                                                setStep(2);
-                                            } else {
-                                                setStep(1);
-                                            }
-                                        }}
-                                        className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6 hover:text-slate-700 dark:hover:text-slate-200"
-                                    >
-                                        <ChevronLeft size={16} />
-                                        {t("saldo.back")}
-                                    </button>
-                                    
-                                    <div className="text-center mb-6">
-                                        {selectedPreset ? (
-                                            <>
-                                                <div className="flex items-center justify-center gap-2 mb-2">
-                                                    {(() => {
-                                                        const Icon = iconMap[selectedPreset.icon] || Wallet;
-                                                        return <Icon size={24} color={selectedPreset.color} />;
-                                                    })()}
-                                                </div>
-                                                <p className="text-2xl font-black text-slate-900 dark:text-white">{selectedPreset.name}</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Custom Account</p>
-                                                <input
-                                                    type="text"
-                                                    value={customName}
-                                                    onChange={(e) => setCustomName(e.target.value)}
-                                                    placeholder="Nama Akun (contoh: Bank Jabar)"
-                                                    className="w-full p-4 text-2xl font-black text-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
-                                                />
-                                            </>
-                                        )}
-                                        <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mt-4 mb-1">{t("saldo.initialBalance")}</p>
-                                        <p className="text-4xl font-black text-sky-500">{isStealthMode ? "••••••••" : formatCurrency(parseFloat(balance) || 0)}</p>
-                                    </div>
-
-                                    <div className="mb-6">
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            value={balance === "0" ? "" : balance}
-                                            onChange={(e) => {
-                                                const rawValue = e.target.value.replace(/[^0-9]/g, '');
-                                                // Remove leading zeros
-                                                const cleanValue = rawValue.replace(/^0+/, '') || '0';
-                                                setBalance(cleanValue);
-                                            }}
-                                            placeholder="0"
-                                            className="w-full p-4 text-center text-2xl font-bold bg-white dark:bg-slate-800 shadow-sm rounded-2xl border border-slate-200 dark:border-slate-700 focus:border-sky-500 outline-none text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            disabled={isSaving}
-                                            className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm disabled:opacity-50"
-                                        >
-                                            {t("common.cancel")}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleSave}
-                                            disabled={isSaving || (!selectedPreset && !customName.trim())}
-                                            className="flex-1 py-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                            {isSaving ? (
-                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <Check size={20} />
-                                                    {t("saldo.saveAccount")}
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </motion.div>
-                    </motion.div>
+                        </div>
+                    </LayoutGroup>
                 )}
-            </AnimatePresence>
+            </main>
 
             {/* Edit Account Modal */}
             <AnimatePresence>
