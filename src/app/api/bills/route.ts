@@ -10,20 +10,35 @@ export async function GET() {
 
         const allBills = await getBills(userId);
 
-        const data = allBills.map(b => ({
-            id: b.id,
-            name: b.name,
-            amount: b.amount,
-            categoryId: b.categoryId,
-            dueDate: b.dueDate,
-            frequency: b.frequency,
-            isPaid: b.isPaid,
-            lastPaidAt: b.lastPaidAt ? new Date(b.lastPaidAt).toISOString() : null,
-            icon: b.icon,
-            color: b.color,
-            isActive: b.isActive,
-            notes: b.notes,
-        }));
+        const data = allBills.map(b => {
+            // Handle lastPaidAt - could be Date object, string, or number (timestamp)
+            let lastPaidAtValue: string | null = null;
+            if (b.lastPaidAt) {
+                try {
+                    const date = new Date(b.lastPaidAt);
+                    if (!isNaN(date.getTime())) {
+                        lastPaidAtValue = date.toISOString();
+                    }
+                } catch {
+                    lastPaidAtValue = null;
+                }
+            }
+
+            return {
+                id: b.id,
+                name: b.name,
+                amount: b.amount,
+                categoryId: b.categoryId,
+                dueDate: b.dueDate,
+                frequency: b.frequency,
+                isPaid: b.isPaid,
+                lastPaidAt: lastPaidAtValue,
+                icon: b.icon,
+                color: b.color,
+                isActive: b.isActive,
+                notes: b.notes,
+            };
+        });
 
         return NextResponse.json({ success: true, data });
     } catch (error) {

@@ -33,6 +33,11 @@ export function getDb() {
     return globalForDb.db;
 }
 
+export function getRawDb(): Database.Database {
+    getDb(); // Ensure initialization
+    return globalForDb.sqlite!;
+}
+
 export function closeDb() {
     if (globalForDb.sqlite) {
         globalForDb.sqlite.close();
