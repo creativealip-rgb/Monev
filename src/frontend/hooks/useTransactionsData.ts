@@ -108,6 +108,16 @@ export function useTransactionsData(searchQuery: string = "") {
 
         const mappedServer = serverTransactions.map((t: any) => {
             const cat = categories.find((c: Category) => c.id === t.categoryId);
+            // Debug logging for bill payment transactions
+            if (t.destinationType === 'bill' || t.merchantName?.includes('Pembayaran')) {
+                console.log('[useTransactionsData] Bill transaction:', {
+                    id: t.id,
+                    categoryId: t.categoryId,
+                    merchantName: t.merchantName,
+                    foundCategory: cat,
+                    allCategories: categories.map(c => ({ id: c.id, name: c.name }))
+                });
+            }
             return {
                 id: t.id,
                 amount: t.amount,

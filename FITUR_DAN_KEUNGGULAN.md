@@ -159,6 +159,7 @@ Milestone:
 - Catat tagihan bulanan (listrik, air, internet, dll)
 - Track langganan yang aktif
 - Reminder otomatis sebelum due date
+- **Bayar tagihan langsung dari aplikasi** dengan pilihan rekening
 
 **Fitur Detail:**
 - **Bill Calendar**: Kalender tagihan dengan tanggal jatuh tempo
@@ -167,17 +168,29 @@ Milestone:
 - **Smart Reminders**: Notifikasi 3 hari, 1 hari, dan hari H jatuh tempo
 - **Payment History**: Riwayat pembayaran per tagihan
 - **Cost Analyzer**: Lihat total tagihan bulanan vs tahunan
+- **💳 Bayar Tagihan**: 
+  - Pilih rekening sumber pembayaran
+  - Bayar lunas atau sebagian (partial payment)
+  - Saldo rekening otomatis berkurang
+  - Auto-record transaksi pengeluaran
+  - Catatan pembayaran untuk tracking
 
 **Contoh Dashboard Tagihan:**
 ```
 Bulan Ini - Total Tagihan: Rp 5.840.000
 
 Jadwal Tagihan:
-├── 📅 3 Desember - Internet: Rp 600.000 (🔴 OVERDUE)
-├── 📅 5 Desember - Listrik: Rp 850.000 (⏰ 2 hari lagi)
-├── 📅 10 Desember - Air: Rp 200.000 (⏳ 7 hari lagi)
+├── 📅 3 Desember - Internet: Rp 600.000 (🔴 OVERDUE) [Bayar]
+├── 📅 5 Desember - Listrik: Rp 850.000 (⏰ 2 hari lagi) [Bayar]
+├── 📅 10 Desember - Air: Rp 200.000 (⏳ 7 hari lagi) [Bayar]
 ├── 📅 15 Desember - Netflix: Rp 79.000
 └── 📅 20 Desember - Gym: Rp 300.000
+
+Bayar Tagihan - Modal Pembayaran:
+├── Pilih Rekening: BCA (Rp 15.000.000)
+├── Jumlah: Rp 850.000 / Rp 850.000 (Bayar Lunas)
+├── Catatan: Pembayaran listrik Desember 2024
+└── [Bayar Sekarang]
 
 Langganan Aktif:
 ├── Netflix - Rp 79.000/bulan (Premium)
@@ -188,6 +201,13 @@ Langganan Aktif:
 💡 Insight: "Kamu punya 4 langganan aktif dengan total Rp 438.000/bulan 
              Bisa hemat Rp 100.000 jika cancel 1 langganan yang jarang dipakai"
 ```
+
+**Alur Bayar Tagihan:**
+1. Klik tombol "$" di tagihan yang ingin dibayar
+2. Pilih rekening sumber (dengan saldo terlihat)
+3. Masukkan jumlah (otomatis terisi sisa tagihan)
+4. Tambahkan catatan opsional
+5. Klik "Bayar" - saldo berkurang, transaksi tercatat, tagihan diupdate
 
 ---
 
@@ -720,12 +740,14 @@ Berikut penjelasan lebih detail untuk setiap fitur:
 | Fitur | Monev | Competitor A | Competitor B |
 |---|---|---|---|
 | Bill Calendar | ✅ Visual calendar | ❌ List only | ✅ Calendar |
+| **💳 Bayar Tagihan** | ✅ **Pembayaran langsung dengan pilihan rekening** | ❌ Tidak ada | ❌ Tidak ada |
+| Partial Payment | ✅ Bayar sebagian/sebagian | ❌ Tidak ada | ❌ Tidak ada |
 | Subscription Detection | ✅ Auto-detect dari transaksi | ❌ Manual input | ❌ Manual input |
 | Smart Reminders | ✅ 3 days, 1 day, due date | ⚠️ 1 reminder only | ✅ Customizable |
 | Cost Analysis | ✅ Monthly + yearly cost | ❌ Tidak ada | ⚠️ Monthly only |
 | Subscription Optimization | ✅ AI suggest cancel/reduce | ❌ Tidak ada | ❌ Tidak ada |
 
-**Keunggulan Monev**: Bisa detect subscription otomatis & suggest savings.
+**Keunggulan Monev**: **Bayar tagihan langsung dari aplikasi** dengan pilihan rekening, partial payment, dan auto-record transaksi. Competitor tidak punya fitur ini!
 
 ---
 
@@ -825,7 +847,7 @@ Berikut penjelasan lebih detail untuk setiap fitur:
 ### Summary: Keunggulan Kompetitif Monev
 
 ```
-🏆 TOP 5 KEUNGGULAN MONEV:
+🏆 TOP 6 KEUNGGULAN MONEV:
 
 1. 🤖 AI TERINTEGRASI (Unique Selling Point)
    - Hanya Monev yang punya AI assistant + auto-kategorisasi + anomaly detection
@@ -835,16 +857,21 @@ Berikut penjelasan lebih detail untuk setiap fitur:
    - Pencatatan voice → AI parse → auto-kategorisasi (2 langkah jadi 1)
    - Receipt OCR bisa auto-extract detail transaksi
 
-3. 📊 ANALYTICS PALING LENGKAP
+3. 💳 BAYAR TAGIHAN LANGSUNG (New!)
+   - Bayar tagihan dari aplikasi dengan pilihan rekening
+   - Partial payment (bayar sebagian), auto-record transaksi
+   - Saldo otomatis berkurang, tidak ada kompetitor yang punya!
+
+4. 📊 ANALYTICS PALING LENGKAP
    - Sankey chart, heatmap, financial health score, forecast
    - Insight bukan hanya numbers, tapi actionable recommendations
 
-4. 🔒 KEAMANAN PALING BAIK
+5. 🔒 KEAMANAN PALING BAIK
    - Decoy PIN + Stealth Mode (tidak ada kompetitor yang punya)
    - End-to-end encryption dari hari pertama
    - No server logging data finansial raw
 
-5. 🎯 USER EXPERIENCE TERBAIK
+6. 🎯 USER EXPERIENCE TERBAIK
    - Designed for Indonesia (UI in Bahasa Indonesia)
    - Offline-first architecture (tetap jalan tanpa internet)
    - Smooth animations & gamification (motivasi user)
@@ -1485,6 +1512,12 @@ OUTCOME:
 6. ✅ **Analytics date picker** - Click outside to close
 7. ✅ **Simulations error feedback** - Toast + auto-tab switch on error
 8. ✅ **Investments stealth mode** - Mask ROI percentage when stealth active
+9. ✅ **💳 Bayar Tagihan** - Fitur pembayaran tagihan lengkap dengan:
+   - Modal pembayaran dengan pilihan rekening
+   - Partial payment (bayar sebagian)
+   - Auto-record transaksi pengeluaran
+   - Saldo rekening otomatis berkurang
+   - Riwayat pembayaran tercatat
 
 ### UX Improvements
 

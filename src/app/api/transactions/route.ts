@@ -15,6 +15,17 @@ export async function GET(request: Request) {
 
         // Get transactions with pagination
         const transactions = await getTransactions(userId, limit, offset, search);
+        
+        // Debug: log bill payment transactions
+        const billTransactions = transactions.filter((t: any) => t.destinationType === 'bill');
+        if (billTransactions.length > 0) {
+            console.log('[API /transactions] Bill payment transactions:', billTransactions.map((t: any) => ({
+                id: t.id,
+                categoryId: t.categoryId,
+                merchantName: t.merchantName,
+                description: t.description
+            })));
+        }
 
         // Get total count for pagination
         const total = await getTransactionsCount(userId, search);

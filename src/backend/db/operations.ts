@@ -7,7 +7,7 @@
  * @packageDocumentation
  */
 
-import { getDb } from "./index";
+import { getDb, getRawDb } from "./index";
 import { accounts, transactions, categories, budgets, goals, userSettings, users, debts, scheduledMessages, bills, billPayments, investments, merchantMappings, chatHistory, coupons, couponClaims, streaks, achievements, sessions } from "./schema";
 import type { Account, Transaction, Category, Budget, Goal, UserSettings, User, Debt, ScheduledMessage, Bill, BillPayment, Investment, ChatHistory, Coupon, CouponClaim, Streak, Achievement } from "./schema";
 import { eq, and, desc, sql, gte, lte, like, or, count, inArray } from "drizzle-orm";
@@ -409,7 +409,14 @@ export async function deleteTransaction(userId: number, id: number): Promise<voi
         }
     }
 
-    // 3. Delete
+    // 3. Delete associated bill_payments records (if this transaction was a bill payment)
+    await db.delete(billPayments)
+        .where(and(
+            eq(billPayments.transactionId, id),
+            eq(billPayments.userId, userId)
+        ));
+
+    // 4. Delete the transaction
     await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 }
 
@@ -1141,6 +1148,12 @@ export async function updateBill(userId: number, id: number, data: Partial<Bill>
 
 export async function deleteBill(userId: number, id: number): Promise<void> {
     const db = getDb();
+    
+    // First delete associated bill payments
+    await db.delete(billPayments)
+        .where(and(eq(billPayments.billId, id), eq(billPayments.userId, userId)));
+    
+    // Then delete the bill
     await db.delete(bills).where(and(eq(bills.id, id), eq(bills.userId, userId)));
 }
 
@@ -1179,6 +1192,128 @@ export async function getBillHistory(userId: number, billId: number) {
         .where(and(eq(billPayments.billId, billId), eq(billPayments.userId, userId)))
         .orderBy(desc(billPayments.paidAt))
         .all();
+}
+
+export async function payBill(
+    userId: number,
+    billId: number,
+    data: {
+        accountId: number;
+        amount: number;
+        notes?: string;
+    }
+): Promise<{ billPayment: typeof billPayments.$inferSelect; transaction: typeof transactions.$inferSelect } | undefined> {
+    const db = getDb();
+    const rawDb = getRawDb();
+
+    // 1. Get bill details
+    const bill = db.select()
+        .from(bills)
+        .where(and(eq(bills.id, billId), eq(bills.userId, userId)))
+        .get();
+
+    if (!bill) return undefined;
+
+    // 2. Get account and check balance
+    const account = db.select()
+        .from(accounts)
+        .where(and(eq(accounts.id, data.accountId), eq(accounts.userId, userId)))
+        .get();
+
+    if (!account) throw new Error("Account not found");
+    if (account.balance < data.amount) throw new Error("Insufficient balance");
+
+    let result: { billPayment: typeof billPayments.$inferSelect; transaction: typeof transactions.$inferSelect } | undefined;
+    const now = new Date();
+
+    // Get default "Tagihan" category if bill has no category
+    let categoryId = bill.categoryId;
+    console.log("[payBill] Original bill.categoryId:", categoryId);
+    
+    if (!categoryId) {
+        const tagihanCategory = db.select()
+            .from(categories)
+            .where(and(eq(categories.name, "Tagihan"), eq(categories.userId, userId)))
+            .get();
+        console.log("[payBill] Found Tagihan category:", tagihanCategory);
+        if (tagihanCategory) {
+            categoryId = tagihanCategory.id;
+        }
+    }
+    console.log("[payBill] Final categoryId to use:", categoryId);
+
+    try {
+        result = db.transaction((tx) => {
+            // 3. Create expense transaction
+            console.log("[payBill] Creating transaction with categoryId:", categoryId);
+            const transactionResult = tx.insert(transactions)
+                .values({
+                    userId,
+                    amount: data.amount,
+                    description: `Pembayaran ${bill.name}`,
+                    merchantName: bill.name,
+                    categoryId: categoryId,
+                    type: "expense",
+                    paymentMethod: "transfer",
+                    accountId: data.accountId,
+                    destinationType: "bill",
+                    destinationId: billId,
+                    date: now,
+                    isVerified: true,
+                    isRecurring: false,
+                })
+                .returning()
+                .get();
+            console.log("[payBill] Created transaction with categoryId:", transactionResult.categoryId);
+
+            // 4. Update account balance
+            const updateBalance = rawDb.prepare(`
+                UPDATE accounts SET balance = balance - ?, updated_at = ? WHERE id = ?
+            `);
+            updateBalance.run(data.amount, now.getTime(), data.accountId);
+
+            // 5. Create bill payment record
+            const billPaymentResult = tx.insert(billPayments)
+                .values({
+                    billId,
+                    userId,
+                    amount: data.amount,
+                    paidAt: now,
+                    transactionId: transactionResult.id,
+                    notes: data.notes || `Pembayaran ${bill.name}`,
+                })
+                .returning()
+                .get();
+
+            // 6. Update bill status
+            const totalPaid = tx.select({ total: sql<number>`SUM(${billPayments.amount})` })
+                .from(billPayments)
+                .where(and(eq(billPayments.billId, billId), eq(billPayments.userId, userId)))
+                .get();
+
+            const isFullyPaid = totalPaid && totalPaid.total >= bill.amount;
+
+            const updateBill = rawDb.prepare(`
+                UPDATE bills SET is_paid = ?, last_paid_at = ? WHERE id = ?
+            `);
+            updateBill.run(isFullyPaid ? 1 : 0, now.getTime(), billId);
+
+            return {
+                billPayment: billPaymentResult,
+                transaction: transactionResult,
+            };
+        });
+    } catch (error) {
+        console.error("[payBill] Transaction failed:", error);
+        throw error;
+    }
+
+    // Update gamification streak outside transaction
+    if (result) {
+        updateUserStreak(userId).catch(console.error);
+    }
+
+    return result;
 }
 
 export async function ensureSampleBills(userId: number): Promise<void> {
@@ -1468,45 +1603,6 @@ export async function transferToInvestment(userId: number, investmentId: number,
         date: new Date(),
         isVerified: true,
     }).returning().get();
-
-    return transaction;
-}
-
-export async function payBill(userId: number, billId: number, amount: number, description?: string): Promise<Transaction | undefined> {
-    const db = getDb();
-
-    const bill = await getBillById(userId, billId);
-    if (!bill) return undefined;
-
-    await db.update(bills)
-        .set({ isPaid: true, lastPaidAt: new Date() })
-        .where(and(eq(bills.id, billId), eq(bills.userId, userId)));
-
-    const cats = db.select().from(categories).all();
-    const tagihanCat = cats.find((c: Category) => c.name === "Tagihan");
-
-    const transaction = await db.insert(transactions).values({
-        userId,
-        amount,
-        description: description || `Bayar ${bill.name}`,
-        type: "expense",
-        categoryId: tagihanCat?.id,
-        destinationType: "bill",
-        destinationId: billId,
-        paymentMethod: "saldo_aktif",
-        date: new Date(),
-        isVerified: true,
-    }).returning().get();
-
-    // Record to bill_payments history
-    await db.insert(billPayments).values({
-        billId,
-        userId,
-        amount,
-        paidAt: new Date(),
-        transactionId: transaction.id,
-        notes: description
-    });
 
     return transaction;
 }

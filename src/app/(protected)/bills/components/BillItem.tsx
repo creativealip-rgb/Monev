@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil } from "lucide-react";
+import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
@@ -39,6 +39,7 @@ export interface BillItemProps {
     onToggle: (id: number, e: React.MouseEvent) => void;
     onShowHistory: (bill: Bill) => void;
     onEdit?: (bill: Bill) => void;
+    onPay?: (bill: Bill) => void;
     isStealthMode: boolean;
     t: (key: string) => string;
     showReminder?: boolean;
@@ -51,6 +52,7 @@ export function BillItem({
     onToggle,
     onShowHistory,
     onEdit,
+    onPay,
     isStealthMode,
     t,
     showReminder = false,
@@ -162,6 +164,18 @@ export function BillItem({
 
             {/* Actions - positioned absolute top-right */}
             <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                {!bill.isPaid && onPay && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPay(bill);
+                        }}
+                        className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 flex items-center justify-center transition-colors"
+                        title="Bayar"
+                    >
+                        <DollarSign size={14} />
+                    </button>
+                )}
                 <button
                     onClick={(e) => {
                         e.stopPropagation();

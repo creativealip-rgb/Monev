@@ -896,8 +896,14 @@ Semua API route berada di `src/app/api/`. Format response standar:
 | PUT | `/api/bills/[id]` | Edit tagihan |
 | DELETE | `/api/bills/[id]` | Hapus tagihan |
 | GET | `/api/bills/[id]/history` | Riwayat pembayaran |
+| POST | `/api/bills/[id]/pay` | **Bayar tagihan** - Proses pembayaran dengan pilihan rekening, amount, dan catatan |
 
-### Akun/Rekening
+**Fitur Bayar Tagihan:**
+- Pembayaran penuh atau parsial (partial payment)
+- Integrasi dengan rekening/akun - saldo otomatis berkurang
+- Auto-record transaksi pengeluaran
+- Riwayat pembayaran tercatat di `bill_payments`
+- Notifikasi sukses/gagal dengan detail
 
 | Method | Endpoint | Deskripsi |
 |---|---|---|
@@ -1173,6 +1179,7 @@ Semua komponen di `src/frontend/components/` menggunakan `"use client"`.
 | `TierGateOverlay` | `TierGateOverlay.tsx` | Overlay pembatas fitur per tier |
 | `BillReminderWidget` | `BillReminderWidget.tsx` | Widget pengingat tagihan |
 | `FeatureItem` | `FeatureItem.tsx` | Item dalam daftar fitur |
+| `PayBillModal` | `PayBillModal.tsx` | Modal pembayaran tagihan dengan pilihan rekening & partial payment |
 
 ### Komponen Halaman Analytics
 
@@ -1503,11 +1510,17 @@ createGoal(data)
 updateGoal(id, data)
 deleteGoal(id)
 
+// Bills & Payments
+payBill(userId, billId, data)    // ✅ NEW: Process bill payment with account selection
+                                 // Features: partial payment, auto-record transaction,
+                                 // balance deduction, payment history tracking
+getBillHistory(userId, billId)
+
 // User Settings
 getUserSettings(userId)
 updateUserSettings(userId, data)
 
-// Debts, Bills, Investments, Chat History, dll.
+// Debts, Investments, Chat History, dll.
 ```
 
 #### `account-operations.ts` - Operasi akun
@@ -2250,6 +2263,7 @@ NEXT_PUBLIC_APP_URL=https://monevapp.web.id
 
 ### Future Enhancements (Backlog)
 
+- [x] **Bayar Tagihan Integration** - ✅ COMPLETED (v2.3)
 - [ ] Split dashboard/page.tsx into smaller components (currently ~800 lines)
 - [ ] Split transactions/page.tsx hooks (useBulkDelete, useExport)
 - [ ] Fix remaining @ts-ignore comments in codebase
@@ -2261,10 +2275,30 @@ NEXT_PUBLIC_APP_URL=https://monevapp.web.id
 
 ---
 
-**Version**: 2.2 (Split Bill & Automation Update)  
+**Version**: 2.3 (Bill Payment Integration Update)  
 **Status**: Production Ready ✅  
 **Build Status**: ✅ PASSED  
 **Last Updated**: Maret 2026
+
+### What's New in v2.3
+
+#### 💳 Bayar Tagihan Integration
+- **New API Endpoint**: `POST /api/bills/[id]/pay` - Process bill payment with account selection
+- **PayBillModal Component**: Full-featured payment modal with:
+  - Account selection with visible balances
+  - Partial payment support (pay partial amount)
+  - "Pay in Full" button for quick full payment
+  - Payment notes for tracking
+- **Auto Transaction Recording**: Payments automatically create expense transactions
+- **Balance Deduction**: Account balance automatically reduced upon payment
+- **Payment History**: All payments tracked in `bill_payments` table
+- **BillItem Update**: New "$" button for quick payment access
+
+#### Technical Implementation
+- Transaction-safe payment processing (atomic operations)
+- Insufficient balance validation
+- Integration with existing gamification streak system
+- Toast notifications for success/error feedback
 
 ---
 

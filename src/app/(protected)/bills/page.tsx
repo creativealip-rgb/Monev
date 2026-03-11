@@ -16,6 +16,7 @@ import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier } from "@/lib/tier-gate";
 import { useI18n } from "@/frontend/lib/i18n-context";
 import { BillItem } from "./components/BillItem";
+import { PayBillModal } from "@/frontend/components/PayBillModal";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -52,6 +53,11 @@ export default function BillsPage() {
 
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [selectedBillHistory, setSelectedBillHistory] = useState<Bill | null>(null);
+
+    // Pay bill modal state
+    const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+    const [selectedBillToPay, setSelectedBillToPay] = useState<Bill | null>(null);
+    const [billPaymentsMap, setBillPaymentsMap] = useState<Record<number, number>>({});
 
     // View mode
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
@@ -182,6 +188,29 @@ export default function BillsPage() {
         }
     }
 
+    async function loadBillPayments() {
+        try {
+            const paymentsMap: Record<number, number> = {};
+            for (const bill of bills) {
+                const res = await apiFetch(`/api/bills/${bill.id}/history`);
+                const result = await res.json();
+                if (result.success && result.data) {
+                    paymentsMap[bill.id] = result.data.reduce((sum: number, payment: { amount: number }) => sum + payment.amount, 0);
+                }
+            }
+            setBillPaymentsMap(paymentsMap);
+        } catch (error) {
+            console.error("Error loading bill payments:", error);
+        }
+    }
+
+    // Load bill payments when bills change
+    useEffect(() => {
+        if (bills.length > 0) {
+            loadBillPayments();
+        }
+    }, [bills]);
+
     async function handleTogglePaid(id: number, e: React.MouseEvent) {
         e.stopPropagation();
         try {
@@ -205,14 +234,19 @@ export default function BillsPage() {
     async function handleDelete() {
         if (!confirmDeleteId) return;
         try {
+            console.log("[handleDelete] Deleting bill:", confirmDeleteId);
             const res = await apiFetch(`/api/bills/${confirmDeleteId}`, { method: "DELETE" });
             const result = await res.json();
+            console.log("[handleDelete] Delete result:", result);
             if (result.success) {
                 setBills(prev => prev.filter(b => b.id !== confirmDeleteId));
                 toast.success(t("bills.billDeleted"));
+            } else {
+                console.error("[handleDelete] Delete failed:", result.error);
+                toast.error(result.error || "Gagal menghapus tagihan");
             }
         } catch (error) {
-            console.error("Error deleting bill:", error);
+            console.error("[handleDelete] Error deleting bill:", error);
             toast.error(t("bills.errorDelete") || "Gagal menghapus tagihan");
         } finally {
             setConfirmDeleteId(null);
@@ -693,6 +727,10 @@ export default function BillsPage() {
                                                     setIsHistoryModalOpen(true);
                                                 }}
                                                 onEdit={(b) => populateEditForm(b)}
+                                                onPay={(b) => {
+                                                    setSelectedBillToPay(b);
+                                                    setIsPayModalOpen(true);
+                                                }}
                                                 isStealthMode={isStealthMode}
                                                 t={t}
                                                 showReminder={needsReminder}
@@ -710,6 +748,14 @@ export default function BillsPage() {
                 isOpen={isHistoryModalOpen}
                 onClose={() => setIsHistoryModalOpen(false)}
                 bill={selectedBillHistory}
+            />
+
+            <PayBillModal
+                isOpen={isPayModalOpen}
+                onClose={() => setIsPayModalOpen(false)}
+                bill={selectedBillToPay}
+                paidAmount={selectedBillToPay ? billPaymentsMap[selectedBillToPay.id] || 0 : 0}
+                onSuccess={loadBills}
             />
 
             {/* Add Bill Modal */}

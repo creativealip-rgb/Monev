@@ -82,6 +82,20 @@ export default function TransactionsPage() {
 
     // Duplicate detection
     const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
+    const [dismissedDuplicateIds, setDismissedDuplicateIds] = useState<Set<number>>(new Set());
+
+    // Load dismissed duplicates from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem("monev_dismissed_duplicates");
+        if (saved) {
+            try {
+                const ids = JSON.parse(saved);
+                setDismissedDuplicateIds(new Set(ids));
+            } catch {
+                // ignore parse error
+            }
+        }
+    }, []);
 
     const { ref: loadMoreRef, inView } = useInView({
         threshold: 0.1,
@@ -245,7 +259,7 @@ export default function TransactionsPage() {
         return result;
     }, [transactions, filterCategory, filterType, dateRange, amountRange, sortBy, sortOrder]);
 
-    // Duplicate detection: same amount + same category + same day
+    // Duplicate detection: same amount + same category + same day (exclude dismissed)
     const duplicateIds = useMemo(() => {
         const ids = new Set<number>();
         const seen = new Map<string, number[]>();
@@ -271,13 +285,33 @@ export default function TransactionsPage() {
         return ids;
     }, [transactions]);
 
-    const duplicateCount = duplicateIds.size;
+    // Filter out dismissed duplicates for display
+    const activeDuplicateIds = useMemo(() => {
+        const active = new Set<number>();
+        duplicateIds.forEach(id => {
+            if (!dismissedDuplicateIds.has(id)) {
+                active.add(id);
+            }
+        });
+        return active;
+    }, [duplicateIds, dismissedDuplicateIds]);
+
+    const duplicateCount = activeDuplicateIds.size;
+
+    // Function to dismiss current duplicates
+    const dismissDuplicates = useCallback(() => {
+        const newDismissed = new Set(dismissedDuplicateIds);
+        duplicateIds.forEach(id => newDismissed.add(id));
+        setDismissedDuplicateIds(newDismissed);
+        localStorage.setItem("monev_dismissed_duplicates", JSON.stringify(Array.from(newDismissed)));
+        setShowDuplicatesOnly(false);
+    }, [duplicateIds, dismissedDuplicateIds]);
 
     // Apply duplicate filter on top of existing filtered transactions
     const displayTransactions = useMemo(() => {
         if (!showDuplicatesOnly) return filteredTransactions;
-        return filteredTransactions.filter(t => duplicateIds.has(t.id));
-    }, [filteredTransactions, showDuplicatesOnly, duplicateIds]);
+        return filteredTransactions.filter(t => activeDuplicateIds.has(t.id));
+    }, [filteredTransactions, showDuplicatesOnly, activeDuplicateIds]);
 
     // Reset display when toggling off duplicates
     useEffect(() => {
@@ -763,6 +797,15 @@ tr:nth-child(even){background:#fafafa}
                                     <Eye size={14} />
                                     {showDuplicatesOnly ? t("transactions.viewAll") : t("transactions.view")}
                                 </motion.button>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={dismissDuplicates}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    title="Abaikan duplikat ini"
+                                >
+                                    <X size={14} />
+                                    {t("transactions.dismiss")}
+                                </motion.button>
                             </div>
                         </motion.div>
                     )}
@@ -795,9 +838,9 @@ tr:nth-child(even){background:#fafafa}
                     ) : (
                         <>
                             <motion.div
-                                key={`list-${filterCategory}-${filterType}-${searchQuery}-${showDuplicatesOnly ? 'dup' : 'all'}`}
+                                key={`list-${filterCategory}-${filterType}-${showDuplicatesOnly ? 'dup' : 'all'}`}
                                 variants={containerVariants}
-                                initial="hidden"
+                                initial={false}
                                 animate="visible"
                                 exit={{ opacity: 0 }}
                                 className="space-y-6"
@@ -810,17 +853,17 @@ tr:nth-child(even){background:#fafafa}
                                         <div className="space-y-3">
 
                                             {dayTransactions.map((t) => (
-                                                <motion.div
-                                                    key={`${showDuplicatesOnly ? 'dup-' : ''}${t.id}`}
-                                                    variants={itemVariants}
-                                                    layout
-                                                    className={cn(
-                                                        "group transition-all duration-200",
-                                                        showDuplicatesOnly && duplicateIds.has(t.id)
-                                                            ? "ring-2 ring-amber-400/60 rounded-2xl"
-                                                            : ""
-                                                    )}
-                                                >
+                                                    <motion.div
+                                                        key={t.id}
+                                                        variants={itemVariants}
+                                                        layout
+                                                        className={cn(
+                                                            "group transition-all duration-200",
+                                                            showDuplicatesOnly && activeDuplicateIds.has(t.id)
+                                                                ? "ring-2 ring-amber-400/60 rounded-2xl"
+                                                                : ""
+                                                        )}
+                                                    >
                                                     <TransactionItem
                                                         transaction={t}
                                                         showCheckbox={showBulkActions}
