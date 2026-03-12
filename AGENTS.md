@@ -4,7 +4,7 @@ Guidance for AI coding agents working in this repository.
 
 ## Project Overview
 
-**Monev** - Indonesian personal finance app with Next.js 16, React 19, TypeScript (strict), Tailwind CSS v4, SQLite via Drizzle ORM, next-auth v5. UI in Indonesian. Currency: IDR.
+**Monev** - Indonesian personal finance app. Stack: Next.js 16, React 19, TypeScript (strict), Tailwind CSS v4, SQLite via Drizzle ORM, next-auth v5. UI in Indonesian. Currency: IDR.
 
 ## Build / Lint / Test Commands
 

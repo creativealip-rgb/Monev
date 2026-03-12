@@ -95,7 +95,7 @@ export default function Home() {
         refresh
     } = useDashboardData();
 
-    const [transactionFilter, setTransactionFilter] = useState<"today" | "week" | "month" | "all">("today");
+    const [transactionFilter, setTransactionFilter] = useState<"today" | "week" | "month" | "all">("month");
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const { isStealthMode, toggleStealth } = useSecurity();
@@ -387,7 +387,6 @@ export default function Home() {
                         window.dispatchEvent(new CustomEvent("transactionAdded"));
                         toast.success(t("dashboard.transferSuccess"), t("dashboard.transferMessage"));
                     }}
-                    currentBalance={stats.balance}
                 />
 
                 <AddTransactionSheet

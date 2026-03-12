@@ -29,6 +29,7 @@ interface Transaction {
     createdAt: string;
     date?: Date;
     isVerified: boolean;
+    paymentMethod?: string;
 }
 
 interface DashboardStats {
@@ -252,9 +253,9 @@ export function useDashboardData() {
     const allTransactions = useMemo(() => {
         if (isDecoyMode) {
             return [
-                { id: "fake-1", amount: 50000, description: "Makan Siang", categoryName: "Makan", categoryColor: "#f97316", categoryIcon: "Utensils", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
-                { id: "fake-2", amount: 15000, description: "Parkir", categoryName: "Transportasi", categoryColor: "#3b82f6", categoryIcon: "Car", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
-                { id: "fake-3", amount: 2500000, description: "Gaji", categoryName: "Gaji", categoryColor: "#10b981", categoryIcon: "Briefcase", type: "income", createdAt: new Date().toISOString(), isVerified: true },
+                { id: "fake-1", amount: 50000, description: "Makan Siang", categoryName: "Makan", categoryColor: "#f97316", categoryIcon: "Utensils", type: "expense", createdAt: new Date().toISOString(), isVerified: true, paymentMethod: "cash", accountId: null },
+                { id: "fake-2", amount: 15000, description: "Parkir", categoryName: "Transportasi", categoryColor: "#3b82f6", categoryIcon: "Car", type: "expense", createdAt: new Date().toISOString(), isVerified: true, paymentMethod: "qris", accountId: null },
+                { id: "fake-3", amount: 2500000, description: "Gaji", categoryName: "Gaji", categoryColor: "#10b981", categoryIcon: "Briefcase", type: "income", createdAt: new Date().toISOString(), isVerified: true, paymentMethod: "transfer", accountId: null },
             ];
         }
         const mappedServer = serverTransactions.map(t => {
@@ -271,6 +272,8 @@ export function useDashboardData() {
                 createdAt: t.date,
                 date: new Date(t.date),
                 isVerified: t.isVerified,
+                paymentMethod: t.paymentMethod || "cash",
+                accountId: t.accountId || null,
             };
         });
 
@@ -282,6 +285,8 @@ export function useDashboardData() {
                 categoryName: cat?.name || "Lainnya",
                 categoryColor: cat?.color || "#64748b",
                 categoryIcon: cat?.icon || "CreditCard",
+                paymentMethod: t.paymentMethod || "cash",
+                accountId: t.accountId || null,
             };
         });
 

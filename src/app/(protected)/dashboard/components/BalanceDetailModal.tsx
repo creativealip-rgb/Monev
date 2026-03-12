@@ -25,9 +25,7 @@ export function BalanceDetailModal({
 }: BalanceDetailModalProps) {
     if (!show || !mounted) return null;
 
-    const total = stats.totalAccounts || 0;
-    const transactionBalance = stats.balance;
-    const difference = total - transactionBalance - (stats.totalGoals || 0) - (stats.totalInvestments || 0);
+    const total = (stats.totalAccounts || 0) + (stats.totalGoals || 0) + (stats.totalInvestments || 0);
 
     const progressBar = (() => {
         if (total <= 0) {
@@ -90,25 +88,12 @@ export function BalanceDetailModal({
                         <div className="flex items-center gap-5">
                             <div className="w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] border-2 border-white dark:border-slate-900" />
                             <div>
-                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Total Akun</p>
-                                <p className="text-[10px] text-muted-foreground font-medium">Dari semua dompet & bank</p>
+                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Saldo Aktif</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Dompet & rekening bank (liquid)</p>
                             </div>
                         </div>
                         <p className="text-lg font-bold text-foreground tabular-nums">
                             {!mounted ? "..." : formatCurrency(stats.totalAccounts || 0)}
-                        </p>
-                    </div>
-
-                    <div className="flex items-center justify-between group transition-all">
-                        <div className="flex items-center gap-5">
-                            <div className="w-4 h-4 rounded-full bg-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.5)] border-2 border-white dark:border-slate-900" />
-                            <div>
-                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Saldo Transaksi</p>
-                                <p className="text-[10px] text-muted-foreground font-medium">Pemasukan - Pengeluaran</p>
-                            </div>
-                        </div>
-                        <p className="text-base font-bold text-foreground tabular-nums">
-                            {!mounted ? "..." : formatCurrency(transactionBalance)}
                         </p>
                     </div>
 
@@ -139,13 +124,11 @@ export function BalanceDetailModal({
                     </div>
                 </div>
 
-                {difference !== 0 && (
-                    <div className="mt-6 p-4 bg-sky-50/80 dark:bg-sky-950/30 rounded-xl border border-sky-200/60 dark:border-sky-800/50 relative z-10">
-                        <p className="text-[10px] text-sky-700 dark:text-sky-300 leading-relaxed">
-                            💡 <strong>Info:</strong> Ada selisih karena tidak semua saldo di akun tercatat sebagai transaksi. Total akun menunjukkan uang riil yang kamu punya.
-                        </p>
-                    </div>
-                )}
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 relative z-10">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center">
+                        💡 Total kekayaan = Saldo aktif + Tabungan goals + Investasi
+                    </p>
+                </div>
             </motion.div>
         </div>,
         document.body

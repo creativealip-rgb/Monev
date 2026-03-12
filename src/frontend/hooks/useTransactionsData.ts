@@ -133,6 +133,8 @@ export function useTransactionsData(searchQuery: string = "") {
                 userId: t.userId || 0,
                 merchantName: t.merchantName || null,
                 splitGroupId: t.splitGroupId || null,
+                paymentMethod: t.paymentMethod || "cash",
+                accountId: t.accountId || null,
             } as TransactionWithCategory;
         });
 
@@ -141,8 +143,11 @@ export function useTransactionsData(searchQuery: string = "") {
         if (offlineTrans.length > 0 && searchQuery === "") {
             const mappedOffline = offlineTrans.map(t => ({
                 ...t,
+                categoryId: Number(t.categoryId),
                 category: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
                 categoryName: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
+                paymentMethod: t.paymentMethod || "cash",
+                accountId: t.accountId || null,
             } as TransactionWithCategory));
             merged = [...mappedOffline, ...merged];
         }

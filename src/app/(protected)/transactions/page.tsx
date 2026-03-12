@@ -18,6 +18,7 @@ import { TransactionWithCategory } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useTransactionsData } from "@/frontend/hooks/useTransactionsData";
 import { useI18n } from "@/frontend/lib/i18n-context";
+import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useDebouncedValue } from "@/frontend/hooks/useDebouncedValue";
 import { enUS, id as idLocale } from "date-fns/locale";
 
@@ -42,6 +43,7 @@ const itemVariants = {
 
 export default function TransactionsPage() {
     const { t, locale } = useI18n();
+    const { accounts } = useAccountsData();
     const [searchQuery, setSearchQuery] = useState("");
     const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
     const [filterCategory, setFilterCategory] = useState<number | "all">("all");
@@ -927,11 +929,11 @@ tr:nth-child(even){background:#fafafa}
             />
 
             {/* Detail Modal */}
-            < TransactionDetailModal
-                isOpen={!!detailTransaction
-                }
+            <TransactionDetailModal
+                isOpen={!!detailTransaction}
                 onClose={() => setDetailTransaction(null)}
                 transaction={detailTransaction}
+                accounts={accounts}
                 onEdit={(t) => {
                     setDetailTransaction(null);
                     setEditingTransaction(t);
