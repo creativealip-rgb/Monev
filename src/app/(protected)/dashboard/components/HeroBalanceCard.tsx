@@ -11,7 +11,7 @@ import {
 import { ThemeSelector } from "@/frontend/components/ThemeSelector";
 import { useHeroTheme } from "@/frontend/lib/hero-theme";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 
 export interface HeroBalanceCardProps {
     stats: {

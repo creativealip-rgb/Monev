@@ -13,7 +13,7 @@ import { useSession } from "next-auth/react";
 import { UserTier, hasFullAnalytics } from "@/lib/tier-gate";
 import { useToast } from "@/frontend/components/UI";
 import { useSecurity } from "@/components/SecurityProvider";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 
 // Components
 import { NetWorthCard } from "./components/NetWorthCard";

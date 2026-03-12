@@ -27,10 +27,10 @@ export async function GET(req: NextRequest) {
             income: analysis.income,
             expense: analysis.expense,
             balance: analysis.balance,
-            allocations: analysis.allocations as any,
+            allocations: analysis.allocations.map(a => ({ ...a, color: "#3b82f6" })) as any,
             categoryBreakdown: {
-                expense: analysis.categoryBreakdown.expense,
-                income: analysis.categoryBreakdown.income
+                expense: analysis.categoryBreakdown.expense.map(c => ({ ...c, color: "#3b82f6", icon: "Wallet" })),
+                income: analysis.categoryBreakdown.income.map(c => ({ ...c, color: "#10b981", icon: "TrendingUp" }))
             }
         });
 

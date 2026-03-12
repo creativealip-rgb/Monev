@@ -9,7 +9,7 @@ import { cn } from "@/frontend/lib/utils";
 import { LanguageSelector } from "@/frontend/components/LanguageSelector";
 import { CurrencySelector } from "@/frontend/components/CurrencySelector";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { signOut, useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { apiFetch } from "@/frontend/lib/api-client";

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Wallet, Plus, Banknote, Landmark, Smartphone } from "lucide-react";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
