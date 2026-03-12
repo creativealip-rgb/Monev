@@ -6,15 +6,16 @@ import { eq, and } from "drizzle-orm";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const resolvedParams = await params;
         const userId = parseInt(session.user.id);
-        const reportId = parseInt(params.id);
+        const reportId = parseInt(resolvedParams.id);
 
         const db = getDb();
         const report = await db.select()

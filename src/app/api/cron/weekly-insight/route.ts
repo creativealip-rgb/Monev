@@ -99,9 +99,9 @@ export async function GET(req: Request) {
                 const prevWeekExpense = prevWeekTransactions.reduce((sum, t) => sum + t.amount, 0);
                 const changePercent = prevWeekExpense > 0 
                     ? ((totalExpense - prevWeekExpense) / prevWeekExpense * 100).toFixed(1)
-                    : 0;
+                    : "0";
 
-                const locale = settings.reportLocale === "en" ? "en" : "id";
+                const locale = settings?.reportLocale === "en" ? "en" : "id";
                 const insight = generateWeeklyInsight({
                     totalExpense,
                     transactionCount,

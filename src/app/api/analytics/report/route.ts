@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
             userName: name,
             month: new Date(year, month - 1).toLocaleString('id-ID', { month: 'long' }),
             year,
+            locale: "id" as const,
             stats: {
                 income: analysis.income,
                 expense: analysis.expense,
