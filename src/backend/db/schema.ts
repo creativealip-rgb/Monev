@@ -136,8 +136,33 @@ export const userSettings = sqliteTable("user_settings", {
     quietHoursStart: text("quiet_hours_start").notNull().default("22:00"),
     quietHoursEnd: text("quiet_hours_end").notNull().default("08:00"),
     autoLockTimeout: integer("auto_lock_timeout").notNull().default(300000), // Default 5 minutes in ms
+    // Report preferences
+    monthlyReportEmail: integer("monthly_report_email", { mode: "boolean" }).notNull().default(true),
+    monthlyReportTelegram: integer("monthly_report_telegram", { mode: "boolean" }).notNull().default(true),
+    weeklyInsightTelegram: integer("weekly_insight_telegram", { mode: "boolean" }).notNull().default(false),
+    reportLocale: text("report_locale", { enum: ["auto", "id", "en"] }).notNull().default("auto"),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
+export const scheduledReports = sqliteTable("scheduled_reports", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    reportMonth: integer("month").notNull(),
+    reportYear: integer("year").notNull(),
+    locale: text("locale", { enum: ["id", "en"] }).notNull().default("id"),
+    status: text("status", { enum: ["pending", "generating", "sent", "failed"] }).notNull().default("pending"),
+    emailSentAt: integer("email_sent_at", { mode: "timestamp" }),
+    telegramSentAt: integer("telegram_sent_at", { mode: "timestamp" }),
+    errorMessage: text("error_message"),
+    pdfData: text("pdf_data"), // Base64 encoded PDF for on-demand download
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_scheduled_reports_user_id").on(table.userId),
+    monthYearIdx: index("idx_scheduled_reports_month_year").on(table.reportMonth, table.reportYear),
+    userIdMonthYearIdx: index("idx_scheduled_reports_user_month_year").on(table.userId, table.reportMonth, table.reportYear),
+    statusIdx: index("idx_scheduled_reports_status").on(table.status),
+}));
 
 export const accounts = sqliteTable("accounts", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -394,6 +419,7 @@ export type UserSettings = typeof userSettings.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
 export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
+export type ScheduledReport = typeof scheduledReports.$inferSelect;
 export type ChatHistory = typeof chatHistory.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Investment = typeof investments.$inferSelect;
@@ -419,6 +445,7 @@ export type InsertUserSettings = typeof userSettings.$inferInsert;
 export type InsertDebt = typeof debts.$inferInsert;
 export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
 export type InsertBill = typeof bills.$inferInsert;
+export type InsertScheduledReport = typeof scheduledReports.$inferInsert;
 export type InsertChatHistory = typeof chatHistory.$inferInsert;
 export type InsertAccount = typeof accounts.$inferInsert;
 export type InsertInvestment = typeof investments.$inferInsert;
@@ -444,6 +471,8 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings);
 export const selectUserSettingsSchema = createSelectSchema(userSettings);
 export const insertBillSchema = createInsertSchema(bills);
 export const selectBillSchema = createSelectSchema(bills);
+export const insertScheduledReportSchema = createInsertSchema(scheduledReports);
+export const selectScheduledReportSchema = createSelectSchema(scheduledReports);
 export const insertAccountSchema = createInsertSchema(accounts);
 export const selectAccountSchema = createSelectSchema(accounts);
 export const insertInvestmentSchema = createInsertSchema(investments);
