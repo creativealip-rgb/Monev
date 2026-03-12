@@ -9,7 +9,7 @@ import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { useSecurity } from "@/components/SecurityProvider";
 import { ACCOUNT_PRESETS, ACCOUNT_TYPES, QUICK_ADD_PRESETS, AccountPreset } from "@/frontend/data/account-presets";
 

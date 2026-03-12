@@ -2,7 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { QueryProvider } from "./QueryProvider";
-import { I18nProvider } from "@/frontend/lib/i18n-context";
+import { I18nProvider } from "@/lib/i18n";
 
 export function Providers({ children, session }: { children: React.ReactNode, session?: any }) {
     return (

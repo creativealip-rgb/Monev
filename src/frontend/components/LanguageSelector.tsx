@@ -1,6 +1,6 @@
 "use client";
 
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { useHaptics } from "@/frontend/hooks/useHaptics";

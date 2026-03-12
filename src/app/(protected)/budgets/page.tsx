@@ -15,7 +15,7 @@ import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 
 interface Category {
     id: number;

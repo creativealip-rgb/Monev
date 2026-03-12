@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { TransactionWithCategory } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useTransactionsData } from "@/frontend/hooks/useTransactionsData";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useDebouncedValue } from "@/frontend/hooks/useDebouncedValue";
 import { enUS, id as idLocale } from "date-fns/locale";

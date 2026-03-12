@@ -304,6 +304,20 @@ export const aiInsightsCache = sqliteTable("ai_insights_cache", {
     monthYearIdx: index("idx_ai_insights_month_year").on(table.month, table.year),
 }));
 
+export const aiAnomaliesCache = sqliteTable("ai_anomalies_cache", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    month: integer("month").notNull(),
+    year: integer("year").notNull(),
+    anomalies: text("anomalies").notNull(),
+    summary: text("summary").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_ai_anomalies_user_id").on(table.userId),
+    monthYearIdx: index("idx_ai_anomalies_month_year").on(table.month, table.year),
+}));
+
 export const verificationTokens = sqliteTable("verification_tokens", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     identifier: text("identifier").notNull(), // email address being verified
@@ -387,6 +401,7 @@ export type Coupon = typeof coupons.$inferSelect;
 export type CouponClaim = typeof couponClaims.$inferSelect;
 export type AdminActivityLog = typeof adminActivityLog.$inferSelect;
 export type AiInsightsCache = typeof aiInsightsCache.$inferSelect;
+export type AiAnomaliesCache = typeof aiAnomaliesCache.$inferSelect;
 export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
 export type InsertRecurringTransaction = typeof recurringTransactions.$inferInsert;
 export type Streak = typeof streaks.$inferSelect;
@@ -411,6 +426,7 @@ export type InsertCoupon = typeof coupons.$inferInsert;
 export type InsertCouponClaim = typeof couponClaims.$inferInsert;
 export type InsertAdminActivityLog = typeof adminActivityLog.$inferInsert;
 export type InsertAiInsightsCache = typeof aiInsightsCache.$inferInsert;
+export type InsertAiAnomaliesCache = typeof aiAnomaliesCache.$inferInsert;
 export type InsertStreak = typeof streaks.$inferInsert;
 export type InsertAchievement = typeof achievements.$inferInsert;
 export type InsertBillPayment = typeof billPayments.$inferInsert;
@@ -442,3 +458,5 @@ export const insertBillPaymentSchema = createInsertSchema(billPayments);
 export const selectBillPaymentSchema = createSelectSchema(billPayments);
 export const insertSplitBillMemberSchema = createInsertSchema(splitBillMembers);
 export const selectSplitBillMemberSchema = createSelectSchema(splitBillMembers);
+export const insertAiAnomaliesCacheSchema = createInsertSchema(aiAnomaliesCache);
+export const selectAiAnomaliesCacheSchema = createSelectSchema(aiAnomaliesCache);

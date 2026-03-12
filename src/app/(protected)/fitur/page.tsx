@@ -307,7 +307,7 @@ const itemVariants = {
     visible: { opacity: 1, y: 0 }
 };
 
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { LanguageSelector } from "@/frontend/components/LanguageSelector";
 
 export default function FiturPage() {

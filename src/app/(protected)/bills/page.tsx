@@ -13,7 +13,7 @@ import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier } from "@/lib/tier-gate";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 import { BillItem, PayBillSheet, AddBillSheet } from "./components";
 import { shouldResetBill, getResetMessage } from "@/lib/bill-reset";
 

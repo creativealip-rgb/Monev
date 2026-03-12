@@ -12,7 +12,7 @@ import { NetworkStatus } from "@/components/NetworkStatus";
 import { HeroThemeProvider } from "@/frontend/lib/hero-theme";
 import { ThemeProvider } from "@/frontend/lib/theme-context";
 import { CurrencyProvider } from "@/frontend/lib/currency-context";
-import { I18nProvider } from "@/frontend/lib/i18n-context";
+import { I18nProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/frontend/components/Toast";
 import { cn } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";

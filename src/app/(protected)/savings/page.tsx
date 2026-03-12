@@ -18,7 +18,7 @@ import { useSession } from "next-auth/react";
 import { useSavingsData } from "@/frontend/hooks/useSavingsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";
-import { useI18n } from "@/frontend/lib/i18n-context";
+import { useI18n } from "@/lib/i18n";
 
 const containerVariants = {
     hidden: { opacity: 0 },
