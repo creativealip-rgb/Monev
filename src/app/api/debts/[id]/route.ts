@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { updateDebtStatus } from "@/backend/db/operations";
+import { updateDebtStatus, createTransaction, getCategories } from "@/backend/db/operations";
 import { getDb } from "@/backend/db";
 import { debts } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -14,7 +14,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const debtId = parseInt(id);
 
         const body = await req.json();
-        const { status, debtorName, amount, description, dueDate, direction } = body;
+        const { status, debtorName, amount, description, dueDate, direction, payFromBalance, paymentAmount } = body;
 
         const db = getDb();
 
@@ -43,6 +43,28 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
             .get();
 
         if (!updated) return NextResponse.json({ error: "Debt not found" }, { status: 404 });
+
+        // Handle paying from balance for hutang (direction=owe)
+        if (payFromBalance && paymentAmount > 0 && (direction || "owe") === "owe") {
+            try {
+                // Create expense transaction - createTransaction handles balance automatically
+                const categories = await getCategories();
+                const hutangCategory = categories.find(c => c.name === "Hutang") ||
+                    categories.find(c => c.name === "Lainnya") ||
+                    categories[0];
+
+                await createTransaction(userId, {
+                    amount: paymentAmount,
+                    description: `💸 Pembayaran hutang ke ${debtorName || updated.debtorName}${description ? ": " + description : ""}`,
+                    categoryId: hutangCategory?.id || 1,
+                    type: "expense",
+                    date: new Date(),
+                });
+            } catch (balanceError) {
+                console.error("Error processing balance payment:", balanceError);
+                // Continue returning success for debt update even if balance payment fails
+            }
+        }
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {

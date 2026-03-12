@@ -388,33 +388,6 @@ export default function ChatPage() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-                {/* Welcome Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-4 border border-blue-100 dark:border-slate-700"
-                >
-                    <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="text-sky-600 dark:text-sky-400" size={18} />
-                        <span className="text-sm font-semibold text-sky-900 dark:text-sky-300">Quick Actions</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        {quickActions.map((action) => {
-                            const Icon = action.icon;
-                            return (
-                                <button
-                                    key={action.id}
-                                    onClick={() => handleQuickAction(action.id)}
-                                    className="flex items-center gap-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-sky-100 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-600 hover:shadow-sm transition-all text-left"
-                                >
-                                    <Icon className="text-sky-600 dark:text-sky-400" size={16} />
-                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{action.label}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </motion.div>
-
                 {/* Chat Messages */}
                 <AnimatePresence>
                     {messages.map((message) => (
@@ -471,10 +444,31 @@ export default function ChatPage() {
                                                             href={href}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            className="text-sky-600 hover:underline"
                                                             {...props}
                                                         >
                                                             {children}
                                                         </a>
+                                                    ),
+                                                    ol: ({ children }) => (
+                                                        <ol className="list-decimal list-inside space-y-3 my-2">
+                                                            {children}
+                                                        </ol>
+                                                    ),
+                                                    ul: ({ children }) => (
+                                                        <ul className="list-disc list-inside space-y-3 my-2">
+                                                            {children}
+                                                        </ul>
+                                                    ),
+                                                    li: ({ children }) => (
+                                                        <li className="text-sm leading-relaxed">
+                                                            {children}
+                                                        </li>
+                                                    ),
+                                                    p: ({ children }) => (
+                                                        <p className="text-sm mb-2">
+                                                            {children}
+                                                        </p>
                                                     ),
                                                 }}
                                             >

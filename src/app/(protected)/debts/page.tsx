@@ -47,7 +47,7 @@ export default function DebtsPage() {
     useEffect(() => { loadDebts(); }, [loadDebts]);
 
     const handleMarkPaid = async (id: number, status: "paid" | "unpaid", debt?: Debt) => {
-        if (status === "paid" && debt && debt.direction === "owed") {
+        if (status === "paid" && debt && (debt.direction === "owed" || debt.direction === "owe")) {
             setSettleDialog({ debt });
             return;
         }
@@ -69,16 +69,20 @@ export default function DebtsPage() {
         }
     };
 
-    const handleSettle = async (createTx: boolean) => {
+    const handleSettle = async (createTx: boolean, payFromBalance?: boolean) => {
         if (!settleDialog) return;
         try {
             const res = await apiFetch("/api/debts/settle", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ debtId: settleDialog.debt.id, createTx }),
+                body: JSON.stringify({ debtId: settleDialog.debt.id, createTx, payFromBalance }),
             });
             if (res.ok) {
-                toast.success("Lunas!", createTx ? "Saldo bertambah sesuai piutang" : "Ditandai lunas");
+                if (settleDialog.debt.direction === "owe") {
+                    toast.success("Lunas!", createTx && payFromBalance ? "Saldo berkurang sesuai hutang" : "Ditandai lunas");
+                } else {
+                    toast.success("Lunas!", createTx ? "Saldo bertambah sesuai piutang" : "Ditandai lunas");
+                }
             } else {
                 toast.error("Gagal", "Gagal memproses pelunasan");
             }
@@ -426,31 +430,65 @@ export default function DebtsPage() {
                                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                                 className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[999999] bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl max-w-[500px] mx-auto"
                             >
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
-                                    <TrendingUp size={24} className="text-emerald-500" />
-                                </div>
-                                <h3 className="text-lg font-black text-foreground mb-1">Piutang Lunas! 🎉</h3>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                    <strong>{settleDialog.debt.debtorName}</strong> telah membayar{" "}
-                                    <strong className="text-emerald-600">{formatCurrency(settleDialog.debt.amount)}</strong>
-                                </p>
-                                <p className="text-sm text-muted-foreground mb-6">
-                                    Apakah kamu ingin menambahkan dana ini ke saldo utama sebagai transaksi <em>pemasukan</em>?
-                                </p>
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={() => handleSettle(true)}
-                                        className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
-                                    >
-                                        Ya, Tambah ke Saldo
-                                    </button>
-                                    <button
-                                        onClick={() => handleSettle(false)}
-                                        className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95"
-                                    >
-                                        Tandai Lunas Saja
-                                    </button>
-                                </div>
+                                {settleDialog.debt.direction === "owe" ? (
+                                    // Hutang dialog
+                                    <>
+                                        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center mb-4">
+                                            <TrendingDown size={24} className="text-rose-500" />
+                                        </div>
+                                        <h3 className="text-lg font-black text-foreground mb-1">Bayar Hutang</h3>
+                                        <p className="text-sm text-muted-foreground mb-2">
+                                            Kamu akan membayar hutang ke <strong>{settleDialog.debt.debtorName}</strong> sebesar{" "}
+                                            <strong className="text-rose-600">{formatCurrency(settleDialog.debt.amount)}</strong>
+                                        </p>
+                                        <p className="text-sm text-muted-foreground mb-6">
+                                            Apakah kamu ingin memotong saldo utama untuk membayar hutang ini?
+                                        </p>
+                                        <div className="flex flex-col gap-3">
+                                            <button
+                                                onClick={() => handleSettle(true, true)}
+                                                className="w-full py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm shadow-lg shadow-rose-500/30 transition-all active:scale-95"
+                                            >
+                                                Bayar &amp; Potong Saldo
+                                            </button>
+                                            <button
+                                                onClick={() => handleSettle(true, false)}
+                                                className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95"
+                                            >
+                                                Tandai Lunas Saja
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    // Piutang dialog
+                                    <>
+                                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+                                            <TrendingUp size={24} className="text-emerald-500" />
+                                        </div>
+                                        <h3 className="text-lg font-black text-foreground mb-1">Piutang Lunas! 🎉</h3>
+                                        <p className="text-sm text-muted-foreground mb-2">
+                                            <strong>{settleDialog.debt.debtorName}</strong> telah membayar{" "}
+                                            <strong className="text-emerald-600">{formatCurrency(settleDialog.debt.amount)}</strong>
+                                        </p>
+                                        <p className="text-sm text-muted-foreground mb-6">
+                                            Apakah kamu ingin menambahkan dana ini ke saldo utama sebagai transaksi <em>pemasukan</em>?
+                                        </p>
+                                        <div className="flex flex-col gap-3">
+                                            <button
+                                                onClick={() => handleSettle(true)}
+                                                className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
+                                            >
+                                                Ya, Tambah ke Saldo
+                                            </button>
+                                            <button
+                                                onClick={() => handleSettle(false)}
+                                                className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95"
+                                            >
+                                                Tandai Lunas Saja
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </motion.div>
                         </>
                     )}

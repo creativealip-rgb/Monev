@@ -7,6 +7,7 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useToast } from "@/frontend/components/UI";
+import { AccountIcon } from "@/frontend/components/AccountIcon";
 import { Bill } from "@/types";
 
 interface PayBillModalProps {
@@ -175,7 +176,7 @@ export function PayBillModal({ isOpen, onClose, bill, paidAmount = 0, onSuccess 
                                                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                                                 style={{ backgroundColor: account.color + "20" }}
                                             >
-                                                <span style={{ color: account.color }}>{account.icon}</span>
+                                                <AccountIcon name={account.icon} color={account.color} size={20} />
                                             </div>
                                             <div className="flex-1 text-left">
                                                 <p className="font-medium text-sm">{account.name}</p>

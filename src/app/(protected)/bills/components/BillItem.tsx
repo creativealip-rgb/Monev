@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil, DollarSign } from "lucide-react";
+import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil, Banknote } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
@@ -42,7 +41,6 @@ export interface BillItemProps {
     onPay?: (bill: Bill) => void;
     isStealthMode: boolean;
     t: (key: string) => string;
-    showReminder?: boolean;
 }
 
 export function BillItem({
@@ -55,15 +53,11 @@ export function BillItem({
     onPay,
     isStealthMode,
     t,
-    showReminder = false,
 }: BillItemProps) {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-
-    const status = getStatusInfo(bill, t);
     const today = new Date().getDate();
     const daysLeft = bill.dueDate - today;
     const isOverdue = daysLeft < 0 && !bill.isPaid;
+    const frequency = bill.frequency === "monthly" ? t("bills.frequency.monthly") : bill.frequency === "weekly" ? t("bills.frequency.weekly") : t("bills.frequency.yearly");
 
     return (
         <motion.div
@@ -73,142 +67,118 @@ export function BillItem({
             transition={{ duration: 0.4, delay: index * 0.06 }}
             whileHover={{ scale: 1.02 }}
             className={cn(
-                "card-clean p-5 group relative cursor-pointer transition-all",
+                "card-clean p-5 cursor-pointer transition-all",
                 bill.isPaid
                     ? "bg-emerald-50/30 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50"
                     : "hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20"
             )}
         >
-            <div className="flex items-center gap-3 mb-3">
-                <button
-                    onClick={(e) => onToggle(bill.id, e)}
-                    className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-all",
-                        bill.isPaid
-                            ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-900/30"
-                    )}
-                    style={!bill.isPaid ? { backgroundColor: bill.color + "20" } : {}}
-                >
-                    {bill.isPaid ? (
-                        <Check size={20} strokeWidth={3} />
-                    ) : (
-                        <BillIcon name={bill.icon} color={bill.color} size={18} />
-                    )}
-                </button>
-                <div className="flex-1">
-                    <span className={cn(
-                        "font-bold text-foreground text-[13px] block transition-all",
-                        bill.isPaid ? "text-muted-foreground line-through" : ""
-                    )}>
-                        {bill.name}
-                    </span>
-                    <p className="text-xs text-muted-foreground tabular-nums">
-                        {bill.frequency === "monthly" ? t("bills.frequency.monthly") : bill.frequency === "weekly" ? t("bills.frequency.weekly") : t("bills.frequency.yearly")}
-                    </p>
+            <div className="flex items-start justify-between gap-3">
+                {/* Left - Icon and details */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <button
+                        onClick={(e) => onToggle(bill.id, e)}
+                        className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-all",
+                            bill.isPaid
+                                ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
+                                : "bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-900/30"
+                        )}
+                        style={!bill.isPaid ? { backgroundColor: bill.color + "20" } : {}}
+                    >
+                        {bill.isPaid ? (
+                            <Check size={20} strokeWidth={3} />
+                        ) : (
+                            <BillIcon name={bill.icon} color={bill.color} size={18} />
+                        )}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                        <p className={cn(
+                            "font-bold text-sm text-foreground truncate",
+                            bill.isPaid ? "text-muted-foreground line-through" : ""
+                        )}>
+                            {bill.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{frequency}</p>
+                        <span className={cn(
+                            "text-sm font-bold tabular-nums",
+                            bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600"
+                        )}>
+                            {isStealthMode ? "******" : formatCurrency(bill.amount)}
+                        </span>
+                    </div>
                 </div>
-                <div className="text-right pr-2">
-                    <span className={cn(
-                        "font-bold text-[13px] block tabular-nums",
-                        bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
-                    )}>
-                        {isStealthMode ? "******" : formatCurrency(bill.amount)}
-                    </span>
-                    <span className={cn(
-                        "text-[10px] tabular-nums",
-                        isOverdue ? "text-rose-500 font-semibold" : "text-muted-foreground"
-                    )}>
-                        {!mounted ? "..." : status.label}
-                    </span>
+
+                {/* Right - Action buttons */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    {!bill.isPaid && onPay && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPay(bill);
+                            }}
+                            className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 flex items-center justify-center transition-colors"
+                            title="Bayar"
+                        >
+                            <Banknote size={16} className="text-emerald-600" />
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onShowHistory(bill);
+                        }}
+                        className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
+                        title={t("bills.history")}
+                    >
+                        <History size={14} className="text-sky-500" />
+                    </button>
+                    {onEdit && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(bill);
+                            }}
+                            className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
+                            title="Edit"
+                        >
+                            <Pencil size={14} className="text-sky-500" />
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(bill.id);
+                        }}
+                        className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center transition-colors"
+                        title={t("bills.deleteBill")}
+                    >
+                        <Trash2 size={14} className="text-red-500" />
+                    </button>
                 </div>
             </div>
 
-            {/* Reminder badge */}
-            {showReminder && !bill.isPaid && (
+            {/* Due date info - always show for unpaid bills */}
+            {!bill.isPaid && (
                 <div className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold mb-2 w-fit",
-                    isOverdue
-                        ? "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                        : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                    "flex items-center gap-1.5 text-[10px] font-medium mt-3",
+                    isOverdue ? "text-rose-500" : daysLeft <= 3 ? "text-amber-500" : "text-slate-400"
                 )}>
                     <Clock size={10} />
                     {isOverdue
-                        ? "Sudah lewat jatuh tempo!"
+                        ? `Terlambat ${Math.abs(daysLeft)} hari`
                         : daysLeft === 0
-                            ? "Jatuh tempo hari ini!"
-                            : `Jatuh tempo dalam ${daysLeft} hari`
+                            ? "Jatuh tempo hari ini"
+                            : `${daysLeft} hari lagi`
                     }
                 </div>
             )}
 
-            {/* Days remaining bar */}
-            {!bill.isPaid && (
-                <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.max(0, Math.min(100, (daysLeft / 30) * 100))}%` }}
-                        transition={{ duration: 1, delay: index * 0.1 }}
-                        className={cn(
-                            "h-full rounded-full",
-                            isOverdue ? "bg-rose-500" : daysLeft <= 3 ? "bg-amber-500" : "bg-sky-500"
-                        )}
-                    />
-                </div>
-            )}
-
             {bill.isPaid && (
-                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
+                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-3 flex items-center gap-1">
                     <Check size={12} /> {t("bills.paid")}
                 </p>
             )}
-
-            {/* Actions - positioned absolute top-right */}
-            <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                {!bill.isPaid && onPay && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onPay(bill);
-                        }}
-                        className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 flex items-center justify-center transition-colors"
-                        title="Bayar"
-                    >
-                        <DollarSign size={14} />
-                    </button>
-                )}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onShowHistory(bill);
-                    }}
-                    className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
-                    title={t("bills.history")}
-                >
-                    <History size={14} />
-                </button>
-                {onEdit && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(bill);
-                        }}
-                        className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/50 flex items-center justify-center transition-colors"
-                        title="Edit"
-                    >
-                        <Pencil size={14} />
-                    </button>
-                )}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(bill.id);
-                    }}
-                    className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 flex items-center justify-center transition-colors"
-                    title={t("bills.deleteBill")}
-                >
-                    <Trash2 size={14} />
-                </button>
-            </div>
         </motion.div>
     );
 }

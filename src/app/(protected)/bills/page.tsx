@@ -1,22 +1,21 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell, Clock, X, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell } from "lucide-react";
 import { BillHistoryModal } from "@/frontend/components/DetailModalsVerified";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
-import { Portal } from "@/frontend/components/Portal";
 import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier } from "@/lib/tier-gate";
 import { useI18n } from "@/frontend/lib/i18n-context";
-import { BillItem } from "./components/BillItem";
-import { PayBillModal } from "@/frontend/components/PayBillModal";
+import { BillItem, PayBillSheet, AddBillSheet } from "./components";
+import { shouldResetBill, getResetMessage } from "@/lib/bill-reset";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -36,35 +35,27 @@ export default function BillsPage() {
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all");
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [showAddSheet, setShowAddSheet] = useState(false);
     const { isStealthMode } = useSecurity();
     const toast = useToast();
     const { data: session } = useSession();
     const userTier: UserTier = session?.user?.tier || "starter";
-    // Form state
-    const [formName, setFormName] = useState("");
-    const [formAmount, setFormAmount] = useState("");
-    const [formDueDate, setFormDueDate] = useState("1");
-    const [formFrequency, setFormFrequency] = useState<"monthly" | "weekly" | "yearly">("monthly");
-    const [formIcon, setFormIcon] = useState("Receipt");
-    const [formColor, setFormColor] = useState("#6366f1");
-    const [formNotes, setFormNotes] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [selectedBillHistory, setSelectedBillHistory] = useState<Bill | null>(null);
 
-    // Pay bill modal state
-    const [isPayModalOpen, setIsPayModalOpen] = useState(false);
-    const [selectedBillToPay, setSelectedBillToPay] = useState<Bill | null>(null);
+    // Pay bill sheet state
+    const [payBill, setPayBill] = useState<Bill | null>(null);
     const [billPaymentsMap, setBillPaymentsMap] = useState<Record<number, number>>({});
+
+    // Add/Edit bill state
+    const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
     // View mode
     const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-    const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
     const filteredBills = useMemo(() => {
         let filtered = bills;
@@ -188,6 +179,30 @@ export default function BillsPage() {
         }
     }
 
+    // Auto-reset bills on page load
+    const autoResetBills = async () => {
+        try {
+            const res = await apiFetch("/api/bills/reset", { method: "POST" });
+            const data = await res.json();
+            if (data.success && data.resetCount > 0) {
+                toast.info(
+                    "Tagihan Diperbarui",
+                    `${data.resetCount} tagihan telah direset untuk periode baru`
+                );
+                await loadBills();
+            }
+        } catch (error) {
+            console.error("Auto-reset error:", error);
+        }
+    };
+
+    // Run auto-reset when bills are loaded
+    useEffect(() => {
+        if (!loading && bills.length > 0) {
+            autoResetBills();
+        }
+    }, [loading]);
+
     async function loadBillPayments() {
         try {
             const paymentsMap: Record<number, number> = {};
@@ -253,86 +268,6 @@ export default function BillsPage() {
         }
     }
 
-    async function handleSaveBill() {
-        if (!formName || !formAmount) return;
-        setIsSubmitting(true);
-        try {
-            let res;
-            const body = {
-                name: formName,
-                amount: Number(formAmount),
-                dueDate: Number(formDueDate),
-                frequency: formFrequency,
-                icon: formIcon,
-                color: formColor,
-                notes: formNotes || undefined,
-            };
-
-            if (editingBill) {
-                res = await apiFetch(`/api/bills/${editingBill.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body),
-                });
-            } else {
-                res = await apiFetch("/api/bills", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body),
-                });
-            }
-            const result = await res.json();
-            if (result.success) {
-                await loadBills();
-                setIsAddModalOpen(false);
-                resetForm();
-                toast.success(editingBill ? t("bills.billUpdated") : t("bills.billAdded"));
-            } else {
-                toast.error(t("bills.failedSave"), result.error || t("bills.networkError"));
-            }
-        } catch (error) {
-            console.error("Error saving bill:", error);
-            toast.error(t("bills.failedSave"), t("bills.networkError"));
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    function resetForm() {
-        setFormName("");
-        setFormAmount("");
-        setFormDueDate("1");
-        setFormFrequency("monthly");
-        setFormIcon("Receipt");
-        setFormColor("#6366f1");
-        setFormNotes("");
-        setEditingBill(null);
-    }
-
-    function populateEditForm(bill: Bill) {
-        setEditingBill(bill);
-        setFormName(bill.name);
-        setFormAmount(bill.amount.toString());
-        setFormDueDate(bill.dueDate.toString());
-        setFormFrequency(bill.frequency || "monthly");
-        setFormIcon(bill.icon || "Receipt");
-        setFormColor(bill.color || "#6366f1");
-        setFormNotes(bill.notes || "");
-        setIsAddModalOpen(true);
-    }
-
-    const iconOptions = [
-        { name: "Receipt", label: t("bills.title") },
-        { name: "Zap", label: t("bills.bills") },
-        { name: "Wifi", label: t("bills.internet") },
-        { name: "Tv", label: t("bills.streaming") },
-        { name: "Music", label: t("bills.music") },
-        { name: "Heart", label: t("bills.health") },
-        { name: "Bike", label: t("bills.vehicle") },
-    ];
-
-    const colorOptions = ["#6366f1", "#3b82f6", "#ef4444", "#f59e0b", "#22c55e", "#ec4899", "#8b5cf6", "#06b6d4"];
-
     const tabs = [
         { id: "all" as const, label: t("bills.all"), count: bills.length },
         { id: "unpaid" as const, label: t("bills.unpaid"), count: bills.length - paidCount },
@@ -381,7 +316,7 @@ export default function BillsPage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => setIsAddModalOpen(true)}
+                        onClick={() => setShowAddSheet(true)}
                         className="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 active:scale-95 transition-all"
                     >
                         <Plus size={24} strokeWidth={2.5} />
@@ -693,7 +628,7 @@ export default function BillsPage() {
                                 </div>
                             ) : filteredBills.length === 0 ? (
                                 activeTab === "all" ? (
-                                    <NoBillsEmpty onAddNew={() => setIsAddModalOpen(true)} />
+                                    <NoBillsEmpty onAddNew={() => setShowAddSheet(true)} />
                                 ) : (
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
@@ -726,14 +661,10 @@ export default function BillsPage() {
                                                     setSelectedBillHistory(b);
                                                     setIsHistoryModalOpen(true);
                                                 }}
-                                                onEdit={(b) => populateEditForm(b)}
-                                                onPay={(b) => {
-                                                    setSelectedBillToPay(b);
-                                                    setIsPayModalOpen(true);
-                                                }}
+                                                onEdit={(b) => setEditingBill(b)}
+                                                onPay={(b) => setPayBill(b)}
                                                 isStealthMode={isStealthMode}
                                                 t={t}
-                                                showReminder={needsReminder}
                                             />
                                         );
                                     })}
@@ -750,157 +681,19 @@ export default function BillsPage() {
                 bill={selectedBillHistory}
             />
 
-            <PayBillModal
-                isOpen={isPayModalOpen}
-                onClose={() => setIsPayModalOpen(false)}
-                bill={selectedBillToPay}
-                paidAmount={selectedBillToPay ? billPaymentsMap[selectedBillToPay.id] || 0 : 0}
+            <PayBillSheet
+                bill={payBill}
+                paidAmount={payBill ? billPaymentsMap[payBill.id] || 0 : 0}
+                onClose={() => setPayBill(null)}
                 onSuccess={loadBills}
             />
 
-            {/* Add Bill Modal */}
-            <Portal>
-                <AnimatePresence>
-                    {isAddModalOpen && (
-                        <>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => { setIsAddModalOpen(false); resetForm(); }}
-                                className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999998]"
-                            />
-                            <motion.div
-                                initial={{ y: "100%" }}
-                                animate={{ y: 0 }}
-                                exit={{ y: "100%" }}
-                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                className="fixed bottom-0 left-0 right-0 z-[999999] bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl max-w-[500px] mx-auto"
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-foreground">{editingBill ? "Edit Tagihan" : "Tambah Tagihan"}</h2>
-                                    <button
-                                        onClick={() => { setIsAddModalOpen(false); resetForm(); }}
-                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Tagihan</label>
-                                        <input
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
-                                            placeholder="Listrik, Internet, Netflix..."
-                                            value={formName}
-                                            onChange={e => setFormName(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
-                                        <input
-                                            type="number"
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
-                                            placeholder="0"
-                                            value={formAmount}
-                                            onChange={e => setFormAmount(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Tanggal Jatuh Tempo</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="31"
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
-                                                value={formDueDate}
-                                                onChange={e => setFormDueDate(e.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Frekuensi</label>
-                                            <select
-                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
-                                                value={formFrequency}
-                                                onChange={e => setFormFrequency(e.target.value as "monthly" | "weekly" | "yearly")}
-                                            >
-                                                <option value="monthly">Bulanan</option>
-                                                <option value="weekly">Mingguan</option>
-                                                <option value="yearly">Tahunan</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Ikon</label>
-                                        <div className="flex gap-2 flex-wrap">
-                                            {iconOptions.map(opt => (
-                                                <button
-                                                    key={opt.name}
-                                                    onClick={() => setFormIcon(opt.name)}
-                                                    className={cn(
-                                                        "px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all",
-                                                        formIcon === opt.name
-                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/50 text-sky-600"
-                                                            : "border-slate-100 dark:border-slate-700 text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {opt.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Warna</label>
-                                        <div className="flex gap-3">
-                                            {colorOptions.map(c => (
-                                                <button
-                                                    key={c}
-                                                    onClick={() => setFormColor(c)}
-                                                    className={cn(
-                                                        "w-8 h-8 rounded-full transition-all flex-shrink-0",
-                                                        formColor === c ? "ring-2 ring-offset-2 ring-sky-500 scale-110 dark:ring-offset-slate-900" : ""
-                                                    )}
-                                                    style={{ backgroundColor: c }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">
-                                            Catatan <span className="normal-case font-medium text-muted-foreground">(opsional)</span>
-                                        </label>
-                                        <input
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
-                                            placeholder="Catatan tambahan..."
-                                            value={formNotes}
-                                            onChange={e => setFormNotes(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <button
-                                        onClick={handleSaveBill}
-                                        disabled={isSubmitting || !formName || !formAmount}
-                                        className={cn(
-                                            "w-full py-4 rounded-xl font-bold text-white text-sm mt-2 transition-all",
-                                            "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20",
-                                            (isSubmitting || !formName || !formAmount) && "opacity-50 cursor-not-allowed"
-                                        )}
-                                    >
-                                        {isSubmitting ? t("bills.saving") : t("bills.saveBill")}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-            </Portal>
+            <AddBillSheet
+                isOpen={showAddSheet || !!editingBill}
+                onClose={() => { setShowAddSheet(false); setEditingBill(null); }}
+                onSuccess={() => { loadBills(); setEditingBill(null); }}
+                editingBill={editingBill}
+            />
 
             <ConfirmDialog
                 isOpen={!!confirmDeleteId}

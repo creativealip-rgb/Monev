@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Wallet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -21,6 +21,8 @@ export function PartialPaymentSheet({
 }) {
     const [paymentAmount, setPaymentAmount] = useState("");
     const [loading, setLoading] = useState(false);
+    const [payFromBalance, setPayFromBalance] = useState(false);
+    const [balance, setBalance] = useState(0);
     const toast = useToast();
 
     const { originalAmount, remainingAmount } = debt
@@ -30,9 +32,28 @@ export function PartialPaymentSheet({
     const parsedAmount = parseFloat(paymentAmount) || 0;
     const isValid = parsedAmount > 0 && parsedAmount <= remainingAmount;
     const isFullPayment = parsedAmount === remainingAmount;
+    const isOwe = debt?.direction === "owe";
+    const hasEnoughBalance = balance >= parsedAmount;
+
+    useEffect(() => {
+        if (debt && isOwe) {
+            apiFetch("/api/balance")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && typeof data.data === "number") {
+                        setBalance(data.data);
+                    }
+                })
+                .catch(console.error);
+        }
+    }, [debt, isOwe]);
 
     const handleSubmit = async () => {
         if (!debt || !isValid) return;
+        if (isOwe && payFromBalance && !hasEnoughBalance) {
+            toast.error("Saldo Tidak Cukup", "Saldo kamu tidak cukup untuk membayar hutang ini");
+            return;
+        }
         setLoading(true);
         try {
             const newRemaining = remainingAmount - parsedAmount;
@@ -49,6 +70,7 @@ export function PartialPaymentSheet({
                         status: "paid",
                         description: descWithOrig,
                         direction: debt.direction,
+                        payFromBalance: isOwe ? payFromBalance : false,
                     }),
                 });
                 const result = await res.json();
@@ -68,6 +90,8 @@ export function PartialPaymentSheet({
                         amount: newRemaining,
                         description: descWithOrig,
                         direction: debt.direction,
+                        payFromBalance: isOwe ? payFromBalance : false,
+                        paymentAmount: isOwe && payFromBalance ? parsedAmount : undefined,
                     }),
                 });
                 const result = await res.json();
@@ -81,6 +105,7 @@ export function PartialPaymentSheet({
                 );
             }
             setPaymentAmount("");
+            setPayFromBalance(false);
             onClose();
             onSuccess();
         } catch {
@@ -110,7 +135,9 @@ export function PartialPaymentSheet({
                             className="fixed bottom-0 left-0 right-0 z-[999999] bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl max-w-[500px] mx-auto"
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-foreground">Bayar Sebagian</h2>
+                                <h2 className="text-xl font-bold text-foreground">
+                                    {isOwe ? "Bayar Hutang" : "Catat Pembayaran Piutang"}
+                                </h2>
                                 <button
                                     onClick={onClose}
                                     className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -185,20 +212,59 @@ export function PartialPaymentSheet({
                                     })}
                                 </div>
 
+                                {isOwe && parsedAmount > 0 && (
+                                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                                    <Wallet size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-foreground">Bayar dari Saldo</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Saldo: {formatCurrency(balance)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setPayFromBalance(!payFromBalance)}
+                                                className={cn(
+                                                    "relative w-12 h-6 rounded-full transition-colors",
+                                                    payFromBalance ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
+                                                )}
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
+                                                        payFromBalance && "translate-x-6"
+                                                    )}
+                                                />
+                                            </button>
+                                        </div>
+                                        {payFromBalance && !hasEnoughBalance && (
+                                            <p className="text-xs text-red-500 mt-2">
+                                                Saldo tidak cukup untuk membayar
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading || !isValid}
+                                    disabled={loading || !isValid || (isOwe && payFromBalance && !hasEnoughBalance)}
                                     className={cn(
                                         "w-full py-4 rounded-xl font-bold text-white text-sm mt-2 transition-all",
                                         "bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/20",
-                                        (loading || !isValid) && "opacity-50 cursor-not-allowed"
+                                        (loading || !isValid || (isOwe && payFromBalance && !hasEnoughBalance)) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {loading
                                         ? "Memproses..."
-                                        : isFullPayment
-                                            ? "Bayar Lunas"
-                                            : `Bayar ${parsedAmount > 0 ? formatCurrency(parsedAmount) : ""}`}
+                                        : isOwe && payFromBalance
+                                            ? `Bayar dari Saldo ${parsedAmount > 0 ? formatCurrency(parsedAmount) : ""}`
+                                            : isFullPayment
+                                                ? "Bayar Lunas"
+                                                : `Bayar ${parsedAmount > 0 ? formatCurrency(parsedAmount) : ""}`}
                                 </button>
                             </div>
                         </motion.div>
