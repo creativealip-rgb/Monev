@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Bell } from "lucide-react";
+import { Check, Bell, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -20,12 +20,19 @@ export function NotificationsModal({ onClose }: NotificationsModalProps) {
         promoNews: false
     });
 
+    const [reportPrefs, setReportPrefs] = useState({
+        monthlyReportEmail: true,
+        monthlyReportTelegram: true,
+        weeklyInsightTelegram: false,
+        reportLocale: "auto" as "auto" | "id" | "en",
+    });
+
     const handleSave = async () => {
         try {
             const res = await apiFetch("/api/user/settings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ notifications: notifToggles }),
+                body: JSON.stringify({ notifications: notifToggles, reports: reportPrefs }),
             });
             if (res.ok) {
                 toast.success("Berhasil", "Preferensi notifikasi disimpan!");
@@ -80,6 +87,106 @@ export function NotificationsModal({ onClose }: NotificationsModalProps) {
                         </button>
                     </div>
                 ))}
+            </div>
+
+            {/* Report Preferences Section */}
+            <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-sky-100 dark:bg-sky-900/30 rounded-xl text-sky-600 dark:text-sky-400">
+                        <FileText size={20} />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">Laporan Keuangan</h4>
+                        <p className="text-[10px] text-slate-500 font-medium">Laporan bulanan dan mingguan</p>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    {/* Monthly Report Email */}
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">📧 Laporan Bulanan (Email)</p>
+                            <p className="text-[10px] text-slate-500 font-medium">PDF lengkap via email setiap bulan</p>
+                        </div>
+                        <button
+                            onClick={() => setReportPrefs(prev => ({ ...prev, monthlyReportEmail: !prev.monthlyReportEmail }))}
+                            className={cn(
+                                "relative w-11 h-6 rounded-full transition-colors duration-300",
+                                reportPrefs.monthlyReportEmail ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                            )}
+                        >
+                            <motion.div
+                                animate={{ x: reportPrefs.monthlyReportEmail ? 22 : 2 }}
+                                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                            />
+                        </button>
+                    </div>
+
+                    {/* Monthly Report Telegram */}
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">📱 Laporan Bulanan (Telegram)</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Summary via Telegram setiap bulan</p>
+                        </div>
+                        <button
+                            onClick={() => setReportPrefs(prev => ({ ...prev, monthlyReportTelegram: !prev.monthlyReportTelegram }))}
+                            className={cn(
+                                "relative w-11 h-6 rounded-full transition-colors duration-300",
+                                reportPrefs.monthlyReportTelegram ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                            )}
+                        >
+                            <motion.div
+                                animate={{ x: reportPrefs.monthlyReportTelegram ? 22 : 2 }}
+                                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                            />
+                        </button>
+                    </div>
+
+                    {/* Weekly Insight Telegram */}
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">💡 Insight Mingguan (Telegram)</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Tips & analisis setiap minggu</p>
+                        </div>
+                        <button
+                            onClick={() => setReportPrefs(prev => ({ ...prev, weeklyInsightTelegram: !prev.weeklyInsightTelegram }))}
+                            className={cn(
+                                "relative w-11 h-6 rounded-full transition-colors duration-300",
+                                reportPrefs.weeklyInsightTelegram ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
+                            )}
+                        >
+                            <motion.div
+                                animate={{ x: reportPrefs.weeklyInsightTelegram ? 22 : 2 }}
+                                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                            />
+                        </button>
+                    </div>
+
+                    {/* Language Selector */}
+                    <div className="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-2xl border border-sky-100 dark:border-sky-800">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm mb-3">Bahasa Laporan</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { value: "auto", label: "Auto" },
+                                { value: "id", label: "Indonesia" },
+                                { value: "en", label: "English" }
+                            ].map(opt => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setReportPrefs(prev => ({ ...prev, reportLocale: opt.value as any }))}
+                                    className={cn(
+                                        "py-2 px-3 rounded-xl text-xs font-bold transition-all",
+                                        reportPrefs.reportLocale === opt.value
+                                            ? "bg-sky-500 text-white shadow-md"
+                                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30"
+                                    )}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button

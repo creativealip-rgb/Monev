@@ -15,6 +15,13 @@
       "when": 1773296361341,
       "tag": "0001_serious_mockingbird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773300714471,
+      "tag": "0002_pink_gabe_jones",
+      "breakpoints": true
     }
   ]
 }
