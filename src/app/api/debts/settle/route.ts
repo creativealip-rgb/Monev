@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const userId = parseInt(session.user.id);
 
-    const { debtId, createTx } = await req.json();
+    const { debtId, createTx, payFromBalance, partialAmount } = await req.json();
     if (!debtId) return NextResponse.json({ error: "debtId required" }, { status: 400 });
 
     const db = getDb();
@@ -22,12 +22,21 @@ export async function POST(req: NextRequest) {
 
     if (!debt) return NextResponse.json({ error: "Debt not found" }, { status: 404 });
 
+    const direction = debt.description?.startsWith("[OWED]") ? "owed" : "owe";
+
     // Mark as paid
     await updateDebtStatus(userId, debtId, "paid");
 
+    // Handle paying from balance for hutang (direction=owe)
+    const paymentAmount = partialAmount && partialAmount > 0 ? partialAmount : debt.amount;
+
+    // createTransaction will automatically handle balance deduction when payFromBalance is true
+    if (direction === "owe" && payFromBalance) {
+        // No manual balance check needed - createTransaction handles insufficient balance
+    }
+
     // Optionally create a transaction to reflect in balance
     if (createTx) {
-        const direction = debt.description?.startsWith("[OWED]") ? "owed" : "owe";
         const cleanDescription = debt.description?.replace(/^\[(OWE|OWED)\]\s*/, "") || "";
 
         const categories = await getCategories();
@@ -37,7 +46,7 @@ export async function POST(req: NextRequest) {
         if (direction === "owed") {
             // Piutang diterima → income
             await createTransaction(userId, {
-                amount: debt.amount,
+                amount: paymentAmount,
                 description: `💸 Piutang diterima dari ${debt.debtorName}${cleanDescription ? ": " + cleanDescription : ""}`,
                 categoryId: lainnyaCategory?.id || 1,
                 type: "income",
@@ -46,7 +55,7 @@ export async function POST(req: NextRequest) {
         } else {
             // Hutang dibayar → expense
             await createTransaction(userId, {
-                amount: debt.amount,
+                amount: paymentAmount,
                 description: `💸 Bayar hutang ke ${debt.debtorName}${cleanDescription ? ": " + cleanDescription : ""}`,
                 categoryId: lainnyaCategory?.id || 1,
                 type: "expense",

@@ -21,9 +21,13 @@ interface Transaction {
     id: string;
     amount: number;
     description: string;
-    category: string;
+    categoryId?: number;
+    categoryName: string;
+    categoryColor?: string;
+    categoryIcon?: string;
     type: "expense" | "income";
     createdAt: string;
+    date?: Date;
     isVerified: boolean;
 }
 
@@ -248,25 +252,38 @@ export function useDashboardData() {
     const allTransactions = useMemo(() => {
         if (isDecoyMode) {
             return [
-                { id: "fake-1", amount: 50000, description: "Makan Siang", category: "Makan", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
-                { id: "fake-2", amount: 15000, description: "Parkir", category: "Transportasi", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
-                { id: "fake-3", amount: 2500000, description: "Gaji", category: "Gaji", type: "income", createdAt: new Date().toISOString(), isVerified: true },
+                { id: "fake-1", amount: 50000, description: "Makan Siang", categoryName: "Makan", categoryColor: "#f97316", categoryIcon: "Utensils", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
+                { id: "fake-2", amount: 15000, description: "Parkir", categoryName: "Transportasi", categoryColor: "#3b82f6", categoryIcon: "Car", type: "expense", createdAt: new Date().toISOString(), isVerified: true },
+                { id: "fake-3", amount: 2500000, description: "Gaji", categoryName: "Gaji", categoryColor: "#10b981", categoryIcon: "Briefcase", type: "income", createdAt: new Date().toISOString(), isVerified: true },
             ];
         }
-        const mappedServer = serverTransactions.map(t => ({
-            id: t.id.toString(),
-            amount: t.amount,
-            description: t.description,
-            category: categories.find(c => c.id === t.categoryId)?.name || "Lainnya",
-            type: t.type,
-            createdAt: t.date,
-            isVerified: t.isVerified,
-        }));
+        const mappedServer = serverTransactions.map(t => {
+            const cat = categories.find(c => c.id === t.categoryId);
+            return {
+                id: t.id.toString(),
+                amount: t.amount,
+                description: t.description,
+                categoryId: t.categoryId,
+                categoryName: cat?.name || "Lainnya",
+                categoryColor: cat?.color || "#64748b",
+                categoryIcon: cat?.icon || "CreditCard",
+                type: t.type,
+                createdAt: t.date,
+                date: new Date(t.date),
+                isVerified: t.isVerified,
+            };
+        });
 
-        const mappedOffline = offlineTrans.map(t => ({
-            ...t,
-            category: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
-        }));
+        const mappedOffline = offlineTrans.map(t => {
+            const cat = categories.find(c => c.id === Number(t.categoryId));
+            return {
+                ...t,
+                categoryId: Number(t.categoryId),
+                categoryName: cat?.name || "Lainnya",
+                categoryColor: cat?.color || "#64748b",
+                categoryIcon: cat?.icon || "CreditCard",
+            };
+        });
 
         return [...mappedOffline, ...mappedServer];
     }, [serverTransactions, offlineTrans, categories, isDecoyMode]);

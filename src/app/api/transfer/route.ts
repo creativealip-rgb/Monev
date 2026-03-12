@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         const userId = parseInt(session.user.id);
 
         const body = await request.json();
-        const { action, amount, type, id, description } = body;
+        const { action, amount, type, id, description, accountId } = body;
 
         if (!amount || amount <= 0) {
             return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
@@ -21,6 +21,10 @@ export async function POST(request: Request) {
 
         if (!action || !type || !id) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        if (type === "bill" && !accountId) {
+            return NextResponse.json({ error: "Account ID required for bill payment" }, { status: 400 });
         }
 
         let result;
@@ -33,7 +37,7 @@ export async function POST(request: Request) {
             } else if (type === "investment") {
                 result = await transferToInvestment(userId, id, amount, description);
             } else if (type === "bill") {
-                result = await payBill(userId, id, amount, description);
+                result = await payBill(userId, id, { accountId, amount, notes: description });
             } else {
                 return NextResponse.json({ error: "Invalid transfer type" }, { status: 400 });
             }
