@@ -6,12 +6,12 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 
 interface TransferModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
-    currentBalance: number;
 }
 
 interface Destination {
@@ -40,7 +40,7 @@ const withdrawTabs = [
     { id: "investment", label: "Investasi", icon: TrendingUp },
 ];
 
-export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: TransferModalProps) {
+export function TransferModal({ isOpen, onClose, onSuccess }: TransferModalProps) {
     const [mode, setMode] = useState<"transfer" | "withdraw">("transfer");
     const [activeTab, setActiveTab] = useState("goal");
     const [destinations, setDestinations] = useState<{
@@ -58,12 +58,15 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [sourceAccountId, setSourceAccountId] = useState<number | null>(null);
+    const [targetAccountId, setTargetAccountId] = useState<number | null>(null);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
     const tabs = mode === "transfer" ? transferTabs : withdrawTabs;
+    const { accounts, isLoading: accountsLoading } = useAccountsData();
 
     useEffect(() => {
         if (isOpen) {
@@ -81,26 +84,45 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
         setSelectedDestination(null);
         setAmount("");
         setDescription("");
+        setSourceAccountId(null);
+        setTargetAccountId(null);
     }, [isOpen, mode]);
 
+    const [error, setError] = useState<string | null>(null);
+
     const handleSubmit = async () => {
+        setError(null);
+        
         if (!selectedDestination || !amount || parseFloat(amount) <= 0) return;
 
         const numAmount = parseFloat(amount);
 
         // Validation
-        if (mode === "transfer" && numAmount > currentBalance) {
-            alert("Saldo tidak cukup");
+        if (mode === "transfer") {
+            const selectedAccount = accounts.find(a => a.id === sourceAccountId);
+            if (!selectedAccount || numAmount > selectedAccount.balance) {
+                setError("Saldo tidak cukup");
+                return;
+            }
+        }
+
+        if (mode === "transfer" && !sourceAccountId) {
+            setError("Pilih akun sumber dana");
+            return;
+        }
+
+        if (mode === "withdraw" && !targetAccountId) {
+            setError("Pilih akun tujuan dana");
             return;
         }
 
         if (mode === "withdraw") {
             if (activeTab === "goal" && selectedDestination.currentAmount && numAmount > selectedDestination.currentAmount) {
-                alert("Jumlah melebihi saldo tabungan");
+                setError("Jumlah melebihi saldo tabungan");
                 return;
             }
             if (activeTab === "investment" && selectedDestination.currentValue && numAmount > selectedDestination.currentValue) {
-                alert("Jumlah melebihi nilai investasi");
+                setError("Jumlah melebihi nilai investasi");
                 return;
             }
         }
@@ -116,6 +138,8 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                     type: activeTab,
                     id: selectedDestination.id,
                     description: description || undefined,
+                    accountId: mode === "transfer" ? sourceAccountId : undefined,
+                    targetAccountId: mode === "withdraw" ? targetAccountId : undefined,
                 }),
             });
 
@@ -124,11 +148,11 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                 onSuccess?.();
                 onClose();
             } else {
-                alert(data.error || "Operasi gagal");
+                setError(data.error || "Operasi gagal");
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("Operasi gagal");
+            setError("Operasi gagal");
         } finally {
             setLoading(false);
         }
@@ -141,7 +165,10 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
     };
 
     const getMaxAmount = () => {
-        if (mode === "transfer") return currentBalance;
+        if (mode === "transfer") {
+            const selectedAccount = accounts.find(a => a.id === sourceAccountId);
+            return selectedAccount?.balance || 0;
+        }
         if (!selectedDestination) return 0;
         if (activeTab === "goal") return selectedDestination.currentAmount || 0;
         if (activeTab === "investment") return selectedDestination.currentValue || 0;
@@ -159,14 +186,20 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
     };
 
     const getBalanceLabel = () => {
-        if (mode === "transfer") return "Saldo Aktif";
+        if (mode === "transfer") {
+            const selectedAccount = accounts.find(a => a.id === sourceAccountId);
+            return selectedAccount ? selectedAccount.name : "Sumber Dana";
+        }
         if (activeTab === "goal") return "Saldo Tabungan";
         if (activeTab === "investment") return "Nilai Investasi";
         return "";
     };
 
     const getBalanceValue = () => {
-        if (mode === "transfer") return currentBalance;
+        if (mode === "transfer") {
+            const selectedAccount = accounts.find(a => a.id === sourceAccountId);
+            return selectedAccount?.balance || 0;
+        }
         if (!selectedDestination) return 0;
         if (activeTab === "goal") return selectedDestination.currentAmount || 0;
         if (activeTab === "investment") return selectedDestination.currentValue || 0;
@@ -384,6 +417,50 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                                             </div>
                                         )}
 
+                                        {/* Account Selection - Sumber Dana / Tujuan Dana */}
+                                        {(mode === "transfer" || mode === "withdraw") && (
+                                            <section className="space-y-3">
+                                                <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                                    {mode === "transfer" ? "Sumber Dana" : "Tujuan Dana"}
+                                                </p>
+                                                {accountsLoading ? (
+                                                    <div className="flex gap-3 overflow-x-auto pb-2">
+                                                        {[1, 2, 3].map((i) => (
+                                                            <div key={i} className="w-32 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                                                        ))}
+                                                    </div>
+                                                ) : accounts.length === 0 ? (
+                                                    <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
+                                                        Belum ada akun. Tambahkan akun terlebih dahulu.
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                                        {accounts.map((acc) => {
+                                                            const isSelected = mode === "transfer" ? sourceAccountId === acc.id : targetAccountId === acc.id;
+                                                            return (
+                                                                <button
+                                                                    key={acc.id}
+                                                                    onClick={() => mode === "transfer" ? setSourceAccountId(acc.id) : setTargetAccountId(acc.id)}
+                                                                    className={`flex-shrink-0 w-36 p-3 rounded-xl border-2 transition-all text-left ${
+                                                                        isSelected
+                                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20 dark:border-sky-400"
+                                                                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-sky-300 dark:hover:border-sky-600"
+                                                                    }`}
+                                                                >
+                                                                    <p className={`font-bold text-sm ${isSelected ? "text-sky-600 dark:text-sky-400" : "text-slate-900 dark:text-white"}`}>
+                                                                        {acc.name}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                                                        {formatCurrency(acc.balance)}
+                                                                    </p>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </section>
+                                        )}
+
                                         <div>
                                             <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">Keterangan (opsional)</label>
                                             <input
@@ -397,10 +474,10 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
 
                                         <button
                                             onClick={handleSubmit}
-                                            disabled={loading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > getMaxAmount()}
+                                            disabled={loading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > getMaxAmount() || (mode === "transfer" && !sourceAccountId) || (mode === "withdraw" && !targetAccountId)}
                                             className={cn(
                                                 "w-full py-3 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2",
-                                                loading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > getMaxAmount()
+                                                loading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > getMaxAmount() || (mode === "transfer" && !sourceAccountId) || (mode === "withdraw" && !targetAccountId)
                                                     ? "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
                                                     : mode === "transfer" ? "bg-sky-500 hover:bg-sky-600" : "bg-emerald-500 hover:bg-emerald-600"
                                             )}
@@ -417,9 +494,9 @@ export function TransferModal({ isOpen, onClose, onSuccess, currentBalance }: Tr
                                             )}
                                         </button>
 
-                                        {amount && parseFloat(amount) > getMaxAmount() && (
+                                        {error && (
                                             <p className="text-xs text-red-500 dark:text-red-400 text-center">
-                                                {mode === "transfer" ? "Saldo tidak cukup" : "Jumlah melebihi dana tersedia"}
+                                                {error}
                                             </p>
                                         )}
                                     </div>

@@ -91,3 +91,26 @@ export function formatCurrency(amount: number): string {
         maximumFractionDigits: config.minFrac,
     }).format(convertedAmount);
 }
+
+/**
+ * Payment method configuration for display
+ */
+export const PAYMENT_METHODS: Record<string, { label: string; icon: string }> = {
+    cash: { label: "Tunai", icon: "Banknote" },
+    transfer: { label: "Transfer Bank", icon: "Landmark" },
+    gopay: { label: "GoPay", icon: "Wallet" },
+    credit_card: { label: "Kartu Kredit", icon: "CreditCard" },
+    qris: { label: "QRIS", icon: "QrCode" },
+    dana: { label: "DANA", icon: "Wallet" },
+    ovo: { label: "OVO", icon: "Wallet" },
+    shopeepay: { label: "ShopeePay", icon: "Wallet" },
+};
+
+/**
+ * Get payment method display info
+ * @param method - Payment method code (e.g., "cash", "transfer")
+ * @returns Object with label and icon name
+ */
+export function getPaymentMethod(method: string | null | undefined): { label: string; icon: string } {
+    return PAYMENT_METHODS[method || "cash"] || PAYMENT_METHODS.cash;
+}

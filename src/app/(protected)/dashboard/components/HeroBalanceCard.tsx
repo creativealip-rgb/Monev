@@ -101,21 +101,12 @@ export function HeroBalanceCard({
                     </div>
                 </div>
 
-                <h2 className="text-3xl font-bold tracking-tight mb-2 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
+                <h2 className="text-3xl font-bold tracking-tight mb-1 group-hover:scale-[1.02] transition-transform origin-left tabular-nums">
                     {!mounted ? "Loading..." : hideBalance ? "******" : formatCurrency(stats.totalAccounts || 0)}
                 </h2>
                 <p className="text-white/60 text-[10px] font-medium mb-6">
-                    {stats.accountCount || 0} {t("dashboard.accountsRegistered")}
+                    Saldo dari {stats.accountCount || 0} akun
                 </p>
-                
-                {/* Empty State Info - Show when no accounts */}
-                {!hideBalance && (stats.accountCount === 0 || stats.accountCount === undefined) && (
-                    <div className="mt-4 p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
-                        <p className="text-[10px] text-white/80 leading-relaxed">
-                            💡 <strong>Tip:</strong> Tambahkan akun bank/e-wallet di halaman <strong>"Balances"</strong> untuk melihat total kekayaan kamu di sini.
-                        </p>
-                    </div>
-                )}
             </div>
 
             <div className="flex gap-3">

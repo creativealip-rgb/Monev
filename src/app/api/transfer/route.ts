@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { and, eq } from "drizzle-orm";
+import { getDb } from "@/backend/db";
+import { accounts } from "@/backend/db/schema";
 import {
     transferToGoal, transferToInvestment, payBill,
     withdrawFromGoal, withdrawFromInvestment,
@@ -13,7 +16,9 @@ export async function POST(request: Request) {
         const userId = parseInt(session.user.id);
 
         const body = await request.json();
-        const { action, amount, type, id, description, accountId } = body;
+        const { action, amount, type, id, description, accountId, targetAccountId } = body;
+
+        const db = getDb();
 
         if (!amount || amount <= 0) {
             return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
@@ -27,15 +32,71 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Account ID required for bill payment" }, { status: 400 });
         }
 
+        if (action === "transfer") {
+            if (!accountId) {
+                return NextResponse.json(
+                    { success: false, error: "Pilih akun sumber dana" },
+                    { status: 400 }
+                );
+            }
+
+            // Verify account exists and belongs to user
+            const account = await db
+                .select()
+                .from(accounts)
+                .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+                .get();
+
+            if (!account) {
+                return NextResponse.json(
+                    { success: false, error: "Akun tidak ditemukan" },
+                    { status: 404 }
+                );
+            }
+
+            // Check sufficient balance (amount + 2% fee)
+            const fee = Math.round(amount * 0.02);
+            const totalNeeded = amount + fee;
+            if (account.balance < totalNeeded) {
+                return NextResponse.json(
+                    { success: false, error: `Saldo tidak mencukupi. Dibutuhkan ${totalNeeded}, tersedia ${account.balance}` },
+                    { status: 400 }
+                );
+            }
+        }
+
+        if (action === "withdraw") {
+            if (!targetAccountId) {
+                return NextResponse.json(
+                    { success: false, error: "Pilih akun tujuan dana" },
+                    { status: 400 }
+                );
+            }
+
+            // Verify target account exists and belongs to user
+            const targetAccount = await db
+                .select()
+                .from(accounts)
+                .where(and(eq(accounts.id, targetAccountId), eq(accounts.userId, userId)))
+                .get();
+
+            if (!targetAccount) {
+                return NextResponse.json(
+                    { success: false, error: "Akun tujuan tidak ditemukan" },
+                    { status: 404 }
+                );
+            }
+        }
+
         let result;
         const fee = amount * 0.02; // 2% admin fee
 
         if (action === "transfer") {
             // Transfer from main balance to goal/investment/bill
             if (type === "goal") {
-                result = await transferToGoal(userId, id, amount, description);
+                result = await transferToGoal(userId, id, amount, description, accountId);
             } else if (type === "investment") {
-                result = await transferToInvestment(userId, id, amount, description);
+                result = await transferToInvestment(userId, id, amount, description, accountId);
             } else if (type === "bill") {
                 result = await payBill(userId, id, { accountId, amount, notes: description });
             } else {
@@ -44,9 +105,9 @@ export async function POST(request: Request) {
         } else if (action === "withdraw") {
             // Withdraw from goal/investment to main balance
             if (type === "goal") {
-                result = await withdrawFromGoal(userId, id, amount, description);
+                result = await withdrawFromGoal(userId, id, amount, description, targetAccountId);
             } else if (type === "investment") {
-                result = await withdrawFromInvestment(userId, id, amount, description);
+                result = await withdrawFromInvestment(userId, id, amount, description, targetAccountId);
             } else {
                 return NextResponse.json({ error: "Invalid withdraw type" }, { status: 400 });
             }

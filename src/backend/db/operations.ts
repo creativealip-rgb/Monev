@@ -1539,7 +1539,7 @@ export async function addChatMessage(userId: number, role: "user" | "assistant",
 
 const ADMIN_FEE_PERCENTAGE = 0.02; // 2% admin fee
 
-export async function transferToGoal(userId: number, goalId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+export async function transferToGoal(userId: number, goalId: number, amount: number, description?: string, accountId?: number): Promise<Transaction | undefined> {
     const db = getDb();
 
     const goal = await getGoalById(userId, goalId);
@@ -1553,6 +1553,13 @@ export async function transferToGoal(userId: number, goalId: number, amount: num
         .set({ currentAmount: newAmount })
         .where(and(eq(goals.id, goalId), eq(goals.userId, userId)));
 
+    // Update source account balance if accountId provided
+    if (accountId) {
+        const fee = Math.round(amount * 0.02);
+        const totalDeduction = amount + fee;
+        await updateAccountBalance(userId, accountId, -totalDeduction);
+    }
+
     const cats = db.select().from(categories).all();
     const tabunganCat = cats.find((c: Category) => c.name === "Tabungan");
 
@@ -1564,7 +1571,7 @@ export async function transferToGoal(userId: number, goalId: number, amount: num
         categoryId: tabunganCat?.id,
         destinationType: "goal",
         destinationId: goalId,
-        paymentMethod: "saldo_aktif",
+        paymentMethod: "transfer",
         fee,
         date: new Date(),
         isVerified: true,
@@ -1573,7 +1580,7 @@ export async function transferToGoal(userId: number, goalId: number, amount: num
     return transaction;
 }
 
-export async function transferToInvestment(userId: number, investmentId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+export async function transferToInvestment(userId: number, investmentId: number, amount: number, description?: string, accountId?: number): Promise<Transaction | undefined> {
     const db = getDb();
 
     const investment = await getInvestmentById(userId, investmentId);
@@ -1587,6 +1594,13 @@ export async function transferToInvestment(userId: number, investmentId: number,
         .set({ quantity: newQuantity, updatedAt: new Date() })
         .where(and(eq(investments.id, investmentId), eq(investments.userId, userId)));
 
+    // Update source account balance if accountId provided
+    if (accountId) {
+        const fee = Math.round(amount * 0.02);
+        const totalDeduction = amount + fee;
+        await updateAccountBalance(userId, accountId, -totalDeduction);
+    }
+
     const cats = db.select().from(categories).all();
     const investasiCat = cats.find((c: Category) => c.name === "Investasi");
 
@@ -1598,7 +1612,7 @@ export async function transferToInvestment(userId: number, investmentId: number,
         categoryId: investasiCat?.id,
         destinationType: "investment",
         destinationId: investmentId,
-        paymentMethod: "saldo_aktif",
+        paymentMethod: "transfer",
         fee,
         date: new Date(),
         isVerified: true,
@@ -1909,7 +1923,7 @@ export async function getCashflowPrediction(userId: number) {
 }
 
 
-export async function withdrawFromGoal(userId: number, goalId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+export async function withdrawFromGoal(userId: number, goalId: number, amount: number, description?: string, targetAccountId?: number): Promise<Transaction | undefined> {
     const db = getDb();
 
     const goal = await getGoalById(userId, goalId);
@@ -1938,16 +1952,22 @@ export async function withdrawFromGoal(userId: number, goalId: number, amount: n
         categoryId: tabunganCat?.id,
         sourceType: "goal",
         sourceId: goalId,
-        paymentMethod: "saldo_aktif",
+        paymentMethod: "transfer",
         fee,
         date: new Date(),
         isVerified: true,
     }).returning().get();
 
+    // Update target account balance if targetAccountId provided (add the net amount after fee)
+    if (targetAccountId) {
+        const netAmount = amount - fee;
+        await updateAccountBalance(userId, targetAccountId, netAmount);
+    }
+
     return transaction;
 }
 
-export async function withdrawFromInvestment(userId: number, investmentId: number, amount: number, description?: string): Promise<Transaction | undefined> {
+export async function withdrawFromInvestment(userId: number, investmentId: number, amount: number, description?: string, targetAccountId?: number): Promise<Transaction | undefined> {
     const db = getDb();
 
     const investment = await getInvestmentById(userId, investmentId);
@@ -1978,11 +1998,17 @@ export async function withdrawFromInvestment(userId: number, investmentId: numbe
         categoryId: investasiCat?.id,
         sourceType: "investment",
         sourceId: investmentId,
-        paymentMethod: "saldo_aktif",
+        paymentMethod: "transfer",
         fee,
         date: new Date(),
         isVerified: true,
     }).returning().get();
+
+    // Update target account balance if targetAccountId provided (add the net amount after fee)
+    if (targetAccountId) {
+        const netAmount = amount - fee;
+        await updateAccountBalance(userId, targetAccountId, netAmount);
+    }
 
     return transaction;
 }
