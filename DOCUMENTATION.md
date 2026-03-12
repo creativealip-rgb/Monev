@@ -1010,13 +1010,50 @@ Semua API route berada di `src/app/api/`. Format response standar:
 
 ### Cron Jobs
 
-| Method | Endpoint | Deskripsi |
+| Method | Endpoint | Schedule | Deskripsi |
+|---|---|---|---|
+| POST | `/api/cron/auto-transfer` | - | Auto-transfer ke goals |
+| POST | `/api/cron/budget-rollover` | - | Rollover budget bulanan |
+| POST | `/api/cron/cleanup-deleted-accounts` | - | Hapus akun yang direquest delete |
+| POST | `/api/cron/subscription-check` | - | Cek langganan expired |
+| POST | `/api/cron/daily-recap` | - | Kirim rekap harian |
+| POST | `/api/cron/monthly-report` | `0 9 1 * *` | **Generate & send monthly reports** dengan PDF + charts |
+| POST | `/api/cron/weekly-insight` | `0 8 * * 0` | **Send weekly insights** via Telegram |
+
+### Report Generation API
+
+| Endpoint | Method | Fungsi |
 |---|---|---|
-| POST | `/api/cron/auto-transfer` | Auto-transfer ke goals |
-| POST | `/api/cron/budget-rollover` | Rollover budget bulanan |
-| POST | `/api/cron/cleanup-deleted-accounts` | Hapus akun yang direquest delete |
-| POST | `/api/cron/subscription-check` | Cek langganan expired |
-| POST | `/api/cron/daily-recap` | Kirim rekap harian |
+| `/api/reports/monthly/generate` | POST | Generate on-demand monthly report PDF with charts |
+| `/api/reports/monthly/[id]/download` | GET | Download generated PDF report |
+
+#### Features:
+
+**5 Chart Types in PDF Reports:**
+1. Income vs Expense Bar Chart (current vs previous month)
+2. Expense Breakdown Doughnut Chart (by category)
+3. Daily Spending Trend Line Chart
+4. Goals Progress Horizontal Bar Chart
+5. 50/30/20 Allocation Pie Chart
+
+**Monthly Report Automation:**
+- Auto-generate PDF dengan charts setiap tanggal 1
+- Email delivery dengan HTML template + PDF attachment
+- Telegram summary dengan ASCII progress bars
+- Track delivery status di database
+- Support bilingual (Indonesia/English)
+
+**Weekly Insights:**
+- Auto-analyze spending patterns setiap minggu
+- Week-over-week comparison
+- Personalized tips based on behavior
+- Send via Telegram dengan emoji & formatting
+
+**User Preferences:**
+- Toggle monthly report email
+- Toggle monthly report Telegram
+- Toggle weekly insight Telegram
+- Language selector (Auto/ID/EN)
 
 ### Webhooks & Lainnya
 
@@ -1462,6 +1499,15 @@ Menyimpan transaksi ke IndexedDB saat offline dan sync saat online kembali.
 | `report-generator.ts` | Generator laporan keuangan |
 | `importers/csv-parser.ts` | Parser CSV untuk import transaksi |
 
+#### Automated Reports & Insights (NEW - Maret 2026)
+
+| File | Fungsi |
+|---|---|
+| `charts.ts` | Generate charts (bar, pie, line, doughnut) untuk PDF menggunakan Chart.js + node-canvas |
+| `report-generator.ts` | Updated: Generate PDF laporan dengan 5 jenis charts embedded |
+| `mailer.ts` | Updated: `sendMonthlyReportEmail()` - Kirim email dengan PDF attachment |
+| `telegram.ts` | Updated: `sendMonthlyReportTelegram()` - Kirim summary via Telegram dengan ASCII charts |
+
 #### Komunikasi
 
 | File | Fungsi |
@@ -1480,6 +1526,21 @@ Menyimpan transaksi ke IndexedDB saat offline dan sync saat online kembali.
 | `logger.ts` | Structured logging |
 | `error-messages.ts` | Konstanta pesan error (Bahasa Indonesia) |
 | `transaction-pipeline.ts` | Pipeline pemrosesan transaksi |
+
+#### i18n (Internationalization) - UPDATED Maret 2026
+
+| File | Fungsi |
+|---|---|
+| `src/lib/i18n/index.tsx` | I18nContext provider dengan automatic interpolation support |
+| `src/lib/i18n/types.ts` | TypeScript types untuk i18n (Locale, TranslationKey) |
+| `src/lib/i18n/locales/id.ts` | **783 Indonesian translations** |
+| `src/lib/i18n/locales/en.ts` | **783 English translations** (complete) |
+
+**Features:**
+- Automatic interpolation: `t("key", { name: "value" })`
+- Locale storage in localStorage
+- Fallback to Indonesian if key missing
+- Report localization support
 
 ### Database Operations (`src/backend/db/`)
 

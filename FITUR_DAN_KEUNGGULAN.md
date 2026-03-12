@@ -12,6 +12,7 @@
 8. [Keamanan Data](#keamanan-data)
 9. [Use Cases](#use-cases)
 10. [Roadmap Fitur](#roadmap-fitur)
+11. [Laporan Otomatis & AI Insights](#laporan-otomatis--ai-insights)
 
 ---
 
@@ -556,6 +557,222 @@ ACHIEVEMENT 2024:
 ✅ 0 overdraft / utang pada akhir tahun
 ✅ Unlocked 5 achievement badges
 ```
+
+---
+
+### 14. 📊 Laporan Otomatis & AI Insights (NEW - Maret 2026)
+
+**Apa ini?**
+- Laporan keuangan bulanan otomatis dengan grafik profesional
+- Generate PDF dengan 5 jenis chart (bar, pie, line, doughnut)
+- Auto-kirim via email dan Telegram setiap bulan
+- Weekly insight dengan analisis pola pengeluaran
+
+**Fitur Detail:**
+
+#### 📄 Monthly Automated Reports
+
+**PDF Generation:**
+- **5 Chart Types:**
+  1. Income vs Expense Bar Chart (perbandingan bulan ini vs bulan lalu)
+  2. Expense Breakdown Doughnut Chart (rincian per kategori)
+  3. Daily Spending Trend Line Chart (trend harian)
+  4. Goals Progress Horizontal Bar Chart (progress tabungan)
+  5. 50/30/20 Allocation Pie Chart (alokasi budget)
+
+**Delivery:**
+- ✉️ **Email:** HTML template profesional + PDF attachment
+- 📱 **Telegram:** Summary dengan ASCII progress bars
+- 🗓️ **Schedule:** Otomatis tanggal 1 jam 9 pagi
+- 🌍 **Bilingual:** Support Bahasa Indonesia & English
+
+**Email Template Features:**
+- Gradient header dengan bulan/tahun
+- Summary cards (Income/Expense/Balance)
+- Month-over-month change percentage
+- Top 3 expenses list
+- Goals progress bars
+- AI insight section
+- CTA button ke dashboard
+- PDF attachment: `Monev_Report_[Bulan]_[Tahun].pdf`
+
+**Telegram Message Format:**
+```
+🌙 *LAPORAN BULANAN NOVEMBER 2025*
+
+💰 *Income:* Rp 15.000.000
+💸 *Expense:* Rp 8.500.000
+📊 *Net Savings:* Rp 6.500.000 (43%)
+
+📈 *Expenses by Category:*
+🍽 Makan        ████████░░ 38%
+🚗 Transport    ████░░░░░░ 21%
+🛍 Belanja      ███░░░░░░░ 18%
+
+🎯 *Goals Progress:*
+🗾 Liburan Jepang  ██████░░░░░░ 45%
+🛡️ Emergency Fund  ████████░░░░ 78%
+
+💡 *Insight:*
+Konsisten! Pengeluaran makan turun 15%...
+```
+
+---
+
+#### 💡 Weekly AI Insights
+
+**Schedule:** Setiap Minggu jam 8 pagi via Telegram
+
+**Analysis:**
+- Week-over-week spending comparison
+- Top expense category identification
+- Transaction count analysis
+- Personalized insight generation
+
+**Smart Insights Examples:**
+- `changePercent < -20`: "Hebat! Pengeluaranmu turun 20% dari minggu lalu. Pertahankan! 💪"
+- `changePercent > 20`: "Waduh, pengeluaran naik 20%. Lebih hemat lagi ya! 🧘"
+- `transactionCount > 15`: "Kamu cukup aktif belanja (15 transaksi). Review apakah semua perlu? 🤔"
+- `topCategory = "Makanan"`: "Pengeluaran terbesar di Makanan. Coba masak di rumah lebih sering! 🍳"
+
+---
+
+#### ⚙️ User Preferences
+
+**Location:** Profile → Notifications
+
+**Toggles:**
+- ☑️ **Monthly Report Email** - PDF lengkap via email setiap bulan
+- ☑️ **Monthly Report Telegram** - Summary via Telegram setiap bulan
+- ☐ **Weekly Insight Telegram** - Tips & analisis setiap minggu
+- 🌐 **Language Selector** - Auto / Indonesia / English
+
+**Delivery Tracking:**
+- Status tracking di database (`scheduled_reports` table)
+- Retry mechanism untuk failed delivery
+- Error logging untuk debugging
+
+---
+
+#### 📊 Database Schema
+
+**New Table: `scheduled_reports`**
+```typescript
+{
+  id: integer (PK),
+  userId: integer (FK → users.id),
+  reportMonth: integer (1-12),
+  reportYear: integer,
+  locale: "id" | "en",
+  status: "pending" | "generating" | "sent" | "failed",
+  emailSentAt: timestamp,
+  telegramSentAt: timestamp,
+  errorMessage: text,
+  pdfData: text (base64),
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+**Extended `user_settings`:**
+```typescript
+{
+  // ... existing fields
+  monthlyReportEmail: boolean (default: true),
+  monthlyReportTelegram: boolean (default: true),
+  weeklyInsightTelegram: boolean (default: false),
+  reportLocale: "id" | "en" | "auto" (default: "auto")
+}
+```
+
+---
+
+#### 🔧 Technical Implementation
+
+**Chart Generation:**
+- Library: Chart.js + node-canvas
+- Process: Render chart → PNG image → Embed to PDF
+- Size: 800x400px untuk standard charts
+- Format: Base64 PNG data URL
+
+**PDF Generation:**
+- Multi-page PDF dengan jsPDF
+- Charts embedded sebagai images
+- Tables formatted dengan autoTable
+- Bilingual labels (ID/EN)
+
+**Email Delivery:**
+- Provider: Resend
+- Template: HTML dengan inline CSS
+- Attachment: Base64 PDF
+- Fallback: Graceful error handling
+
+**Telegram Delivery:**
+- Format: Markdown with emoji
+- ASCII progress bars untuk visual
+- Fallback: Text-only jika gagal
+
+---
+
+#### 📊 Example PDF Report Structure
+
+```
+┌─────────────────────────────────────────┐
+│  🌙 MONEV WEALTH REPORT                 │
+│     November 2025                       │
+├─────────────────────────────────────────┤
+│                                         │
+│  💰 Income: Rp 15.000.000              │
+│  💸 Expense: Rp 8.500.000              │
+│  📊 Net: Rp 6.500.000                  │
+│                                         │
+│  [CHART: Income vs Expense Bar]         │
+│                                         │
+│  📈 Expense Breakdown:                  │
+│  [CHART: Doughnut Chart by Category]    │
+│                                         │
+│  Top 3 Expenses:                        │
+│  1. Makan: Rp 3.200.000 (38%)          │
+│  2. Transport: Rp 1.800.000 (21%)      │
+│  3. Belanja: Rp 1.500.000 (18%)        │
+│                                         │
+│  [CHART: Daily Spending Trend Line]     │
+│                                         │
+│  🎯 Goals Progress:                     │
+│  [CHART: Horizontal Bar Chart]          │
+│                                         │
+│  💡 AI Insight:                         │
+│  "Konsisten! Pengeluaran makan turun    │
+│   15% dari bulan lalu. Pertahankan!"    │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+---
+
+#### 🎯 Benefits
+
+**For Users:**
+- ✅ Automated monthly reporting (no manual work)
+- ✅ Professional PDF untuk arsip/tax
+- ✅ Visual charts untuk insight lebih baik
+- ✅ Weekly tips untuk improve financial habit
+- ✅ Bilingual support (ID/EN)
+
+**For Business:**
+- ✅ Increased engagement (monthly touchpoint)
+- ✅ Premium feature (PDF export for Sultan tier)
+- ✅ Email marketing opportunity
+- ✅ User retention (weekly insights)
+- ✅ Data-driven insights (AI recommendations)
+
+---
+
+**Keunggulan vs Competitor:**
+- 🏆 **Hanya Monev** yang punya automated monthly reports dengan charts
+- 🏆 **Hanya Monev** yang kirim insight mingguan via Telegram
+- 🏆 **Hanya Monev** yang support bilingual reports
+- 🏆 **Hanya Monev** yang punya ASCII progress bars di Telegram
 
 ---
 
