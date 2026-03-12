@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { users, userSettings, scheduledReports, goals, accounts, categories, transactions } from "@/backend/db/schema";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { eq, and, gte, lte, desc, inArray } from "drizzle-orm";
 import { generateWealthReport } from "@/lib/report-generator";
 import { sendMonthlyReportEmail } from "@/lib/mailer";
 import { sendMonthlyReportTelegram } from "@/lib/telegram";
@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
             })),
             allocations: [],
             investments: [],
+            categories: [],
             aiInsight: "Laporan Anda telah berhasil dibuat. Silakan unduh untuk melihat detail lengkap.",
         };
 
@@ -223,10 +224,13 @@ async function getCategoryBreakdown(userId: number, year: number, month: number)
         }
     });
 
-    const categoryData = await db.select()
-        .from(categories)
-        .where(eq(categories.id, Object.keys(categoryTotals).map(Number)))
-        .all();
+    const categoryIds = Object.keys(categoryTotals).map(Number);
+    const categoryData = categoryIds.length > 0
+        ? await db.select()
+            .from(categories)
+            .where(inArray(categories.id, categoryIds))
+            .all()
+        : [];
 
     return {
         expenses: categoryData.map(c => ({
