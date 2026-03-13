@@ -7,6 +7,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { TransactionWithCategory } from "@/types";
+import { logger } from "@/lib/logger";
 
 interface Category {
     id: number;
@@ -30,15 +31,15 @@ export function useTransactionsData(searchQuery: string = "") {
         loadOffline();
 
         const handleTransactionAdded = async () => {
-            console.log("[useTransactionsData] Event received: transactionAdded");
+            logger.info("[useTransactionsData] Event received: transactionAdded");
             await loadOffline();
             // Force invalidate and refetch with Promise
-            console.log("[useTransactionsData] Invalidating queries...");
+            logger.info("[useTransactionsData] Invalidating queries...");
             await queryClient.invalidateQueries({ 
                 queryKey: ["transactions", "list"],
                 exact: false 
             });
-            console.log("[useTransactionsData] Queries invalidated, offline transactions:", offlineTrans.length);
+            logger.info("[useTransactionsData] Queries invalidated, offline trans count:", offlineTrans.length);
         };
 
         window.addEventListener("transactionAdded", handleTransactionAdded);
@@ -72,10 +73,10 @@ export function useTransactionsData(searchQuery: string = "") {
         initialPageParam: 0,
         queryFn: async ({ pageParam = 0 }) => {
             const limit = 20;
-            console.log("[useTransactionsData] Fetching page:", pageParam, "searchQuery:", searchQuery);
+            logger.debug("[useTransactionsData] Fetching page:", pageParam, "searchQuery:", searchQuery);
             const res = await apiFetch(`/api/transactions?limit=${limit}&offset=${pageParam}&search=${searchQuery}`);
             const json = await res.json();
-            console.log("[useTransactionsData] Response:", json.data?.length, "transactions");
+            logger.debug("[useTransactionsData] Response:", json.data?.length, "transactions");
             if (json.success) {
                 if (pageParam === 0 && !searchQuery) {
                     OfflineManager.setCache("transactions_list", json.data);
@@ -110,7 +111,7 @@ export function useTransactionsData(searchQuery: string = "") {
             const cat = categories.find((c: Category) => c.id === t.categoryId);
             // Debug logging for bill payment transactions
             if (t.destinationType === 'bill' || t.merchantName?.includes('Pembayaran')) {
-                console.log('[useTransactionsData] Bill transaction:', {
+                logger.debug('[useTransactionsData] Bill transaction:', {
                     id: t.id,
                     categoryId: t.categoryId,
                     merchantName: t.merchantName,

@@ -8,6 +8,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { UserTier } from "@/lib/tier-gate";
 import { useSecurity } from "@/components/SecurityProvider";
+import { logger } from "@/lib/logger";
 
 interface Category {
     id: number;
@@ -81,14 +82,14 @@ export function useDashboardData() {
         loadOffline();
 
         const handleTransactionAdded = async () => {
-            console.log("[useDashboardData] Event received: transactionAdded");
+            logger.info("[useDashboardData] Event received: transactionAdded");
             await loadOffline();
-            console.log("[useDashboardData] Invalidating and refetching dashboard...");
+            logger.info("[useDashboardData] Invalidating and refetching dashboard...");
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
             queryClient.invalidateQueries({ queryKey: ["accounts"] });
             await queryClient.refetchQueries({ queryKey: ["dashboard"] });
             await queryClient.refetchQueries({ queryKey: ["accounts"] });
-            console.log("[useDashboardData] Dashboard refetched, offline transactions:", offlineTrans.length);
+            logger.info("[useDashboardData] Dashboard refetched, offline trans count:", offlineTrans.length);
         };
 
         window.addEventListener("transactionAdded", handleTransactionAdded);
@@ -139,7 +140,7 @@ export function useDashboardData() {
         queryFn: async () => {
             const res = await apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
             const json = await res.json();
-            console.log('[useDashboardData] Stats API response:', json.data);
+            logger.debug('[useDashboardData] Stats API response:', json.data);
             if (json.success && json.data) {
                 OfflineManager.setCache("dashboard_stats", json.data);
                 return json.data as DashboardStats;
@@ -200,8 +201,8 @@ export function useDashboardData() {
 
     // Merge Offline Stats
     const stats = useMemo(() => {
-        console.log('[useDashboardData] serverStats:', serverStats);
-        console.log('[useDashboardData] offlineTrans:', offlineTrans.length);
+        logger.debug('[useDashboardData] serverStats:', serverStats);
+        logger.debug('[useDashboardData] offlineTrans count:', offlineTrans.length);
         
         if (isDecoyMode) {
             return {
@@ -222,7 +223,7 @@ export function useDashboardData() {
         const totalAccounts = serverStats?.totalAccounts ?? 0;
         const accountCount = serverStats?.accountCount ?? 0;
         
-        console.log('[useDashboardData] Computed totalAccounts:', totalAccounts, 'accountCount:', accountCount);
+        logger.debug('[useDashboardData] Computed totalAccounts:', totalAccounts, 'accountCount:', accountCount);
         
         if (offlineTrans.length === 0) {
             const result = {
@@ -230,7 +231,7 @@ export function useDashboardData() {
                 totalAccounts,
                 accountCount
             };
-            console.log('[useDashboardData] Final stats (no offline):', result);
+            logger.debug('[useDashboardData] Final stats (no offline):', result);
             return result;
         }
 
@@ -245,7 +246,7 @@ export function useDashboardData() {
             expense: base.expense + offlineExpense,
             balance: base.balance + offlineIncome - offlineExpense,
         };
-        console.log('[useDashboardData] Final stats (with offline):', result);
+        logger.debug('[useDashboardData] Final stats (with offline):', result);
         return result;
     }, [serverStats, offlineTrans, isDecoyMode]);
 

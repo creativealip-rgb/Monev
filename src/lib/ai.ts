@@ -1,6 +1,7 @@
 
 import OpenAI from "openai";
 import https from "https";
+import { logger } from "./logger";
 
 // Create an agent that forces IPv4 to avoid VPS IPv6 issues
 const agent = new https.Agent({ family: 4 });
@@ -169,7 +170,7 @@ Jawab dalam format JSON saja, tanpa markdown:
         const content = response.choices[0]?.message?.content || "";
         return JSON.parse(cleanJsonResponse(content));
     } catch (e) {
-        console.error("OCR Error:", e);
+        logger.error("OCR Error:", e);
         return {
             amount: 0,
             transactionType: "expense",
@@ -235,7 +236,7 @@ Jawab dalam format JSON saja:
         const content = completion.choices[0]?.message?.content || "";
         return { transcription: text, parsed: JSON.parse(cleanJsonResponse(content)) };
     } catch (e) {
-        console.error("Voice Error:", e);
+        logger.error("Voice Error:", e);
         return {
             transcription: text,
             parsed: {
@@ -281,10 +282,10 @@ async function searchMerchant(merchantName: string): Promise<string | null> {
             return await searchMerchantFallback(merchantName);
         }
 
-        console.log(`[Detective] Web search for "${merchantName}":`, result.substring(0, 100));
+        logger.debug(`[Detective] Web search for "${merchantName}":`, result.substring(0, 100));
         return result;
     } catch (e) {
-        console.warn("[Detective] Web search failed:", e);
+        logger.warn("[Detective] Web search failed:", e);
         return await searchMerchantFallback(merchantName);
     }
 }
@@ -312,10 +313,10 @@ async function searchMerchantFallback(merchantName: string): Promise<string | nu
             .slice(0, 3)
             .join(". ");
 
-        console.log(`[Detective] Fallback search for "${merchantName}":`, cleanSnippets.substring(0, 100));
+        logger.debug(`[Detective] Fallback search for "${merchantName}":`, cleanSnippets.substring(0, 100));
         return cleanSnippets || null;
     } catch (e) {
-        console.warn("[Detective] Fallback search also failed:", e);
+        logger.warn("[Detective] Fallback search also failed:", e);
         return null;
     }
 }
@@ -400,7 +401,7 @@ Jawab dalam format JSON saja:
         return { ...result2, searchUsed: true, transactionType: result2.transactionType || "expense" };
 
     } catch (e) {
-        console.error("Categorize Error:", e);
+        logger.error("Categorize Error:", e);
         return {
             category: "Lainnya",
             transactionType: "expense",
@@ -625,7 +626,7 @@ Aturan categorization yang ketat: Selalu gunakan salah satu dari kategori yang t
             debtType: parsed.debtType
         };
     } catch (e) {
-        console.error("NLP Error:", e);
+        logger.error("NLP Error:", e);
         return null;
     }
 }
