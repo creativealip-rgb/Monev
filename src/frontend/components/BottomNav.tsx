@@ -9,6 +9,9 @@ import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSecurity } from "@/components/SecurityProvider";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("BottomNav");
 
 interface BottomNavProps {
     onFabClick?: () => void;
@@ -63,7 +66,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const handleNavClick = (href: string, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log("[BottomNav] Navigating to:", href);
+        logger.debug("Navigating to:", href);
         haptics.tap();
         window.location.href = href;
     };
@@ -90,7 +93,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                     href={link.href}
                                     onClick={(e) => handleNavClick(link.href, e)}
                                     onMouseDown={(e) => {
-                                        console.log("[BottomNav] MouseDown on:", link.href);
+                                        logger.debug("MouseDown on:", link.href);
                                         haptics.tap();
                                     }}
                                     aria-label={link.label}
@@ -161,7 +164,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                     href={link.href}
                                     onClick={(e) => handleNavClick(link.href, e)}
                                     onMouseDown={(e) => {
-                                        console.log("[BottomNav] MouseDown on:", link.href);
+                                        logger.debug("MouseDown on:", link.href);
                                         haptics.tap();
                                     }}
                                     aria-label={link.label}

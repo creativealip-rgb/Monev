@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("AIInsight");
 
 export interface AIInsight {
     insight: string;
@@ -42,7 +45,7 @@ export function useAIInsight(year?: number, month?: number, locale?: string) {
             }
         } catch (err) {
             setError("Gagal mengambil insight");
-            console.error("AI Insight error:", err);
+            logger.error("AI Insight error", err);
         } finally {
             setLoading(false);
         }

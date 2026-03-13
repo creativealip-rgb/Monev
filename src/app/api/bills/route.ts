@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getBills, createBill } from "@/backend/db/operations";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("API:Bills");
 
 export async function GET() {
     try {
@@ -42,7 +45,7 @@ export async function GET() {
 
         return NextResponse.json({ success: true, data });
     } catch (error) {
-        console.error("Error fetching bills:", error);
+        logger.error("Error fetching bills:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch bills" }, { status: 500 });
     }
 }
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, data: bill });
     } catch (error) {
-        console.error("Error creating bill:", error);
+        logger.error("Error creating bill:", error);
         return NextResponse.json({ success: false, error: "Failed to create bill" }, { status: 500 });
     }
 }

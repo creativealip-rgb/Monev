@@ -5,7 +5,7 @@ import { id } from "date-fns/locale";
 import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2 } from "lucide-react";
 import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useSecurity } from "@/components/SecurityProvider";
 import { decryptData } from "@/lib/encryption";
@@ -108,7 +108,7 @@ interface TransactionItemProps {
     onSelect?: (id: number) => void;
 }
 
-export function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect }: TransactionItemProps) {
+export const TransactionItem = React.memo(function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect }: TransactionItemProps) {
     const [mounted, setMounted] = useState(false);
     const { encryptionKey } = useSecurity();
     const [displayDescription, setDisplayDescription] = useState(transaction.description || "Tanpa Deskripsi");
@@ -251,4 +251,4 @@ export function TransactionItem({ transaction, onClick, onEdit, onDelete, showCh
             </motion.div>
         </div>
     );
-}
+});

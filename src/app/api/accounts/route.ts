@@ -1,24 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/backend/db/account-operations";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("API:Accounts");
 
 export async function GET(req: NextRequest) {
-    console.log("[API] GET /api/accounts - Start");
+    logger.debug("GET /api/accounts - Start");
     try {
         const session = await auth();
-        console.log("[API] GET /api/accounts - Session:", session?.user?.id);
+        logger.debug("GET /api/accounts - Session:", session?.user?.id);
 
         if (!session?.user?.id) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        console.log("[API] GET /api/accounts - Fetching accounts for userId:", session.user.id);
+        logger.debug("GET /api/accounts - Fetching accounts for userId:", session.user.id);
         const accounts = await getAccounts(Number(session.user.id));
-        console.log("[API] GET /api/accounts - Success, found:", accounts.length);
+        logger.debug("GET /api/accounts - Success, found:", accounts.length);
 
         return NextResponse.json({ success: true, data: accounts });
     } catch (error) {
-        console.error("[API] GET /api/accounts - Error:", error);
+        logger.error("GET /api/accounts - Error:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch accounts" }, { status: 500 });
     }
 }

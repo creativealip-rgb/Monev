@@ -7,6 +7,9 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { BudgetSummary } from "@/types";
 import { Portal } from "@/frontend/components/Portal";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("BudgetForms");
 
 interface Category {
     id: number;
@@ -218,7 +221,7 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                 onClose();
             }
         } catch (err) {
-            console.error("Failed to update budget:", err);
+            logger.error("Failed to update budget", err);
         }
     };
 

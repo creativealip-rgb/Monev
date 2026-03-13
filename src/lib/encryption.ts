@@ -3,6 +3,10 @@
  * Provides AES-GCM encryption/decryption using the Web Crypto API.
  */
 
+import { createLogger } from "./logger";
+
+const logger = createLogger("Encryption");
+
 const ALGORITHM = "AES-GCM";
 const IV_LENGTH = 12;
 
@@ -80,7 +84,7 @@ export const decryptString = async (base64Data: string, key: CryptoKey): Promise
 
         return new TextDecoder().decode(decryptedData);
     } catch (e) {
-        console.error("Decryption failed", e);
+        logger.error("Decryption failed", e);
         throw new Error("Invalid key or corrupted data");
     }
 };

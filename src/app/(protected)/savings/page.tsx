@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { AddGoalForm, EditGoalForm, GoalTemplateData } from "@/frontend/components/GoalForms";
-import { GoalDetailModal } from "@/frontend/components/DetailModalsVerified";
+import { GoalDetailModal } from "@/frontend/components/modals/GoalDetailModal";
 import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { GoalWithProgress } from "@/types";

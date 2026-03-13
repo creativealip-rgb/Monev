@@ -2,6 +2,9 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("VoiceVisualizer");
 
 interface VoiceVisualizerProps {
     isRecording: boolean;
@@ -45,7 +48,7 @@ export function VoiceVisualizer({ isRecording, recordingTime }: VoiceVisualizerP
                 dataArrayRef.current = dataArray;
                 analyserRef.current = analyser;
             } catch {
-                console.log("Audio visualization not available");
+                logger.debug("Audio visualization not available");
             }
         };
         setupAudio();

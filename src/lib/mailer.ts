@@ -1,10 +1,13 @@
 import { Resend } from "resend";
+import { createLogger } from "./logger";
+
+const logger = createLogger("Mailer");
 
 // Lazy initialization to avoid build-time errors when API key is missing
 const getResendClient = () => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-        console.warn("RESEND_API_KEY is not set. Email functionality will be disabled.");
+        logger.warn("RESEND_API_KEY is not set. Email functionality will be disabled.");
         return null;
     }
     return new Resend(apiKey);
@@ -20,7 +23,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 
     const resend = getResendClient();
     if (!resend) {
-        console.warn("Email not sent: RESEND_API_KEY is not configured");
+        logger.warn("Email not sent: RESEND_API_KEY is not configured");
         return { error: "Email service not configured" };
     }
 
@@ -44,12 +47,12 @@ export const sendVerificationEmail = async (email: string, token: string) => {
         });
 
         if (error) {
-            console.error("Gagal mengirim email verifikasi:", error);
+            logger.error("Gagal mengirim email verifikasi", error);
             return { error };
         }
         return { data };
     } catch (err) {
-        console.error("Exception saat mengirim email verifikasi:", err);
+        logger.error("Exception saat mengirim email verifikasi", err);
         return { error: err };
     }
 };
@@ -59,7 +62,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 
     const resend = getResendClient();
     if (!resend) {
-        console.warn("Email not sent: RESEND_API_KEY is not configured");
+        logger.warn("Email not sent: RESEND_API_KEY is not configured");
         return { error: "Email service not configured" };
     }
 
@@ -83,12 +86,12 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
         });
 
         if (error) {
-            console.error("Gagal mengirim email reset password:", error);
+            logger.error("Gagal mengirim email reset password", error);
             return { error };
         }
         return { data };
     } catch (err) {
-        console.error("Exception saat mengirim email reset password:", err);
+        logger.error("Exception saat mengirim email reset password", err);
         return { error: err };
     }
 };
@@ -117,7 +120,7 @@ export const sendMonthlyReportEmail = async (
 ) => {
     const resend = getResendClient();
     if (!resend) {
-        console.warn("Email not sent: RESEND_API_KEY is not configured");
+        logger.warn("Email not sent: RESEND_API_KEY is not configured");
         return { error: "Email service not configured" };
     }
 
@@ -291,12 +294,12 @@ export const sendMonthlyReportEmail = async (
         });
 
         if (error) {
-            console.error("Gagal mengirim monthly report email:", error);
+            logger.error("Gagal mengirim monthly report email", error);
             return { error };
         }
         return { data: emailData };
     } catch (err) {
-        console.error("Exception saat mengirim monthly report email:", err);
+        logger.error("Exception saat mengirim monthly report email", err);
         return { error: err };
     }
 };
@@ -314,7 +317,7 @@ export const sendDailyRecapEmail = async (
 ) => {
     const resend = getResendClient();
     if (!resend) {
-        console.warn("Email not sent: RESEND_API_KEY is not configured");
+        logger.warn("Email not sent: RESEND_API_KEY is not configured");
         return { error: "Email service not configured" };
     }
 
@@ -406,12 +409,12 @@ export const sendDailyRecapEmail = async (
         });
 
         if (error) {
-            console.error("Gagal mengirim daily recap email:", error);
+            logger.error("Gagal mengirim daily recap email", error);
             return { error };
         }
         return { data };
     } catch (err) {
-        console.error("Exception saat mengirim daily recap email:", err);
+        logger.error("Exception saat mengirim daily recap email", err);
         return { error: err };
     }
 };

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell } from "lucide-react";
-import { BillHistoryModal } from "@/frontend/components/DetailModalsVerified";
+import { BillHistoryModal } from "@/frontend/components/modals/BillDetailModal";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";

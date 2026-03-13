@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getTransactions, getTransactionsCount, createTransaction } from "@/backend/db/operations";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("API:Transactions");
 
 export async function GET(request: Request) {
     try {
@@ -19,7 +22,7 @@ export async function GET(request: Request) {
         // Debug: log bill payment transactions
         const billTransactions = transactions.filter((t: any) => t.destinationType === 'bill');
         if (billTransactions.length > 0) {
-            console.log('[API /transactions] Bill payment transactions:', billTransactions.map((t: any) => ({
+            logger.debug('Bill payment transactions:', billTransactions.map((t: any) => ({
                 id: t.id,
                 categoryId: t.categoryId,
                 merchantName: t.merchantName,
@@ -41,7 +44,7 @@ export async function GET(request: Request) {
             }
         });
     } catch (error) {
-        console.error("Error fetching transactions:", error);
+        logger.error("Error fetching transactions:", error);
         return NextResponse.json(
             { success: false, error: "Failed to fetch transactions" },
             { status: 500 }
@@ -71,7 +74,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, data: transaction });
     } catch (error) {
-        console.error("Error creating transaction:", error);
+        logger.error("Error creating transaction:", error);
         return NextResponse.json(
             { success: false, error: "Failed to create transaction" },
             { status: 500 }

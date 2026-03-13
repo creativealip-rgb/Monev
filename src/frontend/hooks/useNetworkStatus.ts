@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Network, ConnectionStatus } from '@capacitor/network';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("NetworkStatus");
 
 /**
  * Custom hook to monitor device network connection status.
@@ -25,7 +28,7 @@ export function useNetworkStatus() {
             } catch (err) {
                 // If the app is running in standard browser without Capacitor full support, 
                 // fallback to standard browser APIs.
-                console.warn('Network Plugin not available, using fallback.', err);
+                logger.debug("Network Plugin not available, using fallback", err);
                 if (mounted) {
                     setIsOnline(navigator.onLine);
                 }
@@ -39,7 +42,7 @@ export function useNetworkStatus() {
             if (mounted) {
                 setIsOnline(status.connected);
                 setConnectionType(status.connectionType);
-                console.log(`[NetworkStatus] Connection changed: ${status.connected ? 'ONLINE' : 'OFFLINE'} (${status.connectionType})`);
+                logger.debug(`Connection changed: ${status.connected ? 'ONLINE' : 'OFFLINE'} (${status.connectionType})`);
 
                 // Dispatch a global Window event so other parts of the app can listen
                 // easily without adopting the React hook (e.g., standard event listeners)

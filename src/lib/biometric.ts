@@ -3,6 +3,10 @@
  * Uses WebAuthn API to provide biometric verification (Face ID, Touch ID, Windows Hello)
  */
 
+import { createLogger } from "./logger";
+
+const logger = createLogger("Biometric");
+
 export const isBiometricSupported = async (): Promise<boolean> => {
     if (typeof window === "undefined" || !window.PublicKeyCredential) {
         return false;
@@ -10,7 +14,7 @@ export const isBiometricSupported = async (): Promise<boolean> => {
     try {
         return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
     } catch (e) {
-        console.error("Biometric capability check failed", e);
+        logger.error("Biometric capability check failed", e);
         return false;
     }
 };
@@ -49,7 +53,7 @@ export const registerBiometric = async (userId: string, userName: string): Promi
         const credential = await navigator.credentials.create({ publicKey: options });
         return !!credential;
     } catch (e) {
-        console.error("Biometric registration failed", e);
+        logger.error("Biometric registration failed", e);
         return false;
     }
 };
@@ -73,7 +77,7 @@ export const authenticateBiometric = async (): Promise<boolean> => {
         const assertion = await navigator.credentials.get({ publicKey: options });
         return !!assertion;
     } catch (e) {
-        console.error("Biometric authentication failed", e);
+        logger.error("Biometric authentication failed", e);
         return false;
     }
 };

@@ -9,6 +9,9 @@ import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useToast } from "@/frontend/components/UI";
 import { AccountIcon } from "@/frontend/components/AccountIcon";
 import { Bill } from "@/types";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("PayBillModal");
 
 interface PayBillModalProps {
     isOpen: boolean;
@@ -80,7 +83,7 @@ export function PayBillModal({ isOpen, onClose, bill, paidAmount = 0, onSuccess 
                 toast.error("Pembayaran gagal", result.error || "Terjadi kesalahan");
             }
         } catch (err) {
-            console.error("Error paying bill:", err);
+            logger.error("Error paying bill", err);
             setError("Terjadi kesalahan saat memproses pembayaran");
             toast.error("Pembayaran gagal", "Coba lagi nanti");
         } finally {

@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("InfiniteScrollList");
 
 interface PaginationInfo {
     total: number;
@@ -54,7 +57,7 @@ export function InfiniteScrollList<T>({
             setPagination(result.pagination);
         } catch (err) {
             setError("Gagal memuat data");
-            console.error("Error loading more:", err);
+            logger.error("Error loading more data", err);
         } finally {
             setLoading(false);
         }

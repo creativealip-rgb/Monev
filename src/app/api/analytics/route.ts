@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
             if (!insights) {
                 try {
                     const generatedInsights = await getFinancialInsights(basicAnalysis);
-                    insights = generatedInsights;
+                    insights = typeof generatedInsights === "object" && generatedInsights !== null ? (generatedInsights as { content?: string }).content || "" : (generatedInsights as string);
                     await setCachedInsights(userId, month, year, insights);
                 } catch (aiError) {
                     console.error("AI Insights generation failed:", aiError);

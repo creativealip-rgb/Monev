@@ -10,6 +10,9 @@ import { Transaction } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("EditTransactionForm");
 
 
 interface Category {
@@ -82,7 +85,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                 }));
             }
         } catch (err) {
-            console.error("Error loading categories:", err);
+            logger.error("Error loading categories", err);
         }
     };
 
@@ -135,7 +138,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
             }
         } catch (err) {
             setError("Gagal menyimpan transaksi");
-            console.error(err);
+            logger.error("Error saving transaction", err);
         } finally {
             setLoading(false);
         }

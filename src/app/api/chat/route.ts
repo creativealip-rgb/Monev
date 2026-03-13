@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Transaction } from "@/backend/db/schema";
 import { auth } from "@/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import {
@@ -403,7 +404,7 @@ Ada lagi yang mau dicatat?`;
                 });
 
                 // Format results for AI
-                const formattedResults = searchResults.map((t: any) => {
+                const formattedResults = searchResults.map((t: Transaction) => {
                     const catName = allCategories.find(c => c.id === t.categoryId)?.name || "Lainnya";
                     return `- [${new Date(t.date).toLocaleDateString('id-ID')}] ${t.description}: ${t.type === 'expense' ? '-' : '+'}Rp ${t.amount.toLocaleString('id-ID')} (${catName})`;
                 }).join("\n");
@@ -471,12 +472,13 @@ Ada lagi yang mau dicatat?`;
         await logAIChat(userId, "assistant", finalReply);
 
         return NextResponse.json({ reply: finalReply });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Chat API Error:", error);
         return NextResponse.json({
             error: "Internal Server Error",
-            details: error.message,
-            stack: error.stack
+            details: errorMessage,
+            stack: error instanceof Error ? error.stack : undefined
         }, { status: 500 });
     }
 }
