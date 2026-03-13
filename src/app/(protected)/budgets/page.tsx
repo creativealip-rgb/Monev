@@ -1,16 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Plus, ShieldAlert, ArrowLeft, Flame, Zap, TrendingUp, RotateCcw, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
-import { BudgetDetailModal } from "@/frontend/components/DetailModalsVerified";
+import { BudgetDetailModal } from "@/frontend/components/modals/BudgetDetailModal";
 import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
-import { BudgetChart } from "./components/BudgetChart";
+
+const BudgetChart = dynamic(() => import("./components/BudgetChart").then(mod => mod.BudgetChart), {
+    loading: () => <div className="h-64 bg-white/5 rounded-xl animate-pulse" />
+});
 import { BudgetSummary } from "@/types";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";

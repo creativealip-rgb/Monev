@@ -1,12 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { formatCurrency } from "@/frontend/lib/utils";
-import { apiFetch } from "@/frontend/lib/api-client";
+import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
 import { Sparkles, Info, RefreshCw, Layers } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
-import { SankeyFlowChart } from "@/frontend/components/SankeyFlowChart";
+import { apiFetch } from "@/frontend/lib/api-client";
+
+const SankeyFlowChart = dynamic(() => import("@/frontend/components/SankeyFlowChart").then(mod => mod.SankeyFlowChart), {
+    loading: () => <div className="h-96 bg-white/5 rounded-xl animate-pulse" />
+});
 
 interface Node {
     id: string;

@@ -3,6 +3,10 @@
  * Handles automatic base URL injection for backend separation
  */
 
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("API");
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export interface ApiOptions extends RequestInit {
@@ -18,15 +22,15 @@ export async function apiFetch(input: string | URL | Request, init?: ApiOptions)
 
     // Debug logging
     if (typeof window !== "undefined") {
-        console.log(`[apiFetch] Calling: ${url} (isApk: ${isApk})`);
+        logger.debug(`Calling: ${url} (isApk: ${isApk})`);
     }
 
     if (url.startsWith("/api") && !url.startsWith("http") && API_BASE_URL && isApk) {
         url = `${API_BASE_URL}${url.startsWith("/") ? url : "/" + url}`;
-        if (typeof window !== "undefined") console.log(`[apiFetch] Rewritten to production: ${url}`);
+        if (typeof window !== "undefined") logger.debug(`Rewritten to production: ${url}`);
     } else if (url.startsWith("/api") && !url.startsWith("http")) {
         // Ensure relative URLs are used as-is in local dev
-        if (typeof window !== "undefined") console.log(`[apiFetch] Using local relative path: ${url}`);
+        if (typeof window !== "undefined") logger.debug(`Using local relative path: ${url}`);
     }
 
     try {
@@ -36,8 +40,8 @@ export async function apiFetch(input: string | URL | Request, init?: ApiOptions)
             const isApiHttp = url.startsWith("http:");
 
             if (isPageHttps && isApiHttp) {
-                console.warn(
-                    "⚠️ [apiFetch] PROTOCOL MISMATCH DETECTED:\n" +
+                logger.warn(
+                    "⚠️ PROTOCOL MISMATCH DETECTED:\n" +
                     "Your frontend is on HTTPS but trying to call an HTTP API.\n" +
                     "Browsers will likely block this (Mixed Content).\n" +
                     "Please use an HTTPS API URL or test via http://localhost:3000"
@@ -68,11 +72,11 @@ export async function apiFetch(input: string | URL | Request, init?: ApiOptions)
     } catch (error: any) {
         // For development debugging
         if (typeof window !== "undefined") {
-            console.error(`[apiFetch] ERROR calling ${url}:`, error);
+            logger.error(`ERROR calling ${url}:`, error);
         }
 
-        console.error(`❌ [apiFetch] FAILED TO FETCH: ${url}`);
-        console.error(`Detailed Error: ${error.message}`);
+        logger.error(`FAILED TO FETCH: ${url}`);
+        logger.error(`Detailed Error: ${error.message}`);
 
         // Rethrow with more context if it's a type error (often network/CORS/Ad-blocker)
         if (error instanceof TypeError && error.message === "Failed to fetch") {

@@ -9,6 +9,7 @@ import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { UserTier } from "@/lib/tier-gate";
 import { useSecurity } from "@/components/SecurityProvider";
 import { logger } from "@/lib/logger";
+import { useTransactionEvents } from "./useTransactionEvents";
 
 interface Category {
     id: number;
@@ -49,8 +50,8 @@ interface DashboardStats {
     streak?: { current: number; longest: number };
     weeklyBudgetRemaining?: number;
     weeklyBudgetTotal?: number;
-    totalAccounts?: number; // New: Total from all accounts
-    accountCount?: number; // New: Number of accounts
+    totalAccounts?: number;
+    accountCount?: number;
 }
 
 interface Anomaly {
@@ -74,27 +75,27 @@ export function useDashboardData() {
 
     useEffect(() => {
         setMounted(true);
-        // Load offline transactions initially and when events fire
         const loadOffline = async () => {
             const trans = await OfflineManager.getOptimisticTransactions();
             setOfflineTrans(trans);
         };
         loadOffline();
+    }, []);
 
-        const handleTransactionAdded = async () => {
-            logger.info("[useDashboardData] Event received: transactionAdded");
-            await loadOffline();
-            logger.info("[useDashboardData] Invalidating and refetching dashboard...");
-            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-            queryClient.invalidateQueries({ queryKey: ["accounts"] });
-            await queryClient.refetchQueries({ queryKey: ["dashboard"] });
-            await queryClient.refetchQueries({ queryKey: ["accounts"] });
-            logger.info("[useDashboardData] Dashboard refetched, offline trans count:", offlineTrans.length);
+    useTransactionEvents(() => {
+        logger.info("[useDashboardData] Event received: transactionAdded");
+        const loadOffline = async () => {
+            const trans = await OfflineManager.getOptimisticTransactions();
+            setOfflineTrans(trans);
         };
-
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
-    }, [queryClient]);
+        loadOffline();
+        logger.info("[useDashboardData] Invalidating and refetching dashboard...");
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.refetchQueries({ queryKey: ["dashboard"] });
+        queryClient.refetchQueries({ queryKey: ["accounts"] });
+        logger.info("[useDashboardData] Dashboard refetched, offline trans count:", offlineTrans.length);
+    }, ["transactionAdded"]);
 
     // Profile Query
     const { data: profile, isLoading: profileLoading } = useQuery({

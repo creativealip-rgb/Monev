@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
             allocations,
             categories: categoriesWithNames,
             investments: investmentsData,
-            aiInsight,
+            aiInsight: typeof aiInsight === "object" && aiInsight !== null ? (aiInsight as { content?: string }).content || "" : (aiInsight as string),
         };
 
         const doc = await generateWealthReport(reportData);

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("WebPush");
 
 /**
  * Web Push Notification registration hook.
@@ -32,7 +35,7 @@ export function useWebPush() {
             const sub = await reg.pushManager.getSubscription();
             setIsSubscribed(!!sub);
         } catch (error) {
-            console.error("[WebPush] Registration failed:", error);
+            logger.error("Registration failed", error);
         }
     }
 
@@ -46,7 +49,7 @@ export function useWebPush() {
             // Get VAPID key from server
             const res = await apiFetch("/api/push/vapid-key");
             if (!res.ok) {
-                console.error("[WebPush] Failed to get VAPID key");
+                logger.error("Failed to get VAPID key");
                 return false;
             }
             const { publicKey } = await res.json();
@@ -66,7 +69,7 @@ export function useWebPush() {
             setIsSubscribed(true);
             return true;
         } catch (error) {
-            console.error("[WebPush] Subscribe failed:", error);
+            logger.error("Subscribe failed", error);
             return false;
         }
     }
@@ -87,7 +90,7 @@ export function useWebPush() {
             setIsSubscribed(false);
             return true;
         } catch (error) {
-            console.error("[WebPush] Unsubscribe failed:", error);
+            logger.error("Unsubscribe failed", error);
             return false;
         }
     }

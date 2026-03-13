@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
                 type: i.type,
                 value: i.quantity * i.currentPrice
             })),
-            aiInsight: aiInsight
+            aiInsight: typeof aiInsight === "object" && aiInsight !== null ? (aiInsight as { content?: string }).content || "" : (aiInsight as string)
         };
 
         // 4. Generate PDF

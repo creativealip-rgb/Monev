@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("TransferModal");
 
 interface TransferModalProps {
     isOpen: boolean;
@@ -78,7 +81,7 @@ export function TransferModal({ isOpen, onClose, onSuccess }: TransferModalProps
                         setDestinations(data.data);
                     }
                 })
-                .catch(console.error)
+                .catch((err) => logger.error("Error fetching transfer data", err))
                 .finally(() => setFetching(false));
         }
         setSelectedDestination(null);
@@ -151,7 +154,7 @@ export function TransferModal({ isOpen, onClose, onSuccess }: TransferModalProps
                 setError(data.error || "Operasi gagal");
             }
         } catch (error) {
-            console.error("Error:", error);
+            logger.error("Error during transfer", error);
             setError("Operasi gagal");
         } finally {
             setLoading(false);

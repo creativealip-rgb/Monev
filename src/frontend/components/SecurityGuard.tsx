@@ -7,6 +7,9 @@ import { App } from "@capacitor/app";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Fingerprint, ShieldCheck } from "lucide-react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("SecurityGuard");
 
 interface SecurityGuardProps {
     children: React.ReactNode;
@@ -34,7 +37,7 @@ export function SecurityGuard({ children }: SecurityGuardProps) {
             setIsLocked(false);
             return true;
         } catch (error) {
-            console.error("Biometric Auth Failed:", error);
+            logger.error("Biometric Auth Failed", error);
             return false;
         }
     }, []);
@@ -58,7 +61,7 @@ export function SecurityGuard({ children }: SecurityGuardProps) {
                     await authenticate();
                 }
             } catch (e) {
-                console.error("Failed to fetch security settings:", e);
+                logger.error("Failed to fetch security settings", e);
             } finally {
                 setIsChecking(false);
             }

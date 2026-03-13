@@ -1110,7 +1110,7 @@ Aturan:
             content: message?.content || "Duh, maaf saya agak bingung nih. Bisa diulang pertanyaannya?"
         };
     } catch (e) {
-        console.error("Agent Chat Error:", e);
+        logger.error("Agent Chat Error:", e);
         return { content: "Maaf, asisten AI sedang istirahat sebentar. Coba tanya lagi nanti ya!" };
     }
 }
@@ -1169,8 +1169,8 @@ ATURAN OUTPUT:
 
         return response.choices[0]?.message?.content || "Data belum cukup untuk memberikan analisa. Terus catat transaksi Anda ya! 😊";
     } catch (e) {
-        console.error("Financial Insights Error:", e);
-        return "Gagal menghasilkan analisa AI saat ini. Coba cek lagi nanti!";
+        logger.error("Financial Insights Error:", e);
+        return { content: "Gagal menghasilkan insight. Coba lagi nanti." };
     }
 }
 
@@ -1226,7 +1226,7 @@ Jawab dalam format JSON saja:
         const reply = response.choices[0]?.message?.content || "";
         return JSON.parse(cleanJsonResponse(reply));
     } catch (e) {
-        console.error("Process Notification Error:", e);
+        logger.error("Process Notification Error:", e);
         return null;
     }
 }

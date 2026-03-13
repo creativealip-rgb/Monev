@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { Sparkles, AlertCircle, TrendingUp, RefreshCw } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("DailyInsight");
 
 export function DailyInsight() {
     const [insight, setInsight] = useState<{ text: string, type: "success" | "warning" | "info" } | null>(null);
@@ -25,7 +28,7 @@ export function DailyInsight() {
                 });
             }
         } catch (e) {
-            console.error(e);
+            logger.error("Failed to fetch insight", e);
             // Fallback for network error / timeout
             setInsight({
                 text: "Gagal menghubungkan ke AI. Cek koneksi internetmu, Bos.",

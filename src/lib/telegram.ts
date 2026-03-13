@@ -1,6 +1,9 @@
 
 
 import https from 'https';
+import { createLogger } from "./logger";
+
+const logger = createLogger("Telegram");
 
 export async function sendMonthlyReportTelegram(
     chatId: number,
@@ -125,13 +128,13 @@ export async function sendMonthlyReportTelegram(
 export async function sendTelegramMessage(chatId: number, text: string) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) {
-        console.warn("TELEGRAM_BOT_TOKEN is not set");
+        logger.warn("TELEGRAM_BOT_TOKEN is not set");
         return;
     }
 
     // Check if chatId is valid
     if (!chatId) {
-        console.error("Invalid chatId for Telegram message");
+        logger.error("Invalid chatId for Telegram message");
         return;
     }
 
@@ -165,18 +168,18 @@ export async function sendTelegramMessage(chatId: number, text: string) {
                 try {
                     const parsedData = JSON.parse(responseBody);
                     if (!parsedData.ok) {
-                        console.error("Telegram API Error:", parsedData);
+                        logger.error("Telegram API Error:", parsedData);
                     }
                     resolve();
                 } catch (e) {
-                    console.error("Failed to parse Telegram response:", e);
+                    logger.error("Failed to parse Telegram response:", e);
                     resolve(); // Don't crash on parse error
                 }
             });
         });
 
         req.on('error', (e) => {
-            console.error("Failed to send Telegram message:", e);
+            logger.error("Failed to send Telegram message:", e);
             resolve(); // Resolve anyway to prevent blocking
         });
 

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("ProfileData");
 
 export function useProfileData() {
     const [user, setUser] = useState<any>(null);
@@ -30,7 +33,7 @@ export function useProfileData() {
                 return data.user;
             }
         } catch (error) {
-            console.error("Failed to load profile data:", error);
+            logger.error("Failed to load profile data", error);
         } finally {
             setLoading(false);
         }
@@ -44,7 +47,7 @@ export function useProfileData() {
                 setCategories(catResult.data.filter((c: any) => c.userId === userId));
             }
         } catch (error) {
-            console.error("Failed to load categories:", error);
+            logger.error("Failed to load categories", error);
         }
     };
 

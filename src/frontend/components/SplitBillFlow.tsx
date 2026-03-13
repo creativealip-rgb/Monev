@@ -6,6 +6,9 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { useToast } from "@/frontend/components/UI";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("SplitBillFlow");
 
 interface SplitBillFlowProps {
     isOpen: boolean;
@@ -186,7 +189,7 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
                 throw new Error(result.error || "Failed to create split bill");
             }
         } catch (error) {
-            console.error("Error creating split bill:", error);
+            logger.error("Error creating split bill", error);
             alert("Gagal membuat split bill. Coba lagi.");
         } finally {
             setIsSaving(false);

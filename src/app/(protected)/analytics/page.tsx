@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import { apiFetch } from "@/frontend/lib/api-client";
 import {
     Calendar, ChevronRight, Lock, ArrowLeft, FileDown, Flame
@@ -15,12 +16,14 @@ import { useToast } from "@/frontend/components/UI";
 import { useSecurity } from "@/components/SecurityProvider";
 import { useI18n } from "@/lib/i18n";
 
-// Components
+// Components - NetWorthCard is above the fold, keep static
 import { NetWorthCard } from "./components/NetWorthCard";
-import { FinancialMap } from "./components/FinancialMap";
-import { OverviewTab } from "./components/OverviewTab";
-import { TrendsTab } from "./components/TrendsTab";
-import { InsightsTab } from "./components/InsightsTab";
+
+// Dynamic imports for tab content
+const OverviewTab = dynamic(() => import("./components/OverviewTab").then(mod => mod.OverviewTab), { loading: () => <TabSkeleton /> });
+const TrendsTab = dynamic(() => import("./components/TrendsTab").then(mod => mod.TrendsTab), { loading: () => <TabSkeleton /> });
+const InsightsTab = dynamic(() => import("./components/InsightsTab").then(mod => mod.InsightsTab), { loading: () => <TabSkeleton /> });
+const FinancialMap = dynamic(() => import("./components/FinancialMap").then(mod => mod.FinancialMap), { loading: () => <TabSkeleton /> });
 
 // Types
 import type { AnalyticsData } from "./components/types";
@@ -364,6 +367,16 @@ useEffect(() => {
                 {activeTab === "trends" && <TrendsTab data={data} itemVariants={itemVariants} />}
                 {activeTab === "insights" && <InsightsTab data={data} itemVariants={itemVariants} />}
             </motion.div>
+        </div>
+    );
+}
+
+// Tab loading skeleton
+function TabSkeleton() {
+    return (
+        <div className="space-y-4 p-4">
+            <div className="h-32 bg-white/5 rounded-xl animate-pulse" />
+            <div className="h-64 bg-white/5 rounded-xl animate-pulse" />
         </div>
     );
 }

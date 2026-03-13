@@ -1,6 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("Currency");
 
 type CurrencyCode = "IDR" | "USD" | "EUR" | "SGD" | "MYR";
 
@@ -61,13 +64,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
                         IDR: 1 // Base currency
                     });
                 } else {
-                    console.warn("Currency fetch failed, using fallbacks");
+                    logger.warn("Currency fetch failed, using fallbacks");
                     setExchangeRates({
                         USD: 0.000064, EUR: 0.000059, SGD: 0.000085, MYR: 0.00028, IDR: 1
                     });
                 }
             } catch (error) {
-                console.error("Error fetching exchange rates:", error);
+                logger.error("Error fetching exchange rates", error);
                 // Fallback rates if offline
                 setExchangeRates({
                     USD: 0.000064, EUR: 0.000059, SGD: 0.000085, MYR: 0.00028, IDR: 1

@@ -4,6 +4,9 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
 import { TransactionWithCategory } from "@/types";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("TransactionDelete");
 
 export function useTransactionDelete(
     refresh: () => Promise<void>
@@ -67,7 +70,7 @@ export function useTransactionDelete(
                 toast.error("Gagal mengembalikan", "Coba lagi nanti");
             }
         } catch (error) {
-            console.error("Error restoring transaction:", error);
+            logger.error("Error restoring transaction", error);
             toast.error("Gagal mengembalikan", "Terjadi kesalahan");
         } finally {
             setIsRestoring(false);
@@ -116,7 +119,7 @@ export function useTransactionDelete(
                 toast.error("Gagal menghapus", "Coba lagi nanti");
             }
         } catch (error) {
-            console.error("Error deleting:", error);
+            logger.error("Error deleting transaction", error);
             toast.error("Gagal menghapus", "Terjadi kesalahan");
         } finally {
             setDeletingId(null);

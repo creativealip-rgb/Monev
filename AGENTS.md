@@ -26,18 +26,18 @@ npx eslint --fix src/path/to/file.tsx  # Auto-fix single file
 # Unit tests (Vitest)
 npm run test                         # Run all unit tests
 npm run test:watch                   # Run tests in watch mode
-npx vitest run src/lib/validations.test.ts    # Run single test file
-npx vitest run -t "test name"                  # Run single test by name
+npx vitest run src/lib/validations.test.ts  # Run single test file
+npx vitest run -t "test name"               # Run single test by name
+npx vitest src/lib/validations.test.ts      # Watch single file
 
 # E2E tests (Playwright) - requires dev server running
 npx playwright test                  # Run all E2E tests
-npx playwright test tests/login.spec.ts       # Run single spec
+npx playwright test tests/login.spec.ts     # Run single spec
 
 # Database (Drizzle ORM + SQLite)
 npx drizzle-kit push                 # Push schema to local sqlite.db
 npx drizzle-kit generate             # Generate migration files
 npx drizzle-kit migrate              # Run migrations (local)
-npx drizzle-kit migrate --config=drizzle.config.prod.ts  # Run migrations (prod)
 npx drizzle-kit studio               # Open Drizzle Studio GUI
 ```
 
@@ -142,6 +142,7 @@ export async function GET(request: Request) {
 - **API routes**: try/catch + `console.error` + JSON error response (400/401/500)
 - **Components**: try/catch + `console.error` + user-facing state (`useState<string | null>`)
 - **Nested try/catch** for non-critical ops so main flow continues
+- Use `logger` utility from `@/lib/logger` when available
 - User-facing messages in **Indonesian**
 
 ### Styling (Tailwind CSS v4)
@@ -154,7 +155,7 @@ export async function GET(request: Request) {
 
 ### Database (Drizzle + SQLite)
 - Schema: `src/backend/db/schema.ts` | Connection: `src/backend/db/index.ts`
-- Operations: `src/backend/db/operations.ts`, `*-operations.ts`
+- Operations: `src/backend/db/operations/*.ts` (domain-specific files)
 - `getDb()` returns singleton (survives HMR via `globalThis`)
 - Tables: `sqliteTable()`, auto-increment int PKs, `integer(..., { mode: "timestamp" })` for dates
 - Booleans: `integer(..., { mode: "boolean" })`; Enums: `text(..., { enum: [...] })`
@@ -175,9 +176,9 @@ src/
 │   ├── hooks/                # Custom hooks
 │   └── lib/                  # Utils, contexts
 ├── backend/
-│   ├── db/                   # Schema, connection, operations
+│   ├── db/                   # Schema, connection, operations/*
 │   └── actions/              # Server actions
-├── lib/                      # Shared server utilities
+├── lib/                      # Shared utilities (constants, logger, ai)
 ├── types/index.ts            # Shared types
 ├── auth.ts                   # next-auth config
 └── auth.config.ts            # Auth provider config
@@ -201,7 +202,7 @@ src/
 | Auth | next-auth v5 (beta) |
 | AI | openai, ai SDK |
 | Dates | date-fns |
-| Charts | recharts |
+| Charts | recharts, chart.js |
 | Validation | drizzle-zod, zod |
 | PDF | jspdf, jspdf-autotable |
 | Mobile | Capacitor |

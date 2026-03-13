@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, FileText, Camera, Mic, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
-import { TransactionForm } from "./TransactionForm";
+import { TransactionForm } from "./TransactionForm/index";
 import { SmartInput } from "./SmartInput";
 import { useSession } from "next-auth/react";
 import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";

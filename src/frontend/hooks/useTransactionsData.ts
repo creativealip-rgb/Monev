@@ -8,6 +8,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { TransactionWithCategory } from "@/types";
 import { logger } from "@/lib/logger";
+import { useTransactionEvents } from "./useTransactionEvents";
 
 interface Category {
     id: number;
@@ -29,22 +30,20 @@ export function useTransactionsData(searchQuery: string = "") {
             setOfflineTrans(trans);
         };
         loadOffline();
+    }, []);
 
-        const handleTransactionAdded = async () => {
-            logger.info("[useTransactionsData] Event received: transactionAdded");
-            await loadOffline();
-            // Force invalidate and refetch with Promise
-            logger.info("[useTransactionsData] Invalidating queries...");
-            await queryClient.invalidateQueries({ 
-                queryKey: ["transactions", "list"],
-                exact: false 
-            });
-            logger.info("[useTransactionsData] Queries invalidated, offline trans count:", offlineTrans.length);
+    useTransactionEvents(() => {
+        logger.info("[useTransactionsData] Event received: transactionAdded");
+        const loadOffline = async () => {
+            const trans = await OfflineManager.getOptimisticTransactions();
+            setOfflineTrans(trans);
         };
-
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
-    }, [queryClient]);
+        loadOffline();
+        queryClient.invalidateQueries({
+            queryKey: ["transactions", "list"],
+            exact: false
+        });
+    }, ["transactionAdded"]);
 
     // Categories Query
     const { data: categories = [] } = useQuery({

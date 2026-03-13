@@ -3,6 +3,9 @@
 import { getDb } from "@/backend/db";
 import { usageTracking } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
+import { createLogger } from "./logger";
+
+const logger = createLogger("UsageTracker");
 
 /**
  * Increment usage counter for a specific feature
@@ -60,7 +63,7 @@ export async function incrementUsage(
                 .where(eq(usageTracking.id, record.id));
         }
     } catch (error) {
-        console.error("Error incrementing usage:", error);
+        logger.error("Error incrementing usage", error);
         // Don't throw - usage tracking should not block main operation
     }
 }
@@ -96,7 +99,7 @@ export async function getUsage(userId: number) {
             }
         );
     } catch (error) {
-        console.error("Error getting usage:", error);
+        logger.error("Error getting usage", error);
         return {
             transactionsCount: 0,
             aiChatsCount: 0,
@@ -181,7 +184,7 @@ export async function resetUsage(userId: number) {
         await db.delete(usageTracking).where(eq(usageTracking.userId, userId));
         return true;
     } catch (error) {
-        console.error("Error resetting usage:", error);
+        logger.error("Error resetting usage", error);
         return false;
     }
 }
