@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { CURRENCY_CONFIG, PAYMENT_METHODS, type CurrencyCode } from "@/lib/constants";
 
 /**
  * Utility function to merge Tailwind CSS class names.
@@ -26,16 +27,6 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
-
-type CurrencyCode = "IDR" | "USD" | "EUR" | "SGD" | "MYR";
-
-const CURRENCY_CONFIG: Record<CurrencyCode, { locale: string; minFrac: number }> = {
-    IDR: { locale: "id-ID", minFrac: 0 },
-    USD: { locale: "en-US", minFrac: 2 },
-    EUR: { locale: "de-DE", minFrac: 2 },
-    SGD: { locale: "en-SG", minFrac: 2 },
-    MYR: { locale: "ms-MY", minFrac: 2 },
-};
 
 /**
  * Formats a numeric amount as localized currency string.
@@ -91,20 +82,6 @@ export function formatCurrency(amount: number): string {
         maximumFractionDigits: config.minFrac,
     }).format(convertedAmount);
 }
-
-/**
- * Payment method configuration for display
- */
-export const PAYMENT_METHODS: Record<string, { label: string; icon: string }> = {
-    cash: { label: "Tunai", icon: "Banknote" },
-    transfer: { label: "Transfer Bank", icon: "Landmark" },
-    gopay: { label: "GoPay", icon: "Wallet" },
-    credit_card: { label: "Kartu Kredit", icon: "CreditCard" },
-    qris: { label: "QRIS", icon: "QrCode" },
-    dana: { label: "DANA", icon: "Wallet" },
-    ovo: { label: "OVO", icon: "Wallet" },
-    shopeepay: { label: "ShopeePay", icon: "Wallet" },
-};
 
 /**
  * Get payment method display info

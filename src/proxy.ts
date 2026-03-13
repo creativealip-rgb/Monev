@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export function proxy(request: Request) {
     const { pathname } = new URL(request.url);
@@ -10,7 +11,7 @@ export function proxy(request: Request) {
 
     const isLoggedIn = !!sessionCookie;
 
-    console.log(`[middleware] Path: ${pathname}, isLoggedIn: ${!!sessionCookie}`);
+    logger.debug(`[Middleware] Path: ${pathname}, isLoggedIn: ${isLoggedIn}`);
 
     // Public paths yang tidak perlu auth
     const isPublicPath =
@@ -67,7 +68,7 @@ export function proxy(request: Request) {
 
     // Redirect unauthenticated users ke login
     if (!isLoggedIn && !isPublicPath) {
-        console.log(`[middleware] Redirecting unauthenticated user from ${pathname} to /login`);
+        logger.info(`[Middleware] Redirecting unauthenticated user from ${pathname} to /login`);
         return NextResponse.redirect(new URL("/login", request.url));
     }
 

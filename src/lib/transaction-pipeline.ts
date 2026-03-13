@@ -1,5 +1,6 @@
 import { createTransaction, getUserSettings, getGoalById, getMonthlyStats, createScheduledMessage, findRecentMatchingTransaction, updateTransaction, getCategories } from '@/backend/db/operations';
 import { getPsychologicalImpact } from '@/lib/ai';
+import { logger } from "@/lib/logger";
 import { sendTelegramMessage } from '@/lib/telegram';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -24,14 +25,14 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
     const categoryName = (data as any).categoryName || "Transaksi"; // Fallback if name not passed
 
     const formattedDate = format(transaction.date, "dd MMM yyyy", { locale: id });
-    console.log(`Transaction saved via ${source}:`, transaction.id);
+    logger.info(`[Pipeline] Transaction saved via ${source}:`, transaction.id);
 
     // --- TRANSFER BALANCER LOGIC ---
     let isTransfer = data.type === 'transfer' || data.categoryName === 'Transfer';
     const matchingTrans = await findRecentMatchingTransaction(userId, data.amount, data.type as any);
 
     if (matchingTrans && !isTransfer) {
-        console.log(`[Balancer] Match found for ${transaction.amount}: ${matchingTrans.id}. Converting to Transfer.`);
+        logger.info(`[Pipeline/Balancer] Match found for ${transaction.amount}: ${matchingTrans.id}. Converting to Transfer.`);
         isTransfer = true;
 
         // Upgrade both to transfer
@@ -78,7 +79,7 @@ export async function processAndSaveTransaction(userId: number, data: Transactio
             const impact = await getPsychologicalImpact(transaction.amount, settings?.hourlyRate || 50000, primaryGoal, monthlySaving, categoryName);
             message += `\n\n${impact}`;
         } catch (pError) {
-            console.error("Psychological Calculation Error:", pError);
+            logger.error("[Pipeline] Psychological Calculation Error:", pError);
         }
     }
 

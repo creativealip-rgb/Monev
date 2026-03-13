@@ -3,7 +3,7 @@ import { getCategories } from "@/backend/db/operations";
 
 export interface ImportResult {
     success: boolean;
-    data?: any[];
+    data?: Array<{ date: Date; description: string; amount: number; type: 'income' | 'expense' }>;
     error?: string;
     stats?: {
         total: number;
@@ -12,7 +12,7 @@ export interface ImportResult {
     };
 }
 
-export async function parseBankCSV(csvText: string): Promise<any[]> {
+export async function parseBankCSV(csvText: string): Promise<Array<{ date: Date; description: string; amount: number; type: 'income' | 'expense' }>> {
     // Simple CSV parser for demonstration
     // Expected format: Date, Description, Amount, Type
     const lines = csvText.split('\n').filter(line => line.trim() !== '');
@@ -23,7 +23,7 @@ export async function parseBankCSV(csvText: string): Promise<any[]> {
 
     return dataRows.map(row => {
         const values = row.split(',').map(v => v.trim());
-        const entry: any = {};
+        const entry: Record<string, string> = {};
         headers.forEach((header, index) => {
             entry[header] = values[index];
         });
@@ -38,7 +38,7 @@ export async function parseBankCSV(csvText: string): Promise<any[]> {
             date: dateRaw ? new Date(dateRaw) : new Date(),
             description: descRaw || "Imported Transaction",
             amount: Math.abs(parseFloat(amountRaw || "0")),
-            type: typeRaw.toLowerCase().includes('in') || parseFloat(amountRaw) > 0 ? 'income' : 'expense',
+            type: (typeRaw.toLowerCase().includes('in') || parseFloat(amountRaw) > 0 ? 'income' : 'expense') as 'income' | 'expense',
         };
     }).filter(item => !isNaN(item.amount));
 }

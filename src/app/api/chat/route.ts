@@ -10,6 +10,7 @@ import {
     getBills, getBillById, createBill, updateBill, deleteBill, toggleBillPaid,
     getDailyAICount, logAIChat, getUserSettings
 } from "@/backend/db/operations";
+import { logger } from "@/lib/logger";
 import { askFinanceAgent, getPsychologicalImpact } from "@/lib/ai";
 import { canUseAI, UserTier } from "@/lib/tier-gate";
 
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
             percent: (g.currentAmount / g.targetAmount) * 100
         }));
 
-        const budgetsContext = allBudgets.map((b: any) => ({
+        const budgetsContext = allBudgets.map((b) => ({
             id: b.id,
             category: b.category.name,
             limit: b.amount,
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
             percent: (b.spent / b.amount) * 100
         }));
 
-        const transactionsContext = rawTransactions.map((t: any) => {
+        const transactionsContext = rawTransactions.map((t) => {
             try {
                 return {
                     id: t.id,
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
                 console.error("Error mapping transaction context:", e, t);
                 return null;
             }
-        }).filter(Boolean) as any[];
+        }).filter((t): t is NonNullable<typeof t> => t !== null);
 
         // Get AI response
         const aiResponse = await askFinanceAgent(message || "Analyze this image", {
@@ -114,7 +115,8 @@ export async function POST(req: NextRequest) {
             }))
         }, history, imageBase64);
 
-        console.log("AI Response:", aiResponse);
+        logger.info("[ChatAPI] AI Response received");
+        logger.debug("[ChatAPI] Response details:", aiResponse);
 
         let finalReply = aiResponse.content;
 
@@ -123,7 +125,7 @@ export async function POST(req: NextRequest) {
             const toolName = aiResponse.toolCall.function.name;
             const args = JSON.parse(aiResponse.toolCall.function.arguments);
 
-            console.log(`[ToolCall] ${toolName}`, args);
+            logger.info(`[ChatAPI] ToolCall triggered: ${toolName}`, args);
 
             if (toolName === "record_transaction") {
                 // Find category ID
@@ -187,7 +189,7 @@ Ada lagi yang mau dicatat?`;
 
                 finalReply = `✅ Mantap Alip! Target baru "${args.name}" sebesar Rp ${args.targetAmount.toLocaleString('id-ID')} sudah saya pasang. 🎯✨ Semangat nabungnya ya!`;
             } else if (toolName === "update_transaction") {
-                const updateData: any = {};
+                const updateData: { amount?: number; description?: string; type?: "income" | "expense" | "transfer"; categoryId?: number } = {};
                 if (args.amount) updateData.amount = args.amount;
                 if (args.description) updateData.description = args.description;
                 if (args.type) updateData.type = args.type;
@@ -219,7 +221,7 @@ Ada lagi yang mau dicatat?`;
                 await deleteBudget(userId, args.id);
                 finalReply = `🗑️ Budget [ID: ${args.id}] sudah dihapus ya, Bos.`;
             } else if (toolName === "update_goal") {
-                const updateData: any = {};
+                const updateData: { name?: string; targetAmount?: number; deadline?: Date; icon?: string } = {};
                 if (args.name) updateData.name = args.name;
                 if (args.targetAmount) updateData.targetAmount = args.targetAmount;
                 if (args.deadline) updateData.deadline = new Date(args.deadline);
@@ -314,10 +316,10 @@ Ada lagi yang mau dicatat?`;
                 });
                 finalReply = `✅ Sip! Tagihan "${args.name}" sebesar Rp ${args.amount.toLocaleString('id-ID')} (Tgl ${args.dueDate}) sudah saya catat. Jangan lupa bayar ya Bos! 🧾⚡`;
             } else if (toolName === "update_bill") {
-                const updateData: any = {};
+                const updateData: { name?: string; amount?: number; dueDate?: number } = {};
                 if (args.name) updateData.name = args.name;
                 if (args.amount) updateData.amount = args.amount;
-                if (args.dueDate) updateData.dueDate = args.dueDate;
+                if (args.dueDate) updateData.dueDate = Number(args.dueDate);
 
                 await updateBill(userId, args.id, updateData);
                 finalReply = `✅ Tagihan [ID: ${args.id}] sudah saya update sesuai permintaan Bos! 👌`;
@@ -359,7 +361,7 @@ Ada lagi yang mau dicatat?`;
                 finalReply = `✅ Keren! Aset investasi baru "${args.name}" (${args.quantity} unit) sudah saya tambahkan ke portofolio. 📈🚀`;
             } else if (toolName === "update_investment") {
                 const investment = await getInvestmentById(userId, args.id);
-                const updateData: any = {};
+                const updateData: { quantity?: number; avgBuyPrice?: number; currentPrice?: number } = {};
                 if (args.quantity) updateData.quantity = args.quantity;
                 if (args.buyPrice) updateData.avgBuyPrice = args.buyPrice;
                 if (args.currentPrice) updateData.currentPrice = args.currentPrice;
