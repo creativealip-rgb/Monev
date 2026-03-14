@@ -2,7 +2,7 @@ import {
     generateIncomeExpenseChart,
     generateExpenseBreakdownChart,
     generateGoalsProgressChart
-} from "@/lib/charts";
+} from "@/lib/charts.server";
 
 export interface ReportData {
     userName: string;
