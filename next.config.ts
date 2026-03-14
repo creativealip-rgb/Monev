@@ -52,6 +52,9 @@ const nextConfig = (phase: string): NextConfig => {
 
         // Power by header (security - hide framework info)
         poweredByHeader: false,
+
+        // Exclude @napi-rs/canvas from bundling (server-only native module)
+        serverExternalPackages: ["@napi-rs/canvas"],
     };
 };
 

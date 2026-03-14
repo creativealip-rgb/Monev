@@ -1,7 +1,12 @@
 import { Chart, registerables, ChartConfiguration, Color } from "chart.js";
-import { createCanvas } from "canvas";
 
 Chart.register(...registerables);
+
+// Dynamic import for canvas (server-only)
+async function getCanvas() {
+    const { createCanvas } = await import("@napi-rs/canvas");
+    return { createCanvas };
+}
 
 const BRAND_COLORS = {
     primary: "#8B5CF6",
@@ -59,6 +64,7 @@ export async function generateIncomeExpenseChart(
     previousMonth: { income: number; expense: number },
     locale: "id" | "en"
 ): Promise<string> {
+    const { createCanvas } = await getCanvas();
     const canvas = createCanvas(800, 400);
     const ctx = canvas.getContext("2d");
 
@@ -140,6 +146,7 @@ export async function generateExpenseBreakdownChart(
     categories: Array<{ name: string; amount: number; color: string }>,
     locale: "id" | "en"
 ): Promise<string> {
+    const { createCanvas } = await getCanvas();
     const canvas = createCanvas(800, 400);
     const ctx = canvas.getContext("2d");
 
@@ -207,6 +214,7 @@ export async function generateDailySpendingChart(
     dailyData: Array<{ date: string; amount: number }>,
     locale: "id" | "en"
 ): Promise<string> {
+    const { createCanvas } = await getCanvas();
     const canvas = createCanvas(800, 400);
     const ctx = canvas.getContext("2d");
 
@@ -295,6 +303,7 @@ export async function generateGoalsProgressChart(
     goals: Array<{ name: string; current: number; target: number; color: string }>,
     locale: "id" | "en"
 ): Promise<string> {
+    const { createCanvas } = await getCanvas();
     const canvas = createCanvas(800, 400);
     const ctx = canvas.getContext("2d");
 
@@ -380,6 +389,7 @@ export async function generate503020Gauge(
     savings: { actual: number; target: number },
     locale: "id" | "en"
 ): Promise<string> {
+    const { createCanvas } = await getCanvas();
     const canvas = createCanvas(400, 400);
     const ctx = canvas.getContext("2d");
 
