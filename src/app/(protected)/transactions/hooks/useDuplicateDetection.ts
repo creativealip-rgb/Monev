@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useSyncExternalStore } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { TransactionWithCategory } from "@/types";
 import { UseDuplicateDetectionReturn } from "../types";
 
@@ -24,18 +24,15 @@ export function useDuplicateDetection(
     transactions: TransactionWithCategory[]
 ): UseDuplicateDetectionReturn {
     const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
+    const [dismissedDuplicateIds, setDismissedDuplicateIds] = useState<Set<number>>(() => getDismissedIdsFromStorage());
 
-    const getSnapshot = useCallback(() => getDismissedIdsFromStorage(), []);
-
-    const dismissedDuplicateIds = useSyncExternalStore(
-        (callback) => {
-            const handleStorage = () => callback();
-            window.addEventListener("storage", handleStorage);
-            return () => window.removeEventListener("storage", handleStorage);
-        },
-        getSnapshot,
-        getSnapshot
-    );
+    useEffect(() => {
+        const handleStorage = () => {
+            setDismissedDuplicateIds(getDismissedIdsFromStorage());
+        };
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+    }, []);
 
     const duplicateIds = useMemo(() => {
         const ids = new Set<number>();
