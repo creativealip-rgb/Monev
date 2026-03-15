@@ -6,7 +6,10 @@ export function proxy(request: Request) {
     const cookies = request.headers.get("cookie") || "";
     const sessionCookie = cookies
         .split(";")
-        .find((c) => c.trim().startsWith("authjs.session-token="))
+        .find((c) => {
+            const trimmed = c.trim();
+            return trimmed.startsWith("next-auth.session-token=") || trimmed.startsWith("authjs.session-token=") || trimmed.startsWith("__Secure-next-auth.session-token=");
+        })
         ?.split("=")[1];
 
     const isLoggedIn = !!sessionCookie;
