@@ -25,14 +25,16 @@ export function useDuplicateDetection(
 ): UseDuplicateDetectionReturn {
     const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
 
+    const getSnapshot = useCallback(() => getDismissedIdsFromStorage(), []);
+
     const dismissedDuplicateIds = useSyncExternalStore(
         (callback) => {
             const handleStorage = () => callback();
             window.addEventListener("storage", handleStorage);
             return () => window.removeEventListener("storage", handleStorage);
         },
-        getDismissedIdsFromStorage,
-        () => new Set<number>()
+        getSnapshot,
+        getSnapshot
     );
 
     const duplicateIds = useMemo(() => {
