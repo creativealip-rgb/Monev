@@ -147,7 +147,7 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
     const background = useTransform(
         x,
         [-100, 0, 100],
-        ["#ef4444", "transparent", "#0ea5e9"]
+        ["#ef4444", "#ffffff00", "#0ea5e9"]
     );
 
     return (
