@@ -47,9 +47,9 @@ const menuItems = [
 ];
 
 const helpItems = [
-    { icon: Book, label: "Dokumentasi", description: "Panduan lengkap Monev", href: "https://docs.monevapp.web.id", color: "blue" },
+    { icon: Book, label: "Dokumentasi", description: "Panduan lengkap Monev", href: "/help/docs", color: "blue" },
     { icon: MessageSquare, label: "FAQ", description: "Pertanyaan umum", href: "/help/faq", color: "purple" },
-    { icon: Mail, label: "Kontak Support", description: "Email: support@monevapp.web.id", href: "mailto:support@monevapp.web.id", color: "emerald" },
+    { icon: Mail, label: "Kontak Support", description: "Email: alifpm55@gmail.com", href: "mailto:alifpm55@gmail.com", color: "emerald" },
 ];
 
 export default function ProfilePage() {
