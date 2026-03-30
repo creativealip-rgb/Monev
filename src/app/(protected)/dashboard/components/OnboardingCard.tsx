@@ -89,7 +89,7 @@ export function OnboardingCard({ show }: OnboardingCardProps) {
                 </div>
 
                 {/* CTA Button */}
-                <Link href="/balances" onClick={() => haptics.medium()}>
+                <Link href="/saldo" onClick={() => haptics.medium()}>
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
