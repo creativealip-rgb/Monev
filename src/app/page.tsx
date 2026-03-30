@@ -453,7 +453,7 @@ export default function LandingPage() {
                     <div className="space-y-16">
                         {featureCategories.map((category, catIndex) => {
                             const Icon = category.icon;
-                            const colors = {
+                            const colors: Record<string, string> = {
                                 emerald: "from-emerald-500 to-teal-600",
                                 purple: "from-purple-500 to-pink-600",
                                 sky: "from-sky-500 to-blue-600",
