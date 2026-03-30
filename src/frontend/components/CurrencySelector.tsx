@@ -61,15 +61,15 @@ export function CurrencySelector({ variant = "default" }: { variant?: "default" 
     }
 
     return (
-        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-full border border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex gap-1.5 p-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-full border border-slate-200/50 dark:border-slate-700/50 overflow-x-auto scrollbar-hide">
             {currencies.map((curr) => (
                 <button
                     key={curr.id}
                     onClick={() => handleChange(curr.id)}
                     className={cn(
-                        "relative flex items-center justify-center gap-2 py-3 px-3 rounded-xl transition-all overflow-hidden",
+                        "relative flex items-center gap-1.5 py-2.5 px-3 rounded-xl transition-all whitespace-nowrap flex-shrink-0",
                         currency === curr.id
-                            ? "flex-1 shadow-sm"
+                            ? "shadow-sm"
                             : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
                     )}
                 >
@@ -81,21 +81,13 @@ export function CurrencySelector({ variant = "default" }: { variant?: "default" 
                         />
                     )}
 
-                    <span className="relative z-10 text-lg leading-none">{curr.flag}</span>
-                    <div className="relative z-10 flex flex-col items-start">
-                        <span className={cn(
-                            "text-[13px] font-bold transition-colors leading-none",
-                            currency === curr.id ? "text-white" : "text-slate-600 dark:text-slate-300"
-                        )}>
-                            {curr.id}
-                        </span>
-                        <span className={cn(
-                            "text-[9px] transition-colors",
-                            currency === curr.id ? "text-white/80" : "text-slate-400"
-                        )}>
-                            {curr.symbol}
-                        </span>
-                    </div>
+                    <span className="relative z-10 text-base leading-none">{curr.flag}</span>
+                    <span className={cn(
+                        "text-[11px] font-bold transition-colors leading-none",
+                        currency === curr.id ? "text-white" : "text-slate-700 dark:text-slate-300"
+                    )}>
+                        {curr.id}
+                    </span>
                 </button>
             ))}
         </div>
