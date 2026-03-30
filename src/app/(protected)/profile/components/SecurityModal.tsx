@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Shield, Lock, Zap, Fingerprint, Trash2, LogOut, Smartphone, Key, Eye, EyeOff } from "lucide-react";
+import { Check, Shield, Lock, Zap, Fingerprint, Trash2, LogOut, Smartphone, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
