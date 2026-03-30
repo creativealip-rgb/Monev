@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Download, Upload, Cloud, FileJson, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Download, Upload, Cloud, FileJson, FileSpreadsheet, FileText, CheckCircle2, AlertCircle, Loader2, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { useSecurity } from "@/components/SecurityProvider";
@@ -20,11 +20,19 @@ export function ExportModal({ onClose }: ExportModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [importFile, setImportFile] = useState<File | null>(null);
     const [lastBackup, setLastBackup] = useState<string | null>(null);
+    
+    // Date range for export
+    const [dateRange, setDateRange] = useState<{from: string; to: string}>({
+        from: new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().split('T')[0],
+        to: new Date().toISOString().split('T')[0]
+    });
 
     const handleExport = async (format: string) => {
         const isVerified = await reauthenticate();
         if (isVerified) {
-            window.open(`/api/export?format=${format}`, "_blank");
+            const url = `/api/export?format=${format}&from=${dateRange.from}&to=${dateRange.to}`;
+            window.open(url, "_blank");
+            toast.success("Export", `Export ${format.toUpperCase()} sedang diproses...`);
         }
     };
 
@@ -142,9 +150,67 @@ export function ExportModal({ onClose }: ExportModalProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-3"
+                        className="space-y-4"
                     >
-                        <p className="text-xs text-slate-500 mb-2">Pilih format export:</p>
+                        {/* Date Range Selector */}
+                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Calendar size={16} className="text-slate-500" />
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Periode Export</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-medium text-slate-500 mb-1">Dari Tanggal</label>
+                                    <input
+                                        type="date"
+                                        value={dateRange.from}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-medium text-slate-500 mb-1">Sampai Tanggal</label>
+                                    <input
+                                        type="date"
+                                        value={dateRange.to}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                        min={dateRange.from}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 mt-3">
+                                <button
+                                    onClick={() => setDateRange({
+                                        from: new Date(new Date().setDate(1)).toISOString().split('T')[0],
+                                        to: new Date().toISOString().split('T')[0]
+                                    })}
+                                    className="flex-1 py-1.5 text-[10px] font-medium text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors"
+                                >
+                                    Bulan Ini
+                                </button>
+                                <button
+                                    onClick={() => setDateRange({
+                                        from: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
+                                        to: new Date().toISOString().split('T')[0]
+                                    })}
+                                    className="flex-1 py-1.5 text-[10px] font-medium text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors"
+                                >
+                                    30 Hari
+                                </button>
+                                <button
+                                    onClick={() => setDateRange({
+                                        from: new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().split('T')[0],
+                                        to: new Date().toISOString().split('T')[0]
+                                    })}
+                                    className="flex-1 py-1.5 text-[10px] font-medium text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors"
+                                >
+                                    3 Bulan
+                                </button>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-slate-500">Pilih format export:</p>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => handleExport("json")}
@@ -163,6 +229,14 @@ export function ExportModal({ onClose }: ExportModalProps) {
                                 <span className="text-[10px] text-slate-400">Excel readable</span>
                             </button>
                             <button
+                                onClick={() => handleExport("pdf")}
+                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                            >
+                                <FileText size={24} className="text-rose-500" />
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">PDF</span>
+                                <span className="text-[10px] text-slate-400">Laporan lengkap</span>
+                            </button>
+                            <button
                                 onClick={() => handleExport("bca_csv")}
                                 className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
@@ -176,6 +250,14 @@ export function ExportModal({ onClose }: ExportModalProps) {
                             >
                                 <span className="text-xl">💳</span>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Mandiri</span>
+                                <span className="text-[10px] text-slate-400">Template</span>
+                            </button>
+                            <button
+                                onClick={() => handleExport("bni_csv")}
+                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                            >
+                                <span className="text-xl">🏦</span>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">BNI</span>
                                 <span className="text-[10px] text-slate-400">Template</span>
                             </button>
                         </div>
