@@ -144,20 +144,20 @@ export function ProfileModals({
                         exit={{ opacity: 0, y: 50, scale: 0.95 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                        className="w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 relative"
+                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-h-[85vh] min-h-[400px] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden"
                     >
-                        <div className="flex justify-between items-center p-6 pb-4 shrink-0">
+                        <div className="flex justify-between items-center p-6 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                 {getModalTitle()}
                             </h3>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="overflow-y-auto flex-1 px-6 pb-6">
+                        <div className="overflow-y-auto flex-1 px-6 pb-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
                             {renderModalContent()}
                         </div>
                     </motion.div>
