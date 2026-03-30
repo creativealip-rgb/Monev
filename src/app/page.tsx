@@ -4,147 +4,254 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-    ArrowRight, ShieldCheck,
-    Brain, Bot, Scan,
-    BarChart3, TrendingUp, ChevronRight, Star
+    ArrowRight, ShieldCheck, Zap, Brain, Bot, Scan,
+    BarChart3, TrendingUp, Star, Check, X, ChevronDown,
+    Users, CreditCard, PiggyBank, Receipt, Lock,
+    FileText, MessageCircle, Camera, Mic, Bell
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import dynamic from "next/dynamic";
 
-function ScreenshotsSkeleton() {
+function Skeleton() {
     return (
-        <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900/30">
-            <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-16 space-y-4">
-                    <div className="mx-auto w-40 h-8 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                    <div className="mx-auto w-96 max-w-full h-12 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                    <div className="mx-auto w-80 max-w-full h-6 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                </div>
-                <div className="grid lg:grid-cols-2 gap-12 items-center">
-                    <div className="mx-auto w-[300px] h-[600px] bg-slate-200 dark:bg-slate-700 rounded-[3rem] animate-pulse" />
-                    <div className="space-y-4">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="flex items-start gap-4 p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl">
-                                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse flex-shrink-0" />
-                                <div className="flex-1 space-y-2">
-                                    <div className="w-32 h-5 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                    <div className="w-56 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function TestimonialSkeleton() {
-    return (
-        <section className="py-24 px-6">
-            <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-16 space-y-4">
-                    <div className="mx-auto w-44 h-8 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                    <div className="mx-auto w-80 max-w-full h-12 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                    <div className="mx-auto w-72 max-w-full h-6 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="text-center p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <div className="mx-auto w-20 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse mb-2" />
-                            <div className="mx-auto w-24 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                        </div>
-                    ))}
-                </div>
-                <div className="grid md:grid-cols-3 gap-6">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800">
-                            <div className="flex gap-1 mb-4">
-                                {Array.from({ length: 5 }).map((_, j) => (
-                                    <div key={j} className="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-                                ))}
-                            </div>
-                            <div className="space-y-2 mb-6">
-                                <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                <div className="w-3/4 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                                <div className="space-y-2">
-                                    <div className="w-28 h-4 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                    <div className="w-20 h-3 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function FAQSkeleton() {
-    return (
-        <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900/30">
-            <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-16 space-y-4">
-                    <div className="mx-auto w-20 h-8 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                    <div className="mx-auto w-96 max-w-full h-12 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                    <div className="mx-auto w-72 max-w-full h-6 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                </div>
-                <div className="space-y-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="w-3/4 h-5 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
-                                <div className="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded animate-pulse flex-shrink-0 ml-4" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
+        <div className="animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />
     );
 }
 
 const AppScreenshots = dynamic(
     () => import("./components/AppScreenshots").then(mod => mod.AppScreenshots),
-    { ssr: false, loading: () => <ScreenshotsSkeleton /> }
+    { ssr: false, loading: () => <Skeleton /> }
 );
+
 const TestimonialSection = dynamic(
     () => import("./components/TestimonialSection").then(mod => mod.TestimonialSection),
-    { ssr: false, loading: () => <TestimonialSkeleton /> }
+    { ssr: false, loading: () => <Skeleton /> }
 );
+
 const FAQSection = dynamic(
     () => import("./components/FAQSection").then(mod => mod.FAQSection),
-    { ssr: false, loading: () => <FAQSkeleton /> }
+    { ssr: false, loading: () => <Skeleton /> }
 );
+
 const StickyCTA = dynamic(
     () => import("./components/StickyCTA").then(mod => mod.StickyCTA),
     { ssr: false }
 );
 
-function FeatureCard({ icon, title, desc, className, delay = 0 }: { icon: React.ReactNode, title: string, desc: string, className?: string, delay?: number }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay, duration: 0.5 }}
-            className={cn(
-                "p-8 rounded-[2.5rem] bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800 hover:border-sky-200 dark:hover:border-sky-800 hover:shadow-2xl hover:shadow-sky-500/10 transition-all group",
-                className
-            )}
-        >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-50 to-white dark:from-slate-800 dark:to-slate-900 shadow-sm flex items-center justify-center mb-6 text-sky-600 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-sky-500/10">
-                {icon}
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">{title}</h3>
-            <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{desc}</p>
-        </motion.div>
-    );
-}
+// Feature categories with ALL features
+const featureCategories = [
+    {
+        category: "📸 Smart Input",
+        description: "Catat transaksi dalam hitungan detik",
+        icon: Camera,
+        color: "emerald",
+        features: [
+            {
+                icon: Camera,
+                title: "Screenshot Agent",
+                desc: "Upload screenshot mutasi bank, AI auto-extract"
+            },
+            {
+                icon: Mic,
+                title: "Voice Input",
+                desc: "Rekam 'tadi beli kopi 35rb', AI catat otomatis"
+            },
+            {
+                icon: Bell,
+                title: "Notification Auto-Detect",
+                desc: "Notifikasi transfer langsung tercatat"
+            }
+        ]
+    },
+    {
+        category: "🤖 AI Features",
+        description: "Asisten keuangan pribadi 24/7",
+        icon: Brain,
+        color: "purple",
+        features: [
+            {
+                icon: MessageCircle,
+                title: "Monev AI Chat",
+                desc: "Tanya apapun tentang keuanganmu, 24/7"
+            },
+            {
+                icon: Brain,
+                title: "Auto-Categorization",
+                desc: "AI kategorisasi transaksi otomatis"
+            },
+            {
+                icon: TrendingUp,
+                title: "Financial Persona",
+                desc: "Profil psikologi keuangan personalized"
+            },
+            {
+                icon: Zap,
+                title: "Proactive Insights",
+                desc: "AI kasih insight sebelum kamu tanya"
+            }
+        ]
+    },
+    {
+        category: "💰 Money Management",
+        description: "Kelola semua aspek keuangan",
+        icon: CreditCard,
+        color: "sky",
+        features: [
+            {
+                icon: BarChart3,
+                title: "Budget Tracking",
+                desc: "Set limit per kategori, dapat alert"
+            },
+            {
+                icon: Receipt,
+                title: "Bill Management",
+                desc: "Track tagihan rutin, auto-reminder"
+            },
+            {
+                icon: PiggyBank,
+                title: "Goal/Target Savings",
+                desc: "Set target, track progress visual"
+            },
+            {
+                icon: CreditCard,
+                title: "Debt Tracking",
+                desc: "Catat hutang/piutang, track repayment"
+            },
+            {
+                icon: TrendingUp,
+                title: "Investment Portfolio",
+                desc: "Track saham, reksadana, crypto"
+            },
+            {
+                icon: Zap,
+                title: "Recurring Transactions",
+                desc: "Set gaji, cicilan, auto-catat bulanan"
+            }
+        ]
+    },
+    {
+        category: "📊 Analytics & Reports",
+        description: "Pahami pola keuanganmu",
+        icon: FileText,
+        color: "amber",
+        features: [
+            {
+                icon: BarChart3,
+                title: "Spending Heatmap",
+                desc: "Lihat pola pengeluaran per kategori"
+            },
+            {
+                icon: TrendingUp,
+                title: "Cash Flow Analysis",
+                desc: "Pemasukan vs pengeluaran bulanan"
+            },
+            {
+                icon: FileText,
+                title: "Export Data",
+                desc: "CSV, Excel, PDF kapan saja"
+            },
+            {
+                icon: FileText,
+                title: "Bank Templates",
+                desc: "Export template BCA, Mandiri, BNI"
+            }
+        ]
+    },
+    {
+        category: "🔒 Security",
+        description: "Data kamu aman 100%",
+        icon: Lock,
+        color: "rose",
+        features: [
+            {
+                icon: Lock,
+                title: "PIN Protection",
+                desc: "6 digit PIN untuk akses app"
+            },
+            {
+                icon: ShieldCheck,
+                title: "Biometric Lock",
+                desc: "Fingerprint/Face ID support"
+            },
+            {
+                icon: ShieldCheck,
+                title: "End-to-End Encryption",
+                desc: "Data terenkripsi, tidak dijual"
+            }
+        ]
+    }
+];
+
+// Comparison data
+const comparisonData = {
+    headers: ["Fitur", "Monev", "Excel/Notes"],
+    rows: [
+        { feature: "Auto-Input (Voice/Foto)", monev: true, other: false },
+        { feature: "Auto-Categorization", monev: true, other: false },
+        { feature: "AI Insights", monev: true, other: false },
+        { feature: "Bill Reminders", monev: true, other: false },
+        { feature: "Mobile App", monev: true, other: false },
+        { feature: "Bank Export Templates", monev: true, other: false },
+        { feature: "Security (PIN/Biometric)", monev: true, other: false },
+        { feature: "Gratis Selamanya", monev: true, other: true },
+    ]
+};
+
+// Use cases
+const useCases = [
+    {
+        icon: Users,
+        title: "Freelancer",
+        desc: "Track project income & expenses automatically. Pisahkan uang pribadi & bisnis.",
+        color: "blue"
+    },
+    {
+        icon: CreditCard,
+        title: "UMKM Owner",
+        desc: "Kelola cashflow, track inventory, monitor profit margin dengan mudah.",
+        color: "emerald"
+    },
+    {
+        icon: PiggyBank,
+        title: "Professional",
+        desc: "Budget management, investment tracking, dan retirement planning dalam satu app.",
+        color: "purple"
+    },
+    {
+        icon: Star,
+        title: "Student",
+        desc: "Belajar financial discipline dari dini. Track uang saku & nabung untuk goals.",
+        color: "amber"
+    }
+];
+
+// FAQ data
+const faqData = [
+    {
+        question: "Apakah benar-benar gratis?",
+        answer: "Ya! Paket Gratis bisa dipakai selamanya tanpa batas waktu. Kamu bisa catat sampai 50 transaksi per bulan dengan semua fitur dasar. Upgrade ke Pro atau Sultan kalau butuh lebih."
+    },
+    {
+        question: "Aman nggak data saya?",
+        answer: "100% aman! Kami pakai enkripsi bank-level (AES-256) dan tidak pernah menjual data ke pihak ketiga. Data kamu hanya bisa diakses oleh kamu sendiri."
+    },
+    {
+        question: "Bisa export data nggak?",
+        answer: "Bisa banget! Kamu bisa export ke CSV, Excel, atau PDF kapan saja. Ada juga template khusus untuk BCA, Mandiri, dan BNI biar gampang import ke mobile banking."
+    },
+    {
+        question: "Gimana kalau nggak cocok?",
+        answer: "Tenang! Kami ada garansi 30 hari - uang kembali tanpa pertanyaan. Tapi kami yakin kamu bakal suka Monev! 😊"
+    },
+    {
+        question: "Bisa dipakai di iPhone?",
+        answer: "Saat ini Monev tersedia sebagai web app yang bisa diakses dari browser apapun (Chrome, Safari, Firefox). Aplikasi Android sedang dalam pengembangan dan akan segera rilis!"
+    },
+    {
+        question: "Apa bedanya paket Gratis, Pro, dan Sultan?",
+        answer: "Gratis: 50 transaksi/bulan, fitur dasar. Pro (Rp 29rb): Unlimited transaksi, smart input (voice/foto), export data. Sultan (Rp 59rb): Semua fitur Pro + Telegram bot, AI insights prioritas, support 24/7."
+    }
+];
 
 export default function LandingPage() {
     return (
@@ -167,14 +274,14 @@ export default function LandingPage() {
                     </div>
                     
                     <div className="hidden md:flex items-center gap-1">
-                        <Link href="/tentang" className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                            Tentang
-                        </Link>
-                        <Link href="/fitur" className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <Link href="#features" className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                             Fitur
                         </Link>
-                        <Link href="/pricing" className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <Link href="#pricing" className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                             Harga
+                        </Link>
+                        <Link href="/help/faq" className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                            FAQ
                         </Link>
                     </div>
                     
@@ -192,6 +299,7 @@ export default function LandingPage() {
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 px-6 overflow-hidden">
                 <div className="max-w-5xl mx-auto text-center relative z-10">
+                    {/* Trust Badge */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -200,94 +308,263 @@ export default function LandingPage() {
                     >
                         <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-xs font-bold mb-4">
                             <Star size={14} className="text-amber-500 fill-amber-500" />
-                            Terbaik untuk UKM dan Freelancer
+                            10.000+ UMKM & Freelancer Percaya
                         </span>
 
+                        {/* Main Headline */}
                         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white mb-6 leading-[0.95] tracking-tight">
-                            Manajemen Uang <br />
+                            Gaji Numpang Lewat? <br />
                             <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                                Super AI-Powered
+                                Monev Aja.
                             </span>
                         </h1>
                         
+                        {/* Subheadline */}
                         <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-                            Bantu bisnismu tumbuh dengan alat keuangan AI terbaik. 
-                            Input lewat Telegram, rekam lewat voice note, dan kontrol semua pengeluaranmu dalam satu wadah.
+                            AI yang bikin kamu paham kemana uang pergi. 
+                            Catat dalam 2 detik, gratis selamanya.
                         </p>
                         
+                        {/* CTAs */}
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <Link href="/register" className="group w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-bold rounded-2xl hover:from-sky-600 hover:to-indigo-700 transition-all shadow-2xl shadow-sky-500/30 flex items-center justify-center gap-2 active:scale-95">
                                 Mulai Gratis Sekarang
                                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link href="#features" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-sky-400 dark:hover:border-sky-600 transition-all flex items-center justify-center gap-2">
-                                Lihat Demo
+                                <Zap size={18} className="text-amber-500 fill-amber-500" />
+                                Demo 60 Detik
                             </Link>
+                        </div>
+
+                        {/* Trust Indicators */}
+                        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-2">
+                                <Check size={16} className="text-emerald-500" />
+                                <span>Gratis Selamanya</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Check size={16} className="text-emerald-500" />
+                                <span>Tanpa Kartu Kredit</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Check size={16} className="text-emerald-500" />
+                                <span>Setup 60 Detik</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Check size={16} className="text-emerald-500" />
+                                <span>🔒 Data Terenkripsi</span>
+                            </div>
                         </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* Trust Section */}
-            <section className="py-20 bg-slate-50 dark:bg-slate-900/30 relative overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] mb-12">DIBUAT UNTUK GENERASI MODERN</p>
-                    <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
-                        <div className="text-2xl font-black text-slate-400">PEKERJA LEPAS</div>
-                        <div className="text-2xl font-black text-slate-400">PENDIRI</div>
-                        <div className="text-2xl font-black text-slate-400">PENABUNG</div>
-                        <div className="text-2xl font-black text-slate-400">INVESTOR</div>
+            {/* Stats Bar */}
+            <section className="py-12 bg-slate-50 dark:bg-slate-900/30 border-y border-slate-200 dark:border-slate-800">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        {[
+                            { value: "10.000+", label: "User Aktif" },
+                            { value: "4.8/5", label: "Rating App" },
+                            { value: "500.000+", label: "Transaksi/Bulan" },
+                            { value: "99.9%", label: "Uptime" }
+                        ].map((stat, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
+                                className="text-center"
+                            >
+                                <div className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1">
+                                    {stat.value}
+                                </div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                                    {stat.label}
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* Feature Section (Bento Grid) */}
-            <section id="features" className="py-32 px-6">
+            {/* Use Cases */}
+            <section className="py-20 px-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4">
+                            Dibuat Untuk Kamu
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto">
+                            Apapun profesimu, Monev bantu kelola keuangan dengan lebih cerdas
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {useCases.map((useCase, i) => {
+                            const Icon = useCase.icon;
+                            const colors = {
+                                blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+                                emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
+                                purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
+                                amber: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                            };
+
+                            return (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: i * 0.1 }}
+                                    className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all"
+                                >
+                                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-4", colors[useCase.color])}>
+                                        <Icon size={24} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                                        {useCase.title}
+                                    </h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        {useCase.desc}
+                                    </p>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section (Bento Grid) */}
+            <section id="features" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/30">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 space-y-4">
                         <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                            Fitur-Fitur Monev
+                            Semua Fitur yang Kamu Butuhkan
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400 font-bold">Segala sesuatu yang kamu perlukan untuk mengelola finansial bisnismu</p>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold max-w-2xl mx-auto">
+                            25+ fitur lengkap untuk kelola keuangan pribadi & bisnis
+                        </p>
                     </div>
 
-                    <div className="grid md:grid-cols-6 gap-6">
-                        <FeatureCard
-                            className="md:col-span-3"
-                            icon={<Scan size={28} />}
-                            title="Smart Input (Foto Struk & Voice)"
-                            desc="Cukup kirim screenshot mutasi bank atau rekam 'tadi beli kopi 35rb', AI kami akan mencatat dan kategorisasikan dalam sekejap."
-                            delay={0.1}
-                        />
-                        <FeatureCard
-                            className="md:col-span-3"
-                            icon={<Bot size={28} />}
-                            title="Telegram Sidekick (AI Bot)"
-                            desc="Kelola pengeluaran langsung dari Telegram. Bot kami siap siaga 24/7 untuk mencatat dan memberikan wawasan keuangan."
-                            delay={0.2}
-                        />
-                        <FeatureCard
-                            className="md:col-span-2"
-                            icon={<Brain size={28} />}
-                            title="AI Financial Advisor"
-                            desc="Dapatkan saran personal dari AI tentang cara mengoptimalkan pengeluaranmu dan mencapai target tabungan lebih cepat."
-                            delay={0.3}
-                        />
-                        <FeatureCard
-                            className="md:col-span-2"
-                            icon={<BarChart3 size={28} />}
-                            title="Analisis Lengkap"
-                            desc="Kategorisasi otomatis, heatmap spending, dan detektif insight untuk memahami ke mana uangmu pergi secara detail."
-                            delay={0.4}
-                        />
-                        <FeatureCard
-                            className="md:col-span-2"
-                            icon={<ShieldCheck size={28} />}
-                            title="Keamanan Data"
-                            desc="Data finansialmu diamankan 100% tanpa dibagikan. Enkripsi end-to-end untuk privasi maksimal."
-                            delay={0.5}
-                        />
+                    {/* Feature Categories */}
+                    <div className="space-y-16">
+                        {featureCategories.map((category, catIndex) => {
+                            const Icon = category.icon;
+                            const colors = {
+                                emerald: "from-emerald-500 to-teal-600",
+                                purple: "from-purple-500 to-pink-600",
+                                sky: "from-sky-500 to-blue-600",
+                                amber: "from-amber-500 to-orange-600",
+                                rose: "from-rose-500 to-red-600"
+                            };
+
+                            return (
+                                <motion.div
+                                    key={catIndex}
+                                    initial={{ opacity: 0, y: 40 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: catIndex * 0.1 }}
+                                >
+                                    {/* Category Header */}
+                                    <div className="flex items-center gap-4 mb-8">
+                                        <div className={cn("w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white shadow-lg", colors[category.color])}>
+                                            <Icon size={28} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                                                {category.category}
+                                            </h3>
+                                            <p className="text-slate-500 dark:text-slate-400 font-medium">
+                                                {category.description}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Features Grid */}
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {category.features.map((feature, featIndex) => {
+                                            const FeatureIcon = feature.icon;
+                                            return (
+                                                <motion.div
+                                                    key={featIndex}
+                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                    whileInView={{ opacity: 1, scale: 1 }}
+                                                    viewport={{ once: true }}
+                                                    transition={{ delay: featIndex * 0.05 }}
+                                                    className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-sky-300 dark:hover:border-sky-700 hover:shadow-lg transition-all group"
+                                                >
+                                                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                                        <FeatureIcon size={20} className="text-slate-600 dark:text-slate-400" />
+                                                    </div>
+                                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                                                        {feature.title}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                        {feature.desc}
+                                                    </p>
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </div>
+                </div>
+            </section>
+
+            {/* Comparison Table */}
+            <section className="py-32 px-6">
+                <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-12 space-y-4">
+                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">
+                            Kenapa Monev Lebih Baik?
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">
+                            Bandingkan dengan cara lama kelola keuangan
+                        </p>
+                    </div>
+
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-slate-50 dark:bg-slate-900">
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-slate-500 dark:text-slate-400">
+                                        {comparisonData.headers[0]}
+                                    </th>
+                                    <th className="px-6 py-4 text-center text-sm font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20">
+                                        {comparisonData.headers[1]}
+                                    </th>
+                                    <th className="px-6 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
+                                        {comparisonData.headers[2]}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                                {comparisonData.rows.map((row, i) => (
+                                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                                        <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                                            {row.feature}
+                                        </td>
+                                        <td className="px-6 py-4 text-center bg-sky-50 dark:bg-sky-900/10">
+                                            <Check size={20} className="inline text-emerald-500" />
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <X size={20} className="inline text-slate-300 dark:text-slate-700" />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+                        Dan masih banyak fitur lainnya! 🚀
+                    </p>
                 </div>
             </section>
 
@@ -312,9 +589,9 @@ export default function LandingPage() {
                             </h2>
                             <div className="space-y-8">
                                 {[
-                                    { step: "01", title: "Buat Akun Gratis", desc: "Daftar dengan email dan verifikasi identitasmu dalam waktu singkat." },
-                                    { step: "02", title: "Koneksikan ke Telegram", desc: "Tautkan dengan bot Telegram untuk rekam pengeluaran lewat pesan teks." },
-                                    { step: "03", title: "Jalankan Sistemmu", desc: "Mulai menghitung dan memonitor semua transaksi menggunakan kecerdasan AI." }
+                                    { step: "01", title: "Daftar Gratis", desc: "Cuma butuh email & password. Nggak perlu kartu kredit." },
+                                    { step: "02", title: "Catat Transaksi Pertama", desc: "Ketik 'beli kopi 35rb' atau upload struk. AI kami yang urus sisanya." },
+                                    { step: "03", title: "Lihat Progress Real-Time", desc: "Dashboard update otomatis. AI kasih insights personalized." }
                                 ].map((item, i) => (
                                     <div key={i} className="flex gap-6 items-start">
                                         <span className="text-4xl font-black opacity-70 tracking-tighter">{item.step}</span>
@@ -351,6 +628,59 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Final CTA Section */}
+            <section className="py-32 px-6">
+                <div className="max-w-4xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-[3rem] p-12 text-center text-white shadow-2xl shadow-sky-500/30 relative overflow-hidden"
+                    >
+                        {/* Background Pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl" />
+                            <div className="absolute bottom-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl" />
+                        </div>
+
+                        <div className="relative z-10">
+                            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+                                Siap Kuasai Keuanganmu?
+                            </h2>
+                            <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto font-medium">
+                                10.000+ user sudah mulai. Sekarang giliranmu.
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                                <Link href="/register" className="group w-full sm:w-auto px-10 py-5 bg-white text-sky-600 font-black rounded-2xl hover:bg-sky-50 transition-all shadow-2xl flex items-center justify-center gap-2 active:scale-95 text-lg">
+                                    Mulai Gratis Sekarang
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/80">
+                                <div className="flex items-center gap-2">
+                                    <Check size={16} className="text-white" />
+                                    <span>Gratis Selamanya</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check size={16} className="text-white" />
+                                    <span>Tanpa Kartu Kredit</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check size={16} className="text-white" />
+                                    <span>Cancel Kapan Saja</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check size={16} className="text-white" />
+                                    <span>Garansi 30 Hari</span>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
             {/* Footer */}
             <footer className="py-16 px-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950">
                 <div className="max-w-7xl mx-auto">
@@ -363,20 +693,20 @@ export default function LandingPage() {
                                 <span className="text-lg font-black text-slate-900 dark:text-white">Monev</span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-                                Solusi keuangan AI-pertama untuk para UMKM dan pekerja lepas di Indonesia.
+                                Solusi keuangan AI pertama untuk UMKM dan pekerja lepas di Indonesia.
                             </p>
                             <div className="flex gap-4">
                                 <Link href="#" className="text-slate-400 hover:text-sky-500 transition-colors">
-                                  <span className="sr-only">Twitter</span>
-                                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
-                                  </svg>
+                                    <span className="sr-only">Twitter</span>
+                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
+                                    </svg>
                                 </Link>
                                 <Link href="#" className="text-slate-400 hover:text-sky-500 transition-colors">
-                                  <span className="sr-only">GitHub</span>
-                                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
-                                  </svg>
+                                    <span className="sr-only">GitHub</span>
+                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
+                                    </svg>
                                 </Link>
                             </div>
                         </div>
@@ -384,10 +714,10 @@ export default function LandingPage() {
                         <div>
                             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Produk</h4>
                             <ul className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
-                                <li><Link href="/pricing" className="hover:text-sky-500 transition-colors">Harga</Link></li>
-                                <li><Link href="/fitur" className="hover:text-sky-500 transition-colors">Fitur</Link></li>
-                                <li><Link href="/integrations" className="hover:text-sky-500 transition-colors">Integrasi</Link></li>
-                                <li><Link href="/sdk" className="hover:text-sky-500 transition-colors">SDK</Link></li>
+                                <li><Link href="#pricing" className="hover:text-sky-500 transition-colors">Harga</Link></li>
+                                <li><Link href="#features" className="hover:text-sky-500 transition-colors">Fitur</Link></li>
+                                <li><Link href="/help/docs" className="hover:text-sky-500 transition-colors">Dokumentasi</Link></li>
+                                <li><Link href="/help/faq" className="hover:text-sky-500 transition-colors">FAQ</Link></li>
                             </ul>
                         </div>
                         
@@ -395,18 +725,16 @@ export default function LandingPage() {
                             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
                             <ul className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
                                 <li><Link href="/about" className="hover:text-sky-500 transition-colors">Tentang</Link></li>
-                                <li><Link href="/careers" className="hover:text-sky-500 transition-colors">Karir</Link></li>
                                 <li><Link href="/blog" className="hover:text-sky-500 transition-colors">Blog</Link></li>
-                                <li><Link href="/contact" className="hover:text-sky-500 transition-colors">Kontak</Link></li>
+                                <li><Link href="mailto:alifpm55@gmail.com" className="hover:text-sky-500 transition-colors">Kontak</Link></li>
                             </ul>
                         </div>
                         
                         <div>
                             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Legal</h4>
                             <ul className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
-                                <li><Link href="/privacy" className="hover:text-sky-500 transition-colors">Privacy</Link></li>
-                                <li><Link href="/terms" className="hover:text-sky-500 transition-colors">Terms</Link></li>
-                                <li><Link href="/compliance" className="hover:text-sky-500 transition-colors">Compliance</Link></li>
+                                <li><Link href="/privacy" className="hover:text-sky-500 transition-colors">Privacy Policy</Link></li>
+                                <li><Link href="/terms" className="hover:text-sky-500 transition-colors">Terms of Service</Link></li>
                                 <li><Link href="/security" className="hover:text-sky-500 transition-colors">Security</Link></li>
                             </ul>
                         </div>
