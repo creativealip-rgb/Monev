@@ -31,6 +31,11 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
         showNew: false,
         showConfirm: false
     });
+    
+    // Sessions state
+    const [showSessions, setShowSessions] = useState(false);
+    const [sessions, setSessions] = useState<any[]>([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
 
     const handleSaveSecurity = async () => {
         if (formData.isAppLockEnabled && !formData.securityPin) {
@@ -66,6 +71,38 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
             });
             if (res.ok) {
                 toast.success("Berhasil!", "Semua sesi lain telah diakhiri");
+                loadSessions(); // Refresh sessions list
+            } else {
+                toast.error("Gagal", "Coba lagi nanti");
+            }
+        } catch {
+            toast.error("Gagal", "Terjadi kesalahan");
+        }
+    };
+
+    const loadSessions = async () => {
+        setLoadingSessions(true);
+        try {
+            const res = await apiFetch("/api/profile/sessions");
+            const result = await res.json();
+            if (result.success) {
+                setSessions(result.sessions || []);
+            }
+        } catch {
+            setSessions([]);
+        } finally {
+            setLoadingSessions(false);
+        }
+    };
+
+    const handleRevokeSession = async (sessionId: string) => {
+        try {
+            const res = await apiFetch(`/api/profile/sessions/${sessionId}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                toast.success("Berhasil!", "Sesi berhasil diakhiri");
+                loadSessions();
             } else {
                 toast.error("Gagal", "Coba lagi nanti");
             }
@@ -363,11 +400,86 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
             <SettingItem
                 icon={Smartphone}
                 title="Kelola Sesi"
-                description="Logout dari perangkat lain"
-                onClick={handleRevokeSessions}
+                description="Lihat & logout dari perangkat lain"
+                onClick={() => {
+                    setShowSessions(!showSessions);
+                    if (!showSessions) loadSessions();
+                }}
             >
-                <LogOut size={18} className="text-slate-400" />
+                <span className="text-sm font-medium text-sky-600">
+                    {showSessions ? "Tutup" : "Kelola"}
+                </span>
             </SettingItem>
+
+            {/* Sessions List */}
+            <AnimatePresence>
+                {showSessions && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 mx-1 mb-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Perangkat Aktif</p>
+                                <button
+                                    onClick={handleRevokeSessions}
+                                    disabled={loadingSessions}
+                                    className="text-xs font-medium text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                                >
+                                    {loadingSessions ? "Loading..." : "Logout Semua"}
+                                </button>
+                            </div>
+
+                            {loadingSessions ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <Loader2 size={20} className="animate-spin text-slate-400" />
+                                    <span className="text-xs text-slate-500 ml-2">Memuat sesi...</span>
+                                </div>
+                            ) : sessions.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <Smartphone size={32} className="mx-auto text-slate-300 mb-2" />
+                                    <p className="text-xs text-slate-500">Tidak ada sesi aktif lainnya</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {sessions.map((session: any) => (
+                                        <div
+                                            key={session.id}
+                                            className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                                                    {session.device?.type === 'mobile' ? (
+                                                        <Smartphone size={16} className="text-slate-600 dark:text-slate-400" />
+                                                    ) : (
+                                                        <span className="text-xs">💻</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-medium text-slate-900 dark:text-white">
+                                                        {session.device?.name || 'Unknown Device'}
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-500">
+                                                        {session.ip} • {new Date(session.lastActive).toLocaleDateString('id-ID')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleRevokeSession(session.id)}
+                                                className="text-xs font-medium text-rose-600 hover:text-rose-700 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Save Button */}
             <motion.button

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera } from "lucide-react";
+import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -44,6 +44,12 @@ const menuItems = [
     { id: "security", icon: Shield, label: "profile.security", color: "amber", hasArrow: true },
     { id: "export", icon: Database, label: "profile.dataBackup", color: "sky", hasArrow: true },
     { id: "download", icon: Smartphone, label: "profile.downloadApp", color: "sky", hasArrow: true, isDownload: true },
+];
+
+const helpItems = [
+    { icon: Book, label: "Dokumentasi", description: "Panduan lengkap Monev", href: "https://docs.monevapp.web.id", color: "blue" },
+    { icon: MessageSquare, label: "FAQ", description: "Pertanyaan umum", href: "/help/faq", color: "purple" },
+    { icon: Mail, label: "Kontak Support", description: "Email: support@monevapp.web.id", href: "mailto:support@monevapp.web.id", color: "emerald" },
 ];
 
 export default function ProfilePage() {
@@ -348,6 +354,54 @@ export default function ProfilePage() {
                         </motion.button>
                     );
                 })}
+                
+                {/* Help & Support Section */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: 1.0 }}
+                    className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-800"
+                >
+                    <div className="flex items-center gap-2 mb-4">
+                        <HelpCircle size={18} className="text-slate-400" />
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Butuh Bantuan?</h3>
+                    </div>
+                    <div className="space-y-2">
+                        {helpItems.map((item, index) => {
+                            const Icon = item.icon;
+                            const colors = {
+                                blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+                                purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
+                                emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
+                            };
+                            
+                            return (
+                                <motion.a
+                                    key={index}
+                                    href={item.href}
+                                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 1.05 + index * 0.05 }}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="w-full p-4 card-clean flex items-center gap-4 group hover:border-slate-300/50 hover:shadow-md transition-all no-underline"
+                                >
+                                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", colors[item.color])}>
+                                        <Icon size={18} strokeWidth={2.5} />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <p className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</p>
+                                        <p className="text-[10px] text-slate-500">{item.description}</p>
+                                    </div>
+                                    <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-slate-400 transition-colors" />
+                                </motion.a>
+                            );
+                        })}
+                    </div>
+                </motion.div>
+                
                 <motion.button initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center"><LogOut size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-rose-500 dark:text-rose-400 tracking-tight">{t("profile.signOut")}</span>
                 </motion.button>
