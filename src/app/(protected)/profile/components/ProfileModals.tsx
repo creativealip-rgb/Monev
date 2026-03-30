@@ -135,7 +135,7 @@ export function ProfileModals({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-end sm:items-center justify-center p-0 sm:p-4"
+                    className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
                     onClick={onClose}
                 >
                     <motion.div
@@ -144,7 +144,7 @@ export function ProfileModals({
                         exit={{ opacity: 0, y: 50, scale: 0.95 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                        className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[85vh] min-h-[400px] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden mb-20 sm:mb-0"
+                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-h-[85vh] min-h-[400px] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden"
                     >
                         <div className="flex justify-between items-center p-6 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
