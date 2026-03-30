@@ -2,6 +2,8 @@
 
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AccountModal } from "./AccountModal";
 import { IntegrationsModal } from "./IntegrationsModal";
 import { SecurityModal } from "./SecurityModal";
@@ -10,6 +12,16 @@ import { CollectionModal } from "./CollectionModal";
 import { CategoriesModal } from "./CategoriesModal";
 import { ExportModal } from "./ExportModal";
 import { FinancialModal } from "./FinancialModal";
+
+// Portal component - render directly to document.body for stable positioning
+function Portal({ children }: { children: React.ReactNode }) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+    return mounted ? createPortal(children, document.body) : null;
+}
 
 type ModalType = "account" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "financial";
 
@@ -129,40 +141,42 @@ export function ProfileModals({
     };
 
     return (
-        <AnimatePresence>
-            {activeModal && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
-                    onClick={onClose}
-                >
+        <Portal>
+            <AnimatePresence>
+                {activeModal && (
                     <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-h-[85vh] min-h-[400px] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
+                        onClick={onClose}
                     >
-                        <div className="flex justify-between items-center p-6 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                                {getModalTitle()}
-                            </h3>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="overflow-y-auto flex-1 px-6 pb-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
-                            {renderModalContent()}
-                        </div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-h-[85vh] min-h-[400px] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden"
+                        >
+                            <div className="flex justify-between items-center p-6 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                    {getModalTitle()}
+                                </h3>
+                                <button
+                                    onClick={onClose}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="overflow-y-auto flex-1 px-6 pb-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+                                {renderModalContent()}
+                            </div>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                )}
+            </AnimatePresence>
+        </Portal>
     );
 }
