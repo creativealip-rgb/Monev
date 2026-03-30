@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Shield, Lock, Zap, Fingerprint, Trash2, LogOut, Smartphone } from "lucide-react";
+import { Check, Shield, Lock, Zap, Fingerprint, Trash2, LogOut, Smartphone, Key, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -20,6 +20,17 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
     const { deleteLocalData, reauthenticate } = useSecurity();
     const [showPinInput, setShowPinInput] = useState(false);
     const [activeSection, setActiveSection] = useState<string | null>(null);
+    
+    // Change Password state
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+        showCurrent: false,
+        showNew: false,
+        showConfirm: false
+    });
 
     const handleSaveSecurity = async () => {
         if (formData.isAppLockEnabled && !formData.securityPin) {
@@ -84,6 +95,55 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
             }
         } catch {
             toast.error("Gagal", "Terjadi kesalahan");
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+            toast.error("Validasi", "Semua field password harus diisi!");
+            return;
+        }
+
+        if (passwordData.newPassword.length < 8) {
+            toast.error("Validasi", "Password baru minimal 8 karakter!");
+            return;
+        }
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error("Validasi", "Password baru dan konfirmasi tidak cocok!");
+            return;
+        }
+
+        try {
+            const res = await apiFetch("/api/auth/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword
+                })
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                toast.success("Berhasil!", "Password berhasil diubah. Silakan login ulang.");
+                setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                    showCurrent: false,
+                    showNew: false,
+                    showConfirm: false
+                });
+                setShowPasswordForm(false);
+                setTimeout(() => {
+                    window.location.href = "/login?changed=success";
+                }, 1500);
+            } else {
+                toast.error("Gagal", result.error || "Password saat ini salah!");
+            }
+        } catch {
+            toast.error("Gagal", "Terjadi kesalahan. Coba lagi nanti.");
         }
     };
 
@@ -324,6 +384,154 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                 <Check size={18} />
                 Simpan Pengaturan
             </motion.button>
+
+            {/* Change Password Section */}
+            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <Key size={20} />
+                        </div>
+                        <div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">Ubah Password</p>
+                            <p className="text-xs text-slate-500">Ganti password akun Anda</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setShowPasswordForm(!showPasswordForm)}
+                        className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
+                    >
+                        {showPasswordForm ? "Batal" : "Ubah"}
+                    </button>
+                </div>
+
+                <AnimatePresence>
+                    {showPasswordForm && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 space-y-4">
+                                {/* Current Password */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password Saat Ini</label>
+                                    <div className="relative">
+                                        <input
+                                            type={passwordData.showCurrent ? "text" : "password"}
+                                            value={passwordData.currentPassword}
+                                            onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                                            placeholder="Masukkan password saat ini"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setPasswordData(prev => ({ ...prev, showCurrent: !prev.showCurrent }))}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            {passwordData.showCurrent ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* New Password */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password Baru</label>
+                                    <div className="relative">
+                                        <input
+                                            type={passwordData.showNew ? "text" : "password"}
+                                            value={passwordData.newPassword}
+                                            onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                                            placeholder="Minimal 8 karakter"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setPasswordData(prev => ({ ...prev, showNew: !prev.showNew }))}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            {passwordData.showNew ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Confirm Password */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Konfirmasi Password Baru</label>
+                                    <div className="relative">
+                                        <input
+                                            type={passwordData.showConfirm ? "text" : "password"}
+                                            value={passwordData.confirmPassword}
+                                            onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                            className={cn(
+                                                "w-full px-4 py-3 rounded-xl border bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm",
+                                                passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword
+                                                    ? "border-red-400 focus:border-red-500"
+                                                    : "border-slate-200 dark:border-slate-700"
+                                            )}
+                                            placeholder="Ulangi password baru"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setPasswordData(prev => ({ ...prev, showConfirm: !prev.showConfirm }))}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        >
+                                            {passwordData.showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Password Strength Indicator */}
+                                {passwordData.newPassword && (
+                                    <div className="pt-2">
+                                        <div className="flex gap-1 h-1 mb-1">
+                                            {[1, 2, 3, 4].map((level) => (
+                                                <div
+                                                    key={level}
+                                                    className={cn(
+                                                        "flex-1 rounded-full transition-all",
+                                                        passwordData.newPassword.length >= level * 2
+                                                            ? passwordData.newPassword.length >= 8
+                                                                ? "bg-emerald-500"
+                                                                : "bg-yellow-500"
+                                                            : "bg-slate-200 dark:bg-slate-700"
+                                                    )}
+                                                />
+                                            ))}
+                                        </div>
+                                        <p className={cn(
+                                            "text-[10px] font-medium",
+                                            passwordData.newPassword.length >= 8
+                                                ? "text-emerald-600 dark:text-emerald-400"
+                                                : "text-slate-500"
+                                        )}>
+                                            {passwordData.newPassword.length >= 8
+                                                ? "Password kuat"
+                                                : `Minimal 8 karakter (${passwordData.newPassword.length}/${8})`}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Save Button */}
+                                <button
+                                    onClick={handleChangePassword}
+                                    disabled={!passwordData.currentPassword || !passwordData.newPassword || passwordData.newPassword.length < 8}
+                                    className={cn(
+                                        "w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all",
+                                        passwordData.currentPassword && passwordData.newPassword.length >= 8 && passwordData.newPassword === passwordData.confirmPassword
+                                            ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                                            : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
+                                    )}
+                                >
+                                    <Key size={16} />
+                                    Ubah Password
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
 
             {/* Danger Zone */}
             <div className="mt-8 pt-6 border-t-2 border-rose-100 dark:border-rose-900/30">
