@@ -405,7 +405,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {useCases.map((useCase, i) => {
                             const Icon = useCase.icon;
-                            const colors = {
+                            const colors: Record<string, string> = {
                                 blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
                                 emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
                                 purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
