@@ -90,7 +90,10 @@ export function ProfileModals({
                 );
             case "notifications":
                 return (
-                    <NotificationsModal onClose={onClose} />
+                    <NotificationsModal 
+                        onClose={onClose}
+                        loadData={loadData}
+                    />
                 );
             case "collection":
                 return (

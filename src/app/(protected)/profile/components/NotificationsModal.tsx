@@ -9,9 +9,10 @@ import { useToast } from "@/frontend/components/UI";
 
 interface NotificationsModalProps {
     onClose: () => void;
+    loadData?: () => void;
 }
 
-export function NotificationsModal({ onClose }: NotificationsModalProps) {
+export function NotificationsModal({ onClose, loadData }: NotificationsModalProps) {
     const toast = useToast();
     const [notifToggles, setNotifToggles] = useState({
         dailyReport: true,
@@ -36,6 +37,7 @@ export function NotificationsModal({ onClose }: NotificationsModalProps) {
             });
             if (res.ok) {
                 toast.success("Berhasil", "Preferensi notifikasi disimpan!");
+                loadData?.();
                 onClose();
             } else {
                 toast.error("Gagal", "Gagal menyimpan preferensi notifikasi");
