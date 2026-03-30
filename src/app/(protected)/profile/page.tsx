@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap } from "lucide-react";
+import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -203,7 +203,7 @@ export default function ProfilePage() {
                 </div>
 
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="flex flex-col items-center relative z-10">
-                    <div className="relative mb-4 group">
+                    <div className="relative mb-4 group cursor-pointer" onClick={() => setActiveModal("account")}>
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border-4 border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl overflow-hidden ring-4 ring-black/5">
                             {user?.image ? (
                                 <Image src={user.image.split('?')[0]} alt={user.firstName || "Profile"} width={96} height={96} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -213,6 +213,9 @@ export default function ProfilePage() {
                         </div>
                         <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-400 rounded-full border-[3px] border-sky-600 flex items-center justify-center shadow-lg">
                             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                        </div>
+                        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Camera size={24} className="text-white" />
                         </div>
                     </div>
 
