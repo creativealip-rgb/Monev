@@ -20,7 +20,8 @@ export function useGroupedTransactions({
 
         for (const transaction of transactions) {
             try {
-                const dateObj = new Date(transaction.createdAt);
+                // Use transaction.date (actual transaction date) instead of createdAt
+                const dateObj = new Date(transaction.date);
                 const date = isNaN(dateObj.getTime())
                     ? "Tanggal tidak valid"
                     : format(dateObj, "dd MMM yyyy", {
