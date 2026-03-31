@@ -224,7 +224,8 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                         <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0">
                             {(() => {
                                 try {
-                                    const date = new Date(transaction.createdAt);
+                                    // Use transaction.date (actual transaction date) instead of createdAt
+                                    const date = new Date(transaction.date);
                                     return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm", { locale: id });
                                 } catch (e) {
                                     return "N/A";
