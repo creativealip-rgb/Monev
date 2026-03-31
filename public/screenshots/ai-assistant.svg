@@ -1,0 +1,65 @@
+<svg width="375" height="812" viewBox="0 0 375 812" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="375" height="812" fill="#F0F9FF"/>
+  
+  <!-- Status Bar -->
+  <rect width="375" height="44" fill="#0EA5E9"/>
+  <text x="187" y="28" text-anchor="middle" fill="white" font-size="14" font-weight="600">9:41</text>
+  
+  <!-- Header -->
+  <rect x="0" y="44" width="375" height="60" fill="white"/>
+  <text x="40" y="82" fill="#0F172A" font-size="18" font-weight="700">AI Assistant</text>
+  <circle cx="335" cy="74" r="20" fill="#8B5CF6"/>
+  <text x="335" y="80" text-anchor="middle" fill="white" font-size="12">✨</text>
+  
+  <!-- Chat Messages -->
+  <rect x="20" y="120" width="280" height="70" rx="16" fill="white"/>
+  <text x="35" y="150" fill="#0F172A" font-size="13" line-height="1.5">Berapa total pengeluaran saya bulan ini?</text>
+  
+  <rect x="95" y="210" width="260" height="80" rx="16" fill="#8B5CF6"/>
+  <text x="110" y="240" fill="white" font-size="13" line-height="1.5">Total pengeluaran kamu bulan Maret: Rp 4.950.000</text>
+  <text x="110" y="265" fill="#E9D5FF" font-size="12">15% lebih tinggi dari bulan lalu. Kategori tertinggi: Makanan (45%)</text>
+  
+  <rect x="20" y="310" width="300" height="55" rx="16" fill="white"/>
+  <text x="35" y="342" fill="#0F172A" font-size="13">Tips hemat?</text>
+  
+  <rect x="95" y="385" width="260" height="95" rx="16" fill="#8B5CF6"/>
+  <text x="110" y="415" fill="white" font-size="13" line-height="1.5">💡 Berikut tips untukmu:</text>
+  <text x="110" y="435" fill="#E9D5FF" font-size="12">• Masak sendiri: hemat Rp 500rb/bln</text>
+  <text x="110" y="452" fill="#E9D5FF" font-size="12">• Bawa botol minum: hemat Rp 150rb/bln</text>
+  <text x="110" y="469" fill="#E9D5FF" font-size="12">• Gunakan transportasi umum 2x/minggu</text>
+  
+  <!-- Quick Questions -->
+  <rect x="20" y="510" width="335" height="120" rx="16" fill="white"/>
+  <text x="40" y="540" fill="#64748B" font-size="14" font-weight="600">Pertanyaan Cepat</text>
+  
+  <rect x="40" y="555" width="140" height="32" rx="16" fill="#F1F5F9"/>
+  <text x="110" y="576" text-anchor="middle" fill="#475569" font-size="11">Budget tersisa?</text>
+  
+  <rect x="195" y="555" width="140" height="32" rx="16" fill="#F1F5F9"/>
+  <text x="265" y="576" text-anchor="middle" fill="#475569" font-size="11">Target tabungan</text>
+  
+  <rect x="40" y="595" width="140" height="32" rx="16" fill="#F1F5F9"/>
+  <text x="110" y="616" text-anchor="middle" fill="#475569" font-size="11">Rekomendasi investasi</text>
+  
+  <rect x="195" y="595" width="140" height="32" rx="16" fill="#F1F5F9"/>
+  <text x="265" y="616" text-anchor="middle" fill="#475569" font-size="11">Cara hemat listrik</text>
+  
+  <!-- Input Area -->
+  <rect x="20" y="650" width="335" height="56" rx="28" fill="white" stroke="#E2E8F0"/>
+  <text x="50" y="684" fill="#94A3B8" font-size="14">Tanya apapun tentang keuanganmu...</text>
+  <circle cx="315" cy="678" r="18" fill="#8B5CF6"/>
+  <text x="315" y="684" text-anchor="middle" fill="white" font-size="14">➤</text>
+  
+  <!-- Bottom Nav Placeholder -->
+  <rect x="0" y="750" width="375" height="62" fill="white" stroke="#E2E8F0"/>
+  <circle cx="74" cy="781" r="20" fill="#E2E8F0"/>
+  <text x="74" y="786" text-anchor="middle" fill="#64748B" font-size="10">Beranda</text>
+  <circle cx="223" cy="781" r="24" fill="#0EA5E9"/>
+  <text x="223" y="788" text-anchor="middle" fill="white" font-size="20">+</text>
+  <circle cx="300" cy="781" r="20" fill="#E2E8F0"/>
+  <text x="300" y="786" text-anchor="middle" fill="#64748B" font-size="10">Profil</text>
+  
+  <!-- Watermark -->
+  <text x="187" y="800" text-anchor="middle" fill="#CBD5E1" font-size="10">Monev AI Assistant</text>
+</svg>

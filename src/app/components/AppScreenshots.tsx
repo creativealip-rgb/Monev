@@ -7,28 +7,28 @@ import { cn } from "@/frontend/lib/utils";
 const screenshots = [
     {
         id: 1,
-        src: "/screenshots/dashboard.png",
+        src: "/screenshots/dashboard.svg",
         alt: "Dashboard Monev",
         label: "Dashboard",
         description: "Lihat ringkasan keuanganmu dalam satu tampilan"
     },
     {
         id: 2,
-        src: "/screenshots/transactions.png",
+        src: "/screenshots/add-transaction.svg",
         alt: "Transaksi",
         label: "Catat Transaksi",
         description: "Input transaksi via chat, foto, atau voice"
     },
     {
         id: 3,
-        src: "/screenshots/analytics.png",
+        src: "/screenshots/analytics.svg",
         alt: "Analisis",
         label: "Analisis AI",
         description: "Wawasan finansial yang dipersonalisasi"
     },
     {
         id: 4,
-        src: "/screenshots/chat.png",
+        src: "/screenshots/ai-assistant.svg",
         alt: "AI Assistant",
         label: "AI Assistant",
         description: "Tanya apa saja tentang keuanganmu"
