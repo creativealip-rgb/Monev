@@ -5,7 +5,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { OfflineManager } from "@/frontend/lib/offline-manager";
+import {
+    OfflineManager,
+    type OfflineOptimisticTransaction,
+} from "@/frontend/lib/offline-manager";
 import { normalizeDateValue } from "@/frontend/lib/normalize-date";
 import { TransactionWithCategory } from "@/types";
 import { logger } from "@/lib/logger";
@@ -19,13 +22,22 @@ interface Category {
     type: "expense" | "income";
 }
 
+interface TransactionsApiResponse {
+    success: boolean;
+    data: TransactionWithCategory[];
+    pagination: {
+        total?: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+    };
+}
+
 export function useTransactionsData(searchQuery: string = "") {
     const queryClient = useQueryClient();
-    const [mounted, setMounted] = useState(false);
-    const [offlineTrans, setOfflineTrans] = useState<any[]>([]);
+    const [offlineTrans, setOfflineTrans] = useState<OfflineOptimisticTransaction[]>([]);
 
     useEffect(() => {
-        setMounted(true);
         const loadOffline = async () => {
             const trans = await OfflineManager.getOptimisticTransactions();
             setOfflineTrans(trans);
@@ -67,7 +79,6 @@ export function useTransactionsData(searchQuery: string = "") {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-        refetch
     } = useInfiniteQuery({
         queryKey: ["transactions", "list", searchQuery],
         initialPageParam: 0,
@@ -75,7 +86,7 @@ export function useTransactionsData(searchQuery: string = "") {
             const limit = 20;
             logger.debug("[useTransactionsData] Fetching page:", pageParam, "searchQuery:", searchQuery);
             const res = await apiFetch(`/api/transactions?limit=${limit}&offset=${pageParam}&search=${searchQuery}`);
-            const json = await res.json();
+            const json = await res.json() as TransactionsApiResponse;
             logger.debug("[useTransactionsData] Response:", json.data?.length, "transactions");
             if (json.success) {
                 if (pageParam === 0 && !searchQuery) {
@@ -107,16 +118,16 @@ export function useTransactionsData(searchQuery: string = "") {
         // Flatten pages
         const serverTransactions = data.pages.flatMap(page => page.data);
 
-        const mappedServer = serverTransactions.map((t: any) => {
+        const mappedServer = serverTransactions.map((t) => {
             const cat = categories.find((c: Category) => c.id === t.categoryId);
             // Debug logging for bill payment transactions
-            if (t.destinationType === 'bill' || t.merchantName?.includes('Pembayaran')) {
-                logger.debug('[useTransactionsData] Bill transaction:', {
+            if (t.destinationType === "bill" || t.merchantName?.includes("Pembayaran")) {
+                logger.debug("[useTransactionsData] Bill transaction:", {
                     id: t.id,
                     categoryId: t.categoryId,
                     merchantName: t.merchantName,
                     foundCategory: cat,
-                    allCategories: categories.map(c => ({ id: c.id, name: c.name }))
+                    allCategories: categories.map((category) => ({ id: category.id, name: category.name }))
                 });
             }
             return {
@@ -142,16 +153,25 @@ export function useTransactionsData(searchQuery: string = "") {
         // Offline merging
         let merged = [...mappedServer];
         if (offlineTrans.length > 0 && searchQuery === "") {
-            const mappedOffline = offlineTrans.map(t => ({
-                ...t,
-                categoryId: Number(t.categoryId),
-                category: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
-                categoryName: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
-                createdAt: normalizeDateValue(t.createdAt ?? t.date),
-                date: normalizeDateValue(t.date ?? t.createdAt),
-                paymentMethod: t.paymentMethod || "cash",
-                accountId: t.accountId || null,
-            } as TransactionWithCategory));
+            const mappedOffline = offlineTrans.map((t): TransactionWithCategory => {
+                const offlineCategory = categories.find((category) => category.id === Number(t.categoryId));
+
+                return {
+                    ...t,
+                    categoryId: Number(t.categoryId),
+                    categoryName: offlineCategory?.name || "Lainnya",
+                    createdAt: normalizeDateValue(t.created_at ?? t.date),
+                    date: normalizeDateValue(t.date ?? t.created_at),
+                    paymentMethod: t.paymentMethod || "cash",
+                    accountId: t.accountId || null,
+                    categoryColor: offlineCategory?.color || "bg-slate-500",
+                    categoryIcon: offlineCategory?.icon || "tag",
+                    userId: 0,
+                    isVerified: false,
+                    merchantName: t.merchantName || null,
+                    splitGroupId: null,
+                };
+            });
             merged = [...mappedOffline, ...merged];
         }
 
@@ -169,8 +189,8 @@ export function useTransactionsData(searchQuery: string = "") {
     return {
         transactions,
         categories,
-        loading: isLoading || !mounted,
-        mounted,
+        loading: isLoading,
+        mounted: true,
         fetchNextPage,
         hasNextPage: !!hasNextPage,
         isFetchingNextPage,

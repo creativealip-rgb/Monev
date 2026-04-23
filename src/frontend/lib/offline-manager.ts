@@ -1,5 +1,6 @@
 import { apiFetch } from "@/frontend/lib/api-client";
 import { openDB, IDBPDatabase } from "idb";
+import type { InsertTransaction } from "@/types";
 
 const DB_NAME = "monev-offline-db";
 const STORE_SYNC_QUEUE = "transaction-queue";
@@ -7,8 +8,21 @@ const STORE_CACHE = "app-cache";
 
 interface QueuedTransaction {
     id: string;
-    data: any;
+    data: OfflineQueuedTransactionData;
     timestamp: number;
+}
+
+export type OfflineQueuedTransactionData = Pick<
+    InsertTransaction,
+    "amount" | "description" | "merchantName" | "categoryId" | "type" | "paymentMethod" | "accountId" | "targetAccountId" | "date"
+>;
+
+export interface OfflineOptimisticTransaction extends OfflineQueuedTransactionData {
+    id: string;
+    is_verified: boolean;
+    is_offline: boolean;
+    created_at: string;
+    date: string;
 }
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
@@ -17,7 +31,7 @@ function getDB() {
     if (typeof window === "undefined") return null;
     if (!dbPromise) {
         dbPromise = openDB(DB_NAME, 2, {
-            upgrade(db, oldVersion, newVersion, transaction) {
+            upgrade(db) {
                 if (!db.objectStoreNames.contains(STORE_SYNC_QUEUE)) {
                     db.createObjectStore(STORE_SYNC_QUEUE, { keyPath: "id" });
                 }
@@ -32,20 +46,20 @@ function getDB() {
 
 export const OfflineManager = {
     // --- Caching Support ---
-    async setCache(key: string, data: any): Promise<void> {
+    async setCache<T>(key: string, data: T): Promise<void> {
         const db = await getDB();
         if (!db) return;
         await db.put(STORE_CACHE, data, key);
     },
 
-    async getCache(key: string): Promise<any | null> {
+    async getCache<T>(key: string): Promise<T | null> {
         const db = await getDB();
         if (!db) return null;
-        return await db.get(STORE_CACHE, key);
+        return await db.get(STORE_CACHE, key) as T | null;
     },
 
     // --- Transaction Sync Queueing ---
-    async queueTransaction(data: any): Promise<void> {
+    async queueTransaction(data: OfflineQueuedTransactionData): Promise<void> {
         const db = await getDB();
         if (!db) return;
 
@@ -65,10 +79,10 @@ export const OfflineManager = {
         if ("serviceWorker" in navigator && "SyncManager" in window) {
             try {
                 const reg = await navigator.serviceWorker.ready;
-                // @ts-ignore
+                // @ts-expect-error Background Sync is not typed on older TS lib targets.
                 await reg.sync.register("sync-transactions");
-            } catch (err) {
-                console.warn("Background Sync API (Web) registration failed/unsupported", err);
+            } catch (error) {
+                console.warn("Background Sync API (Web) registration failed/unsupported", error);
             }
         }
     },
@@ -103,7 +117,7 @@ export const OfflineManager = {
                 } else {
                     failed++;
                 }
-            } catch (err) {
+            } catch {
                 failed++;
             }
         }
@@ -120,7 +134,7 @@ export const OfflineManager = {
         return queue.length > 0;
     },
 
-    async getOptimisticTransactions(): Promise<any[]> {
+    async getOptimisticTransactions(): Promise<OfflineOptimisticTransaction[]> {
         const queue = await this.getQueue();
         return queue.map(item => ({
             ...item.data,

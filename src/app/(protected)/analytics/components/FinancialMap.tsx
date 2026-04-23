@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Sparkles, Info, RefreshCw, Layers, AlertCircle } from "lucide-react";
-import { apiFetch } from "@/frontend/lib/api-client";
+import { useQuery } from "@tanstack/react-query";
 import type { AnalyticsDrilldownFilter } from "./types";
+import {
+    getFinancialMapQueryOptions,
+    type FinancialMapData,
+    type FinancialMapLink as Link,
+    type FinancialMapNode as Node,
+} from "../hooks/useAnalyticsQueries";
 
 const loadSankeyFlowChart = () => import("@/frontend/components/SankeyFlowChart").then((mod) => mod.SankeyFlowChart);
 
@@ -12,78 +18,8 @@ const SankeyFlowChart = dynamic(loadSankeyFlowChart, {
     loading: () => <div className="h-96 bg-white/5 rounded-xl animate-pulse" />
 });
 
-const financialMapCache = new Map<string, { nodes: Node[]; links: Link[] }>();
-
 export function preloadFinancialMapChart() {
     return loadSankeyFlowChart();
-}
-
-export async function prefetchFinancialMapData({
-    month,
-    year,
-    startDate,
-    endDate,
-    accountId = "all",
-    categoryId = "all",
-}: {
-    month: number;
-    year: number;
-    startDate?: string | null;
-    endDate?: string | null;
-    accountId?: string;
-    categoryId?: string;
-}) {
-    const params = new URLSearchParams({
-        month: String(month),
-        year: String(year),
-    });
-
-    if (startDate && endDate) {
-        params.set("startDate", startDate);
-        params.set("endDate", endDate);
-    }
-
-    if (accountId !== "all") {
-        params.set("accountId", accountId);
-    }
-
-    if (categoryId !== "all") {
-        params.set("categoryId", categoryId);
-    }
-
-    const requestUrl = `/api/analytics/sankey?${params.toString()}`;
-    if (financialMapCache.has(requestUrl)) {
-        return;
-    }
-
-    const res = await apiFetch(requestUrl);
-    const json = await res.json();
-    if (json.success) {
-        financialMapCache.set(requestUrl, json.data);
-    }
-}
-
-interface Node {
-    id: string;
-    name: string;
-    kind?: "income" | "expense-category" | "uncategorized-expense" | "savings";
-    categoryId?: number;
-    color?: string;
-    value?: number;
-    y?: number;
-    height?: number;
-}
-
-interface Link {
-    source: string;
-    target: string;
-    value: number;
-    kind?: "income-to-category" | "income-to-uncategorized" | "income-to-savings";
-    categoryId?: number;
-    targetName?: string;
-    ySource?: number;
-    yTarget?: number;
-    thickness?: number;
 }
 
 interface FinancialMapProps {
@@ -107,9 +43,6 @@ export function FinancialMap({
     focusLabel = null,
     onOpenDrilldown,
 }: FinancialMapProps) {
-    const [data, setData] = useState<{ nodes: Node[], links: Link[] } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const periodLabel = startDate && endDate
         ? `${startDate} s/d ${endDate}`
         : new Date(year, month - 1, 1).toLocaleDateString("id-ID", {
@@ -117,56 +50,25 @@ export function FinancialMap({
             year: "numeric",
         });
 
-    const loadData = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const params = new URLSearchParams({
-                month: String(month),
-                year: String(year),
-            });
+    const mapQuery = useQuery(
+        getFinancialMapQueryOptions({
+            month,
+            year,
+            startDate,
+            endDate,
+            accountId,
+            categoryId,
+        })
+    );
+    const data: FinancialMapData | undefined = mapQuery.data;
+    const isLoading = mapQuery.isLoading || mapQuery.isFetching;
+    const error = mapQuery.error instanceof Error ? mapQuery.error.message : null;
 
-            if (startDate && endDate) {
-                params.set("startDate", startDate);
-                params.set("endDate", endDate);
-            }
-
-            if (accountId !== "all") {
-                params.set("accountId", accountId);
-            }
-
-            if (categoryId !== "all") {
-                params.set("categoryId", categoryId);
-            }
-
-            const requestUrl = `/api/analytics/sankey?${params.toString()}`;
-            const cachedData = financialMapCache.get(requestUrl);
-            if (cachedData) {
-                setData(cachedData);
-                return;
-            }
-
-            const res = await apiFetch(requestUrl);
-            const json = await res.json();
-            if (json.success) {
-                financialMapCache.set(requestUrl, json.data);
-                setData(json.data);
-            } else {
-                setError("Peta keuangan belum bisa dimuat untuk periode ini.");
-            }
-        } catch (e) {
-            console.error(e);
-            setError("Gagal memuat peta keuangan.");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [accountId, categoryId, endDate, month, startDate, year]);
-
-    const sharedFilter = {
+    const sharedFilter = useMemo(() => ({
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         accountId: accountId !== "all" ? Number(accountId) : undefined,
-    };
+    }), [accountId, endDate, startDate]);
 
     const handleNodeClick = (node: Node) => {
         if (!onOpenDrilldown) {
@@ -231,13 +133,6 @@ export function FinancialMap({
             return;
         }
     };
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
-
-
     if (error) {
         return (
             <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
@@ -246,7 +141,7 @@ export function FinancialMap({
                     <h4 className="mb-2 font-bold text-slate-900 dark:text-white">Peta Keuangan Gagal Dimuat</h4>
                     <p className="text-xs text-slate-500">{error}</p>
                     <button
-                        onClick={loadData}
+                        onClick={() => mapQuery.refetch()}
                         className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white dark:bg-slate-100 dark:text-slate-900"
                     >
                         <RefreshCw size={12} />

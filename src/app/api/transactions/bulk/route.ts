@@ -1,14 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCategories, createBulkTransactions } from "@/backend/db/operations";
+import type { BulkImportTransactionItem } from "@/backend/db/operations/transaction-operations";
 
-export async function POST(req: NextRequest) {
+interface BulkTransactionRequestItem extends BulkImportTransactionItem {
+    category?: string;
+}
+
+export async function POST(req: Request) {
     try {
         const session = await auth();
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        const { transactions } = await req.json();
+        const { transactions } = await req.json() as { transactions?: BulkTransactionRequestItem[] };
 
         if (!Array.isArray(transactions)) {
             return NextResponse.json({ error: "Invalid data format. Expected an array of transactions." }, { status: 400 });
@@ -18,10 +23,10 @@ export async function POST(req: NextRequest) {
         const defaultCategory = allCategories.find(c => c.name === "Lainnya") || allCategories[0];
 
         // Prepare transactions with category IDs
-        const preparedTransactions = transactions.map(t => {
+        const preparedTransactions: BulkImportTransactionItem[] = transactions.map((t) => {
             let categoryId = defaultCategory.id;
             if (t.category) {
-                const match = allCategories.find(c => c.name.toLowerCase() === t.category.toLowerCase());
+                const match = allCategories.find((c) => c.name.toLowerCase() === t.category?.toLowerCase());
                 if (match) categoryId = match.id;
             }
             return {

@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Calendar, Loader2, Tag, Wallet, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { apiFetch } from "@/frontend/lib/api-client";
 import { formatCurrency, getPaymentMethod } from "@/frontend/lib/utils";
 import type { TransactionWithCategory } from "@/types";
 import type { AnalyticsDrilldownFilter } from "./types";
+import { getAnalyticsTransactionsQueryOptions } from "../hooks/useAnalyticsQueries";
 
 interface AnalyticsTransactionsModalProps {
     isOpen: boolean;
@@ -35,82 +36,33 @@ export function AnalyticsTransactionsModal({
     accounts = [],
     onFocusMap,
 }: AnalyticsTransactionsModalProps) {
-    const [transactions, setTransactions] = useState<TransactionWithCategory[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [selectedTransaction, setSelectedTransaction] = useState<TransactionWithCategory | null>(null);
-    const cacheRef = useRef<Map<string, TransactionWithCategory[]>>(new Map());
-    const cacheKey = useMemo(() => JSON.stringify(filter || {}), [filter]);
-
-    useEffect(() => {
-        if (!isOpen || !filter) {
-            return;
-        }
-
-        async function loadTransactions() {
-            const cachedTransactions = cacheRef.current.get(cacheKey);
-            if (cachedTransactions) {
-                setTransactions(cachedTransactions);
-                setError(null);
-                setIsLoading(false);
-                return;
-            }
-
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                const params = new URLSearchParams({
-                    limit: "20",
-                    type: filter.type || "expense",
-                });
-
-                if (filter.categoryId) {
-                    params.set("categoryId", String(filter.categoryId));
-                }
-
-                if (filter.accountId) {
-                    params.set("accountId", String(filter.accountId));
-                }
-
-                if (filter.startDate) {
-                    params.set("startDate", filter.startDate);
-                }
-
-                if (filter.endDate) {
-                    params.set("endDate", filter.endDate);
-                }
-
-                const response = await apiFetch(`/api/transactions?${params.toString()}`);
-                const json = await response.json();
-
-                if (!response.ok || !json?.success) {
-                    throw new Error("Gagal memuat transaksi.");
-                }
-
-                const nextTransactions = json.data || [];
-                cacheRef.current.set(cacheKey, nextTransactions);
-                setTransactions(nextTransactions);
-            } catch (modalError) {
-                console.error("Failed to load drilldown transactions:", modalError);
-                setError("Tidak bisa memuat daftar transaksi.");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        loadTransactions();
-    }, [cacheKey, filter, isOpen]);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setSelectedTransaction(null);
-        }
-    }, [isOpen]);
+    const normalizedFilter = useMemo(() => filter ? ({
+        categoryId: filter.categoryId,
+        accountId: filter.accountId,
+        type: filter.type || "expense",
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+        limit: 20,
+    }) : null, [filter]);
+    const transactionsQuery = useQuery({
+        ...getAnalyticsTransactionsQueryOptions(normalizedFilter || { type: "expense", limit: 20 }),
+        enabled: isOpen && normalizedFilter !== null,
+    });
+    const transactions = transactionsQuery.data || [];
+    const isLoading = transactionsQuery.isLoading || transactionsQuery.isFetching;
+    const error = transactionsQuery.error instanceof Error
+        ? "Tidak bisa memuat daftar transaksi."
+        : null;
 
     if (!isOpen || !filter) {
         return null;
     }
+
+    const handleClose = () => {
+        setSelectedTransaction(null);
+        onClose();
+    };
 
     const sourceAccount = selectedTransaction?.accountId
         ? accounts.find((account) => account.id === selectedTransaction.accountId)
@@ -148,7 +100,7 @@ export function AnalyticsTransactionsModal({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[999999] flex items-end justify-center bg-slate-900/60 p-4 backdrop-blur-md md:items-center"
-                    onClick={onClose}
+                    onClick={handleClose}
                 >
                     <motion.div
                         initial={{ opacity: 0, y: 30, scale: 0.98 }}
@@ -183,7 +135,7 @@ export function AnalyticsTransactionsModal({
                                     <button
                                         onClick={() => {
                                             onFocusMap?.(filter);
-                                            onClose();
+                                            handleClose();
                                         }}
                                         className="rounded-full border border-emerald-200 px-3 py-1.5 text-[11px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50 dark:border-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
                                     >
@@ -192,13 +144,13 @@ export function AnalyticsTransactionsModal({
                                 )}
                                 <Link
                                     href={transactionsPageHref}
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     className="rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
                                 >
                                     Buka di Riwayat
                                 </Link>
                                 <button
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                 >
                                     <X size={16} />

@@ -1,6 +1,6 @@
 import { getDb } from "../index";
 import { transactions, billPayments } from "../schema";
-import type { Transaction } from "../schema";
+import type { InsertTransaction, Transaction } from "../schema";
 import { eq, and, desc, sql, gte, lte, like, or } from "drizzle-orm";
 import { updateAccountBalance } from "../account-operations";
 import { updateUserStreak, unlockAchievement } from "./gamification-operations";
@@ -48,18 +48,29 @@ export interface SearchTransactionsOptions {
     maxAmount?: number;
 }
 
+export interface BulkImportTransactionItem {
+    amount: number | string;
+    description?: string | null;
+    categoryId?: number | null;
+    type?: InsertTransaction["type"] | null;
+    date?: Date | string | number | null;
+    accountId?: number | null;
+}
+
 export async function searchTransactions(userId: number, options: SearchTransactionsOptions): Promise<Transaction[]> {
     const db = getDb();
     const conditions = [eq(transactions.userId, userId)];
 
     if (options.search) {
         // Fix SQL Injection
-        conditions.push(
-            or(
-                like(transactions.description, `%${options.search}%`),
-                like(transactions.merchantName, `%${options.search}%`)
-            ) as any
+        const searchCondition = or(
+            like(transactions.description, `%${options.search}%`),
+            like(transactions.merchantName, `%${options.search}%`)
         );
+
+        if (searchCondition) {
+            conditions.push(searchCondition);
+        }
     }
 
     if (options.categoryId) {
@@ -139,7 +150,7 @@ export async function getTransactionById(userId: number, id: number): Promise<Tr
     return db.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId))).get();
 }
 
-export async function createBulkTransactions(userId: number, items: any[]): Promise<void> {
+export async function createBulkTransactions(userId: number, items: BulkImportTransactionItem[]): Promise<void> {
     const db = getDb();
 
     // Process in batches if necessary, but for small-medium CSVs, a single transaction is fine
@@ -160,7 +171,6 @@ export async function createBulkTransactions(userId: number, items: any[]): Prom
 
             // Update Account Balance if accountId is provided (optional in import)
             if (res && data.accountId) {
-                const amountChange = res.type === 'income' ? res.amount : -res.amount;
                 // Since updateAccountBalance is outside and might use another db instance or transaction,
                 // we should ideally have a version that works inside this transaction.
                 // For now, we'll just insert the transactions and skip balance update or do it simply.

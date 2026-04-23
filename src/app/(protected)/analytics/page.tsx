@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { apiFetch } from "@/frontend/lib/api-client";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     Calendar, ChevronRight, Lock, ArrowLeft, FileDown, Flame
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { ErrorEmpty } from "@/frontend/components/EmptyState";
@@ -23,7 +23,6 @@ import { TrendsTab } from "./components/TrendsTab";
 import { InsightsTab } from "./components/InsightsTab";
 import {
     FinancialMap,
-    prefetchFinancialMapData,
     preloadFinancialMapChart
 } from "./components/FinancialMap";
 import { AnalyticsTransactionsModal } from "./components/AnalyticsTransactionsModal";
@@ -37,19 +36,13 @@ import type {
     MonthlyStat
 } from "./components/types";
 import { getAnalyticsActionItems } from "./components/InsightsTab";
-
-interface FilterAccount {
-    id: number;
-    name: string;
-}
-
-interface FilterCategory {
-    id: number;
-    name: string;
-    type: "expense" | "income";
-}
-
-const analyticsResponseCache = new Map<string, AnalyticsData>();
+import {
+    getAccountsQueryOptions,
+    getAnalyticsQueryOptions,
+    getExpenseCategoriesQueryOptions,
+    getFinancialMapQueryOptions,
+    type AnalyticsFilterOption,
+} from "./hooks/useAnalyticsQueries";
 
 export default function AnalyticsPage() {
     const router = useRouter();
@@ -60,22 +53,30 @@ export default function AnalyticsPage() {
     const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
     const [showDateRangePicker, setShowDateRangePicker] = useState(false);
     const dateRangePickerRef = useRef<HTMLDivElement>(null);
-    const [data, setData] = useState<AnalyticsData | null>(null);
-    const [accounts, setAccounts] = useState<FilterAccount[]>([]);
-    const [categories, setCategories] = useState<FilterCategory[]>([]);
     const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
     const [drilldownFilter, setDrilldownFilter] = useState<AnalyticsDrilldownFilter | null>(null);
     const [mapFocusLabel, setMapFocusLabel] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const { data: session } = useSession();
     const { isStealthMode } = useSecurity();
     const { t } = useI18n();
+    const queryClient = useQueryClient();
     const userTier: UserTier = session?.user?.tier || "starter";
     const toast = useToast();
-    // Use data.canAccessAIInsights from API (reads from DB) as primary source,
-    // fall back to session-based check. This prevents lock when session fetch fails transiently.
+    const analyticsFilters = useMemo(() => ({
+        month: currentDate.getMonth() + 1,
+        year: currentDate.getFullYear(),
+        startDate: dateRange?.start || null,
+        endDate: dateRange?.end || null,
+        accountId: selectedAccountId,
+        categoryId: selectedCategoryId,
+    }), [currentDate, dateRange, selectedAccountId, selectedCategoryId]);
+    const analyticsQuery = useQuery(getAnalyticsQueryOptions(analyticsFilters));
+    const accountsQuery = useQuery(getAccountsQueryOptions());
+    const categoriesQuery = useQuery(getExpenseCategoriesQueryOptions());
+    const data: AnalyticsData | null = analyticsQuery.data || null;
+    const accounts: AnalyticsFilterOption[] = accountsQuery.data || [];
+    const categories: AnalyticsFilterOption[] = categoriesQuery.data || [];
     const canSeeFullAnalytics = data?.canAccessAIInsights ?? hasFullAnalytics(userTier);
 
     const tabs = useMemo(() => [
@@ -128,92 +129,6 @@ export default function AnalyticsPage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [showDateRangePicker]);
 
-    useEffect(() => {
-        async function loadFilters() {
-            try {
-                const [accountsResponse, categoriesResponse] = await Promise.all([
-                    apiFetch("/api/accounts"),
-                    apiFetch("/api/categories"),
-                ]);
-
-                const accountsJson = await accountsResponse.json();
-                const categoriesJson = await categoriesResponse.json();
-
-                if (accountsResponse.ok && accountsJson?.success) {
-                    setAccounts(accountsJson.data || []);
-                }
-
-                if (categoriesResponse.ok && categoriesJson?.success) {
-                    setCategories((categoriesJson.data || []).filter((category: FilterCategory) => category.type === "expense"));
-                }
-            } catch (filterError) {
-                console.error("Failed to load analytics filters:", filterError);
-            }
-        }
-
-        loadFilters();
-    }, []);
-
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            let url = `/api/analytics?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`;
-            if (dateRange) {
-                url = `/api/analytics?startDate=${dateRange.start}&endDate=${dateRange.end}`;
-            }
-            if (selectedAccountId !== "all") {
-                url += `${url.includes("?") ? "&" : "?"}accountId=${selectedAccountId}`;
-            }
-            if (selectedCategoryId !== "all") {
-                url += `${url.includes("?") ? "&" : "?"}categoryId=${selectedCategoryId}`;
-            }
-            const cachedData = analyticsResponseCache.get(url);
-            if (cachedData) {
-                setData(cachedData);
-                setIsLoading(false);
-                return;
-            }
-            const res = await apiFetch(url);
-            if (!res.ok) throw new Error(t("analytics.failedToLoad"));
-            const jsonData = await res.json();
-
-            if (!dateRange && !hasAutoAdjustedMonthRef.current) {
-                const income = Number(jsonData?.income || 0);
-                const expense = Number(jsonData?.expense || 0);
-                const monthlyComparison: MonthlyStat[] = Array.isArray(jsonData?.monthlyComparison) ? jsonData.monthlyComparison : [];
-
-                if (income === 0 && expense === 0 && monthlyComparison.length > 0) {
-                    const latestMonthWithData = [...monthlyComparison]
-                        .reverse()
-                        .find((item) =>
-                            Number(item?.income || 0) > 0 || Number(item?.expense || 0) > 0
-                        );
-
-                    if (
-                        latestMonthWithData?.month &&
-                        latestMonthWithData?.year &&
-                        (
-                            currentDate.getMonth() + 1 !== latestMonthWithData.month
-                            || currentDate.getFullYear() !== latestMonthWithData.year
-                        )
-                    ) {
-                        hasAutoAdjustedMonthRef.current = true;
-                        setCurrentDate(new Date(latestMonthWithData.year, latestMonthWithData.month - 1, 1));
-                        return;
-                    }
-                }
-            }
-
-            analyticsResponseCache.set(url, jsonData);
-            setData(jsonData);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : t("analytics.errorOccurred"));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [currentDate, dateRange, selectedAccountId, selectedCategoryId, t]);
-
     const handleDownloadReport = async () => {
         if (!data) return;
         // Tier gate: only Pro/Sultan
@@ -251,8 +166,36 @@ export default function AnalyticsPage() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (!data || dateRange || hasAutoAdjustedMonthRef.current) {
+            return;
+        }
+
+        const income = Number(data.income || 0);
+        const expense = Number(data.expense || 0);
+        const monthlyComparison: MonthlyStat[] = Array.isArray(data.monthlyComparison)
+            ? data.monthlyComparison
+            : [];
+
+        if (income !== 0 || expense !== 0 || monthlyComparison.length === 0) {
+            return;
+        }
+
+        const latestMonthWithData = [...monthlyComparison]
+            .reverse()
+            .find((item) => Number(item?.income || 0) > 0 || Number(item?.expense || 0) > 0);
+
+        if (
+            latestMonthWithData?.month &&
+            latestMonthWithData?.year &&
+            (
+                currentDate.getMonth() + 1 !== latestMonthWithData.month
+                || currentDate.getFullYear() !== latestMonthWithData.year
+            )
+        ) {
+            hasAutoAdjustedMonthRef.current = true;
+            setCurrentDate(new Date(latestMonthWithData.year, latestMonthWithData.month - 1, 1));
+        }
+    }, [currentDate, data, dateRange]);
 
     useEffect(() => {
         if (!data) {
@@ -261,17 +204,17 @@ export default function AnalyticsPage() {
 
         const runPrefetch = () => {
             preloadFinancialMapChart().catch(() => null);
-            prefetchFinancialMapData({
-                month: currentDate.getMonth() + 1,
-                year: currentDate.getFullYear(),
-                startDate: dateRange?.start || null,
-                endDate: dateRange?.end || null,
-                accountId: selectedAccountId,
-                categoryId: selectedCategoryId,
-            }).catch(() => null);
+            queryClient.prefetchQuery(getFinancialMapQueryOptions(analyticsFilters)).catch(() => null);
 
             if (canSeeFullAnalytics && !data.insights) {
-                apiFetch("/api/ai/insight").catch(() => null);
+                queryClient.prefetchQuery({
+                    queryKey: ["analytics", "ai-insight"],
+                    queryFn: async () => {
+                        const response = await fetch("/api/ai/insight");
+                        return response.json();
+                    },
+                    staleTime: 60 * 1000,
+                }).catch(() => null);
             }
         };
 
@@ -287,7 +230,7 @@ export default function AnalyticsPage() {
 
             window.clearTimeout(idleCallback as number);
         };
-    }, [canSeeFullAnalytics, currentDate, data, dateRange, selectedAccountId, selectedCategoryId]);
+    }, [analyticsFilters, canSeeFullAnalytics, data, queryClient]);
 
     const periodRange = (() => {
         if (dateRange) {
@@ -319,6 +262,15 @@ export default function AnalyticsPage() {
         setCurrentDate(newDate);
     };
 
+    const isLoading = analyticsQuery.isLoading || accountsQuery.isLoading || categoriesQuery.isLoading;
+    const error = analyticsQuery.error instanceof Error
+        ? analyticsQuery.error.message
+        : accountsQuery.error instanceof Error
+            ? accountsQuery.error.message
+            : categoriesQuery.error instanceof Error
+                ? categoriesQuery.error.message
+                : null;
+
     if (isLoading) {
         return <AnalyticsSkeleton />;
     }
@@ -329,7 +281,7 @@ export default function AnalyticsPage() {
                 <ErrorEmpty
                     title={t("analytics.failedToLoadTitle")}
                     description={error || t("analytics.failedToLoadDesc")}
-                    onRetry={fetchData}
+                    onRetry={() => analyticsQuery.refetch()}
                 />
             </div>
         );
