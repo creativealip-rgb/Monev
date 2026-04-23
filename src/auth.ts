@@ -9,6 +9,9 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/backend/db";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { createLogger } from "@/lib/logger";
+
+const authLogger = createLogger("Auth");
 
 async function getUser(email: string) {
     const db = getDb();
@@ -16,7 +19,7 @@ async function getUser(email: string) {
         const user = await db.select().from(users).where(eq(users.email, email)).get();
         return user;
     } catch (error) {
-        console.error("Failed to fetch user:", error);
+        authLogger.error("Failed to fetch user", error);
         throw new Error("Failed to fetch user.");
     }
 }
@@ -55,10 +58,10 @@ async function createOAuthUser(email: string, name: string, image?: string | nul
             username: uniqueUsername,
         }).returning().get();
 
-        console.log("[OAuth] Created new user:", { id: result.id, email, name, firstName: name, username: uniqueUsername });
+        authLogger.info("Created OAuth user", { userId: result.id, email, username: uniqueUsername });
         return result;
     } catch (error) {
-        console.error("Failed to create OAuth user:", error);
+        authLogger.error("Failed to create OAuth user", error);
         throw new Error("Failed to create user.");
     }
 }
@@ -94,18 +97,17 @@ async function updateUserWithGoogleData(userId: number, googleData: {
         }
 
         if (Object.keys(updateData).length > 0) {
-            console.log("[OAuth] Executing database update:", { userId, updateData });
-            const result = await db.update(users)
+            await db.update(users)
                 .set(updateData)
                 .where(eq(users.id, userId))
-                .returning()
-                .get();
-            console.log("[OAuth] Database update result:", result);
-        } else {
-            console.log("[OAuth] No data to update for user:", userId);
+                .run();
+            authLogger.debug("Updated OAuth profile", {
+                userId,
+                updatedFields: Object.keys(updateData),
+            });
         }
     } catch (error) {
-        console.error("[OAuth] Failed to update user with Google data:", error);
+        authLogger.error("Failed to update user with Google data", error);
         throw new Error("Failed to update user.");
     }
 }
@@ -130,22 +132,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     },
     callbacks: {
         async signIn({ user, account, profile }) {
-            console.log("[OAuth] SignIn callback - Provider:", account?.provider);
-            console.log("[OAuth] User data:", {
-                email: user.email,
-                name: user.name,
-                image: user.image
-            });
-            console.log("[OAuth] Profile data:", {
-                name: profile?.name,
-                email: profile?.email,
-                picture: profile?.picture || profile?.image
-            });
-
             // Handle OAuth sign in
             if (account?.provider === "google" && user.email) {
                 const db = getDb();
                 const existingUser = await db.select().from(users).where(eq(users.email, user.email)).get();
+                authLogger.info("Processing Google sign-in", {
+                    email: user.email,
+                    existingUserId: existingUser?.id ?? null,
+                });
 
                 // Get name from profile first (more reliable), fallback to user.name, then email prefix
                 const userName = profile?.name || user.name || user.email.split("@")[0];
@@ -156,33 +150,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
                 if (!existingUser) {
                     // Create new user from OAuth data
-                    console.log("[OAuth] Creating new user with data:", {
-                        email: user.email,
-                        name: userName,
-                        image: userImage,
-                        username: baseUsername
-                    });
                     const newUser = await createOAuthUser(user.email, userName, userImage, baseUsername);
-                    console.log("[OAuth] New user created:", {
-                        userId: newUser.id,
-                        name: newUser.name,
-                        firstName: newUser.firstName
-                    });
+                    authLogger.info("Google user created", { userId: newUser.id, email: user.email });
 
                     // Revalidate pages
                     revalidatePath("/profile");
                     revalidatePath("/dashboard");
                 } else {
                     // Update existing user with latest Google data
-                    console.log("[OAuth] Updating existing user:", {
-                        userId: existingUser.id,
-                        currentName: existingUser.name,
-                        currentFirstName: existingUser.firstName,
-                        newName: userName,
-                        currentImage: existingUser.image,
-                        newImage: userImage
-                    });
-
                     // Force update even if name looks the same (to ensure firstName is set)
                     await updateUserWithGoogleData(existingUser.id, {
                         name: userName,
@@ -194,20 +169,12 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     revalidatePath("/profile");
                     revalidatePath("/dashboard");
 
-                    // Fetch and verify the update
-                    const updatedUser = await db.select().from(users).where(eq(users.id, existingUser.id)).get();
-                    console.log("[OAuth] User after update:", {
-                        userId: updatedUser?.id,
-                        name: updatedUser?.name,
-                        firstName: updatedUser?.firstName,
-                        image: updatedUser?.image
-                    });
+                    authLogger.debug("Google user refreshed", { userId: existingUser.id });
                 }
             }
             return true;
         },
         async session({ session, token }) {
-            console.log("[Session] Callback - Token SUB:", token?.sub);
             if (session?.user && token?.sub) {
                 session.user.id = token.sub;
 
@@ -216,13 +183,12 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     const db = getDb();
                     const userId = parseInt(token.sub);
                     if (isNaN(userId)) {
-                        console.error("[Session] Invalid user ID in token:", token.sub);
+                        authLogger.warn("Invalid user ID in session token");
                         return session;
                     }
 
                     const dbUser = await db.select().from(users).where(eq(users.id, userId)).get();
                     if (dbUser) {
-                        console.log("[Session] Found user in DB:", { id: dbUser.id, name: dbUser.name, firstName: dbUser.firstName, tier: dbUser.tier });
                         session.user.name = dbUser.name;
                         session.user.image = dbUser.image;
                         session.user.tier = (dbUser.tier as UserTier) || "starter";
@@ -234,26 +200,28 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                                 await db.update(users).set({ firstName }).where(eq(users.id, userId)).run();
                             }
                         }
+                        authLogger.debug("Session hydrated from database", {
+                            userId: dbUser.id,
+                            tier: dbUser.tier,
+                        });
                     } else {
-                        console.log("[Session] User not found in DB for ID:", userId);
+                        authLogger.warn("Session user not found in database", { userId });
                     }
                 } catch (error) {
-                    console.error("[Session] Failed to fetch user data:", error);
+                    authLogger.error("Failed to fetch user data for session", error);
                 }
             }
             return session;
         },
         async jwt({ token, user, account }) {
             if (user) {
-                console.log("[JWT] Initial login - Provider:", account?.provider, "User ID:", user.id);
-
                 if (account?.provider === "google") {
                     // For Google, we need to map the Google sub ID to our internal database ID
                     const db = getDb();
                     const dbUser = await db.select().from(users).where(eq(users.email, user.email!)).get();
                     if (dbUser) {
-                        console.log("[JWT] Mapping Google user to DB ID:", dbUser.id);
                         token.sub = dbUser.id.toString();
+                        authLogger.debug("Mapped Google account to internal user", { userId: dbUser.id });
                     }
                 } else {
                     token.sub = user.id?.toString();
@@ -291,7 +259,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     }
                 }
 
-                console.log("Invalid credentials");
+                authLogger.warn("Invalid credentials attempt");
                 return null;
             },
         }),

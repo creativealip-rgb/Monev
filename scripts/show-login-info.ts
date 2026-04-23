@@ -2,7 +2,6 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "../src/backend/db/schema";
 import { eq } from "drizzle-orm";
-import bcryptjs from "bcryptjs";
 
 const sqlite = new Database("sqlite.db");
 const db = drizzle(sqlite, { schema });
@@ -30,18 +29,18 @@ for (const user of allUsers) {
     console.log(`   Transactions: ${txnCount}`);
 
     if (user.isAdmin) {
-        console.log(`   🔐 Password: admin123456`);
+        console.log("   🔐 Password: hidden (set via ADMIN_PASSWORD reset script)");
     }
 }
 
 console.log("\n" + "=".repeat(80));
-console.log("\n✅ TEST THE FOLLOWING LOGIN:\n");
+console.log("\n✅ ADMIN LOGIN TARGETS:\n");
 console.log("1️⃣  Email: admin@monevapp.com");
-console.log("   Password: admin123456");
+console.log("   Password: use the value last set via ADMIN_PASSWORD");
 console.log("   (Old admin account with 1,005 transactions)\n");
 
 console.log("2️⃣  Email: admin@monev.app");
-console.log("   Password: admin123456");
+console.log("   Password: use the value last set via ADMIN_PASSWORD");
 console.log("   (Anak Kosan account we just created)\n");
 
 console.log("💡 Try logging in via: http://localhost:3000/login");
@@ -56,7 +55,7 @@ const aprilTxns = sqlite
     .get(
         new Date(2026, 3, 1).getTime(),
         new Date(2026, 4, 1).getTime()
-    ) as any;
+    ) as { count: number };
 
 console.log(`📊 April 2026 Transactions: ${aprilTxns.count}\n`);
 
