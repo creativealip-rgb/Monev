@@ -96,6 +96,7 @@ export const id: Record<string, string> = {
     // Analytics
     "analytics.title": "Analisa",
     "analytics.overview": "Ringkasan",
+    "analytics.map": "Peta",
     "analytics.trends": "Tren",
     "analytics.insights": "Wawasan",
     "analytics.monthComparison": "Perbandingan Bulan",

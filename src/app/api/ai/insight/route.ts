@@ -13,6 +13,25 @@ const openai = new OpenAI({
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours cache
 
+function normalizeInsightValue(value: unknown): string {
+    if (typeof value !== "string") {
+        return "Tetap semangat mengelola keuanganmu hari ini!";
+    }
+
+    const trimmed = value.trim();
+
+    if (!trimmed.startsWith("{")) {
+        return trimmed;
+    }
+
+    try {
+        const parsed = JSON.parse(trimmed) as { insight?: string };
+        return typeof parsed.insight === "string" ? parsed.insight : trimmed;
+    } catch {
+        return trimmed;
+    }
+}
+
 async function getCachedInsight(userId: number, year: number, month: number): Promise<{ insight: string; type: string } | null> {
     try {
         const db = getDb();
@@ -33,7 +52,10 @@ async function getCachedInsight(userId: number, year: number, month: number): Pr
         }
 
         const parsed = JSON.parse(cached.insights);
-        return { insight: parsed.insight, type: parsed.type };
+        return {
+            insight: normalizeInsightValue(parsed.insight),
+            type: parsed.type || "info"
+        };
     } catch (error) {
         console.error("[getCachedInsight] Error:", error);
         return null;
@@ -179,7 +201,7 @@ export async function GET(req: NextRequest) {
         });
 
         const content = JSON.parse(response.choices[0].message.content || "{}");
-        const insight = content.insight || "Tetap semangat mengelola keuanganmu hari ini!";
+        const insight = normalizeInsightValue(content.insight || "Tetap semangat mengelola keuanganmu hari ini!");
         const type = content.type || "info";
 
         // Cache the insight

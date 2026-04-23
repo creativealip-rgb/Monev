@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { format } from "date-fns";
-import { id as idLocale, enUS } from "date-fns/locale";
+import { normalizeDateValue } from "@/frontend/lib/normalize-date";
 import { TransactionWithCategory } from "@/types";
 import { GroupedTransactions } from "../types";
 
@@ -15,18 +14,17 @@ export function useGroupedTransactions({
     transactions,
     locale,
 }: UseGroupedTransactionsProps): GroupedTransactions {
+    void locale;
+
     return useMemo(() => {
         const groups: GroupedTransactions = {};
 
         for (const transaction of transactions) {
             try {
-                // Use transaction.date (actual transaction date) instead of createdAt
-                const dateObj = new Date(transaction.date);
+                const dateObj = normalizeDateValue(transaction.date);
                 const date = isNaN(dateObj.getTime())
-                    ? "Tanggal tidak valid"
-                    : format(dateObj, "dd MMM yyyy", {
-                        locale: locale === "id" ? idLocale : enUS,
-                    });
+                    ? "invalid-date"
+                    : dateObj.toISOString().slice(0, 10);
 
                 if (!groups[date]) {
                     groups[date] = [];
@@ -40,5 +38,5 @@ export function useGroupedTransactions({
         }
 
         return groups;
-    }, [transactions, locale]);
+    }, [transactions]);
 }

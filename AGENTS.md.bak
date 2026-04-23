@@ -1,0 +1,209 @@
+# AGENTS.md - Coding Guidelines for Monev
+
+## Project Overview
+Next.js 16+ financial app with React 19, TypeScript, Tailwind CSS v4, SQLite + Drizzle ORM.
+
+## Build Commands
+
+```bash
+# Development
+npm run dev                    # Start Next.js dev server (Turbopack)
+npm run build                  # Production build (uses Webpack)
+npm run start                  # Start production server
+
+# Code Quality
+npm run lint                   # Run ESLint on entire project
+npx eslint src/path/file.tsx   # Lint specific file
+npx eslint --fix src/path/file.tsx  # Auto-fix issues
+
+# Database (Drizzle ORM)
+npx drizzle-kit push           # Push schema changes to SQLite
+npx drizzle-kit generate       # Generate migration files
+npx drizzle-kit studio         # Open Drizzle Studio UI
+```
+
+**No test framework configured.** Add tests with: `npm install -D vitest @testing-library/react @testing-library/jest-dom`
+
+## Code Style Guidelines
+
+### Formatting
+- **Indent**: 4 spaces
+- **Max line length**: 100 characters
+- **Quotes**: Double in JSX, single in TypeScript
+- **Semicolons**: Required
+- **Trailing commas**: Use in multi-line objects/arrays
+
+### Naming Conventions
+- **Components/Types**: PascalCase (`TransactionItem`, `UserProfile`)
+- **Functions/Variables**: camelCase (`formatCurrency`, `userData`)
+- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`)
+- **Files**: Match default export name
+
+### Import Order
+```typescript
+// 1. External libraries (alphabetically)
+import { motion } from "framer-motion";
+import Link from "next/link";
+
+// 2. Internal absolute imports (@/ alias)
+import { cn } from "@/frontend/lib/utils";
+import { Transaction } from "@/types";
+
+// 3. Relative imports (avoid when possible)
+import { helper } from "./helper";
+```
+
+### Component Pattern
+```typescript
+"use client"; // Only if using hooks/browser APIs
+
+import { cn } from "@/frontend/lib/utils";
+
+interface ButtonProps {
+    label: string;
+    onClick?: () => void;
+    variant?: "primary" | "secondary";
+}
+
+export function Button({ label, onClick, variant = "primary" }: ButtonProps) {
+    return (
+        <button 
+            onClick={onClick}
+            className={cn(
+                "px-4 py-2 rounded-lg transition-colors",
+                variant === "primary" && "bg-blue-500 hover:bg-blue-600",
+                variant === "secondary" && "bg-gray-200 hover:bg-gray-300"
+            )}
+        >
+            {label}
+        </button>
+    );
+}
+```
+
+### Styling (Tailwind v4)
+- Always use `cn()` utility for conditional classes
+- **Class order**: layout → spacing → sizing → colors → effects → interactions
+- Use `group-hover:`, `active:`, `focus-visible:` for states
+- **Custom utilities**: `glass`, `glass-card`, `card-clean`, `btn-primary`, `btn-secondary`, `input-modern`
+- Avoid arbitrary values (`w-[100px]`); use design tokens
+- Dark mode with `dark:` prefix
+
+### TypeScript
+- Strict mode enabled - no `any`, use `unknown` with type guards
+- Explicit return types on exported functions
+- Use `interface` for extensible contracts, `type` for unions/objects
+- Nullable: `?` for optional, `| null` for explicit null
+- Path alias `@/` maps to `src/`
+
+### Error Handling
+```typescript
+try {
+    const result = await asyncOperation();
+    return result;
+} catch (error) {
+    console.error("Operation failed:", error);
+    throw new Error("Failed to process request");
+}
+```
+
+### API Routes Pattern
+```typescript
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+
+export async function GET(request: Request) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        
+        const { searchParams } = new URL(request.url);
+        const data = await fetchData(searchParams);
+        
+        return NextResponse.json({ success: true, data });
+    } catch (error) {
+        console.error("API Error:", error);
+        return NextResponse.json(
+            { success: false, error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
+```
+
+## File Organization
+
+```
+src/
+├── app/                       # Next.js App Router
+│   ├── (protected)/           # Route groups requiring auth
+│   ├── api/                   # API routes (REST endpoints)
+│   ├── globals.css            # Global styles + CSS variables
+│   ├── layout.tsx             # Root layout with providers
+│   └── page.tsx               # Landing page
+├── frontend/
+│   ├── components/            # React components
+│   └── lib/
+│       ├── utils.ts           # cn() + formatCurrency()
+│       └── theme-context.tsx  # Theme management
+├── backend/
+│   └── db/
+│       ├── schema.ts          # Drizzle ORM schema
+│       ├── operations.ts      # Database operations
+│       └── migrations/        # Migration files
+├── lib/                       # Shared utilities
+├── types/
+│   └── index.ts               # TypeScript types
+└── components/                # Cross-cutting components (Providers)
+```
+
+## Key Libraries
+
+| Category | Libraries |
+|----------|-----------|
+| **Framework** | Next.js 16, React 19 |
+| **Styling** | Tailwind CSS v4, lucide-react |
+| **Utils** | clsx, tailwind-merge (`cn()` utility) |
+| **Database** | drizzle-orm, drizzle-kit, better-sqlite3 |
+| **Auth** | next-auth v5 (beta) |
+| **AI** | openai, ai SDK |
+| **Animation** | framer-motion |
+| **Dates** | date-fns |
+| **Mobile** | Capacitor 8 |
+
+## Database
+
+- **Schema**: `src/backend/db/schema.ts`
+- **Migrations**: `drizzle/` directory
+- **Local DB**: `sqlite.db` file
+- **Studio**: `npx drizzle-kit studio` (port 4983)
+
+## Environment Variables
+
+Create `.env.local`:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+OPENAI_API_KEY=
+TELEGRAM_BOT_TOKEN=
+```
+
+## Localization
+
+- **UI Language**: Indonesian (e.g., "Selamat Sore", "Riwayat Terbaru")
+- **Currency**: IDR via `formatCurrency()` utility
+- **Date Format**: Indonesian locale
+
+## ESLint Config
+
+Flat config in `eslint.config.mjs`:
+- Extends: `eslint-config-next/core-web-vitals`, `eslint-config-next/typescript`
+- Ignores: `.next/`, `out/`, `build/`, `next-env.d.ts`
+
+## Git Workflow
+
+1. Never commit `.env.local` or `sqlite.db`
+2. Run `npm run lint` before committing
+3. Test database migrations: `npx drizzle-kit generate` then `push`

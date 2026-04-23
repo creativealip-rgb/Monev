@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import {
@@ -52,9 +53,24 @@ import {
 export default function TransactionsPage() {
     const { t, locale } = useI18n();
     const { accounts } = useAccountsData();
+    const pathname = usePathname();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const initialSearchQuery = searchParams.get("search") || "";
+    const initialCategoryId = searchParams.get("categoryId");
+    const initialAccountId = searchParams.get("accountId");
+    const initialType = searchParams.get("type");
+    const initialStartDate = searchParams.get("startDate");
+    const initialEndDate = searchParams.get("endDate");
+    const initialFilters = {
+        category: initialCategoryId ? Number(initialCategoryId) : "all" as const,
+        account: initialAccountId ? Number(initialAccountId) : "all" as const,
+        type: initialType === "expense" || initialType === "income" ? initialType : "all" as const,
+        dateRange: initialStartDate && initialEndDate ? { start: initialStartDate, end: initialEndDate } : null,
+    };
 
     // Search
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
     const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
     // Modal states
@@ -88,6 +104,8 @@ export default function TransactionsPage() {
     const {
         filterCategory,
         setFilterCategory,
+        filterAccount,
+        setFilterAccount,
         filterType,
         setFilterType,
         dateRange,
@@ -101,7 +119,7 @@ export default function TransactionsPage() {
         filteredTransactions,
         activeFiltersCount,
         resetFilters,
-    } = useTransactionFilters({ transactions });
+    } = useTransactionFilters({ transactions, initialFilters });
 
     const {
         undoBanner,
@@ -166,6 +184,34 @@ export default function TransactionsPage() {
             fetchNextPage();
         }
     }, [inView, loading, hasNextPage, isFetchingNextPage, fetchNextPage, showDuplicatesOnly]);
+
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        if (debouncedSearchQuery) {
+            params.set("search", debouncedSearchQuery);
+        }
+
+        if (filterCategory !== "all") {
+            params.set("categoryId", String(filterCategory));
+        }
+
+        if (filterAccount !== "all") {
+            params.set("accountId", String(filterAccount));
+        }
+
+        if (filterType !== "all") {
+            params.set("type", filterType);
+        }
+
+        if (dateRange) {
+            params.set("startDate", dateRange.start);
+            params.set("endDate", dateRange.end);
+        }
+
+        const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+        router.replace(nextUrl, { scroll: false });
+    }, [dateRange, debouncedSearchQuery, filterAccount, filterCategory, filterType, pathname, router]);
 
     // Clear selection when toggling duplicate view
     useEffect(() => {
@@ -320,8 +366,10 @@ export default function TransactionsPage() {
 
                 {/* Active Filters Display */}
                 <ActiveFilters
+                    accountName={filterAccount === "all" ? null : accounts.find((account) => account.id === filterAccount)?.name || null}
                     dateRange={dateRange}
                     amountRange={amountRange}
+                    onClearAccount={() => setFilterAccount("all")}
                     onClearDateRange={() => setDateRange(null)}
                     onClearAmountRange={() => setAmountRange(null)}
                     onClearAll={resetFilters}
@@ -370,6 +418,8 @@ export default function TransactionsPage() {
                         selectedIds={selectedIds}
                         onToggleSelect={toggleSelect}
                         onTransactionClick={handleTransactionClick}
+                        onTransactionEdit={handleDetailEdit}
+                        onTransactionDelete={handleDetailDelete}
                         showDuplicatesOnly={showDuplicatesOnly}
                         activeDuplicateIds={activeDuplicateIds}
                         isFetchingNextPage={isFetchingNextPage}
@@ -395,6 +445,9 @@ export default function TransactionsPage() {
             <TransactionFilterModal
                 isOpen={isFilterModalOpen}
                 onClose={() => setIsFilterModalOpen(false)}
+                filterAccount={filterAccount}
+                setFilterAccount={setFilterAccount}
+                accounts={accounts.map((account) => ({ id: account.id, name: account.name }))}
                 filterType={filterType}
                 setFilterType={setFilterType}
                 filterCategory={filterCategory}

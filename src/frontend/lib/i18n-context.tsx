@@ -104,6 +104,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         // Analytics
         "analytics.title": "Analisa",
         "analytics.overview": "Ringkasan",
+        "analytics.map": "Peta",
         "analytics.trends": "Tren",
         "analytics.insights": "Wawasan",
         "analytics.monthComparison": "Perbandingan Bulan",
@@ -972,6 +973,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         // Analytics
         "analytics.title": "Analytics",
         "analytics.overview": "Overview",
+        "analytics.map": "Map",
         "analytics.trends": "Trends",
         "analytics.insights": "Insights",
         "analytics.monthComparison": "Month Comparison",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2, X, ChevronDown, BarChart3 } from "lucide-react";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -57,6 +57,11 @@ const TIER_CARDS = [
     }
 ];
 
+const MAYAR_PAYMENT_LINKS: Partial<Record<UserTier, string>> = {
+    pro: "https://alipcreative.myr.id/plink/Monev-Pro-Monthly",
+    sultan: "https://alipcreative.myr.id/plink/Monev-Sultan-Monthly",
+};
+
 export default function UpgradePage() {
     const { data: session, update: updateSession } = useSession();
     const currentTier: UserTier = session?.user?.tier || "starter";
@@ -66,6 +71,16 @@ export default function UpgradePage() {
     const [couponCode, setCouponCode] = useState("");
     const [isApplying, setIsApplying] = useState(false);
     const [showFullMatrix, setShowFullMatrix] = useState(false);
+
+    const handleUpgradeClick = (tier: UserTier) => {
+        const paymentLink = MAYAR_PAYMENT_LINKS[tier];
+        if (!paymentLink) {
+            toast.error("Paket Tidak Tersedia", "Link pembayaran untuk paket ini belum tersedia");
+            return;
+        }
+
+        window.location.href = paymentLink;
+    };
 
     const handleApplyCoupon = async () => {
         if (!couponCode) {
@@ -92,7 +107,7 @@ export default function UpgradePage() {
             } else {
                 toast.error("Gagal", data.error || "Kode kupon tidak valid");
             }
-        } catch (error) {
+        } catch {
             toast.error("Error", "Terjadi kesalahan saat memproses kupon");
         } finally {
             setIsApplying(false);
@@ -206,7 +221,9 @@ export default function UpgradePage() {
                                 </div>
 
                                 <button
+                                    type="button"
                                     disabled={isCurrent}
+                                    onClick={() => handleUpgradeClick(tier.id)}
                                     className={cn(
                                         "w-full py-4 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg",
                                         isCurrent
@@ -378,7 +395,7 @@ export default function UpgradePage() {
                     </div>
                     <div>
                         <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-widest mb-1">Catatan Penting</h4>
-                        <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">Pembayaran saat ini dilakukan secara manual. Setelah melakukan pembayaran, harap konfirmasi melalui menu bantuan atau hubungi admin di Telegram.</p>
+                        <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">Pembayaran paket Pro dan Sultan akan diarahkan ke halaman checkout Mayar. Setelah pembayaran berhasil, lanjutkan kembali ke aplikasi untuk verifikasi status upgrade.</p>
                     </div>
                 </motion.div>
             </div>

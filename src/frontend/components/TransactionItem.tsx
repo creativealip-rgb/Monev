@@ -2,15 +2,19 @@
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2 } from "lucide-react";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, type LucideIcon } from "lucide-react";
 import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
-import React, { useState, useEffect } from "react";
+import { normalizeDateValue } from "@/frontend/lib/normalize-date";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useSecurity } from "@/components/SecurityProvider";
 import { decryptData } from "@/lib/encryption";
 
-const CATEGORY_STYLES: Record<string, { icon: any, color: string, gradient: string }> = {
+const SWIPE_ACTION_WIDTH = 88;
+const SWIPE_TRIGGER_OFFSET = 72;
+
+const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradient: string }> = {
     "Makan & Minuman": {
         icon: Utensils,
         color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
@@ -109,11 +113,9 @@ interface TransactionItemProps {
 }
 
 export const TransactionItem = React.memo(function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect }: TransactionItemProps) {
-    const [mounted, setMounted] = useState(false);
     const { encryptionKey } = useSecurity();
     const [displayDescription, setDisplayDescription] = useState(transaction.description || "Tanpa Deskripsi");
-
-    useEffect(() => setMounted(true), []);
+    const isDraggingRef = useRef(false);
 
     useEffect(() => {
         const decrypt = async () => {
@@ -123,7 +125,7 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                         const encryptedPart = transaction.description.replace("enc:", "");
                         const decrypted = await decryptData(encryptedPart, encryptionKey);
                         setDisplayDescription(decrypted);
-                    } catch (e) {
+                    } catch {
                         setDisplayDescription("🔒 [Encrypted]");
                     }
                 } else {
@@ -144,45 +146,68 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
 
     // Swipe mechanism
     const x = useMotionValue(0);
-    const background = useTransform(
-        x,
-        [-100, 0, 100],
-        ["#ef4444", "#ffffff00", "#0ea5e9"]
-    );
+    const leftActionOpacity = useTransform(x, [0, SWIPE_ACTION_WIDTH], [0, 1]);
+    const rightActionOpacity = useTransform(x, [-SWIPE_ACTION_WIDTH, 0], [1, 0]);
 
     return (
-        <div className="relative overflow-hidden rounded-2xl mb-2 group">
-            {/* Action Buttons Background */}
-            <motion.div
-                style={{ background }}
-                className="absolute inset-0 flex items-center justify-between px-6 rounded-2xl"
-            >
-                <div className="flex items-center gap-2">
-                    <Edit2 size={20} className="text-white" />
-                    <span className="text-white text-xs font-bold uppercase">Edit</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-white text-xs font-bold uppercase">Hapus</span>
-                    <Trash2 size={20} className="text-white" />
-                </div>
-            </motion.div>
+        <div className="relative mb-2 overflow-hidden rounded-2xl">
+            <div className="absolute inset-0 flex items-stretch">
+                <motion.button
+                    type="button"
+                    style={{ opacity: leftActionOpacity }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onEdit?.(transaction);
+                    }}
+                    className="flex w-[88px] flex-col items-center justify-center gap-1 rounded-l-2xl bg-sky-500 text-white"
+                >
+                    <Edit2 size={18} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Edit</span>
+                </motion.button>
+                <div className="flex-1 bg-transparent" />
+                <motion.button
+                    type="button"
+                    style={{ opacity: rightActionOpacity }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onDelete?.(transaction.id);
+                    }}
+                    className="flex w-[88px] flex-col items-center justify-center gap-1 rounded-r-2xl bg-rose-500 text-white"
+                >
+                    <Trash2 size={18} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Hapus</span>
+                </motion.button>
+            </div>
 
             {/* Swipeable Content */}
             <motion.div
                 style={{ x }}
                 drag="x"
-                dragConstraints={{ left: -100, right: 100 }}
+                dragConstraints={{ left: -SWIPE_ACTION_WIDTH, right: SWIPE_ACTION_WIDTH }}
+                dragElastic={0.08}
+                dragMomentum={false}
+                onDragStart={() => {
+                    isDraggingRef.current = true;
+                }}
                 onDragEnd={(_, info) => {
-                    if (info.offset.x < -50) {
+                    if (info.offset.x <= -SWIPE_TRIGGER_OFFSET) {
                         onDelete?.(transaction.id);
-                    } else if (info.offset.x > 50) {
+                    } else if (info.offset.x >= SWIPE_TRIGGER_OFFSET) {
                         onEdit?.(transaction);
                     }
-                    x.set(0); // Reset after action
+                    x.stop();
+                    x.set(0);
+                    window.setTimeout(() => {
+                        isDraggingRef.current = false;
+                    }, 0);
                 }}
-                onClick={onClick}
+                onClick={() => {
+                    if (!isDraggingRef.current) {
+                        onClick?.();
+                    }
+                }}
                 className={cn(
-                    "relative flex items-center p-4 card-clean cursor-pointer z-10",
+                    "relative z-10 flex w-full items-center cursor-pointer p-4 card-clean",
                     "transition-shadow duration-300"
                 )}
             >
@@ -225,9 +250,9 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                             {(() => {
                                 try {
                                     // Use transaction.date (actual transaction date) instead of createdAt
-                                    const date = new Date(transaction.date);
+                                    const date = normalizeDateValue(transaction.date);
                                     return isNaN(date.getTime()) ? "N/A" : format(date, "dd MMM, HH:mm", { locale: id });
-                                } catch (e) {
+                                } catch {
                                     return "N/A";
                                 }
                             })()}
@@ -240,7 +265,7 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                         "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
                         isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
                     )}>
-                        {isIncome ? "+" : isExpense ? "−" : ""} {!mounted ? "..." : formatCurrency(transaction.amount)}
+                        {isIncome ? "+" : isExpense ? "−" : ""} {formatCurrency(transaction.amount)}
                     </p>
                     {transaction.isVerified && (
                         <div className="flex items-center justify-end gap-1 mt-1">

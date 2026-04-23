@@ -4,16 +4,63 @@ import { formatCurrency } from '@/frontend/lib/utils';
 import { motion } from 'framer-motion';
 
 interface SankeyData {
-    nodes: { name: string }[];
-    links: { source: number, target: number, value: number }[];
+    nodes: Array<{
+        name: string;
+        kind?: "income" | "expense-category" | "uncategorized-expense" | "savings";
+        categoryId?: number;
+    }>;
+    links: Array<{
+        source: number;
+        target: number;
+        value: number;
+        kind?: "income-to-category" | "income-to-uncategorized" | "income-to-savings";
+        categoryId?: number;
+        targetName?: string;
+    }>;
 }
 
 interface SankeyChartProps {
     data: SankeyData | null;
     isLoading: boolean;
+    onNodeClick?: (node: SankeyData["nodes"][number]) => void;
+    onLinkClick?: (link: SankeyData["links"][number]) => void;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface SankeyTooltipPayloadItem {
+    name?: string;
+    value?: number;
+    payload: {
+        source?: { name: string };
+        target?: { name: string };
+    };
+}
+
+interface SankeyTooltipProps {
+    active?: boolean;
+    payload?: SankeyTooltipPayloadItem[];
+}
+
+interface CustomNodeProps {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    index: number;
+    payload: { name: string; value?: number } & SankeyData["nodes"][number];
+    onClick?: (node: SankeyData["nodes"][number]) => void;
+}
+
+interface CustomLinkProps {
+    sourceX: number;
+    targetX: number;
+    sourceY: number;
+    targetY: number;
+    linkWidth: number;
+    payload: SankeyData["links"][number];
+    onClick?: (link: SankeyData["links"][number]) => void;
+}
+
+const CustomTooltip = ({ active, payload }: SankeyTooltipProps) => {
     if (active && payload && payload.length) {
         const data = payload[0];
         // Distinguish between Node and Link tooltips
@@ -47,7 +94,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 // Custom Node rendering for better aesthetics
-const CustomNode = ({ x, y, width, height, index, payload, containerWidth }: any) => {
+const CustomNode = ({ x, y, width, height, index, payload, onClick }: CustomNodeProps) => {
     const isIncome = index === 0;
     const isSavings = payload.name.includes("Sisa") || payload.name.includes("Tabungan");
 
@@ -67,6 +114,8 @@ const CustomNode = ({ x, y, width, height, index, payload, containerWidth }: any
                 strokeWidth={1}
                 rx={4}
                 ry={4}
+                onClick={() => onClick?.(payload)}
+                className={onClick ? "cursor-pointer" : undefined}
             />
             {/* Value Label */}
             <text
@@ -90,7 +139,25 @@ const CustomNode = ({ x, y, width, height, index, payload, containerWidth }: any
     );
 };
 
-export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading }) => {
+const CustomLink = ({ sourceX, targetX, sourceY, targetY, linkWidth, payload, onClick }: CustomLinkProps) => {
+    const y0 = sourceY + linkWidth / 2;
+    const y1 = targetY + linkWidth / 2;
+    const path = `M${sourceX},${y0} C${sourceX + (targetX - sourceX) * 0.45},${y0} ${sourceX + (targetX - sourceX) * 0.55},${y1} ${targetX},${y1}`;
+
+    return (
+        <path
+            d={path}
+            fill="none"
+            stroke="#cbd5e1"
+            strokeOpacity={0.35}
+            strokeWidth={Math.max(linkWidth, 10)}
+            className={onClick ? "cursor-pointer" : undefined}
+            onClick={() => onClick?.(payload)}
+        />
+    );
+};
+
+export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading, onNodeClick, onLinkClick }) => {
     if (isLoading) {
         return (
             <div className="h-[400px] w-full bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-800 flex items-center justify-center animate-pulse">
@@ -128,13 +195,13 @@ export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading })
             <div className="w-full h-[380px] mt-12 pr-6">
                 <ResponsiveContainer width="100%" height="100%">
                     <Sankey
-                        data={data as any}
+                        data={data as unknown as Record<string, unknown>}
                         nodePadding={20}
                         nodeWidth={12}
                         linkCurvature={0.65}
                         margin={{ left: 20, right: 120, top: 20, bottom: 20 }}
-                        node={<CustomNode />}
-                        link={{ stroke: '#cbd5e1', strokeOpacity: 0.3 }}
+                        node={<CustomNode onClick={onNodeClick} />}
+                        link={<CustomLink onClick={onLinkClick} />}
                     >
                         <defs>
                             <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">

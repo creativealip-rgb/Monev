@@ -16,6 +16,9 @@ export interface Category {
 interface TransactionFilterModalProps {
     isOpen: boolean;
     onClose: () => void;
+    filterAccount: number | "all";
+    setFilterAccount: (account: number | "all") => void;
+    accounts: Array<{ id: number; name: string }>;
     filterType: "all" | "expense" | "income";
     setFilterType: (type: "all" | "expense" | "income") => void;
     filterCategory: number | "all";
@@ -44,6 +47,9 @@ interface TransactionFilterModalProps {
 export function TransactionFilterModal({
     isOpen,
     onClose,
+    filterAccount,
+    setFilterAccount,
+    accounts,
     filterType,
     setFilterType,
     filterCategory,
@@ -83,6 +89,38 @@ export function TransactionFilterModal({
                             </div>
 
                             <div className="space-y-8">
+                                <div>
+                                    <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Akun</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            onClick={() => setFilterAccount("all")}
+                                            className={cn(
+                                                "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2",
+                                                filterAccount === "all"
+                                                    ? "bg-sky-500 border-sky-500 text-white"
+                                                    : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
+                                            )}
+                                        >
+                                            Semua akun
+                                        </button>
+                                        {accounts.map((account) => (
+                                            <button
+                                                key={account.id}
+                                                onClick={() => setFilterAccount(account.id)}
+                                                className={cn(
+                                                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 flex items-center gap-2",
+                                                    filterAccount === account.id
+                                                        ? "bg-sky-500 border-sky-500 text-white"
+                                                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600"
+                                                )}
+                                            >
+                                                {filterAccount === account.id && <Check size={12} />}
+                                                {account.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div>
                                     <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Tipe Transaksi</p>
                                     <div className="flex gap-3">
@@ -217,6 +255,7 @@ export function TransactionFilterModal({
                                 <div className="flex gap-4 pt-4">
                                     <button
                                         onClick={() => {
+                                            setFilterAccount("all");
                                             setFilterCategory("all");
                                             setFilterType("all");
                                             setDateRange(null);
