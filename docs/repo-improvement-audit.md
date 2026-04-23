@@ -237,6 +237,13 @@ Estimasi:
 
 - 2 sampai 4 hari
 
+Status:
+
+- mulai dieksekusi
+- auth logging dan boundary sensitif sudah dirapikan di batch sebelumnya
+- transaction pipeline, bulk import, dan offline queue sudah mulai dipertegas tipenya
+- masih tersisa hardening lanjutan di auth/offline boundary lain
+
 ### Batch 4: Data Layer Unification
 
 Target:
@@ -252,6 +259,13 @@ Pekerjaan:
 Estimasi:
 
 - 2 sampai 3 hari
+
+Status:
+
+- mulai dieksekusi
+- analytics utama, `Peta`, filter options, dan drill-down modal sudah dipindahkan ke query layer formal
+- cache `Map` manual di analytics sudah dihapus
+- area lain di luar analytics masih bisa disatukan lebih lanjut
 
 ### Batch 5: Test Reinforcement
 
@@ -329,3 +343,7 @@ Yang sudah dieksekusi setelah audit ini dibuat:
   - `sqlite.db-wal`
   - `my-agent-finance`
   sudah dikeluarkan dari tracking tanpa menghapus file lokal pengguna
+- analytics query layer
+  - cache manual di analytics page, `FinancialMap`, dan modal drill-down sudah dipindahkan ke TanStack Query
+- transaction pipeline
+  - bulk import, offline queue, dan hook transaksi sekarang memakai tipe yang lebih ketat dan tidak lagi bergantung pada `any`
