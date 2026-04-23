@@ -46,3 +46,12 @@ next-env.d.ts
 *.db-wal
 *.db.backup*
 sqlite.db*
+
+# local reports / artifacts
+playwright-report/
+test-results/
+build-output.txt
+*.bak
+
+# local agent / nested workspace artifacts
+my-agent-finance/
