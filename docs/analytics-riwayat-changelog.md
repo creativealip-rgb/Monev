@@ -361,6 +361,28 @@ Tujuan:
 
 - Mengurangi loading saat user pindah tab atau kembali ke kombinasi filter yang sama.
 
+### 16. Query layer analytics sudah diformalisasi
+
+File:
+
+- `src/app/(protected)/analytics/hooks/useAnalyticsQueries.ts`
+- `src/app/(protected)/analytics/page.tsx`
+- `src/app/(protected)/analytics/components/FinancialMap.tsx`
+- `src/app/(protected)/analytics/components/AnalyticsTransactionsModal.tsx`
+
+Perubahan:
+
+- Query analytics utama, filter akun/kategori, `Peta`, dan daftar transaksi drill-down sekarang memakai query options terpusat.
+- Cache `Map` manual di page analytics dan `FinancialMap` dihapus.
+- Prefetch idle untuk `Peta` sekarang memakai `queryClient.prefetchQuery(...)`.
+- Modal drill-down analytics tidak lagi memakai cache lokal `Map`; sekarang ikut memakai query layer yang sama.
+
+Tujuan:
+
+- Menyatukan strategi cache/fetch di analytics.
+- Mengurangi sumber stale state dan invalidasi ganda.
+- Membuat prefetch, refetch, dan reuse cache lebih konsisten.
+
 ## Perubahan halaman Riwayat
 
 ### 1. Header tanggal riwayat diperbaiki
@@ -480,6 +502,28 @@ Tujuan:
 
 - Menghilangkan swipe yang berantakan, action tray yang tumpang tindih, dan trigger yang tidak stabil.
 
+### 6. Tipe pipeline transaksi diperketat
+
+File:
+
+- `src/backend/db/operations/transaction-operations.ts`
+- `src/app/api/transactions/bulk/route.ts`
+- `src/frontend/lib/offline-manager.ts`
+- `src/frontend/hooks/useTransactionsData.ts`
+
+Perubahan:
+
+- Menambahkan tipe formal untuk bulk import transaksi.
+- `createBulkTransactions(...)` tidak lagi menerima `any[]`.
+- Offline queue dan optimistic transaction sekarang punya shape typed.
+- Hook transaksi tidak lagi menebak response API dan data offline dengan `any`.
+- Route bulk import sekarang memakai request body typed dan `Request` standar.
+
+Tujuan:
+
+- Mengurangi bug shape data di jalur transaksi.
+- Membuat import bulk, offline queue, dan tampilan `Riwayat` lebih tahan regresi.
+
 ## Dampak produk
 
 Setelah seluruh perubahan ini:
@@ -504,11 +548,22 @@ Area analytics dan riwayat yang disentuh sudah beberapa kali dilint selama imple
 - mengurangi `any`
 - mengurangi race condition kecil dan bug shape data
 
+Batch hardening terbaru yang juga sudah dilint:
+
+- `src/app/(protected)/analytics/hooks/useAnalyticsQueries.ts`
+- `src/app/(protected)/analytics/components/AnalyticsTransactionsModal.tsx`
+- `src/app/(protected)/analytics/components/FinancialMap.tsx`
+- `src/app/(protected)/analytics/page.tsx`
+- `src/frontend/hooks/useTransactionsData.ts`
+- `src/frontend/lib/offline-manager.ts`
+- `src/backend/db/operations/transaction-operations.ts`
+- `src/app/api/transactions/bulk/route.ts`
+
 ## Rekomendasi lanjutan
 
 Jika pengembangan dilanjutkan, prioritas berikutnya yang paling bernilai adalah:
 
-1. Memindahkan cache manual analytics ke query layer formal.
-2. Menambahkan preload lintas halaman ke `Riwayat`.
-3. Menambahkan persistent highlight antar tab analytics.
+1. Menambahkan preload lintas halaman ke `Riwayat`.
+2. Menambahkan persistent highlight antar tab analytics.
+3. Melanjutkan type hardening di auth/offline boundary lain.
 4. Menambahkan state swipe `snap open` sebelum eksekusi aksi di riwayat.
