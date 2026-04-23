@@ -13,14 +13,22 @@ import {
 
 interface UseTransactionFiltersProps {
     transactions: TransactionWithCategory[];
+    initialFilters?: {
+        category?: number | "all";
+        account?: number | "all";
+        type?: FilterType;
+        dateRange?: DateRange | null;
+    };
 }
 
 export function useTransactionFilters({
     transactions,
+    initialFilters,
 }: UseTransactionFiltersProps): UseTransactionFiltersReturn {
-    const [filterCategory, setFilterCategory] = useState<number | "all">("all");
-    const [filterType, setFilterType] = useState<FilterType>("all");
-    const [dateRange, setDateRange] = useState<DateRange | null>(null);
+    const [filterCategory, setFilterCategory] = useState<number | "all">(initialFilters?.category ?? "all");
+    const [filterAccount, setFilterAccount] = useState<number | "all">(initialFilters?.account ?? "all");
+    const [filterType, setFilterType] = useState<FilterType>(initialFilters?.type ?? "all");
+    const [dateRange, setDateRange] = useState<DateRange | null>(initialFilters?.dateRange ?? null);
     const [amountRange, setAmountRange] = useState<AmountRange | null>(null);
     const [sortBy, setSortBy] = useState<SortBy>("date");
     const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
@@ -29,6 +37,8 @@ export function useTransactionFilters({
         const result = transactions.filter((t) => {
             const matchesCategory =
                 filterCategory === "all" || Number(t.categoryId) === filterCategory;
+            const matchesAccount =
+                filterAccount === "all" || Number(t.accountId) === filterAccount;
             const matchesType = filterType === "all" || t.type === filterType;
 
             let matchesDate = true;
@@ -46,7 +56,7 @@ export function useTransactionFilters({
                     t.amount >= amountRange.min && t.amount <= amountRange.max;
             }
 
-            return matchesCategory && matchesType && matchesDate && matchesAmount;
+            return matchesCategory && matchesAccount && matchesType && matchesDate && matchesAmount;
         });
 
         result.sort((a, b) => {
@@ -69,19 +79,21 @@ export function useTransactionFilters({
         });
 
         return result;
-    }, [transactions, filterCategory, filterType, dateRange, amountRange, sortBy, sortOrder]);
+    }, [transactions, filterCategory, filterAccount, filterType, dateRange, amountRange, sortBy, sortOrder]);
 
     const activeFiltersCount = useMemo(() => {
         let count = 0;
         if (filterCategory !== "all") count++;
+        if (filterAccount !== "all") count++;
         if (filterType !== "all") count++;
         if (dateRange) count++;
         if (amountRange) count++;
         return count;
-    }, [filterCategory, filterType, dateRange, amountRange]);
+    }, [filterCategory, filterAccount, filterType, dateRange, amountRange]);
 
     const resetFilters = useCallback(() => {
         setFilterCategory("all");
+        setFilterAccount("all");
         setFilterType("all");
         setDateRange(null);
         setAmountRange(null);
@@ -90,6 +102,8 @@ export function useTransactionFilters({
     return {
         filterCategory,
         setFilterCategory,
+        filterAccount,
+        setFilterAccount,
         filterType,
         setFilterType,
         dateRange,

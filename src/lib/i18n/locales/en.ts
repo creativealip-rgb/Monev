@@ -97,6 +97,7 @@ export const en: Record<string, string> = {
     // Analytics
     "analytics.title": "Analytics",
     "analytics.overview": "Overview",
+    "analytics.map": "Map",
     "analytics.trends": "Trends",
     "analytics.insights": "Insights",
     "analytics.monthComparison": "Month Comparison",

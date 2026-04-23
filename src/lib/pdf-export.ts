@@ -18,7 +18,22 @@ interface PdfExportData {
     expense: number;
     balance: number;
     categoryStats: CategoryStat[];
+    periodLabel?: string;
+    anomalies?: Array<{
+        date: string;
+        totalAmount: number;
+        transactionCount: number;
+        severity?: "low" | "medium" | "high";
+        insight?: string;
+    }>;
+    actionItems?: string[];
     userName?: string;
+}
+
+interface JsPdfWithPageCount {
+    internal: {
+        getNumberOfPages(): number;
+    };
 }
 
 const MONTH_NAMES = [
@@ -49,7 +64,7 @@ export async function exportAnalyticsPDF(data: PdfExportData): Promise<void> {
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text(`${MONTH_NAMES[data.month - 1]} ${data.year}`, pageWidth - 15, 20, { align: "right" });
+    doc.text(data.periodLabel || `${MONTH_NAMES[data.month - 1]} ${data.year}`, pageWidth - 15, 20, { align: "right" });
 
     if (data.userName) {
         doc.setFontSize(9);
@@ -117,8 +132,56 @@ export async function exportAnalyticsPDF(data: PdfExportData): Promise<void> {
         margin: { left: 15, right: 15 },
     });
 
+    const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || (cardY + 90);
+
+    // ── Anomaly Summary ─────────────────────────────────────
+    const anomalies = (data.anomalies || []).slice(0, 3);
+    if (anomalies.length > 0) {
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Anomali Pengeluaran", 15, finalY + 12);
+
+        const anomalyRows = anomalies.map((item) => [
+            new Date(item.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+            formatCurrency(item.totalAmount),
+            `${item.transactionCount} trx`,
+            (item.severity || "low").toUpperCase(),
+        ]);
+
+        autoTable(doc, {
+            startY: finalY + 16,
+            head: [["Tanggal", "Nominal", "Transaksi", "Severity"]],
+            body: anomalyRows,
+            theme: "striped",
+            headStyles: { fillColor: [245, 158, 11], fontStyle: "bold", fontSize: 9 },
+            bodyStyles: { fontSize: 9 },
+            margin: { left: 15, right: 15 },
+        });
+    }
+
+    const afterAnomalyY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || finalY;
+
+    // ── Action Items ────────────────────────────────────────
+    if ((data.actionItems || []).length > 0) {
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Aksi Prioritas", 15, afterAnomalyY + 12);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        let currentY = afterAnomalyY + 19;
+        data.actionItems?.slice(0, 3).forEach((action, index) => {
+            const lines = doc.splitTextToSize(`${index + 1}. ${action}`, pageWidth - 30);
+            doc.text(lines, 18, currentY);
+            currentY += lines.length * 5 + 2;
+        });
+    }
+
     // ── Footer ───────────────────────────────────────────────
-    const pageCount = (doc as any).internal.getNumberOfPages();
+    const pageCount = (doc as unknown as JsPdfWithPageCount).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setTextColor(148, 163, 184);

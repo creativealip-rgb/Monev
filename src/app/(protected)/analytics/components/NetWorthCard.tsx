@@ -10,7 +10,6 @@ interface NetWorthProps {
     goals: number;
     isLoading?: boolean;
     hideBalance?: boolean;
-    onToggle?: (newValue: boolean) => void;
 }
 
 export function NetWorthCard({ balance, investments, goals, isLoading = false, hideBalance = false }: NetWorthProps) {

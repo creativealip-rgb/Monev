@@ -122,3 +122,119 @@ export function SpendingHeatmap({ data }: SpendingHeatmapProps) {
         </div>
     );
 }
+
+export function MonthlySpendingHeatmap({ data }: { data: DailyStat[] }) {
+    if (!data || data.length === 0) return null;
+
+    const firstDate = new Date(data[0].date);
+    const year = firstDate.getFullYear();
+    const month = firstDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthLabel = firstDate.toLocaleDateString("id-ID", {
+        month: "long",
+        year: "numeric",
+    });
+
+    const dataMap = new Map(data.map((item) => [item.date, item]));
+    const maxTotal = Math.max(...data.map((item) => item.total || 0), 1);
+    const firstDayOffset = new Date(year, month, 1).getDay();
+
+    const getColor = (total: number) => {
+        const ratio = total / maxTotal;
+
+        if (ratio === 0) return "bg-slate-100 dark:bg-slate-800";
+        if (ratio < 0.2) return "bg-emerald-100 dark:bg-emerald-900/30";
+        if (ratio < 0.4) return "bg-emerald-200 dark:bg-emerald-800/40";
+        if (ratio < 0.6) return "bg-emerald-300 dark:bg-emerald-700/55";
+        if (ratio < 0.8) return "bg-emerald-400 dark:bg-emerald-600/70";
+        return "bg-emerald-500 dark:bg-emerald-500";
+    };
+
+    const calendarDays = Array.from({ length: daysInMonth }, (_, index) => {
+        const date = new Date(year, month, index + 1);
+        const dateKey = date.toISOString().split("T")[0];
+        const stats = dataMap.get(dateKey) || { count: 0, total: 0 };
+
+        return {
+            dateKey,
+            dayNumber: index + 1,
+            ...stats,
+        };
+    });
+
+    const highestDay = calendarDays.reduce((max, current) => (
+        current.total > max.total ? current : max
+    ), calendarDays[0]);
+
+    return (
+        <div className="card-clean p-6">
+            <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                Pola Pengeluaran Bulanan
+            </h3>
+            <p className="mb-4 text-[10px] text-muted-foreground uppercase tracking-wider">
+                {monthLabel}
+            </p>
+
+            <div className="grid grid-cols-7 gap-2">
+                {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((day) => (
+                    <div key={day} className="text-center text-[10px] font-medium text-muted-foreground">
+                        {day}
+                    </div>
+                ))}
+
+                {Array.from({ length: firstDayOffset }).map((_, index) => (
+                    <div key={`empty-${index}`} />
+                ))}
+
+                {calendarDays.map((day) => (
+                    <motion.div
+                        key={day.dateKey}
+                        whileHover={{ scale: 1.08 }}
+                        className="group relative"
+                    >
+                        <div
+                            className={cn(
+                                "aspect-square rounded-lg border border-white/70 dark:border-slate-900/40",
+                                "flex items-center justify-center shadow-sm",
+                                getColor(day.total)
+                            )}
+                        >
+                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-100">
+                                {day.dayNumber}
+                            </span>
+                        </div>
+
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded-lg bg-slate-900 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap">
+                            <p>{formatCurrency(day.total)}</p>
+                            <p>{day.count} transaksi</p>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+
+            {highestDay.total > 0 && (
+                <div className="mt-4 rounded-xl bg-emerald-50/60 p-3 text-[11px] text-emerald-700 dark:bg-emerald-900/10 dark:text-emerald-300">
+                    Pengeluaran harian tertinggi terjadi pada tanggal <strong>{highestDay.dayNumber}</strong> dengan total{" "}
+                    <strong>{formatCurrency(highestDay.total)}</strong>.
+                </div>
+            )}
+
+            <div className="mt-4 flex items-center justify-end gap-2 text-[10px] text-muted-foreground">
+                <span>Sedikit</span>
+                <div className="flex gap-1">
+                    {[
+                        "bg-slate-100 dark:bg-slate-800",
+                        "bg-emerald-100 dark:bg-emerald-900/30",
+                        "bg-emerald-200 dark:bg-emerald-800/40",
+                        "bg-emerald-300 dark:bg-emerald-700/55",
+                        "bg-emerald-400 dark:bg-emerald-600/70",
+                        "bg-emerald-500 dark:bg-emerald-500",
+                    ].map((colorClass) => (
+                        <div key={colorClass} className={cn("h-3 w-3 rounded", colorClass)} />
+                    ))}
+                </div>
+                <span>Banyak</span>
+            </div>
+        </div>
+    );
+}

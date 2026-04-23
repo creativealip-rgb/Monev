@@ -44,6 +44,8 @@ export interface UseTransactionsReturn {
 export interface UseTransactionFiltersReturn {
     filterCategory: number | "all";
     setFilterCategory: (category: number | "all") => void;
+    filterAccount: number | "all";
+    setFilterAccount: (account: number | "all") => void;
     filterType: FilterType;
     setFilterType: (type: FilterType) => void;
     dateRange: DateRange | null;

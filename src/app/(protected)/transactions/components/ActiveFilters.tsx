@@ -6,21 +6,25 @@ import { format } from "date-fns";
 import { DateRange, AmountRange } from "../types";
 
 interface ActiveFiltersProps {
+    accountName?: string | null;
     dateRange: DateRange | null;
     amountRange: AmountRange | null;
+    onClearAccount?: () => void;
     onClearDateRange: () => void;
     onClearAmountRange: () => void;
     onClearAll: () => void;
 }
 
 export function ActiveFilters({
+    accountName,
     dateRange,
     amountRange,
+    onClearAccount,
     onClearDateRange,
     onClearAmountRange,
     onClearAll,
 }: ActiveFiltersProps) {
-    if (!dateRange && !amountRange) return null;
+    if (!accountName && !dateRange && !amountRange) return null;
 
     return (
         <motion.div
@@ -28,6 +32,15 @@ export function ActiveFilters({
             animate={{ opacity: 1, height: "auto" }}
             className="flex flex-wrap gap-2 mb-4"
         >
+            {accountName && onClearAccount && (
+                <button
+                    onClick={onClearAccount}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-full text-xs font-medium text-sky-600 dark:text-sky-400"
+                >
+                    Akun: {accountName}
+                    <X size={12} />
+                </button>
+            )}
             {dateRange && (
                 <button
                     onClick={onClearDateRange}

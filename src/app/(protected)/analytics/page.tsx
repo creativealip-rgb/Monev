@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     Calendar, ChevronRight, Lock, ArrowLeft, FileDown, Flame
 } from "lucide-react";
@@ -18,23 +18,55 @@ import { useI18n } from "@/lib/i18n";
 
 // Components - NetWorthCard is above the fold, keep static
 import { NetWorthCard } from "./components/NetWorthCard";
-
-// Dynamic imports for tab content
-const OverviewTab = dynamic(() => import("./components/OverviewTab").then(mod => mod.OverviewTab), { loading: () => <TabSkeleton /> });
-const TrendsTab = dynamic(() => import("./components/TrendsTab").then(mod => mod.TrendsTab), { loading: () => <TabSkeleton /> });
-const InsightsTab = dynamic(() => import("./components/InsightsTab").then(mod => mod.InsightsTab), { loading: () => <TabSkeleton /> });
-const FinancialMap = dynamic(() => import("./components/FinancialMap").then(mod => mod.FinancialMap), { loading: () => <TabSkeleton /> });
+import { OverviewTab } from "./components/OverviewTab";
+import { TrendsTab } from "./components/TrendsTab";
+import { InsightsTab } from "./components/InsightsTab";
+import {
+    FinancialMap,
+    prefetchFinancialMapData,
+    preloadFinancialMapChart
+} from "./components/FinancialMap";
+import { AnalyticsTransactionsModal } from "./components/AnalyticsTransactionsModal";
 
 // Types
-import type { AnalyticsData } from "./components/types";
+import type {
+    AnalyticsData,
+    AnalyticsDrilldownFilter,
+    CategoryBreakdown,
+    GoalProgress,
+    MonthlyStat
+} from "./components/types";
+import { getAnalyticsActionItems } from "./components/InsightsTab";
+
+interface FilterAccount {
+    id: number;
+    name: string;
+}
+
+interface FilterCategory {
+    id: number;
+    name: string;
+    type: "expense" | "income";
+}
+
+const analyticsResponseCache = new Map<string, AnalyticsData>();
 
 export default function AnalyticsPage() {
-const [activeTab, setActiveTab] = useState("overview");
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [activeTab, setActiveTab] = useState("overview");
     const [currentDate, setCurrentDate] = useState(new Date());
+    const hasAutoAdjustedMonthRef = useRef(false);
     const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
     const [showDateRangePicker, setShowDateRangePicker] = useState(false);
     const dateRangePickerRef = useRef<HTMLDivElement>(null);
     const [data, setData] = useState<AnalyticsData | null>(null);
+    const [accounts, setAccounts] = useState<FilterAccount[]>([]);
+    const [categories, setCategories] = useState<FilterCategory[]>([]);
+    const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+    const [drilldownFilter, setDrilldownFilter] = useState<AnalyticsDrilldownFilter | null>(null);
+    const [mapFocusLabel, setMapFocusLabel] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { data: session } = useSession();
@@ -46,12 +78,19 @@ const [activeTab, setActiveTab] = useState("overview");
     // fall back to session-based check. This prevents lock when session fetch fails transiently.
     const canSeeFullAnalytics = data?.canAccessAIInsights ?? hasFullAnalytics(userTier);
 
-    const tabs = [
+    const tabs = useMemo(() => [
         { id: "overview", label: t("analytics.overview") },
         { id: "map", label: t("analytics.map"), locked: false },
         { id: "trends", label: t("analytics.trends"), locked: !canSeeFullAnalytics },
         { id: "insights", label: t("analytics.insights"), locked: !canSeeFullAnalytics }
-    ];
+    ], [canSeeFullAnalytics, t]);
+
+    useEffect(() => {
+        const tab = searchParams.get("tab");
+        if (tab && tabs.some((item) => item.id === tab)) {
+            setActiveTab(tab);
+        }
+    }, [searchParams, tabs]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -64,6 +103,15 @@ const [activeTab, setActiveTab] = useState("overview");
     };
 
     const [isDownloading, setIsDownloading] = useState(false);
+    const selectedAccountLabel = selectedAccountId === "all"
+        ? "Semua akun"
+        : accounts.find((account) => String(account.id) === selectedAccountId)?.name || "Semua akun";
+    const selectedCategoryLabel = selectedCategoryId === "all"
+        ? "Semua kategori"
+        : categories.find((category) => String(category.id) === selectedCategoryId)?.name || "Semua kategori";
+    const selectedPeriodLabel = dateRange
+        ? `${dateRange.start} s/d ${dateRange.end}`
+        : `${currentDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" })} · ${selectedAccountLabel} · ${selectedCategoryLabel}`;
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -80,7 +128,33 @@ const [activeTab, setActiveTab] = useState("overview");
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [showDateRangePicker]);
 
-const fetchData = async () => {
+    useEffect(() => {
+        async function loadFilters() {
+            try {
+                const [accountsResponse, categoriesResponse] = await Promise.all([
+                    apiFetch("/api/accounts"),
+                    apiFetch("/api/categories"),
+                ]);
+
+                const accountsJson = await accountsResponse.json();
+                const categoriesJson = await categoriesResponse.json();
+
+                if (accountsResponse.ok && accountsJson?.success) {
+                    setAccounts(accountsJson.data || []);
+                }
+
+                if (categoriesResponse.ok && categoriesJson?.success) {
+                    setCategories((categoriesJson.data || []).filter((category: FilterCategory) => category.type === "expense"));
+                }
+            } catch (filterError) {
+                console.error("Failed to load analytics filters:", filterError);
+            }
+        }
+
+        loadFilters();
+    }, []);
+
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
@@ -88,16 +162,57 @@ const fetchData = async () => {
             if (dateRange) {
                 url = `/api/analytics?startDate=${dateRange.start}&endDate=${dateRange.end}`;
             }
+            if (selectedAccountId !== "all") {
+                url += `${url.includes("?") ? "&" : "?"}accountId=${selectedAccountId}`;
+            }
+            if (selectedCategoryId !== "all") {
+                url += `${url.includes("?") ? "&" : "?"}categoryId=${selectedCategoryId}`;
+            }
+            const cachedData = analyticsResponseCache.get(url);
+            if (cachedData) {
+                setData(cachedData);
+                setIsLoading(false);
+                return;
+            }
             const res = await apiFetch(url);
             if (!res.ok) throw new Error(t("analytics.failedToLoad"));
             const jsonData = await res.json();
+
+            if (!dateRange && !hasAutoAdjustedMonthRef.current) {
+                const income = Number(jsonData?.income || 0);
+                const expense = Number(jsonData?.expense || 0);
+                const monthlyComparison: MonthlyStat[] = Array.isArray(jsonData?.monthlyComparison) ? jsonData.monthlyComparison : [];
+
+                if (income === 0 && expense === 0 && monthlyComparison.length > 0) {
+                    const latestMonthWithData = [...monthlyComparison]
+                        .reverse()
+                        .find((item) =>
+                            Number(item?.income || 0) > 0 || Number(item?.expense || 0) > 0
+                        );
+
+                    if (
+                        latestMonthWithData?.month &&
+                        latestMonthWithData?.year &&
+                        (
+                            currentDate.getMonth() + 1 !== latestMonthWithData.month
+                            || currentDate.getFullYear() !== latestMonthWithData.year
+                        )
+                    ) {
+                        hasAutoAdjustedMonthRef.current = true;
+                        setCurrentDate(new Date(latestMonthWithData.year, latestMonthWithData.month - 1, 1));
+                        return;
+                    }
+                }
+            }
+
+            analyticsResponseCache.set(url, jsonData);
             setData(jsonData);
         } catch (err) {
             setError(err instanceof Error ? err.message : t("analytics.errorOccurred"));
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [currentDate, dateRange, selectedAccountId, selectedCategoryId, t]);
 
     const handleDownloadReport = async () => {
         if (!data) return;
@@ -112,16 +227,19 @@ const fetchData = async () => {
             await exportAnalyticsPDF({
                 month: currentDate.getMonth() + 1,
                 year: currentDate.getFullYear(),
+                periodLabel: selectedPeriodLabel,
                 income: data.income || 0,
                 expense: data.expense || 0,
                 balance: (data.income || 0) - (data.expense || 0),
                 categoryStats: [
                     ...(data.categoryBreakdown?.expense || []),
                     ...(data.categoryBreakdown?.income || []),
-                ].map((cat: any) => ({
-                    categoryName: cat.categoryName || cat.name,
-                    total: cat.total || cat.amount || 0,
+                ].map((cat: CategoryBreakdown | { categoryName: string; total: number }) => ({
+                    categoryName: "categoryName" in cat ? cat.categoryName : cat.name,
+                    total: "total" in cat ? cat.total : cat.amount,
                 })),
+                anomalies: data.spendingPatterns?.anomalies || [],
+                actionItems: getAnalyticsActionItems(data),
             });
             toast.success(t("analytics.pdfDownloadSuccess"));
         } catch (err) {
@@ -132,9 +250,68 @@ const fetchData = async () => {
         }
     };
 
-useEffect(() => {
+    useEffect(() => {
         fetchData();
-    }, [currentDate, dateRange]);
+    }, [fetchData]);
+
+    useEffect(() => {
+        if (!data) {
+            return;
+        }
+
+        const runPrefetch = () => {
+            preloadFinancialMapChart().catch(() => null);
+            prefetchFinancialMapData({
+                month: currentDate.getMonth() + 1,
+                year: currentDate.getFullYear(),
+                startDate: dateRange?.start || null,
+                endDate: dateRange?.end || null,
+                accountId: selectedAccountId,
+                categoryId: selectedCategoryId,
+            }).catch(() => null);
+
+            if (canSeeFullAnalytics && !data.insights) {
+                apiFetch("/api/ai/insight").catch(() => null);
+            }
+        };
+
+        const idleCallback = typeof window !== "undefined" && "requestIdleCallback" in window
+            ? window.requestIdleCallback(runPrefetch, { timeout: 1500 })
+            : window.setTimeout(runPrefetch, 400);
+
+        return () => {
+            if (typeof window !== "undefined" && "cancelIdleCallback" in window && typeof idleCallback === "number") {
+                window.cancelIdleCallback(idleCallback);
+                return;
+            }
+
+            window.clearTimeout(idleCallback as number);
+        };
+    }, [canSeeFullAnalytics, currentDate, data, dateRange, selectedAccountId, selectedCategoryId]);
+
+    const periodRange = (() => {
+        if (dateRange) {
+            return {
+                startDate: dateRange.start,
+                endDate: dateRange.end,
+            };
+        }
+
+        const month = currentDate.getMonth();
+        const year = currentDate.getFullYear();
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0);
+
+        return {
+            startDate: startDate.toISOString().split("T")[0],
+            endDate: endDate.toISOString().split("T")[0],
+        };
+    })();
+    const sharedDrilldownFilter = {
+        ...periodRange,
+        accountId: selectedAccountId !== "all" ? Number(selectedAccountId) : undefined,
+        categoryId: selectedCategoryId !== "all" ? Number(selectedCategoryId) : undefined,
+    };
 
     const changeMonth = (offset: number) => {
         const newDate = new Date(currentDate);
@@ -199,7 +376,7 @@ useEffect(() => {
                             <div className="flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
                                 <Flame size={12} className="text-orange-500" />
                                 <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
-                                    {(data as any)?.summary?.streakDays || 0}
+                                    {data.summary?.streakDays || 0}
                                 </span>
                             </div>
                             {dateRange ? (
@@ -316,9 +493,43 @@ useEffect(() => {
                 <NetWorthCard
                     balance={data.balance}
                     investments={data.totalInvestments || 0}
-                    goals={data.goalsProgress?.reduce((acc: any, g: any) => acc + g.currentAmount, 0) || 0}
+                    goals={data.goalsProgress?.reduce((acc: number, g: GoalProgress) => acc + g.currentAmount, 0) || 0}
                     hideBalance={isStealthMode}
                 />
+
+                <div className="grid grid-cols-2 gap-3">
+                    <label className="space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Akun</span>
+                        <select
+                            value={selectedAccountId}
+                            onChange={(e) => setSelectedAccountId(e.target.value)}
+                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            <option value="all">Semua akun</option>
+                            {accounts.map((account) => (
+                                <option key={account.id} value={account.id}>
+                                    {account.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <label className="space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Kategori</span>
+                        <select
+                            value={selectedCategoryId}
+                            onChange={(e) => setSelectedCategoryId(e.target.value)}
+                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            <option value="all">Semua kategori</option>
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
 
                 <div className="sticky top-20 z-30 -mx-6 px-6 py-2 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm">
                     <div className="flex gap-2 mb-2">
@@ -354,29 +565,66 @@ useEffect(() => {
                 animate="visible"
                 key={activeTab} // Animate on tab change
             >
-                {activeTab === "overview" && <OverviewTab data={data} itemVariants={itemVariants} />}
+                {activeTab === "overview" && (
+                    <OverviewTab
+                        data={data}
+                        itemVariants={itemVariants}
+                        periodLabel={selectedPeriodLabel}
+                        onOpenDrilldown={setDrilldownFilter}
+                        baseFilter={sharedDrilldownFilter}
+                    />
+                )}
                 {activeTab === "map" && (
                     <motion.div variants={itemVariants}>
                         <FinancialMap
                             month={currentDate.getMonth() + 1}
                             year={currentDate.getFullYear()}
-                            hideBalance={isStealthMode}
+                            startDate={dateRange?.start || null}
+                            endDate={dateRange?.end || null}
+                            accountId={selectedAccountId}
+                            categoryId={selectedCategoryId}
+                            focusLabel={mapFocusLabel}
+                            onOpenDrilldown={setDrilldownFilter}
                         />
                     </motion.div>
                 )}
-                {activeTab === "trends" && <TrendsTab data={data} itemVariants={itemVariants} />}
-                {activeTab === "insights" && <InsightsTab data={data} itemVariants={itemVariants} />}
+                {activeTab === "trends" && (
+                    <TrendsTab
+                        data={data}
+                        itemVariants={itemVariants}
+                        periodLabel={selectedPeriodLabel}
+                        onOpenDrilldown={setDrilldownFilter}
+                    />
+                )}
+                {activeTab === "insights" && (
+                    <InsightsTab
+                        data={data}
+                        itemVariants={itemVariants}
+                        periodLabel={selectedPeriodLabel}
+                        onOpenDrilldown={setDrilldownFilter}
+                        baseFilter={sharedDrilldownFilter}
+                    />
+                )}
             </motion.div>
-        </div>
-    );
-}
-
-// Tab loading skeleton
-function TabSkeleton() {
-    return (
-        <div className="space-y-4 p-4">
-            <div className="h-32 bg-white/5 rounded-xl animate-pulse" />
-            <div className="h-64 bg-white/5 rounded-xl animate-pulse" />
+            <AnalyticsTransactionsModal
+                isOpen={drilldownFilter !== null}
+                onClose={() => setDrilldownFilter(null)}
+                filter={drilldownFilter}
+                accounts={accounts}
+                onFocusMap={(nextFilter) => {
+                    if (nextFilter.accountId) {
+                        setSelectedAccountId(String(nextFilter.accountId));
+                    }
+                    if (nextFilter.categoryId) {
+                        setSelectedCategoryId(String(nextFilter.categoryId));
+                    }
+                    setMapFocusLabel(nextFilter.title);
+                    setActiveTab("map");
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("tab", "map");
+                    router.replace(`/analytics?${params.toString()}`, { scroll: false });
+                }}
+            />
         </div>
     );
 }

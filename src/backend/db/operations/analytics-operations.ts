@@ -4,9 +4,40 @@ import { eq, and, sql, gte, lte, or, inArray, desc } from "drizzle-orm";
 import { getGoals } from "./goal-operations";
 import { calculateRunway } from "@/lib/financial-advising";
 import { detectSubscriptions } from "@/lib/subscription-detector";
+import type { Transaction as AppTransaction } from "@/types";
+
+export interface AnalyticsFilters {
+    accountId?: number;
+    categoryId?: number;
+}
+
+function buildTransactionFilters(
+    userId: number,
+    startDate: Date,
+    endDate: Date,
+    filters?: AnalyticsFilters,
+    transactionTypes?: Array<"expense" | "income" | "transfer" | "withdraw">
+) {
+    return and(
+        eq(transactions.userId, userId),
+        transactionTypes && transactionTypes.length > 0
+            ? or(...transactionTypes.map((type) => eq(transactions.type, type)))
+            : undefined,
+        filters?.accountId ? eq(transactions.accountId, filters.accountId) : undefined,
+        filters?.categoryId ? eq(transactions.categoryId, filters.categoryId) : undefined,
+        gte(transactions.date, startDate),
+        lte(transactions.date, endDate)
+    );
+}
 
 // Statistics
-export async function getMonthlyStats(userId: number, year: number, month: number): Promise<{
+export async function getMonthlyStats(
+    userId: number,
+    year: number,
+    month: number,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+): Promise<{
     income: number;
     expense: number;
     balance: number;
@@ -15,42 +46,28 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
     const db = getDb();
 
     // Optimized: Use SQL filtering instead of JavaScript filtering
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
 
     // Get income transactions (plus withdrawals from assets)
     const incomeResult = await db
         .select({ total: sql<number>`SUM(amount)` })
         .from(transactions)
-        .where(and(
-            eq(transactions.userId, userId),
-            or(eq(transactions.type, "income"), eq(transactions.type, "withdraw")), // Include withdrawals
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters, ["income", "withdraw"]))
         .get();
 
     // Get expense transactions (plus transfers to assets)
     const expenseResult = await db
         .select({ total: sql<number>`SUM(amount)` })
         .from(transactions)
-        .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, "expense"), // Only true expenses
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters, ["expense"]))
         .get();
 
     // Get fees total
     const feesResult = await db
         .select({ total: sql<number>`SUM(fee)` })
         .from(transactions)
-        .where(and(
-            eq(transactions.userId, userId),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters))
         .get();
 
     const income = incomeResult?.total || 0;
@@ -65,10 +82,16 @@ export async function getMonthlyStats(userId: number, year: number, month: numbe
     };
 }
 
-export async function getDailyTransactionStats(userId: number, year: number, month: number): Promise<Array<{ date: string; count: number; total: number }>> {
+export async function getDailyTransactionStats(
+    userId: number,
+    year: number,
+    month: number,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+): Promise<Array<{ date: string; count: number; total: number }>> {
     const db = getDb();
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
 
     const entries = await db.select({
         date: transactions.date,
@@ -76,12 +99,7 @@ export async function getDailyTransactionStats(userId: number, year: number, mon
         type: transactions.type
     })
         .from(transactions)
-        .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, "expense"),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters, ["expense"]))
         .all();
 
     // Aggregate in JS to avoid complex SQLite date formatting compatibility issues
@@ -102,7 +120,13 @@ export async function getDailyTransactionStats(userId: number, year: number, mon
     })).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export async function getCategoryStats(userId: number, year: number, month: number): Promise<Array<{
+export async function getCategoryStats(
+    userId: number,
+    year: number,
+    month: number,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+): Promise<Array<{
     categoryId: number;
     categoryName: string;
     color: string;
@@ -111,8 +135,8 @@ export async function getCategoryStats(userId: number, year: number, month: numb
     const db = getDb();
 
     // Optimized: Use SQL aggregation and filtering
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
 
     // Use SQL GROUP BY for efficient aggregation
     const results = await db.select({
@@ -123,12 +147,7 @@ export async function getCategoryStats(userId: number, year: number, month: numb
     })
         .from(transactions)
         .innerJoin(categories, eq(transactions.categoryId, categories.id))
-        .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, "expense"),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters, ["expense"]))
         .groupBy(categories.id)
         .orderBy(sql`SUM(${transactions.amount}) DESC`)
         .all();
@@ -141,13 +160,19 @@ export async function getCategoryStats(userId: number, year: number, month: numb
     }));
 }
 
-export async function getAnalysisData(userId: number, year: number, month: number) {
+export async function getAnalysisData(
+    userId: number,
+    year: number,
+    month: number,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+) {
     const db = getDb();
 
-    const stats = await getMonthlyStats(userId, year, month);
+    const stats = await getMonthlyStats(userId, year, month, dateRange, filters);
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
 
     // Optimized: Fetch only monthly transactions with SQL filtering
     const monthlyTransactions = await db.select({
@@ -156,11 +181,7 @@ export async function getAnalysisData(userId: number, year: number, month: numbe
     })
         .from(transactions)
         .innerJoin(categories, eq(transactions.categoryId, categories.id))
-        .where(and(
-            eq(transactions.userId, userId),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters))
         .all();
 
     const mapping = {
@@ -174,8 +195,8 @@ export async function getAnalysisData(userId: number, year: number, month: numbe
     let investmentAmount = 0;
 
     // Detailed breakdowns
-    const expenseBreakdown: Record<string, { amount: number; color: string; icon: string }> = {};
-    const incomeBreakdown: Record<string, { amount: number; color: string; icon: string }> = {};
+    const expenseBreakdown: Record<string, { categoryId: number; amount: number; color: string; icon: string }> = {};
+    const incomeBreakdown: Record<string, { categoryId: number; amount: number; color: string; icon: string }> = {};
 
     monthlyTransactions.forEach(({ transaction: t, category: cat }) => {
         if (t.type === 'expense') {
@@ -190,12 +211,22 @@ export async function getAnalysisData(userId: number, year: number, month: numbe
 
             // Category breakdown calculation
             if (!expenseBreakdown[cat.name]) {
-                expenseBreakdown[cat.name] = { amount: 0, color: cat.color, icon: cat.icon };
+                expenseBreakdown[cat.name] = {
+                    categoryId: cat.id,
+                    amount: 0,
+                    color: cat.color,
+                    icon: cat.icon
+                };
             }
             expenseBreakdown[cat.name].amount += t.amount;
         } else if (t.type === 'income') {
             if (!incomeBreakdown[cat.name]) {
-                incomeBreakdown[cat.name] = { amount: 0, color: cat.color, icon: cat.icon };
+                incomeBreakdown[cat.name] = {
+                    categoryId: cat.id,
+                    amount: 0,
+                    color: cat.color,
+                    icon: cat.icon
+                };
             }
             incomeBreakdown[cat.name].amount += t.amount;
         }
@@ -239,14 +270,13 @@ export async function getAnalysisData(userId: number, year: number, month: numbe
 
 // ============ Advanced Analytics Functions ============
 
-export async function getMonthlyComparison(userId: number, months: number = 6) {
-    const db = getDb();
+export async function getMonthlyComparison(userId: number, months: number = 6, filters?: AnalyticsFilters) {
     const now = new Date();
     const comparisons = [];
 
     for (let i = 0; i < months; i++) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const stats = await getMonthlyStats(userId, date.getFullYear(), date.getMonth() + 1);
+        const stats = await getMonthlyStats(userId, date.getFullYear(), date.getMonth() + 1, undefined, filters);
         comparisons.push({
             month: date.getMonth() + 1,
             year: date.getFullYear(),
@@ -260,11 +290,18 @@ export async function getMonthlyComparison(userId: number, months: number = 6) {
     return comparisons.reverse();
 }
 
-export async function getTopSpendingCategories(userId: number, year: number, month: number, limit: number = 5) {
+export async function getTopSpendingCategories(
+    userId: number,
+    year: number,
+    month: number,
+    limit: number = 5,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+) {
     const db = getDb();
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
 
     const results = await db.select({
         categoryId: transactions.categoryId,
@@ -276,36 +313,29 @@ export async function getTopSpendingCategories(userId: number, year: number, mon
     })
         .from(transactions)
         .innerJoin(categories, eq(transactions.categoryId, categories.id))
-        .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, 'expense'),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters, ["expense"]))
         .groupBy(transactions.categoryId)
         .orderBy(sql`totalAmount DESC`)
         .limit(limit)
         .all();
 
     // Get previous month for trend comparison
+    const shouldCompareWithPreviousMonth = !dateRange;
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
     const prevStartDate = new Date(prevYear, prevMonth - 1, 1);
     const prevEndDate = new Date(prevYear, prevMonth, 0, 23, 59, 59, 999);
 
-    const prevResults = await db.select({
-        categoryId: transactions.categoryId,
-        totalAmount: sql<number>`SUM(${transactions.amount})`.as('totalAmount')
-    })
-        .from(transactions)
-        .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, 'expense'),
-            gte(transactions.date, prevStartDate),
-            lte(transactions.date, prevEndDate)
-        ))
-        .groupBy(transactions.categoryId)
-        .all();
+    const prevResults = shouldCompareWithPreviousMonth
+        ? await db.select({
+            categoryId: transactions.categoryId,
+            totalAmount: sql<number>`SUM(${transactions.amount})`.as('totalAmount')
+        })
+            .from(transactions)
+            .where(buildTransactionFilters(userId, prevStartDate, prevEndDate, filters, ["expense"]))
+            .groupBy(transactions.categoryId)
+            .all()
+        : [];
 
     const prevMap = new Map(prevResults.map(r => [r.categoryId, r.totalAmount]));
 
@@ -320,11 +350,17 @@ export async function getTopSpendingCategories(userId: number, year: number, mon
     });
 }
 
-export async function getSpendingPatterns(userId: number, year: number, month: number) {
+export async function getSpendingPatterns(
+    userId: number,
+    year: number,
+    month: number,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+) {
     const db = getDb();
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
 
     // Daily spending for heatmap
     const dailySpending = await db.select({
@@ -335,12 +371,7 @@ export async function getSpendingPatterns(userId: number, year: number, month: n
         transactionCount: sql<number>`COUNT(*)`.as('transactionCount')
     })
         .from(transactions)
-        .where(and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, 'expense'),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-        ))
+        .where(buildTransactionFilters(userId, startDate, endDate, filters, ["expense"]))
         .groupBy(sql`date`)
         .all();
 
@@ -354,8 +385,34 @@ export async function getSpendingPatterns(userId: number, year: number, month: n
         ? dailySpending.reduce((sum, day) => sum + day.totalAmount, 0) / dailySpending.length
         : 0;
 
-    // Detect anomalies (days with spending > 2x average)
-    const anomalies = dailySpending.filter(day => day.totalAmount > avgDaily * 2);
+    // Detect anomalies with severity instead of a flat threshold.
+    const anomalies = dailySpending
+        .filter((day) => avgDaily > 0 && day.totalAmount > avgDaily * 1.5)
+        .map((day) => {
+            const ratioToAverage = avgDaily > 0 ? day.totalAmount / avgDaily : 0;
+
+            let severity: "low" | "medium" | "high" = "low";
+            if (ratioToAverage >= 3) {
+                severity = "high";
+            } else if (ratioToAverage >= 2) {
+                severity = "medium";
+            }
+
+            let insight = "Pengeluaran hari ini mulai di atas pola normal.";
+            if (severity === "high") {
+                insight = "Lonjakan belanja sangat tinggi. Hari ini jauh di atas pola rata-rata bulanan.";
+            } else if (severity === "medium") {
+                insight = "Pengeluaran melonjak cukup tajam dibanding rata-rata harian.";
+            }
+
+            return {
+                ...day,
+                ratioToAverage,
+                severity,
+                insight
+            };
+        })
+        .sort((a, b) => b.ratioToAverage - a.ratioToAverage);
 
     return {
         dailySpending,
@@ -376,8 +433,6 @@ export async function getGoalsProgress(userId: number) {
         let estimatedDays = null;
 
         if (goal.deadline && progress < 100) {
-            const deadline = new Date(goal.deadline);
-            const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
             const amountLeft = goal.targetAmount - goal.currentAmount;
 
             // Simple estimation based on linear progress
@@ -398,8 +453,15 @@ export async function getGoalsProgress(userId: number) {
     });
 }
 
-function generateRecommendations(scores: any, avgIncome: number, avgExpense: number) {
-    const recommendations = [];
+interface HealthScoreBreakdown {
+    savingsRate: number;
+    expenseControl: number;
+    balanceHealth: number;
+    consistency: number;
+}
+
+function generateRecommendations(scores: HealthScoreBreakdown) {
+    const recommendations: string[] = [];
 
     if (scores.savingsRate < 50) {
         recommendations.push('Tingkatkan tabungan minimal 20% dari pendapatan');
@@ -496,7 +558,7 @@ export async function calculateFinancialHealthScore(userId: number) {
         status,
         message,
         breakdown: scores,
-        recommendations: generateRecommendations(scores, avgIncome, avgExpense)
+        recommendations: generateRecommendations(scores)
     };
 }
 
@@ -535,10 +597,16 @@ export async function getCashflowPrediction(userId: number) {
     };
 }
 
-export async function getPassiveIncome(userId: number, year: number, month: number): Promise<number> {
+export async function getPassiveIncome(
+    userId: number,
+    year: number,
+    month: number,
+    dateRange?: { startDate: Date; endDate: Date },
+    filters?: AnalyticsFilters
+): Promise<number> {
     const db = getDb();
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const startDate = dateRange?.startDate || new Date(year, month - 1, 1);
+    const endDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59);
 
     // Categories that count as passive income
     const passiveCats = ["Investasi", "Dividen", "Bunga", "Passive Income", "Pendapatan Pasif"];
@@ -555,7 +623,9 @@ export async function getPassiveIncome(userId: number, year: number, month: numb
         .where(and(
             eq(transactions.userId, userId),
             eq(transactions.type, "income"),
+            filters?.accountId ? eq(transactions.accountId, filters.accountId) : undefined,
             inArray(transactions.categoryId, targetCatIds),
+            filters?.categoryId ? eq(transactions.categoryId, filters.categoryId) : undefined,
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
         ))
@@ -599,7 +669,7 @@ export async function analyzeSubscriptions(userId: number, monthsBack = 3): Prom
 
     // Mapping Transaction from DB to generic Transaction type if needed
     // In this codebase, they seem to be the same or very similar.
-    const patterns = detectSubscriptions(userTransactions as any);
+    const patterns = detectSubscriptions(userTransactions as AppTransaction[]);
 
     return patterns.map(p => ({
         merchant: p.merchantName,

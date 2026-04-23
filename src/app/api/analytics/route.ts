@@ -10,7 +10,6 @@ import {
     getTopSpendingCategories,
     getSpendingPatterns,
     getGoalsProgress,
-    calculateFinancialHealthScore,
     getCashflowPrediction,
     getBudgets,
     getDailyTransactionStats,
@@ -18,12 +17,45 @@ import {
     getPassiveIncome,
     getUserSettings,
     getDebts,
-    getUserStreak
+    getUserStreak,
+    type AnalyticsFilters
 } from "@/backend/db/operations";
 import { calculateHealthScore } from "@/lib/health-score";
-import { getFinancialInsights } from "@/lib/ai";
+import type {
+    AnalyticsSummary,
+    BudgetAlert,
+    CategoryBreakdown,
+    ChartCategoryStat,
+    GoalProgress,
+    MonthlyStat,
+} from "@/app/(protected)/analytics/components/types";
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour cache
+
+interface DebtItem {
+    amount: number;
+    description?: string | null;
+}
+
+interface BudgetForHealth {
+    amount: number;
+    spent: number;
+}
+
+interface TopCategoryResult {
+    categoryId: number;
+    categoryName: string;
+    totalAmount: number;
+}
+
+interface CashflowProjection {
+    projectedBalance: number;
+}
+
+interface CashflowResult {
+    projections?: CashflowProjection[];
+    trend: "positive" | "negative";
+}
 
 async function getCachedInsights(userId: number, month: number, year: number): Promise<string | null> {
     try {
@@ -51,40 +83,6 @@ async function getCachedInsights(userId: number, month: number, year: number): P
     }
 }
 
-async function setCachedInsights(userId: number, month: number, year: number, insights: string): Promise<void> {
-    try {
-        const db = getDb();
-
-        const existing = await db.select()
-            .from(aiInsightsCache)
-            .where(and(
-                eq(aiInsightsCache.userId, userId),
-                eq(aiInsightsCache.month, month),
-                eq(aiInsightsCache.year, year)
-            ))
-            .get();
-
-        if (existing) {
-            await db.update(aiInsightsCache)
-                .set({
-                    insights,
-                    updatedAt: new Date()
-                })
-                .where(eq(aiInsightsCache.id, existing.id))
-                .run();
-        } else {
-            await db.insert(aiInsightsCache).values({
-                userId,
-                month,
-                year,
-                insights,
-            }).run();
-        }
-    } catch (error) {
-        console.error("[setCachedInsights] Error:", error);
-    }
-}
-
 export async function GET(req: NextRequest) {
     try {
         const session = await auth();
@@ -93,13 +91,35 @@ export async function GET(req: NextRequest) {
 
         const searchParams = req.nextUrl.searchParams;
         const now = new Date();
-        const month = parseInt(searchParams.get("month") || (now.getMonth() + 1).toString());
-        const year = parseInt(searchParams.get("year") || now.getFullYear().toString());
+        const startDateParam = searchParams.get("startDate");
+        const endDateParam = searchParams.get("endDate");
+        const accountIdParam = searchParams.get("accountId");
+        const categoryIdParam = searchParams.get("categoryId");
+
+        let dateRange: { startDate: Date; endDate: Date } | undefined;
+        if (startDateParam && endDateParam) {
+            const startDate = new Date(`${startDateParam}T00:00:00.000Z`);
+            const endDate = new Date(`${endDateParam}T23:59:59.999Z`);
+            if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+                return NextResponse.json({ error: "Format tanggal tidak valid" }, { status: 400 });
+            }
+            if (startDate > endDate) {
+                return NextResponse.json({ error: "Tanggal mulai harus lebih awal dari tanggal akhir" }, { status: 400 });
+            }
+            dateRange = { startDate, endDate };
+        }
+
+        const referenceDate = dateRange?.endDate || now;
+        const month = parseInt(searchParams.get("month") || (referenceDate.getMonth() + 1).toString());
+        const year = parseInt(searchParams.get("year") || referenceDate.getFullYear().toString());
+        const filters: AnalyticsFilters = {
+            accountId: accountIdParam ? parseInt(accountIdParam, 10) : undefined,
+            categoryId: categoryIdParam ? parseInt(categoryIdParam, 10) : undefined,
+        };
 
         const db = getDb();
         const user = await db.select({
             tier: users.tier,
-            // @ts-ignore - hideBalance is in userSettings but let's see if we can join it easily or just fetch it
         })
             .from(users)
             .where(eq(users.id, userId))
@@ -126,17 +146,17 @@ export async function GET(req: NextRequest) {
             unpaidDebts,
             streak
         ] = await Promise.all([
-            getAnalysisData(userId, year, month),
+            getAnalysisData(userId, year, month, dateRange, filters),
             getFinancialHealthMetrics(userId),
-            getMonthlyComparison(userId, 6),
-            getTopSpendingCategories(userId, year, month, 5),
-            getSpendingPatterns(userId, year, month),
+            getMonthlyComparison(userId, 6, filters),
+            getTopSpendingCategories(userId, year, month, 5, dateRange, filters),
+            getSpendingPatterns(userId, year, month, dateRange, filters),
             getGoalsProgress(userId),
             getCashflowPrediction(userId),
             getBudgets(userId, month, year),
-            getDailyTransactionStats(userId, year, month),
+            getDailyTransactionStats(userId, year, month, dateRange, filters),
             getTotalInvestmentsValue(userId),
-            getPassiveIncome(userId, year, month),
+            getPassiveIncome(userId, year, month, dateRange, filters),
             getDebts(userId, "unpaid"),
             getUserStreak(userId)
         ]);
@@ -145,22 +165,11 @@ export async function GET(req: NextRequest) {
 
         if (canAccessAIInsights) {
             insights = await getCachedInsights(userId, month, year);
-
-            if (!insights) {
-                try {
-                    const generatedInsights = await getFinancialInsights(basicAnalysis);
-                    insights = typeof generatedInsights === "object" && generatedInsights !== null ? (generatedInsights as { content?: string }).content || "" : (generatedInsights as string);
-                    await setCachedInsights(userId, month, year, insights);
-                } catch (aiError) {
-                    console.error("AI Insights generation failed:", aiError);
-                    insights = "Gagal menghasilkan analisa AI saat ini. Coba lagi nanti.";
-                }
-            }
         }
 
         let totalOwe = 0;
         let totalOwed = 0;
-        unpaidDebts.forEach((d: any) => {
+        (unpaidDebts as DebtItem[]).forEach((d) => {
             if (d.description?.startsWith("[OWED]")) {
                 totalOwed += d.amount;
             } else {
@@ -172,7 +181,7 @@ export async function GET(req: NextRequest) {
             income: basicAnalysis.income,
             expense: basicAnalysis.expense,
             streakDays: streak?.currentStreak || 0,
-            budgets: budgets.map((b: any) => ({ amount: b.amount, spent: b.spent })),
+            budgets: (budgets as BudgetForHealth[]).map((b) => ({ amount: b.amount, spent: b.spent })),
             goalsCount: goalsProgress.length,
             totalOwe,
             totalOwed
@@ -183,9 +192,9 @@ export async function GET(req: NextRequest) {
             ? ((basicAnalysis.income - basicAnalysis.expense) / basicAnalysis.income) * 100
             : 0;
 
-        const budgetAlerts = budgets
-            .filter((b: any) => b.percentage > 80)
-            .map((b: any) => ({
+        const budgetAlerts: BudgetAlert[] = budgets
+            .filter((b) => b.percentage > 80)
+            .map((b) => ({
                 category: b.category?.name || b.category,
                 spent: b.spent,
                 limit: b.amount,
@@ -199,6 +208,27 @@ export async function GET(req: NextRequest) {
             balance: basicAnalysis.balance,
             allocations: basicAnalysis.allocations,
             categoryBreakdown: basicAnalysis.categoryBreakdown,
+            
+            // ✨ NEW: Monthly stats for trends
+            monthlyStats: monthlyComparison as MonthlyStat[],
+            
+            // ✨ NEW: Previous month data for comparison
+            prevIncome: monthlyComparison && monthlyComparison.length > 1 ? monthlyComparison[monthlyComparison.length - 2]?.income : basicAnalysis.income,
+            prevExpense: monthlyComparison && monthlyComparison.length > 1 ? monthlyComparison[monthlyComparison.length - 2]?.expense : basicAnalysis.expense,
+            
+            // ✨ NEW: Category stats for charts
+            categoryStats: (topCategories as TopCategoryResult[]).map((cat): ChartCategoryStat => ({
+                categoryId: cat.categoryId,
+                categoryName: cat.categoryName,
+                total: Number(cat.totalAmount || 0)
+            })),
+            
+            // ✨ NEW: Income stats by category/source
+            incomeStats: basicAnalysis.categoryBreakdown?.income?.map((cat: CategoryBreakdown) => ({
+                categoryId: cat.categoryId,
+                name: cat.name,
+                total: cat.amount
+            })) || [],
 
             monthlyComparison,
             topCategories,
@@ -206,8 +236,8 @@ export async function GET(req: NextRequest) {
             goalsProgress,
             healthScore,
             cashflowPrediction: {
-                nextMonth: cashflowPrediction.projections?.[0]?.projectedBalance || 0,
-                trend: cashflowPrediction.trend === 'positive' ? 'up' : 'down',
+                nextMonth: (cashflowPrediction as CashflowResult).projections?.[0]?.projectedBalance || 0,
+                trend: (cashflowPrediction as CashflowResult).trend === "positive" ? "up" : "down",
                 confidence: 85
             },
             budgetAlerts,
@@ -227,9 +257,9 @@ export async function GET(req: NextRequest) {
                 highestSpendingDay: spendingPatterns.highestSpendingDay,
                 anomaliesCount: spendingPatterns.anomalies.length,
                 goalsCount: goalsProgress.length,
-                completedGoals: goalsProgress.filter((g: any) => g.progress >= 100).length,
+                completedGoals: (goalsProgress as GoalProgress[]).filter((g) => g.progress >= 100).length,
                 streakDays: streak?.currentStreak || 0
-            }
+            } satisfies AnalyticsSummary
         });
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";

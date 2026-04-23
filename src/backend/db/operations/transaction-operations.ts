@@ -40,6 +40,7 @@ export interface SearchTransactionsOptions {
     offset?: number;
     search?: string;
     categoryId?: number;
+    accountId?: number;
     type?: "expense" | "income" | "transfer" | "all";
     startDate?: Date;
     endDate?: Date;
@@ -63,6 +64,10 @@ export async function searchTransactions(userId: number, options: SearchTransact
 
     if (options.categoryId) {
         conditions.push(eq(transactions.categoryId, options.categoryId));
+    }
+
+    if (options.accountId) {
+        conditions.push(eq(transactions.accountId, options.accountId));
     }
 
     if (options.type && options.type !== "all") {

@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
+import { normalizeDateValue } from "@/frontend/lib/normalize-date";
 import { TransactionWithCategory } from "@/types";
 import { logger } from "@/lib/logger";
 import { useTransactionEvents } from "./useTransactionEvents";
@@ -127,8 +128,8 @@ export function useTransactionsData(searchQuery: string = "") {
                 categoryColor: cat?.color || "bg-slate-500",
                 categoryIcon: cat?.icon || "tag",
                 type: t.type,
-                createdAt: new Date(t.date),
-                date: new Date(t.date),
+                createdAt: normalizeDateValue(t.createdAt ?? t.date),
+                date: normalizeDateValue(t.date),
                 isVerified: t.isVerified,
                 userId: t.userId || 0,
                 merchantName: t.merchantName || null,
@@ -146,6 +147,8 @@ export function useTransactionsData(searchQuery: string = "") {
                 categoryId: Number(t.categoryId),
                 category: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
                 categoryName: categories.find(c => c.id === Number(t.categoryId))?.name || "Lainnya",
+                createdAt: normalizeDateValue(t.createdAt ?? t.date),
+                date: normalizeDateValue(t.date ?? t.createdAt),
                 paymentMethod: t.paymentMethod || "cash",
                 accountId: t.accountId || null,
             } as TransactionWithCategory));

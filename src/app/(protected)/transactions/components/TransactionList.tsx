@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
+import { normalizeDateValue } from "@/frontend/lib/normalize-date";
 import { TransactionWithCategory } from "@/types";
 import { cn } from "@/frontend/lib/utils";
 import { GroupedTransactions } from "../types";
@@ -13,6 +14,8 @@ interface TransactionListProps {
     selectedIds: Set<number>;
     onToggleSelect: (id: number) => void;
     onTransactionClick: (transaction: TransactionWithCategory) => void;
+    onTransactionEdit: (transaction: TransactionWithCategory) => void;
+    onTransactionDelete: (id: number) => void;
     showDuplicatesOnly: boolean;
     activeDuplicateIds: Set<number>;
     isFetchingNextPage: boolean;
@@ -33,12 +36,31 @@ const itemVariants = {
     visible: { opacity: 1, y: 0 },
 };
 
+function formatGroupLabel(dateKey: string, transactions: TransactionWithCategory[]): string {
+    const fallback = "Tanggal tidak valid";
+    const sampleDate = transactions[0]?.date;
+    const normalizedDate = sampleDate ? normalizeDateValue(sampleDate) : normalizeDateValue(dateKey);
+
+    if (isNaN(normalizedDate.getTime())) {
+        return fallback;
+    }
+
+    return new Intl.DateTimeFormat("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        timeZone: "Asia/Jakarta",
+    }).format(normalizedDate);
+}
+
 export function TransactionList({
     groupedTransactions,
     showBulkActions,
     selectedIds,
     onToggleSelect,
     onTransactionClick,
+    onTransactionEdit,
+    onTransactionDelete,
     showDuplicatesOnly,
     activeDuplicateIds,
     isFetchingNextPage,
@@ -57,7 +79,7 @@ export function TransactionList({
                     ([date, dayTransactions]) => (
                         <div key={date}>
                             <h3 className="text-xs font-bold text-muted-foreground mb-3 py-1 px-2 uppercase tracking-widest">
-                                {date}
+                                {formatGroupLabel(date, dayTransactions)}
                             </h3>
                             <div className="space-y-3">
                                 {dayTransactions.map((t) => (
@@ -77,6 +99,8 @@ export function TransactionList({
                                             showCheckbox={showBulkActions}
                                             isSelected={selectedIds.has(t.id)}
                                             onSelect={onToggleSelect}
+                                            onEdit={onTransactionEdit}
+                                            onDelete={onTransactionDelete}
                                             onClick={() => {
                                                 if (!showBulkActions) {
                                                     onTransactionClick(t);
