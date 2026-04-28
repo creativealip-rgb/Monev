@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getMonthlyStats, getGoals, getBudgets, getTransactions, getPendingScheduledMessages, markScheduledMessageSent } from "@/backend/db/operations";
-import OpenAI from "openai";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 import { getDb } from "@/backend/db";
 import { aiInsightsCache } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || "dummy",
-});
+import { createChatCompletionWithFallback, isAIConfigured } from "@/lib/ai-provider";
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours cache
 
@@ -185,8 +181,18 @@ export async function GET(req: NextRequest) {
             recent: recentTransactions.map(t => ({ desc: t.description, amount: t.amount, type: t.type }))
         };
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+        if (!isAIConfigured()) {
+            return NextResponse.json({
+                success: true,
+                insight: "AI insight belum aktif karena OPENAI_API_KEY belum dikonfigurasi.",
+                type: "info",
+                generatedAt: new Date().toISOString(),
+                isCached: false,
+                aiDisabled: true
+            });
+        }
+
+        const response = await createChatCompletionWithFallback({
             messages: [
                 {
                     role: "system",

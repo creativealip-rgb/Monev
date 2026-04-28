@@ -51,7 +51,7 @@ export function CategoryBreakdownChart({
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ categoryName }: ChartCategoryStat) => categoryName}
+                        label={(entry) => String((entry as Partial<ChartCategoryStat>).categoryName ?? "")}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="total"
@@ -66,7 +66,7 @@ export function CategoryBreakdownChart({
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
-                    <Tooltip formatter={(value: number | string) => formatCurrency(Number(value || 0))} />
+                    <Tooltip formatter={(value: unknown) => formatCurrency(Number(value || 0))} />
                 </PieChart>
             </ResponsiveContainer>
 
@@ -116,7 +116,7 @@ export function IncomeExpenseComparison({ monthlyData }: { monthlyData: MonthlyS
                     />
                     <Tooltip
                         contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569" }}
-                        formatter={(value: number | string) => formatCurrency(Number(value || 0))}
+                        formatter={(value: unknown) => formatCurrency(Number(value || 0))}
                     />
                     <Legend />
                     <Bar dataKey="income" fill="#10b981" radius={[8, 8, 0, 0]} />
@@ -260,7 +260,7 @@ export function SmartRecommendations({ data }: { data: RecommendationData }) {
             icon: <Target size={16} />,
             color: "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
             title: "Kategori Terbesar",
-            description: `${data.topCategory.categoryName || data.topCategory.name} adalah pengeluaran terbesarmu (${formatCurrency(data.topCategory.total)})`
+            description: `${data.topCategory.categoryName} adalah pengeluaran terbesarmu (${formatCurrency(data.topCategory.total)})`
         });
     }
 
@@ -320,14 +320,15 @@ export function IncomeSourceBreakdown({
                         width={56}
                         tickFormatter={formatAxisCurrency}
                     />
-                    <Tooltip formatter={(value: number | string) => formatCurrency(Number(value || 0))} />
+                    <Tooltip formatter={(value: unknown) => formatCurrency(Number(value || 0))} />
                     <Bar
                         dataKey="total"
                         fill="#10b981"
                         radius={[8, 8, 0, 0]}
-                        onClick={(state) => {
-                            if (state?.activePayload?.[0]?.payload && onSelectIncome) {
-                                onSelectIncome(state.activePayload[0].payload as IncomeStat);
+                        onClick={(entry) => {
+                            const payload = (entry as { payload?: IncomeStat } | undefined)?.payload;
+                            if (payload && onSelectIncome) {
+                                onSelectIncome(payload);
                             }
                         }}
                     />

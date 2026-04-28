@@ -28,6 +28,7 @@ import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { useDebouncedValue } from "@/frontend/hooks/useDebouncedValue";
 import { useI18n } from "@/lib/i18n";
 import { TransactionWithCategory } from "@/types";
+import type { FilterType } from "./types";
 
 import {
     DuplicateBanner,
@@ -60,12 +61,13 @@ export default function TransactionsPage() {
     const initialCategoryId = searchParams.get("categoryId");
     const initialAccountId = searchParams.get("accountId");
     const initialType = searchParams.get("type");
+    const initialFilterType: FilterType = initialType === "expense" || initialType === "income" ? initialType : "all";
     const initialStartDate = searchParams.get("startDate");
     const initialEndDate = searchParams.get("endDate");
     const initialFilters = {
         category: initialCategoryId ? Number(initialCategoryId) : "all" as const,
         account: initialAccountId ? Number(initialAccountId) : "all" as const,
-        type: initialType === "expense" || initialType === "income" ? initialType : "all" as const,
+        type: initialFilterType,
         dateRange: initialStartDate && initialEndDate ? { start: initialStartDate, end: initialEndDate } : null,
     };
 

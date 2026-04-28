@@ -5,11 +5,7 @@ import { auth } from "@/auth";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 import { checkAIRateLimit, incrementAIUsage, getRateLimitHeaders } from "@/lib/rate-limiter";
 import { UserTier } from "@/lib/tier-gate";
-
-function getOpenAIClient() {
-    const { default: OpenAI } = require("openai");
-    return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
+import { createChatCompletionWithFallback } from "@/lib/ai-provider";
 
 const CATEGORIES = [
     "Makan & Minuman",
@@ -56,7 +52,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const openai = getOpenAIClient();
         const body = await req.json();
         const { merchantName, description } = body;
 
@@ -67,8 +62,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+        const completion = await createChatCompletionWithFallback({
             messages: [
                 {
                     role: "system",
@@ -130,8 +124,7 @@ Jawab dalam format JSON saja:
     } catch (error) {
         console.error("Categorize Error:", error);
         return NextResponse.json(
-            { success: false, error: "Categorization failed" },
-            { status: 500 }
+            { success: true, data: { category: "Lainnya", confidence: 0.3, reason: "AI fallback: kategorisasi otomatis gagal, default ke Lainnya." }, aiFallback: true }
         );
     }
 }

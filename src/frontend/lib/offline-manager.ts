@@ -12,10 +12,12 @@ interface QueuedTransaction {
     timestamp: number;
 }
 
-export type OfflineQueuedTransactionData = Pick<
+export type OfflineQueuedTransactionData = Omit<Pick<
     InsertTransaction,
     "amount" | "description" | "merchantName" | "categoryId" | "type" | "paymentMethod" | "accountId" | "targetAccountId" | "date"
->;
+>, "date"> & {
+    date: Date | string;
+};
 
 export interface OfflineOptimisticTransaction extends OfflineQueuedTransactionData {
     id: string;

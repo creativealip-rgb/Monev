@@ -132,7 +132,7 @@ export async function exportAnalyticsPDF(data: PdfExportData): Promise<void> {
         margin: { left: 15, right: 15 },
     });
 
-    const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || (cardY + 90);
+    const finalY = (doc as typeof doc & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || (cardY + 90);
 
     // ── Anomaly Summary ─────────────────────────────────────
     const anomalies = (data.anomalies || []).slice(0, 3);
@@ -160,7 +160,7 @@ export async function exportAnalyticsPDF(data: PdfExportData): Promise<void> {
         });
     }
 
-    const afterAnomalyY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || finalY;
+    const afterAnomalyY = (doc as typeof doc & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || finalY;
 
     // ── Action Items ────────────────────────────────────────
     if ((data.actionItems || []).length > 0) {

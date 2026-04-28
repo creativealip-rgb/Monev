@@ -21,6 +21,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     const pathname = usePathname();
     const [isFabPressed, setIsFabPressed] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
     const { t } = useI18n();
     const haptics = useHaptics();
     const { toggleStealth } = useSecurity();
@@ -28,6 +29,34 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
 
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        const focusableSelector = "input, textarea, select, [contenteditable='true']";
+        const getViewportKeyboardState = () => {
+            if (!window.visualViewport) return false;
+            return window.innerHeight - window.visualViewport.height > 120;
+        };
+        const updateKeyboardState = () => {
+            const focusedInput = document.activeElement?.matches(focusableSelector) ?? false;
+            const viewportKeyboardOpen = getViewportKeyboardState();
+            setIsKeyboardOpen(focusedInput || viewportKeyboardOpen);
+            document.documentElement.classList.toggle("keyboard-open", focusedInput || viewportKeyboardOpen);
+        };
+
+        window.visualViewport?.addEventListener("resize", updateKeyboardState);
+        window.visualViewport?.addEventListener("scroll", updateKeyboardState);
+        document.addEventListener("focusin", updateKeyboardState);
+        document.addEventListener("focusout", updateKeyboardState);
+        updateKeyboardState();
+
+        return () => {
+            window.visualViewport?.removeEventListener("resize", updateKeyboardState);
+            window.visualViewport?.removeEventListener("scroll", updateKeyboardState);
+            document.removeEventListener("focusin", updateKeyboardState);
+            document.removeEventListener("focusout", updateKeyboardState);
+            document.documentElement.classList.remove("keyboard-open");
+        };
     }, []);
 
     const links = [
@@ -71,7 +100,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
         window.location.href = href;
     };
 
-    if (!mounted) return null;
+    if (!mounted || isKeyboardOpen) return null;
 
     return (
         <div 

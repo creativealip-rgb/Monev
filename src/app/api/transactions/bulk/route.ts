@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             return {
                 ...t,
                 categoryId,
-                amount: parseFloat(t.amount) || 0
+                amount: parseFloat(String(t.amount)) || 0
             };
         });
 

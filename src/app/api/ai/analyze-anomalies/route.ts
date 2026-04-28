@@ -13,11 +13,7 @@ import { eq, and, gte, lte } from "drizzle-orm";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 import { checkAIRateLimit, getRateLimitHeaders, incrementAIUsage } from "@/lib/rate-limiter";
 import { getUserTier } from "@/lib/tier-gate";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || "dummy",
-});
+import { createChatCompletionWithFallback, isAIConfigured } from "@/lib/ai-provider";
 
 interface Anomaly {
     type: "spending_spike" | "duplicate" | "budget_overrun" | "missing_recurring" | "ratio_warning";
@@ -464,8 +460,22 @@ export async function GET(req: NextRequest) {
             return severityOrder[b.severity] - severityOrder[a.severity];
         });
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+        if (!isAIConfigured()) {
+            const summary = locale === "id"
+                ? "AI belum aktif karena OPENAI_API_KEY belum dikonfigurasi. Menampilkan deteksi lokal saja."
+                : "AI is disabled because OPENAI_API_KEY is not configured. Showing local detection only.";
+
+            return NextResponse.json({
+                success: true,
+                anomalies: sortedAnomalies,
+                summary,
+                analyzedAt: new Date().toISOString(),
+                isCached: false,
+                aiDisabled: true,
+            });
+        }
+
+        const response = await createChatCompletionWithFallback({
             messages: [
                 {
                     role: "system",

@@ -1,19 +1,9 @@
 
 import OpenAI from "openai";
-import https from "https";
 import { logger } from "./logger";
+import { createChatCompletionWithFallback, getAIClient, getPrimaryAIModel } from "./ai-provider";
 
-// Create an agent that forces IPv4 to avoid VPS IPv6 issues
-const agent = new https.Agent({ family: 4 });
-
-function getOpenAIClient() {
-    return new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        httpAgent: agent
-    } as any);
-}
-
-const AI_MODEL = "gpt-4o";
+const AI_MODEL = getPrimaryAIModel();
 
 export const CATEGORIES = [
     "Makan & Minuman",
@@ -118,13 +108,12 @@ export interface FinancialContext {
 
 export async function processOCR(input: Buffer | string): Promise<AIResult> {
     try {
-        const openai = getOpenAIClient();
         // Support both Buffer (from Telegram) and string URL (from web API)
         const imageContent = typeof input === "string"
             ? input
             : `data:image/jpeg;base64,${input.toString("base64")}`;
 
-        const response = await openai.chat.completions.create({
+        const response = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -184,7 +173,7 @@ Jawab dalam format JSON saja, tanpa markdown:
 export async function processVoice(audioBuffer: Buffer): Promise<{ transcription: string; parsed: AIResult }> {
     let text = "";
     try {
-        const openai = getOpenAIClient();
+        const openai = getAIClient();
 
         // Correctly convert Buffer to File for OpenAI v4+ in Node
         const file = await OpenAI.toFile(audioBuffer, "audio.ogg", { type: "audio/ogg" });
@@ -198,7 +187,7 @@ export async function processVoice(audioBuffer: Buffer): Promise<{ transcription
 
         text = transcription.text;
 
-        const completion = await openai.chat.completions.create({
+        const completion = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -323,9 +312,7 @@ async function searchMerchantFallback(merchantName: string): Promise<string | nu
 
 export async function categorizeTransaction(merchantName: string | null, description: string | null): Promise<CategorizationResult> {
     try {
-        const openai = getOpenAIClient();
-
-        const pass1 = await openai.chat.completions.create({
+        const pass1 = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -364,7 +351,7 @@ Jawab dalam format JSON saja:
             return { ...result1, searchUsed: false, transactionType: result1.transactionType || "expense" };
         }
 
-        const pass2 = await openai.chat.completions.create({
+        const pass2 = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -451,9 +438,7 @@ export async function getPsychologicalImpact(
 }
 
 export async function getImpulseJudgment(data: { item: string, amount: number, category: string }, recentHistory: any[], budgetInfo?: any) {
-    const openai = getOpenAIClient();
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+    const response = await createChatCompletionWithFallback({
         messages: [
             {
                 role: "system",
@@ -486,9 +471,7 @@ Aturan:
 }
 
 export async function getSocialDebtReminder(debtorName: string, amount: number, type: "polite" | "firm" | "aggressive" = "polite"): Promise<string> {
-    const openai = getOpenAIClient();
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+    const response = await createChatCompletionWithFallback({
         messages: [
             {
                 role: "system",
@@ -520,8 +503,7 @@ Buat pesan yang natural dan cocok dikirim via WhatsApp.`
 }
 
 export async function getFinancialPersona(context: FinancialContext) {
-    const openai = getOpenAIClient();
-    const response = await openai.chat.completions.create({
+    const response = await createChatCompletionWithFallback({
         model: AI_MODEL,
         messages: [
             {
@@ -564,8 +546,7 @@ Berikan julukan yang kreatif, menarik, dan relevan dengan data (Bisa dalam Bahas
  */
 export async function processNLP(text: string): Promise<NLPResult | null> {
     try {
-        const openai = getOpenAIClient();
-        const response = await openai.chat.completions.create({
+        const response = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -653,8 +634,7 @@ export async function askFinanceAgent(
     });
 
     try {
-        const openai = getOpenAIClient();
-        const response = await openai.chat.completions.create({
+        const response = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -1130,8 +1110,7 @@ export async function getFinancialInsights(data: {
     };
 }) {
     try {
-        const openai = getOpenAIClient();
-        const response = await openai.chat.completions.create({
+        const response = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {
@@ -1179,8 +1158,7 @@ ATURAN OUTPUT:
  */
 export async function processNotification(content: string, source: string): Promise<AIResult | null> {
     try {
-        const openai = getOpenAIClient();
-        const response = await openai.chat.completions.create({
+        const response = await createChatCompletionWithFallback({
             model: AI_MODEL,
             messages: [
                 {

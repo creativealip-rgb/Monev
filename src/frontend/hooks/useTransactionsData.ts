@@ -153,21 +153,31 @@ export function useTransactionsData(searchQuery: string = "") {
         // Offline merging
         let merged = [...mappedServer];
         if (offlineTrans.length > 0 && searchQuery === "") {
-            const mappedOffline = offlineTrans.map((t): TransactionWithCategory => {
+            const mappedOffline = offlineTrans.map((t, index): TransactionWithCategory => {
                 const offlineCategory = categories.find((category) => category.id === Number(t.categoryId));
 
                 return {
                     ...t,
+                    id: -(index + 1),
                     categoryId: Number(t.categoryId),
+                    type: t.type || "expense",
+                    description: t.description || "Transaksi offline",
                     categoryName: offlineCategory?.name || "Lainnya",
                     createdAt: normalizeDateValue(t.created_at ?? t.date),
                     date: normalizeDateValue(t.date ?? t.created_at),
                     paymentMethod: t.paymentMethod || "cash",
                     accountId: t.accountId || null,
+                    targetAccountId: t.targetAccountId || null,
+                    destinationType: null,
+                    destinationId: null,
+                    sourceType: null,
+                    sourceId: null,
+                    fee: 0,
                     categoryColor: offlineCategory?.color || "bg-slate-500",
                     categoryIcon: offlineCategory?.icon || "tag",
                     userId: 0,
                     isVerified: false,
+                    isRecurring: false,
                     merchantName: t.merchantName || null,
                     splitGroupId: null,
                 };
