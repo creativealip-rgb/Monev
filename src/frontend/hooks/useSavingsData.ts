@@ -28,7 +28,11 @@ export function useSavingsData() {
             const res = await apiFetch("/api/goals");
             const json = await res.json();
             if (json.success) {
-                return json.data as GoalWithProgress[];
+                return json.data.map((goal: GoalWithProgress & { target?: number; saved?: number }) => ({
+                    ...goal,
+                    targetAmount: goal.targetAmount ?? goal.target ?? 0,
+                    currentAmount: goal.currentAmount ?? goal.saved ?? 0,
+                })) as GoalWithProgress[];
             }
             return [];
         }

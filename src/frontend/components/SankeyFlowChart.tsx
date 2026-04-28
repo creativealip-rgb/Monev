@@ -5,13 +5,15 @@ import { motion } from 'framer-motion';
 
 interface SankeyData {
     nodes: Array<{
+        id: string;
         name: string;
         kind?: "income" | "expense-category" | "uncategorized-expense" | "savings";
         categoryId?: number;
+        value?: number;
     }>;
     links: Array<{
-        source: number;
-        target: number;
+        source: string;
+        target: string;
         value: number;
         kind?: "income-to-category" | "income-to-uncategorized" | "income-to-savings";
         categoryId?: number;
@@ -41,22 +43,28 @@ interface SankeyTooltipProps {
 }
 
 interface CustomNodeProps {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    index: number;
-    payload: { name: string; value?: number } & SankeyData["nodes"][number];
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    index?: number;
+    payload?: { name: string; value?: number } & SankeyData["nodes"][number];
     onClick?: (node: SankeyData["nodes"][number]) => void;
 }
 
+type SankeyChartLink = Omit<SankeyData["links"][number], "source" | "target"> & {
+    source: number;
+    target: number;
+    originalLink?: SankeyData["links"][number];
+};
+
 interface CustomLinkProps {
-    sourceX: number;
-    targetX: number;
-    sourceY: number;
-    targetY: number;
-    linkWidth: number;
-    payload: SankeyData["links"][number];
+    sourceX?: number;
+    targetX?: number;
+    sourceY?: number;
+    targetY?: number;
+    linkWidth?: number;
+    payload?: SankeyChartLink;
     onClick?: (link: SankeyData["links"][number]) => void;
 }
 
@@ -69,10 +77,10 @@ const CustomTooltip = ({ active, payload }: SankeyTooltipProps) => {
             return (
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xl">
                     <p className="text-xs font-bold text-slate-500 mb-1">
-                        {data.payload.source.name} ➔ {data.payload.target.name}
+                        {data.payload.source?.name ?? "Sumber"} ➔ {data.payload.target?.name ?? "Tujuan"}
                     </p>
                     <p className="text-sm font-black text-rose-500">
-                        {formatCurrency(data.value)}
+                        {formatCurrency(data.value ?? 0)}
                     </p>
                 </div>
             );
@@ -84,7 +92,7 @@ const CustomTooltip = ({ active, payload }: SankeyTooltipProps) => {
                         {data.name}
                     </p>
                     <p className="text-xs font-bold text-sky-500">
-                        {formatCurrency(data.value)}
+                        {formatCurrency(data.value ?? 0)}
                     </p>
                 </div>
             );
@@ -94,7 +102,9 @@ const CustomTooltip = ({ active, payload }: SankeyTooltipProps) => {
 };
 
 // Custom Node rendering for better aesthetics
-const CustomNode = ({ x, y, width, height, index, payload, onClick }: CustomNodeProps) => {
+const CustomNode = ({ x = 0, y = 0, width = 0, height = 0, index = 0, payload, onClick }: CustomNodeProps) => {
+    if (!payload) return null;
+
     const isIncome = index === 0;
     const isSavings = payload.name.includes("Sisa") || payload.name.includes("Tabungan");
 
@@ -133,13 +143,15 @@ const CustomNode = ({ x, y, width, height, index, payload, onClick }: CustomNode
                 textAnchor={isIncome ? "start" : "end"}
                 className="text-[8px] font-medium fill-slate-500 dark:fill-slate-400 select-none"
             >
-                {formatCurrency(payload.value)}
+                {formatCurrency(payload.value ?? 0)}
             </text>
         </g>
     );
 };
 
-const CustomLink = ({ sourceX, targetX, sourceY, targetY, linkWidth, payload, onClick }: CustomLinkProps) => {
+const CustomLink = ({ sourceX = 0, targetX = 0, sourceY = 0, targetY = 0, linkWidth = 0, payload, onClick }: CustomLinkProps) => {
+    if (!payload) return null;
+
     const y0 = sourceY + linkWidth / 2;
     const y1 = targetY + linkWidth / 2;
     const path = `M${sourceX},${y0} C${sourceX + (targetX - sourceX) * 0.45},${y0} ${sourceX + (targetX - sourceX) * 0.55},${y1} ${targetX},${y1}`;
@@ -152,7 +164,7 @@ const CustomLink = ({ sourceX, targetX, sourceY, targetY, linkWidth, payload, on
             strokeOpacity={0.35}
             strokeWidth={Math.max(linkWidth, 10)}
             className={onClick ? "cursor-pointer" : undefined}
-            onClick={() => onClick?.(payload)}
+            onClick={() => onClick?.(payload.originalLink ?? (payload as unknown as SankeyData["links"][number]))}
         />
     );
 };
@@ -181,6 +193,21 @@ export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading, o
         );
     }
 
+    const chartData = {
+        nodes: data.nodes,
+        links: data.links.map((link): SankeyChartLink => {
+            const sourceIndex = data.nodes.findIndex((node) => node.id === link.source);
+            const targetIndex = data.nodes.findIndex((node) => node.id === link.target);
+
+            return {
+                ...link,
+                originalLink: link,
+                source: sourceIndex >= 0 ? sourceIndex : 0,
+                target: targetIndex >= 0 ? targetIndex : 0,
+            };
+        }),
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -195,7 +222,7 @@ export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading, o
             <div className="w-full h-[380px] mt-12 pr-6">
                 <ResponsiveContainer width="100%" height="100%">
                     <Sankey
-                        data={data as unknown as Record<string, unknown>}
+                        data={chartData}
                         nodePadding={20}
                         nodeWidth={12}
                         linkCurvature={0.65}

@@ -14,8 +14,11 @@ import {
     Mic,
     TrendingUp,
     X,
-    AudioWaveform,
-    Zap
+    Zap,
+    Home,
+    NotebookTabs,
+    Plus,
+    Wallet
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
@@ -73,6 +76,9 @@ export default function ChatPage() {
     const toast = useToast();
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+    const [viewportHeight, setViewportHeight] = useState(0);
+    const [dailyUsage, setDailyUsage] = useState(0);
 
     const handleClearChat = () => {
         if (session?.user?.id) {
@@ -83,8 +89,8 @@ export default function ChatPage() {
         setShowClearConfirm(false);
     };
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+        messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
     };
 
     useEffect(() => {
@@ -157,22 +163,64 @@ export default function ChatPage() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, isTyping]);
+
+    useEffect(() => {
+        if (!isKeyboardOpen) return;
+        const timers = [80, 240, 420].map((delay) =>
+            window.setTimeout(() => scrollToBottom("auto"), delay)
+        );
+        return () => timers.forEach(window.clearTimeout);
+    }, [isKeyboardOpen, viewportHeight]);
+
+    useEffect(() => {
+        const focusableSelector = "input, textarea, select, [contenteditable='true']";
+        const updateViewport = () => {
+            const height = window.visualViewport?.height ?? window.innerHeight;
+            const focusedInput = document.activeElement?.matches(focusableSelector) ?? false;
+            setViewportHeight(height);
+            setIsKeyboardOpen(focusedInput);
+            if (focusedInput) {
+                window.setTimeout(() => scrollToBottom("auto"), 80);
+            }
+        };
+
+        window.visualViewport?.addEventListener("resize", updateViewport);
+        window.visualViewport?.addEventListener("scroll", updateViewport);
+        window.addEventListener("resize", updateViewport);
+        document.addEventListener("focusin", updateViewport);
+        document.addEventListener("focusout", updateViewport);
+        updateViewport();
+
+        return () => {
+            window.visualViewport?.removeEventListener("resize", updateViewport);
+            window.visualViewport?.removeEventListener("scroll", updateViewport);
+            window.removeEventListener("resize", updateViewport);
+            document.removeEventListener("focusin", updateViewport);
+            document.removeEventListener("focusout", updateViewport);
+        };
+    }, []);
 
     const userTier: UserTier = session?.user?.tier || "starter";
     const tierConfig = getTierConfig(userTier);
 
-    const getDailyUsage = (): number => {
+    const getDailyUsage = (): number => dailyUsage;
+
+    useEffect(() => {
+        if (!session?.user?.id) return;
         const today = new Date().toISOString().split('T')[0];
-        const key = `monev_ai_usage_${session?.user?.id}_${today}`;
-        return parseInt(localStorage.getItem(key) || "0", 10);
-    };
+        const key = `monev_ai_usage_${session.user.id}_${today}`;
+        const storedUsage = parseInt(localStorage.getItem(key) || "0", 10);
+        setDailyUsage(Number.isNaN(storedUsage) ? 0 : storedUsage);
+    }, [session?.user?.id]);
 
     const incrementDailyUsage = () => {
+        if (!session?.user?.id) return;
         const today = new Date().toISOString().split('T')[0];
-        const key = `monev_ai_usage_${session?.user?.id}_${today}`;
-        const current = getDailyUsage();
-        localStorage.setItem(key, String(current + 1));
+        const key = `monev_ai_usage_${session.user.id}_${today}`;
+        const nextUsage = dailyUsage + 1;
+        setDailyUsage(nextUsage);
+        localStorage.setItem(key, String(nextUsage));
     };
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -315,7 +363,10 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="relative min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+        <div
+            className="relative overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950"
+            style={{ height: viewportHeight ? `${viewportHeight}px` : "calc(100dvh - 4.75rem)" }}
+        >
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -352,7 +403,7 @@ export default function ChatPage() {
                 </div>
                 
                 {/* Quota Indicator */}
-                {userTier !== "sultan" && (
+                {userTier !== "sultan" && !isKeyboardOpen && (
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -366,19 +417,19 @@ export default function ChatPage() {
                                 </span>
                             </div>
                             <span className="text-[10px] font-black text-slate-900 dark:text-white">
-                                {Math.max(0, (tierConfig.aiDailyLimit ?? 10) - getDailyUsage())} / {tierConfig.aiDailyLimit ?? 10}
+                                {Math.max(0, (tierConfig.aiDailyLimit ?? 100) - dailyUsage)} / {tierConfig.aiDailyLimit ?? 100}
                             </span>
                         </div>
                         <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: "100%" }}
-                                animate={{ 
-                                    width: `${Math.min(100, (((tierConfig.aiDailyLimit ?? 10) - getDailyUsage()) / (tierConfig.aiDailyLimit ?? 10)) * 100)}%`
+                                animate={{
+                                    width: `${Math.min(100, (((tierConfig.aiDailyLimit ?? 100) - dailyUsage) / (tierConfig.aiDailyLimit ?? 100)) * 100)}%`
                                 }}
                                 className={cn(
                                     "h-full rounded-full transition-colors",
-                                    getDailyUsage() >= (tierConfig.aiDailyLimit ?? 10) - 1 ? "bg-rose-500" :
-                                    getDailyUsage() >= (tierConfig.aiDailyLimit ?? 10) / 2 ? "bg-amber-500" : "bg-emerald-500"
+                                    dailyUsage >= (tierConfig.aiDailyLimit ?? 100) - 1 ? "bg-rose-500" :
+                                    dailyUsage >= (tierConfig.aiDailyLimit ?? 100) / 2 ? "bg-amber-500" : "bg-emerald-500"
                                 )}
                             />
                         </div>
@@ -387,7 +438,10 @@ export default function ChatPage() {
             </motion.header>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            <div className={cn(
+                "flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth",
+                isKeyboardOpen ? "pb-5" : "pb-6"
+            )}>
                 {/* Chat Messages */}
                 <AnimatePresence>
                     {messages.map((message) => (
@@ -484,7 +538,9 @@ export default function ChatPage() {
                                         "text-[10px] mt-1",
                                         message.role === "user" ? "text-sky-200" : "text-slate-400"
                                     )}>
-                                        {message.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                                        {message.timestamp instanceof Date && !Number.isNaN(message.timestamp.getTime())
+                                            ? message.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+                                            : "Baru saja"}
                                     </p>
                                 </div>
                             </div>
@@ -545,7 +601,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+            <div className="shrink-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 shadow-[0_-12px_30px_rgba(15,23,42,0.08)]">
                 {selectedImage && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -583,13 +639,6 @@ export default function ChatPage() {
                         >
                             <Camera size={18} />
                         </button>
-                        <button
-                            onClick={() => setSmartInputMode("voice")}
-                            className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500/10 to-cyan-500/10 dark:from-sky-500/20 dark:to-cyan-500/20 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:from-sky-500/20 hover:to-cyan-500/20 transition-colors border border-sky-200 dark:border-sky-800"
-                            title="Catat Transaksi Suara"
-                        >
-                            <AudioWaveform size={18} />
-                        </button>
                     </div>
                     <div className="flex-1 relative flex items-center">
                         <input
@@ -597,6 +646,7 @@ export default function ChatPage() {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={handleKeyPress}
+                            onFocus={() => window.setTimeout(() => scrollToBottom("auto"), 120)}
                             placeholder={isListening ? "Mendengarkan..." : "Ketik pesan..."}
                             className={cn(
                                 "w-full pl-4 pr-12 py-3 bg-slate-100 dark:bg-slate-800 rounded-full text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all",
@@ -634,6 +684,34 @@ export default function ChatPage() {
                     </motion.button>
                 </div>
             </div>
+
+            {!isKeyboardOpen && (
+                <nav className="shrink-0 bg-white/95 dark:bg-slate-900/95 border-t border-slate-100 dark:border-slate-800 px-2 pb-3 pt-1">
+                    <div className="flex h-14 items-end justify-between">
+                        <Link href="/dashboard" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
+                            <Home size={22} />
+                            <span className="text-[10px] font-semibold">Beranda</span>
+                        </Link>
+                        <Link href="/transactions" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
+                            <NotebookTabs size={22} />
+                            <span className="text-[10px] font-semibold">Riwayat</span>
+                        </Link>
+                        <button type="button" className="flex flex-1 flex-col items-center justify-end pb-1" aria-label="Tambah transaksi">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-sky-600 text-white shadow-lg shadow-sky-500/40">
+                                <Plus size={24} strokeWidth={2.5} />
+                            </span>
+                        </button>
+                        <Link href="/saldo" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
+                            <Wallet size={22} />
+                            <span className="text-[10px] font-semibold">Saldo</span>
+                        </Link>
+                        <Link href="/profile" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
+                            <User size={22} />
+                            <span className="text-[10px] font-semibold">Profil</span>
+                        </Link>
+                    </div>
+                </nav>
+            )}
 
             {/* Smart Input Modal */}
             {smartInputMode && (

@@ -156,7 +156,7 @@ export async function createBulkTransactions(userId: number, items: BulkImportTr
     // Process in batches if necessary, but for small-medium CSVs, a single transaction is fine
     await db.transaction(async (tx) => {
         for (const data of items) {
-            const amount = parseFloat(data.amount) || 0;
+            const amount = parseFloat(String(data.amount)) || 0;
             const res = await tx.insert(transactions).values({
                 userId,
                 amount,

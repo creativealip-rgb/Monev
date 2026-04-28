@@ -218,17 +218,21 @@ export default function AnalyticsPage() {
             }
         };
 
-        const idleCallback = typeof window !== "undefined" && "requestIdleCallback" in window
-            ? window.requestIdleCallback(runPrefetch, { timeout: 1500 })
-            : window.setTimeout(runPrefetch, 400);
+        const browserWindow = window as Window & {
+            requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+            cancelIdleCallback?: (handle: number) => void;
+        };
+        const idleCallback = browserWindow.requestIdleCallback
+            ? browserWindow.requestIdleCallback(runPrefetch, { timeout: 1500 })
+            : globalThis.setTimeout(runPrefetch, 400);
 
         return () => {
-            if (typeof window !== "undefined" && "cancelIdleCallback" in window && typeof idleCallback === "number") {
-                window.cancelIdleCallback(idleCallback);
+            if (browserWindow.cancelIdleCallback && typeof idleCallback === "number") {
+                browserWindow.cancelIdleCallback(idleCallback);
                 return;
             }
 
-            window.clearTimeout(idleCallback as number);
+            globalThis.clearTimeout(idleCallback as ReturnType<typeof setTimeout>);
         };
     }, [analyticsFilters, canSeeFullAnalytics, data, queryClient]);
 
@@ -288,14 +292,14 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen overflow-x-hidden pb-24 bg-sky-50 dark:bg-slate-950">
             {/* Standardized Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 pb-3 border-b border-sky-100/50 dark:border-slate-800/50 sm:px-6 sm:pb-4"
             >
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -309,13 +313,13 @@ export default function AnalyticsPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:w-auto sm:mx-0 sm:px-0 sm:pb-0">
                         {/* Download Report Button */}
                         <button
                             onClick={handleDownloadReport}
                             disabled={isDownloading}
                             className={cn(
-                                "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-[10px] font-bold shadow-lg shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50",
+                                "flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-[10px] font-bold shadow-lg shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50",
                                 isDownloading && "animate-pulse"
                             )}
                         >
@@ -324,7 +328,7 @@ export default function AnalyticsPage() {
                         </button>
 
 {/* Month Selector Mini */}
-                        <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm">
+                        <div className="flex shrink-0 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm">
                             <div className="flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
                                 <Flame size={12} className="text-orange-500" />
                                 <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">

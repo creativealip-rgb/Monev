@@ -9,7 +9,7 @@ import { getUserTier } from "@/lib/tier-gate";
 export const RATE_LIMITS = {
     ai: {
         window: 60 * 1000, // 1 minute
-        max: 10,
+        max: 60,
     },
     bulk: {
         window: 60 * 1000,

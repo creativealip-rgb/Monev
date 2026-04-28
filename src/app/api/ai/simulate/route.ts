@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getAnalysisData, getInvestments, getGoals } from "@/backend/db/operations";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || "dummy",
-});
+import { createChatCompletionWithFallback } from "@/lib/ai-provider";
 
 export async function POST(req: NextRequest) {
     try {
@@ -66,8 +62,7 @@ export async function POST(req: NextRequest) {
             }
         `;
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+        const response = await createChatCompletionWithFallback({
             messages: [{ role: "system", content: "You are a professional financial advisor specialized in 'What-If' simulations." }, { role: "user", content: prompt }],
             response_format: { type: "json_object" }
         });
@@ -78,6 +73,13 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error("Simulation API Error:", error);
-        return NextResponse.json({ error: "Gagal menjalankan simulasi" }, { status: 500 });
+        return NextResponse.json({
+            impact: "AI simulasi sedang memakai fallback lokal. Dampak utama: cek lagi cashflow dan prioritas goal sebelum keputusan ini.",
+            riskLevel: "medium",
+            runwayImpact: "Dana darurat perlu dijaga agar tetap aman.",
+            goalImpact: "Goal bisa mundur jika pengeluaran ini tidak diimbangi penghematan.",
+            advice: "Tahan dulu kalau bukan kebutuhan penting, atau pecah jadi target tabungan kecil.",
+            aiFallback: true
+        });
     }
 }

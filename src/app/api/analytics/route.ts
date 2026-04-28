@@ -195,7 +195,7 @@ export async function GET(req: NextRequest) {
         const budgetAlerts: BudgetAlert[] = budgets
             .filter((b) => b.percentage > 80)
             .map((b) => ({
-                category: b.category?.name || b.category,
+                category: typeof b.category === "string" ? b.category : b.category?.name || "Tanpa Kategori",
                 spent: b.spent,
                 limit: b.amount,
                 percentage: b.percentage,
