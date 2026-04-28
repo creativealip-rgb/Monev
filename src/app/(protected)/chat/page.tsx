@@ -68,6 +68,7 @@ export default function ChatPage() {
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -78,6 +79,7 @@ export default function ChatPage() {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
     const [viewportHeight, setViewportHeight] = useState(0);
+    const viewportBaselineRef = useRef(0);
     const [dailyUsage, setDailyUsage] = useState(0);
 
     const handleClearChat = () => {
@@ -174,15 +176,33 @@ export default function ChatPage() {
     }, [isKeyboardOpen, viewportHeight]);
 
     useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        textarea.style.height = "0px";
+        textarea.style.height = `${Math.min(textarea.scrollHeight, 108)}px`;
+    }, [input]);
+
+    useEffect(() => {
         const focusableSelector = "input, textarea, select, [contenteditable='true']";
+        const blurDelayRef = { current: 0 };
         const updateViewport = () => {
             const height = window.visualViewport?.height ?? window.innerHeight;
-            const focusedInput = document.activeElement?.matches(focusableSelector) ?? false;
+            viewportBaselineRef.current = Math.max(viewportBaselineRef.current, height, window.innerHeight);
+            const viewportShrunk = height < viewportBaselineRef.current - 120;
             setViewportHeight(height);
-            setIsKeyboardOpen(focusedInput);
-            if (focusedInput) {
+
+            window.clearTimeout(blurDelayRef.current);
+            if (viewportShrunk) {
+                setIsKeyboardOpen(true);
                 window.setTimeout(() => scrollToBottom("auto"), 80);
+                return;
             }
+
+            blurDelayRef.current = window.setTimeout(() => {
+                const currentHeight = window.visualViewport?.height ?? window.innerHeight;
+                viewportBaselineRef.current = Math.max(viewportBaselineRef.current, currentHeight, window.innerHeight);
+                setIsKeyboardOpen(currentHeight < viewportBaselineRef.current - 120);
+            }, 180);
         };
 
         window.visualViewport?.addEventListener("resize", updateViewport);
@@ -198,6 +218,7 @@ export default function ChatPage() {
             window.removeEventListener("resize", updateViewport);
             document.removeEventListener("focusin", updateViewport);
             document.removeEventListener("focusout", updateViewport);
+            window.clearTimeout(blurDelayRef.current);
         };
     }, []);
 
@@ -371,7 +392,10 @@ export default function ChatPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe pt-3 pb-4"
+                className={cn(
+                    "sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe transition-all duration-200",
+                    isKeyboardOpen ? "pt-2 pb-2" : "pt-3 pb-4"
+                )}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -584,7 +608,7 @@ export default function ChatPage() {
                 )}
 
                 {/* Quick Replies - Show after AI messages */}
-                {!isTyping && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
+                {!isKeyboardOpen && !isTyping && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -623,37 +647,39 @@ export default function ChatPage() {
                         </div>
                     </motion.div>
                 )}
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 mr-1">
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageSelect}
-                        />
+                <div className="flex items-end gap-2">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageSelect}
+                    />
+                    {!isKeyboardOpen && (
                         <button
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            className="mb-1 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             title="Upload Gambar/Screenshot"
                         >
                             <Camera size={18} />
                         </button>
-                    </div>
-                    <div className="flex-1 relative flex items-center">
-                        <input
-                            type="text"
+                    )}
+                    <div className="flex-1 relative flex items-end">
+                        <textarea
+                            ref={textareaRef}
+                            rows={1}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            onKeyPress={handleKeyPress}
+                            onKeyDown={handleKeyPress}
                             onFocus={() => window.setTimeout(() => scrollToBottom("auto"), 120)}
                             placeholder={isListening ? "Mendengarkan..." : "Ketik pesan..."}
                             className={cn(
-                                "w-full pl-4 pr-12 py-3 bg-slate-100 dark:bg-slate-800 rounded-full text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all",
+                                "max-h-[108px] min-h-11 w-full resize-none rounded-2xl bg-slate-100 py-3 pl-4 pr-12 text-sm leading-5 text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500",
+                                input.includes("\n") || input.length > 42 ? "rounded-3xl" : "rounded-full",
                                 isListening && "ring-2 ring-rose-500/30 bg-rose-50/50 dark:bg-rose-900/10"
                             )}
                         />
-                        <div className="absolute right-2 flex items-center gap-1">
+                        <div className="absolute bottom-1.5 right-2 flex items-center gap-1">
                             <button
                                 onClick={toggleListening}
                                 title="Ketik dengan suara"
@@ -674,7 +700,7 @@ export default function ChatPage() {
                         onClick={() => handleSend()}
                         disabled={(!input.trim() && !selectedImage) || isListening}
                         className={cn(
-                            "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                            "mb-1 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
                             (input.trim() || selectedImage) && !isListening
                                 ? "bg-sky-500 text-white hover:bg-sky-600"
                                 : "bg-slate-200 dark:bg-slate-700 text-slate-400"
