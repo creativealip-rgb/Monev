@@ -163,11 +163,11 @@ export default function SaldoPage() {
 
     return (
         <div className="pb-32 font-sans">
-            <header className="px-6 pt-6 pb-8">
-                <div className="flex justify-between items-start mb-6 -pt-4">
+            <header className="px-4 sm:px-6 pt-4 sm:pt-6 pb-6 sm:pb-8">
+                <div className="flex justify-between items-start mb-4 sm:mb-6">
                     <div>
-                        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.subtitle")}</p>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t("saldo.subtitle")}</p>
                     </div>
                     <motion.button 
                         whileHover={{ scale: 1.05 }}
@@ -184,7 +184,7 @@ export default function SaldoPage() {
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden glass-card"
+                    className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden glass-card"
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full -mr-16 -mt-16 blur-3xl" />
                     <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mb-1 relative z-10">{t("saldo.netWorth")}</p>

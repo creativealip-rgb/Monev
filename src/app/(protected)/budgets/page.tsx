@@ -373,23 +373,23 @@ export default function BudgetsPage() {
     }
 
     return (
-        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-1">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-foreground tracking-tight">{t("budgets.title")}</h1>
+                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">{t("budgets.title")}</h1>
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">{t("budgets.subtitle")}</p>
                         </div>
                     </div>
@@ -404,7 +404,7 @@ export default function BudgetsPage() {
                             }
                             setIsBudgetModalOpen(true);
                         }}
-                        className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                     >
                         <Plus size={24} strokeWidth={2.5} />
                     </button>
@@ -414,7 +414,7 @@ export default function BudgetsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="mx-4 sm:mx-6 mt-4 sm:mt-6 p-4 sm:p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export default function BudgetsPage() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="p-6 space-y-8"
+                className="p-4 sm:p-6 space-y-6 sm:space-y-8"
             >
                 <motion.section variants={itemVariants}>
                     <div className="flex items-center justify-between mb-4">

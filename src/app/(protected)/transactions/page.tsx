@@ -11,6 +11,7 @@ import {
     Square,
     CheckSquare,
     Upload,
+    MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -78,6 +79,7 @@ export default function TransactionsPage() {
     // Modal states
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [showMoreActions, setShowMoreActions] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<TransactionWithCategory | null>(null);
     const [detailTransaction, setDetailTransaction] = useState<TransactionWithCategory | null>(null);
@@ -286,56 +288,50 @@ export default function TransactionsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {/* Sort Button */}
-                        <TransactionSortMenu
-                            sortBy={sortBy}
-                            setSortBy={setSortBy}
-                            sortOrder={sortOrder}
-                            setSortOrder={setSortOrder}
-                            showSortMenu={showSortMenu}
-                            setShowSortMenu={setShowSortMenu}
-                        />
+                        <div className="hidden sm:flex items-center gap-2">
+                            <TransactionSortMenu
+                                sortBy={sortBy}
+                                setSortBy={setSortBy}
+                                sortOrder={sortOrder}
+                                setSortOrder={setSortOrder}
+                                showSortMenu={showSortMenu}
+                                setShowSortMenu={setShowSortMenu}
+                            />
+                            <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => {
+                                    setShowBulkActions(!showBulkActions);
+                                    if (showBulkActions) clearSelection();
+                                }}
+                                className={cn(
+                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                    showBulkActions
+                                        ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                )}
+                                title={t("transactions.bulkSelectTitle")}
+                            >
+                                {showBulkActions ? <CheckSquare size={20} /> : <Square size={20} />}
+                            </motion.button>
+                            <ExportMenu
+                                show={showExportMenu}
+                                onToggle={() => setShowExportMenu(!showExportMenu)}
+                                menuRef={exportMenuRef}
+                                onExportCSV={onExportCSV}
+                                onExportPDF={onExportPDF}
+                            />
+                            <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
+                                title="Import CSV"
+                            >
+                                <Upload size={20} />
+                            </motion.button>
+                        </div>
 
-                        {/* Bulk Select Toggle */}
-                        <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => {
-                                setShowBulkActions(!showBulkActions);
-                                if (showBulkActions) clearSelection();
-                            }}
-                            className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                                showBulkActions
-                                    ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25"
-                                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-                            )}
-                            title={t("transactions.bulkSelectTitle")}
-                        >
-                            {showBulkActions ? <CheckSquare size={20} /> : <Square size={20} />}
-                        </motion.button>
-
-                        {/* Export Dropdown */}
-                        <ExportMenu
-                            show={showExportMenu}
-                            onToggle={() => setShowExportMenu(!showExportMenu)}
-                            menuRef={exportMenuRef}
-                            onExportCSV={onExportCSV}
-                            onExportPDF={onExportPDF}
-                        />
-
-                        {/* Import Button */}
-                        <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => setIsImportModalOpen(true)}
-                            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
-                            title="Import CSV"
-                        >
-                            <Upload size={20} />
-                        </motion.button>
-
-                        {/* Filter Button */}
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -349,6 +345,63 @@ export default function TransactionsPage() {
                         >
                             <Filter size={20} />
                         </motion.button>
+
+                        <div className="relative sm:hidden">
+                            <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setShowMoreActions((value) => !value)}
+                                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                                title="Aksi lainnya"
+                            >
+                                <MoreHorizontal size={20} />
+                            </motion.button>
+                            {showMoreActions && (
+                                <div className="absolute right-0 top-12 z-[120] w-44 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-2 shadow-xl backdrop-blur-md">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowSortMenu(true);
+                                            setShowMoreActions(false);
+                                        }}
+                                        className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    >
+                                        Urutkan
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowBulkActions(!showBulkActions);
+                                            if (showBulkActions) clearSelection();
+                                            setShowMoreActions(false);
+                                        }}
+                                        className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    >
+                                        {showBulkActions ? "Selesai pilih" : "Pilih banyak"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowExportMenu(true);
+                                            setShowMoreActions(false);
+                                        }}
+                                        className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    >
+                                        Export
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsImportModalOpen(true);
+                                            setShowMoreActions(false);
+                                        }}
+                                        className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    >
+                                        Import CSV
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </motion.header>
