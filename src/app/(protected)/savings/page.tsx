@@ -473,6 +473,7 @@ export default function SavingsPage() {
                                 return (
                                     <motion.div
                                         key={g.id}
+                                        data-testid="savings-goal-card"
                                         whileHover={{ scale: 1.02 }}
                                         onClick={() => setDetailGoal(g)}
                                         className={cn(
@@ -507,19 +508,19 @@ export default function SavingsPage() {
                                                 <span style={{ color: g.color }}>{g.icon}</span>
                                             </div>
                                             <div className="flex-1">
-                                                <span className="font-bold text-foreground text-[13px]">{g.name}</span>
-                                                <p className="text-xs text-muted-foreground tabular-nums">
+                                                <span data-testid="savings-goal-name" className="font-bold text-foreground text-[13px]">{g.name}</span>
+                                                <p data-testid="savings-goal-target" className="text-xs text-muted-foreground tabular-nums">
                                                     Target: {isStealthMode ? "••••••••" : formatCurrency(g.targetAmount)}
                                                 </p>
                                             </div>
                                             <div className="text-right pr-2">
-                                                <span className={cn(
+                                                <span data-testid="savings-goal-current" className={cn(
                                                     "font-bold text-[13px] block tabular-nums",
                                                     isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
                                                 )}>
                                                     {isStealthMode ? "••••••••" : formatCurrency(g.currentAmount)}
                                                 </span>
-                                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                                <span data-testid="savings-goal-progress" className="text-[10px] text-muted-foreground tabular-nums">
                                                     {Math.round(g.percentage)}%
                                                 </span>
                                             </div>
