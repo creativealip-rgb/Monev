@@ -26,13 +26,20 @@ export default defineConfig({
       testIgnore: /auth\.setup\.ts/,
     },
     {
+      name: "chat",
+      testMatch: /chat\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+    {
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
         storageState: "tests/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: [/auth\.setup\.ts/, /login\.spec\.ts/],
+      testIgnore: [/auth\.setup\.ts/, /login\.spec\.ts/, /chat\.spec\.ts/],
     },
   ],
 });
