@@ -31,55 +31,69 @@ async function registerAndLogin(page: any, request: any) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initialBalance: 0, notifications: false }),
     });
+    localStorage.setItem("monev_onboarding_complete", "true");
   });
 }
 
 async function openChat(page: any) {
   for (let attempt = 0; attempt < 8; attempt++) {
     await page.goto("/chat", { waitUntil: "domcontentloaded" });
-    const chatInput = page.getByRole("textbox", { name: "Ketik pesan..." });
-    if (await chatInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      return chatInput;
-    }
 
     const skipButton = page.getByText("Lewati").first();
     const startButton = page.getByText("Mulai Sekarang").first();
     const nextButton = page.getByRole("button", { name: /Lanjut|Selesai/i }).first();
 
-    if (await skipButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await skipButton.isVisible({ timeout: 1500 }).catch(() => false)) {
       await skipButton.click({ force: true });
-    } else if (await startButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await startButton.click({ force: true });
-    } else if (await nextButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await nextButton.click({ force: true });
+      await page.waitForTimeout(1000);
+      continue;
     }
-    await page.waitForTimeout(2000);
+    if (await startButton.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await startButton.click({ force: true });
+      await page.waitForTimeout(1000);
+      continue;
+    }
+    if (await nextButton.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await nextButton.click({ force: true });
+      await page.waitForTimeout(1000);
+      continue;
+    }
+
+    const chatInput = page.getByTestId("chat-input");
+    if (await chatInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      return chatInput;
+    }
+    await page.waitForTimeout(1500);
   }
 
-  const chatInput = page.getByRole("textbox", { name: "Ketik pesan..." });
+  const chatInput = page.getByTestId("chat-input");
   await expect(chatInput).toBeVisible({ timeout: 30000 });
   return chatInput;
 }
 
 async function sendChatMessage(page: any, message: string) {
-  const chatInput = page.getByRole("textbox", { name: "Ketik pesan..." });
+  let chatInput = page.getByTestId("chat-input");
+  if (!(await chatInput.isVisible({ timeout: 5000 }).catch(() => false))) {
+    chatInput = await openChat(page);
+  }
+  await expect(chatInput).toBeVisible({ timeout: 30000 });
   await chatInput.fill(message, { force: true });
-  await chatInput.press("Enter");
+  await expect(page.getByTestId("chat-send")).toBeEnabled({ timeout: 30000 });
+  await page.getByTestId("chat-send").click({ force: true });
 }
 
 test.describe("Chat AI", () => {
   test("records a transaction, shows undo button, and removes it from history", async ({ page, request }) => {
     await registerAndLogin(page, request);
-    const chatInput = await openChat(page);
+    await openChat(page);
 
-    await chatInput.fill("makan siang 25rb", { force: true });
-    await chatInput.press("Enter");
+    await sendChatMessage(page, "makan siang 25rb");
 
     await expect(page.getByText("Sudah saya catat")).toBeVisible({ timeout: 30000 });
     await expect(page.getByText("Rp 25.000")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Undo transaksi" })).toBeVisible();
+    await expect(page.getByTestId("chat-undo-transaction")).toBeVisible();
 
-    await page.getByRole("button", { name: "Undo transaksi" }).click();
+    await page.getByTestId("chat-undo-transaction").click();
     await expect(page.getByRole("button", { name: "Sudah di-undo" })).toBeVisible({ timeout: 30000 });
     await expect(page.getByText("transaksi terakhir sudah saya undo")).toBeVisible();
 
@@ -103,8 +117,9 @@ test.describe("Chat AI", () => {
     await expect(page.getByText(/goal tabungan sudah saya buat/i)).toBeVisible({ timeout: 30000 });
 
     await page.goto("/savings", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText("Mac Air M4")).toBeVisible({ timeout: 30000 });
-    await expect(page.getByText(/Target:\s*Rp\s*18\.000\.000/)).toBeVisible();
+    const goalCard = page.getByTestId("savings-goal-card").filter({ hasText: "Mac Air M4" });
+    await expect(goalCard).toBeVisible({ timeout: 30000 });
+    await expect(goalCard.getByTestId("savings-goal-target")).toContainText("Rp 18.000.000");
 
     await openChat(page);
     await sendChatMessage(page, "tambah tabungan mac 500rb");
@@ -113,8 +128,9 @@ test.describe("Chat AI", () => {
     await expect(page.getByText("Terkumpul: Rp 500.000 / Rp 18.000.000")).toBeVisible();
 
     await page.goto("/savings", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText("Mac Air M4")).toBeVisible({ timeout: 30000 });
-    await expect(page.getByText(/Rp\s*500\.000/).first()).toBeVisible();
-    await expect(page.getByText(/3%/).first()).toBeVisible();
+    const updatedGoalCard = page.getByTestId("savings-goal-card").filter({ hasText: "Mac Air M4" });
+    await expect(updatedGoalCard).toBeVisible({ timeout: 30000 });
+    await expect(updatedGoalCard.getByTestId("savings-goal-current")).toContainText("Rp 500.000");
+    await expect(updatedGoalCard.getByTestId("savings-goal-progress")).toContainText("3%");
   });
 });

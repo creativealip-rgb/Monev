@@ -545,6 +545,7 @@ export default function ChatPage() {
                     {messages.map((message) => (
                         <motion.div
                             key={message.id}
+                            data-testid={`chat-message-${message.role}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
@@ -642,6 +643,7 @@ export default function ChatPage() {
                                 {message.role === "assistant" && message.transaction && (
                                     <button
                                         type="button"
+                                        data-testid="chat-undo-transaction"
                                         onClick={() => handleUndoTransaction(message.transaction!.id)}
                                         disabled={message.undoneTransactionId === message.transaction.id || isTyping}
                                         className={cn(
@@ -755,6 +757,7 @@ export default function ChatPage() {
                     <div className="flex-1 relative flex items-end">
                         <textarea
                             ref={textareaRef}
+                            data-testid="chat-input"
                             rows={1}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
@@ -783,6 +786,7 @@ export default function ChatPage() {
                         </div>
                     </div>
                     <motion.button
+                        data-testid="chat-send"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleSend()}

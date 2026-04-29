@@ -1,0 +1,42 @@
+name: Chat QA
+
+on:
+  pull_request:
+    paths:
+      - "src/app/api/chat/**"
+      - "src/app/(protected)/chat/**"
+      - "src/app/(protected)/savings/**"
+      - "src/lib/chat/**"
+      - "src/frontend/hooks/useSavingsData.ts"
+      - "tests/chat.spec.ts"
+      - "scripts/qa-chat-local.mjs"
+      - "package.json"
+      - ".github/workflows/chat-qa.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/app/api/chat/**"
+      - "src/app/(protected)/chat/**"
+      - "src/app/(protected)/savings/**"
+      - "src/lib/chat/**"
+      - "src/frontend/hooks/useSavingsData.ts"
+      - "tests/chat.spec.ts"
+      - "scripts/qa-chat-local.mjs"
+      - "package.json"
+      - ".github/workflows/chat-qa.yml"
+
+jobs:
+  chat-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm run qa:chat:local
+        env:
+          AI_MODEL: cx/gpt-5.2
+          AI_FALLBACK_MODEL: cx/gpt-5.5
