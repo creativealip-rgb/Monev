@@ -256,55 +256,57 @@ export default function InvestmentsPage() {
     const colorOptions = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
 
     return (
-        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
             <TierGateOverlay requiredTier="pro" currentTier={userTier} featureName="Investasi" />
 
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-1">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-foreground tracking-tight">Investasi</h1>
+                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Investasi</h1>
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Pantau Portfolio Anda</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value as any)}
-                            className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
-                        >
-                            <option value="all">Semua</option>
-                            <option value="stock">Saham</option>
-                            <option value="crypto">Kripto</option>
-                            <option value="bond">Obligasi</option>
-                            <option value="mutual_fund">Reksa Dana</option>
-                            <option value="gold">Emas</option>
-                            <option value="forex">Forex</option>
-                        </select>
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as any)}
-                            className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
-                        >
-                            <option value="name">Nama</option>
-                            <option value="value">Nilai</option>
-                            <option value="profit">Profit</option>
-                            <option value="type">Tipe</option>
-                        </select>
+                        <div className="hidden md:flex items-center gap-2">
+                            <select
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value as any)}
+                                className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                            >
+                                <option value="all">Semua</option>
+                                <option value="stock">Saham</option>
+                                <option value="crypto">Kripto</option>
+                                <option value="bond">Obligasi</option>
+                                <option value="mutual_fund">Reksa Dana</option>
+                                <option value="gold">Emas</option>
+                                <option value="forex">Forex</option>
+                            </select>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as any)}
+                                className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                            >
+                                <option value="name">Nama</option>
+                                <option value="value">Nilai</option>
+                                <option value="profit">Profit</option>
+                                <option value="type">Tipe</option>
+                            </select>
+                        </div>
                         <button
                             onClick={openAddModal}
-                            className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                         >
                             <Plus size={24} strokeWidth={2.5} />
                         </button>

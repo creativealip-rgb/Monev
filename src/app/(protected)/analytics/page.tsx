@@ -314,22 +314,20 @@ export default function AnalyticsPage() {
                     </div>
 
                     <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:w-auto sm:mx-0 sm:px-0 sm:pb-0">
-                        {/* Download Report Button */}
                         <button
                             onClick={handleDownloadReport}
                             disabled={isDownloading}
                             className={cn(
-                                "flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-[10px] font-bold shadow-lg shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50",
+                                "flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-[10px] font-bold shadow-lg shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50 sm:px-3",
                                 isDownloading && "animate-pulse"
                             )}
                         >
                             <FileDown size={14} />
-                            <span>Laporan</span>
+                            <span className="hidden xs:inline sm:inline">Laporan</span>
                         </button>
 
-{/* Month Selector Mini */}
                         <div className="flex shrink-0 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm">
-                            <div className="flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
+                            <div className="hidden sm:flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
                                 <Flame size={12} className="text-orange-500" />
                                 <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
                                     {data.summary?.streakDays || 0}
@@ -354,7 +352,7 @@ export default function AnalyticsPage() {
                                     <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
                                         <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
                                     </button>
-                                    <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
+                                    <span className="text-[10px] font-bold px-1.5 min-w-[64px] text-center text-slate-600 dark:text-slate-400 capitalize tracking-tight sm:px-2 sm:min-w-[80px]">
                                         {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
                                     </span>
                                     <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
