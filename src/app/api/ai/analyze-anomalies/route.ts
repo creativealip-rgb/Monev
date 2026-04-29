@@ -360,6 +360,38 @@ function detectIncomeExpenseRatio(
     return anomalies;
 }
 
+function parseAIAnomalyResponse(
+    rawContent: string | null | undefined,
+    fallbackAnomalies: Anomaly[],
+    locale: string
+): { anomalies: Anomaly[]; summary: string; usedFallback: boolean } {
+    const defaultSummary = locale === "id"
+        ? "Analisis keuangan Anda telah selesai. Terdapat beberapa hal yang perlu diperhatikan."
+        : "Financial analysis complete. There are several items that need attention.";
+
+    if (!rawContent?.trim()) {
+        return { anomalies: fallbackAnomalies, summary: defaultSummary, usedFallback: true };
+    }
+
+    try {
+        const content = JSON.parse(rawContent);
+        return {
+            anomalies: Array.isArray(content.anomalies) ? content.anomalies : fallbackAnomalies,
+            summary: typeof content.summary === "string" && content.summary.trim()
+                ? content.summary
+                : defaultSummary,
+            usedFallback: false,
+        };
+    } catch (error) {
+        console.warn("[analyze-anomalies] AI returned non-JSON response; using local detection fallback.", error);
+        return {
+            anomalies: fallbackAnomalies,
+            summary: rawContent.trim() || defaultSummary,
+            usedFallback: true,
+        };
+    }
+}
+
 export async function GET(req: NextRequest) {
     const rateLimitResponse = await applyRateLimit(req, "ai");
     if (rateLimitResponse) return rateLimitResponse;
@@ -515,14 +547,13 @@ export async function GET(req: NextRequest) {
             response_format: { type: "json_object" },
         });
 
-        const content = JSON.parse(response.choices[0].message.content || "{}");
-        const summary =
-            content.summary ||
-            (locale === "id"
-                ? "Analisis keuangan Anda telah selesai. Terdapat beberapa hal yang perlu diperhatikan."
-                : "Financial analysis complete. There are several items that need attention.");
-
-        const aiAnomalies: Anomaly[] = content.anomalies || sortedAnomalies;
+        const parsedAI = parseAIAnomalyResponse(
+            response.choices[0].message.content,
+            sortedAnomalies,
+            locale
+        );
+        const summary = parsedAI.summary;
+        const aiAnomalies = parsedAI.anomalies;
 
         await setCachedAnomalies(userId, year, month, aiAnomalies, summary);
 
@@ -534,6 +565,7 @@ export async function GET(req: NextRequest) {
             summary,
             analyzedAt: new Date().toISOString(),
             isCached: false,
+            aiFallback: parsedAI.usedFallback,
         });
     } catch (error) {
         console.error("Anomaly Analysis Error:", error);
