@@ -18,7 +18,8 @@ import {
     Home,
     NotebookTabs,
     Plus,
-    Wallet
+    Wallet,
+    RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
@@ -38,6 +39,16 @@ interface Message {
     timestamp: Date;
     image?: string;
     actions?: Action[];
+    transaction?: ChatTransaction;
+    undoneTransactionId?: number | null;
+}
+
+interface ChatTransaction {
+    id: number;
+    amount: number;
+    description: string;
+    category: string;
+    type: "expense" | "income" | "transfer";
 }
 
 interface Action {
@@ -60,6 +71,26 @@ function generateMessageId(): string {
     }
     // Fallback for non-secure contexts (HTTP) or older browsers
     return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function parseMessageTimestamp(value: unknown): Date {
+    if (value instanceof Date) return value;
+    if (typeof value === "number") {
+        return new Date(value < 100000000000 ? value * 1000 : value);
+    }
+    if (typeof value === "string") {
+        const numericValue = Number(value);
+        const date = Number.isFinite(numericValue)
+            ? new Date(numericValue < 100000000000 ? numericValue * 1000 : numericValue)
+            : new Date(value);
+        if (!Number.isNaN(date.getTime())) return date;
+    }
+    return new Date();
+}
+
+function formatMessageTime(timestamp: Date): string {
+    const date = parseMessageTimestamp(timestamp);
+    return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function ChatPage() {
@@ -106,11 +137,11 @@ export default function ChatPage() {
                 const data = await res.json();
                 if (data.success && data.data?.length > 0) {
                     const serverMessages: Message[] = data.data.map(
-                        (m: { id: number; role: string; content: string; createdAt: number }) => ({
+                        (m: { id: number; role: string; content: string; createdAt: number | string | Date }) => ({
                             id: String(m.id),
                             role: m.role as "user" | "assistant",
                             content: m.content,
-                            timestamp: new Date(m.createdAt * 1000),
+                            timestamp: parseMessageTimestamp(m.createdAt),
                         })
                     );
                     setMessages(serverMessages);
@@ -128,7 +159,7 @@ export default function ChatPage() {
                     const parsed = JSON.parse(saved);
                     const revived = parsed.map((m: any) => ({
                         ...m,
-                        timestamp: new Date(m.timestamp)
+                        timestamp: parseMessageTimestamp(m.timestamp)
                     }));
                     setMessages(revived);
                 } catch (e) {
@@ -303,8 +334,13 @@ export default function ChatPage() {
                     role: "assistant",
                     content: data.reply,
                     timestamp: new Date(),
+                    transaction: data.transaction,
+                    undoneTransactionId: data.undoneTransactionId,
                 };
                 setMessages((prev) => [...prev, aiMessage]);
+                if (data.goal) {
+                    window.dispatchEvent(new Event("goalsChanged"));
+                }
                 incrementDailyUsage();
             } else {
                 throw new Error(data.error || "Gagal mendapatkan respons AI");
@@ -318,6 +354,44 @@ export default function ChatPage() {
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, errorMessage]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    const handleUndoTransaction = async (transactionId: number) => {
+        setIsTyping(true);
+        try {
+            const response = await apiFetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ undoTransactionId: transactionId }),
+            });
+            const data = await response.json();
+
+            if (!data.reply) {
+                throw new Error(data.error || "Gagal undo transaksi");
+            }
+
+            const undoMessage: Message = {
+                id: generateMessageId(),
+                role: "assistant",
+                content: data.reply,
+                timestamp: new Date(),
+                undoneTransactionId: data.undoneTransactionId,
+            };
+
+            setMessages((prev) => [
+                ...prev.map((message) => (
+                    message.transaction?.id === transactionId
+                        ? { ...message, undoneTransactionId: transactionId }
+                        : message
+                )),
+                undoMessage,
+            ]);
+        } catch (error: any) {
+            console.error("Undo transaction error:", error);
+            toast.error("Undo Gagal", error.message || "Transaksi belum bisa di-undo sekarang.");
         } finally {
             setIsTyping(false);
         }
@@ -562,11 +636,25 @@ export default function ChatPage() {
                                         "text-[10px] mt-1",
                                         message.role === "user" ? "text-sky-200" : "text-slate-400"
                                     )}>
-                                        {message.timestamp instanceof Date && !Number.isNaN(message.timestamp.getTime())
-                                            ? message.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
-                                            : "Baru saja"}
+                                        {formatMessageTime(message.timestamp)}
                                     </p>
                                 </div>
+                                {message.role === "assistant" && message.transaction && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUndoTransaction(message.transaction!.id)}
+                                        disabled={message.undoneTransactionId === message.transaction.id || isTyping}
+                                        className={cn(
+                                            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all",
+                                            message.undoneTransactionId === message.transaction.id
+                                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                                                : "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+                                        )}
+                                    >
+                                        <RotateCcw size={13} />
+                                        {message.undoneTransactionId === message.transaction.id ? "Sudah di-undo" : "Undo transaksi"}
+                                    </button>
+                                )}
                             </div>
                         </motion.div>
                     ))}

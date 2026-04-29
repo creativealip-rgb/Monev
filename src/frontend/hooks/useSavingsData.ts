@@ -13,12 +13,16 @@ export function useSavingsData() {
 
     useEffect(() => {
         setMounted(true);
-        const handleTransactionAdded = () => {
+        const refreshGoals = () => {
             queryClient.invalidateQueries({ queryKey: ["goals"] });
         };
 
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
+        window.addEventListener("transactionAdded", refreshGoals);
+        window.addEventListener("goalsChanged", refreshGoals);
+        return () => {
+            window.removeEventListener("transactionAdded", refreshGoals);
+            window.removeEventListener("goalsChanged", refreshGoals);
+        };
     }, [queryClient]);
 
     // Goals Query
