@@ -12,7 +12,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
-import { NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
+import { ErrorEmpty, NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
 import { useSession } from "next-auth/react";
 import { UserTier, canCreateInvestment, getTierConfig } from "@/lib/tier-gate";
 import { TierGateOverlay, TierLimitBanner } from "@/frontend/components/TierGateOverlay";
@@ -34,6 +34,7 @@ function AssetIcon({ name, color, size = 20 }: { name: string; color: string; si
 export default function InvestmentsPage() {
     const [summary, setSummary] = useState<InvestmentSummary | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
@@ -108,14 +109,17 @@ export default function InvestmentsPage() {
 
     async function loadData() {
         setLoading(true);
+        setLoadError(null);
         try {
             const res = await apiFetch("/api/investments");
             const result = await res.json();
-            if (result.success) {
-                setSummary(result);
+            if (!result.success) {
+                throw new Error(result.error || "Gagal memuat investasi");
             }
+            setSummary(result);
         } catch (error) {
             console.error("Error loading investments:", error);
+            setLoadError(error instanceof Error ? error.message : "Gagal memuat investasi");
         } finally {
             setLoading(false);
         }
@@ -453,8 +457,24 @@ export default function InvestmentsPage() {
                             <div key={i} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 h-24 animate-pulse" />
                         ))}
                     </div>
+                ) : loadError ? (
+                    <div className="card-clean">
+                        <ErrorEmpty
+                            title="Gagal memuat investasi"
+                            description={loadError}
+                            onRetry={() => { void loadData(); }}
+                        />
+                    </div>
                 ) : investments.length === 0 ? (
                     <NoInvestmentsEmpty onAddNew={() => setIsAddModalOpen(true)} />
+                ) : displayInvestments.length === 0 ? (
+                    <div className="card-clean">
+                        <ErrorEmpty
+                            title="Tidak ada aset yang cocok"
+                            description="Ubah filter atau urutan untuk melihat aset lainnya."
+                            onRetry={() => setFilterType("all")}
+                        />
+                    </div>
                 ) : (
                     <div className="space-y-3">
                         {displayInvestments.map((inv, i) => {

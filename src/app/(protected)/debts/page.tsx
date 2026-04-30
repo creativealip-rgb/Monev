@@ -8,7 +8,7 @@ import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
-import { useToast } from "@/frontend/components/UI";
+import { ErrorEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { Debt } from "./types";
@@ -23,6 +23,7 @@ const containerVariants = {
 export default function DebtsPage() {
     const [debts, setDebts] = useState<Debt[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [showAddSheet, setShowAddSheet] = useState(false);
     const [activeTab, setActiveTab] = useState<"all" | "split" | "regular" | "unpaid" | "paid">("unpaid");
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -35,10 +36,17 @@ export default function DebtsPage() {
 
     const loadDebts = useCallback(async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             const res = await apiFetch("/api/debts");
             const data = await res.json();
-            if (data.success) setDebts(data.data);
+            if (!data.success) {
+                throw new Error(data.error || "Gagal memuat hutang");
+            }
+            setDebts(data.data || []);
+        } catch (error) {
+            console.error("Error loading debts:", error);
+            setLoadError(error instanceof Error ? error.message : "Gagal memuat hutang");
         } finally {
             setLoading(false);
         }
@@ -289,6 +297,14 @@ export default function DebtsPage() {
                             <div key={i} className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
                         ))}
                     </div>
+                ) : loadError ? (
+                    <div className="card-clean">
+                        <ErrorEmpty
+                            title="Gagal memuat hutang"
+                            description={loadError}
+                            onRetry={() => { void loadDebts(); }}
+                        />
+                    </div>
                 ) : activeTab === "unpaid" ? (
                     <motion.div
                         variants={containerVariants}
@@ -342,6 +358,22 @@ export default function DebtsPage() {
                             )}
                             
                             {/* Empty States */}
+                            {splitViewMode === "all" && displaySplitBills.length === 0 && displayRegularDebts.length === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-col items-center justify-center py-12 text-center"
+                                >
+                                    <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                        <Users size={32} className="text-slate-400" />
+                                    </div>
+                                    <p className="font-bold text-foreground mb-1">Belum ada hutang aktif</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Tap + untuk mencatat hutang, piutang, atau split bill baru.
+                                    </p>
+                                </motion.div>
+                            )}
+
                             {splitViewMode === "split" && displaySplitBills.length === 0 && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
@@ -384,7 +416,21 @@ export default function DebtsPage() {
                         className="space-y-3"
                     >
                         <AnimatePresence>
-                            {filtered.map(debt => (
+                            {filtered.length === 0 ? (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-col items-center justify-center py-12 text-center"
+                                >
+                                    <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                        <Wallet size={32} className="text-slate-400" />
+                                    </div>
+                                    <p className="font-bold text-foreground mb-1">Belum ada hutang lunas</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Hutang yang sudah selesai akan muncul di sini.
+                                    </p>
+                                </motion.div>
+                            ) : filtered.map(debt => (
                                 <DebtCard
                                     key={debt.id}
                                     debt={debt as any}

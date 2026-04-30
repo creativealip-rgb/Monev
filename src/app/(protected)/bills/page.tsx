@@ -8,7 +8,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
-import { BillCardSkeleton, NoBillsEmpty, useToast } from "@/frontend/components/UI";
+import { BillCardSkeleton, ErrorEmpty, NoBillsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { useSession } from "next-auth/react";
 import { useSecurity } from "@/components/SecurityProvider";
@@ -34,6 +34,7 @@ export default function BillsPage() {
     const { t } = useI18n();
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all");
     const [showAddSheet, setShowAddSheet] = useState(false);
     const { isStealthMode } = useSecurity();
@@ -174,13 +175,16 @@ export default function BillsPage() {
     async function loadBills() {
         try {
             setLoading(true);
+            setLoadError(null);
             const res = await apiFetch("/api/bills");
             const result = await res.json();
-            if (result.success) {
-                setBills(result.data);
+            if (!result.success) {
+                throw new Error(result.error || "Gagal memuat tagihan");
             }
+            setBills(result.data || []);
         } catch (error) {
             console.error("Error loading bills:", error);
+            setLoadError(error instanceof Error ? error.message : "Gagal memuat tagihan");
         } finally {
             setLoading(false);
         }
@@ -632,6 +636,14 @@ export default function BillsPage() {
                                     {[1, 2, 3, 4].map(i => (
                                         <BillCardSkeleton key={i} />
                                     ))}
+                                </div>
+                            ) : loadError ? (
+                                <div className="card-clean">
+                                    <ErrorEmpty
+                                        title="Gagal memuat tagihan"
+                                        description={loadError}
+                                        onRetry={() => { void loadBills(); }}
+                                    />
                                 </div>
                             ) : filteredBills.length === 0 ? (
                                 activeTab === "all" ? (
