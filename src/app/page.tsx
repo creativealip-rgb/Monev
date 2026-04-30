@@ -297,7 +297,7 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section */}
-            <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+            <section className="relative flex min-h-[100svh] items-center px-6 pb-16 pt-28 sm:pt-32 sm:pb-20 overflow-hidden">
                 <div className="max-w-5xl mx-auto text-center relative z-10">
                     {/* Trust Badge */}
                     <motion.div

@@ -108,10 +108,10 @@ export default function PricingPage() {
                 </div>
             </nav>
 
-            <main className="relative z-10 pt-32 pb-20 px-6">
+            <main className="relative z-10 pt-28 sm:pt-32 pb-20 px-4 sm:px-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
-                    <div className="text-center mb-16 space-y-4">
+                    <div className="text-center mb-8 sm:mb-16 space-y-3 sm:space-y-4">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -124,7 +124,7 @@ export default function PricingPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight"
+                            className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight"
                         >
                             Harga Transparan, <br />
                             <span className="text-sky-500">Tanpa Rahasia.</span>
@@ -148,7 +148,7 @@ export default function PricingPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 * idx }}
                                 className={cn(
-                                    "relative p-8 rounded-[2.5rem] flex flex-col h-full transition-all duration-500 group",
+                                    "relative p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] flex flex-col h-full transition-all duration-500 group",
                                     tier.highlight
                                         ? "bg-white dark:bg-slate-900 border-2 border-sky-500 shadow-2xl shadow-sky-500/20 scale-105 z-10"
                                         : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800 hover:border-sky-200"
@@ -160,9 +160,9 @@ export default function PricingPage() {
                                     </div>
                                 )}
 
-                                <div className="mb-8">
+                                <div className="mb-5 sm:mb-8">
                                     <div className={cn(
-                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg",
+                                        "w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 text-white shadow-lg",
                                         tier.color === "slate" && "bg-slate-500",
                                         tier.color === "sky" && "bg-sky-500",
                                         tier.color === "indigo" && "bg-indigo-500"
@@ -175,7 +175,7 @@ export default function PricingPage() {
                                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{tier.description}</p>
                                 </div>
 
-                                <div className="mb-8 flex items-baseline gap-1">
+                                <div className="mb-5 sm:mb-8 flex items-baseline gap-1">
                                     <span className="text-4xl font-black text-slate-900 dark:text-white">{tier.price}</span>
                                     {tier.period && <span className="text-slate-400 font-bold">{tier.period}</span>}
                                 </div>
@@ -183,7 +183,7 @@ export default function PricingPage() {
                                 <Link
                                     href={tier.href}
                                     className={cn(
-                                        "w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 mb-10 active:scale-95",
+                                        "w-full py-3.5 sm:py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 mb-6 sm:mb-10 active:scale-95",
                                         tier.highlight
                                             ? "bg-sky-500 text-white shadow-xl shadow-sky-500/30 hover:bg-sky-600"
                                             : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-sky-50"
