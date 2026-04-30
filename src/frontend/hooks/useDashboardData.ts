@@ -171,11 +171,15 @@ export function useDashboardData() {
     const { data: anomalies = [], isLoading: anomaliesLoading } = useQuery({
         queryKey: ["dashboard", "anomalies"],
         queryFn: async () => {
-            const res = await apiFetch("/api/dashboard/scan");
-            const json = await res.json();
-            if (json.anomalies) {
-                OfflineManager.setCache("dashboard_anomalies", json.anomalies);
-                return json.anomalies as Anomaly[];
+            try {
+                const res = await apiFetch("/api/dashboard/scan", { silent: true });
+                const json = await res.json();
+                if (json.anomalies) {
+                    OfflineManager.setCache("dashboard_anomalies", json.anomalies);
+                    return json.anomalies as Anomaly[];
+                }
+            } catch {
+                return [];
             }
             return [];
         }

@@ -35,7 +35,7 @@ export function useAIInsight(year?: number, month?: number, locale?: string) {
                 locale: locale || "id"
             });
             
-            const res = await apiFetch(`/api/ai/insight?${params}`);
+            const res = await apiFetch(`/api/ai/insight?${params}`, { silent: true });
             const data = await res.json();
             
             if (data.success) {
@@ -45,7 +45,7 @@ export function useAIInsight(year?: number, month?: number, locale?: string) {
             }
         } catch (err) {
             setError("Gagal mengambil insight");
-            logger.error("AI Insight error", err);
+            logger.debug("AI Insight unavailable", err);
         } finally {
             setLoading(false);
         }

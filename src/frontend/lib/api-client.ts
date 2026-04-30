@@ -11,10 +11,11 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export interface ApiOptions extends RequestInit {
     timeout?: number;
+    silent?: boolean;
 }
 
 export async function apiFetch(input: string | URL | Request, init?: ApiOptions): Promise<Response> {
-    const { timeout = 30000, ...rest } = init || {};
+    const { timeout = 30000, silent = false, ...rest } = init || {};
     let url = input.toString();
 
     // Only prepend if it's a relative API path and we have a base URL AND we are in APK mode
@@ -71,12 +72,14 @@ export async function apiFetch(input: string | URL | Request, init?: ApiOptions)
         }
     } catch (error: any) {
         // For development debugging
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && !silent) {
             logger.error(`ERROR calling ${url}:`, error);
         }
 
-        logger.error(`FAILED TO FETCH: ${url}`);
-        logger.error(`Detailed Error: ${error.message}`);
+        if (!silent) {
+            logger.error(`FAILED TO FETCH: ${url}`);
+            logger.error(`Detailed Error: ${error.message}`);
+        }
 
         // Rethrow with more context if it's a type error (often network/CORS/Ad-blocker)
         if (error instanceof TypeError && error.message === "Failed to fetch") {
