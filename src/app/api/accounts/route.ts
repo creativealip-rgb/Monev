@@ -4,6 +4,27 @@ import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/back
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("API:Accounts");
+const ACCOUNT_TYPES = new Set(["bank", "emoney", "cash", "credit_card", "investment_wallet"]);
+
+function validateAccountPayload(body: any) {
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const type = typeof body.type === "string" ? body.type : "bank";
+    const balance = body.balance === undefined || body.balance === "" ? 0 : Number(body.balance);
+
+    if (!name) return { error: "Nama akun wajib diisi" };
+    if (!ACCOUNT_TYPES.has(type)) return { error: "Tipe akun tidak valid" };
+    if (!Number.isFinite(balance) || balance < 0) return { error: "Saldo akun tidak valid" };
+
+    return {
+        data: {
+            name,
+            type,
+            balance,
+            color: typeof body.color === "string" && body.color.trim() ? body.color : "#3b82f6",
+            icon: typeof body.icon === "string" && body.icon.trim() ? body.icon : "Wallet",
+        }
+    };
+}
 
 export async function GET(req: NextRequest) {
     logger.debug("GET /api/accounts - Start");
@@ -32,7 +53,12 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const account = await createAccount(Number(session.user.id), body);
+        const validated = validateAccountPayload(body);
+        if (validated.error) {
+            return NextResponse.json({ success: false, error: validated.error }, { status: 400 });
+        }
+
+        const account = await createAccount(Number(session.user.id), validated.data!);
         return NextResponse.json({ success: true, data: account });
     } catch (error) {
         return NextResponse.json({ success: false, error: "Failed to create account" }, { status: 500 });
