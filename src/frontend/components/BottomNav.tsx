@@ -8,6 +8,7 @@ import { useI18n } from "@/lib/i18n";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSecurity } from "@/components/SecurityProvider";
 import { createLogger } from "@/lib/logger";
 
@@ -16,9 +17,10 @@ const logger = createLogger("BottomNav");
 interface BottomNavProps {
     onFabClick?: () => void;
     hideOnFocus?: boolean;
+    portal?: boolean;
 }
 
-export function BottomNav({ onFabClick, hideOnFocus = true }: BottomNavProps) {
+export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: BottomNavProps) {
     const pathname = usePathname();
     const [isFabPressed, setIsFabPressed] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -103,7 +105,7 @@ export function BottomNav({ onFabClick, hideOnFocus = true }: BottomNavProps) {
 
     if (!mounted || isKeyboardOpen) return null;
 
-    return (
+    const navContent = (
         <div
             className="fixed inset-x-3 bottom-3 z-[99999] pb-safe pointer-events-none"
         >
@@ -238,4 +240,6 @@ export function BottomNav({ onFabClick, hideOnFocus = true }: BottomNavProps) {
             </div>
         </div>
     );
+
+    return portal ? createPortal(navContent, document.body) : navContent;
 }
