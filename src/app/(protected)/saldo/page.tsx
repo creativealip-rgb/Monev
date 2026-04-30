@@ -54,11 +54,23 @@ export default function SaldoPage() {
     const { isStealthMode } = useSecurity();
 
     useEffect(() => {
-        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: isAddOpen }));
+        const shouldSuppressNav = isAddOpen || isEditOpen;
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: shouldSuppressNav }));
+        document.body.style.overflow = isEditOpen ? "hidden" : "";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== "Escape") return;
+            if (isEditOpen && !isSaving) setIsEditOpen(false);
+            if (isAddOpen && !isSaving) resetForm();
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
         return () => {
             window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+            document.body.style.overflow = "";
+            window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isAddOpen]);
+    }, [isAddOpen, isEditOpen, isSaving]);
 
     const accountTypeLabels: Record<string, string> = {
         bank: t("saldo.type.bank"),
@@ -819,27 +831,39 @@ export default function SaldoPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setIsEditOpen(false)}
+                            onClick={() => {
+                                if (!isSaving) setIsEditOpen(false);
+                            }}
                             className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
                         />
                         <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="edit-account-title"
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="relative w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl card-clean p-6"
+                            className="relative max-h-[92svh] w-full max-w-[500px] overflow-y-auto bg-white p-6 shadow-2xl card-clean rounded-t-3xl dark:bg-slate-900 sm:rounded-3xl"
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-black text-slate-900 dark:text-white">Edit Akun</h2>
-                                <button onClick={() => setIsEditOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                                <h2 id="edit-account-title" className="text-xl font-black text-slate-900 dark:text-white">Edit Akun</h2>
+                                <button
+                                    type="button"
+                                    aria-label="Tutup edit akun"
+                                    onClick={() => setIsEditOpen(false)}
+                                    disabled={isSaving}
+                                    className="p-2 hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800 rounded-lg"
+                                >
                                     <X size={20} className="text-slate-500" />
                                 </button>
                             </div>
                             
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Nama Akun</label>
+                                    <label htmlFor="edit-account-name" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Nama Akun</label>
                                     <input
+                                        id="edit-account-name"
                                         type="text"
                                         value={editForm.name}
                                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
@@ -847,8 +871,9 @@ export default function SaldoPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Saldo</label>
+                                    <label htmlFor="edit-account-balance" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Saldo</label>
                                     <input
+                                        id="edit-account-balance"
                                         type="text"
                                         inputMode="numeric"
                                         value={editForm.balance}
@@ -866,7 +891,8 @@ export default function SaldoPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsEditOpen(false)}
-                                    className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm"
+                                    disabled={isSaving}
+                                    className="flex-1 py-4 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 shadow-sm disabled:opacity-50"
                                 >
                                     {t("common.cancel")}
                                 </button>
