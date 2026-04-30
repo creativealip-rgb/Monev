@@ -109,10 +109,9 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
         <div
             className="fixed inset-x-3 bottom-3 z-[99999] pb-safe pointer-events-none"
         >
-            <div className="absolute inset-x-[-12px] bottom-[-12px] h-36 bg-gradient-to-t from-sky-50 via-sky-50 to-sky-50/70 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950/70" />
             <div className="relative w-full max-w-[460px] mx-auto">
                 <div
-                    className="border border-slate-200/80 bg-white px-2.5 py-1.5 shadow-[0_16px_45px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900 rounded-[28px] pointer-events-auto"
+                    className="border border-slate-200 bg-white px-2.5 py-1.5 shadow-[0_16px_45px_rgba(15,23,42,0.18)] dark:border-slate-700 dark:bg-slate-900 rounded-[28px] pointer-events-auto"
                 >
                     <div className="flex items-end justify-between h-12 relative">
                         {leftLinks.map((link) => {
