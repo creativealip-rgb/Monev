@@ -148,13 +148,21 @@ export function EmptyState({
     );
 }
 
-export function NoTransactionsEmpty({ onAddNew }: { onAddNew?: () => void }) {
+export function NoTransactionsEmpty({ onAddNew, noAccounts }: { onAddNew?: () => void; noAccounts?: boolean }) {
     return (
         <EmptyState
             lottieKey="transaction"
-            title="Belum ada transaksi"
-            description="Catat pemasukan atau pengeluaran pertamamu supaya riwayat keuangan mulai kebaca."
-            action={onAddNew ? { label: "+ Tambah Transaksi", onClick: onAddNew } : undefined}
+            title={noAccounts ? "Tambahkan akun dulu" : "Belum ada transaksi"}
+            description={
+                noAccounts
+                    ? "Buat akun saldo seperti Cash, Bank, atau E-Wallet sebelum mencatat transaksi."
+                    : "Catat pemasukan atau pengeluaran pertamamu supaya riwayat keuangan mulai kebaca."
+            }
+            action={
+                noAccounts
+                    ? { label: "+ Tambah Akun", onClick: () => { window.location.href = "/saldo"; } }
+                    : onAddNew ? { label: "+ Tambah Transaksi", onClick: onAddNew } : undefined
+            }
         />
     );
 }
