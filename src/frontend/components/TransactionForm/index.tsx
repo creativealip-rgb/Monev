@@ -181,11 +181,18 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
 
                         {/* Type Section */}
                         <section className="space-y-6">
-                            <TypeSection
-                                transactionType={transactionType}
-                                onTypeChange={handleTypeChange}
-                                transferDisabled={accounts.length < 2}
-                            />
+                            <div className="space-y-2">
+                                <TypeSection
+                                    transactionType={transactionType}
+                                    onTypeChange={handleTypeChange}
+                                    transferDisabled={accounts.length < 2}
+                                />
+                                {accounts.length === 1 && (
+                                    <p className="px-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                        Transfer aktif setelah kamu punya minimal 2 akun saldo.
+                                    </p>
+                                )}
+                            </div>
 
                             {/* Amount Section with Quick Templates */}
                             <AmountSection
