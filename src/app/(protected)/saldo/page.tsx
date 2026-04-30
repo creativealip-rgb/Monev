@@ -64,11 +64,11 @@ export default function SaldoPage() {
             if (isAddOpen && !isSaving) resetForm();
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleKeyDown, true);
         return () => {
             window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
             document.body.style.overflow = "";
-            window.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown, true);
         };
     }, [isAddOpen, isEditOpen, isSaving]);
 
