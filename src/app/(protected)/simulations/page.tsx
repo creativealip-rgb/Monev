@@ -250,7 +250,7 @@ export default function SimulationsPage() {
                 </div>
             </motion.header>
 
-            <div className="px-6 py-8">
+            <div className="px-4 sm:px-6 py-5 sm:py-8 pb-40">
                 <AnimatePresence mode="wait">
                     {activeTab === "simulasi" ? (
                         <motion.div
@@ -274,7 +274,7 @@ export default function SimulationsPage() {
                                         Template Cepat
                                     </h2>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                     {TEMPLATES.map((tpl) => (
                                         <button
                                             key={tpl.label}
@@ -318,7 +318,7 @@ export default function SimulationsPage() {
                             </motion.div>
 
                             {/* Input Card */}
-                            <div className="glass-card p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                            <div className="glass-card p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
                                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Skenario Keputusan</h2>
 
                                 <div className="space-y-4">
@@ -345,7 +345,7 @@ export default function SimulationsPage() {
 
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase ml-1">Tipe Keputusan</label>
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                             {[
                                                 { id: "one_time_expense", label: "Pengeluaran Sekali", icon: Wallet },
                                                 { id: "recurring_expense", label: "Cicilan/Rutin", icon: Receipt },
@@ -397,7 +397,7 @@ export default function SimulationsPage() {
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="glass-card p-6 border border-slate-200 dark:border-slate-800 overflow-hidden relative"
+                                        className="glass-card p-5 sm:p-6 border border-slate-200 dark:border-slate-800 overflow-hidden relative"
                                     >
                                         {/* Risk Badge */}
                                         <div className={cn(

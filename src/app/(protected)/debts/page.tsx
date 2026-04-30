@@ -46,6 +46,13 @@ export default function DebtsPage() {
 
     useEffect(() => { loadDebts(); }, [loadDebts]);
 
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: showAddSheet || !!editingDebt || !!partialPaymentDebt || !!settleDialog }));
+        return () => {
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+        };
+    }, [showAddSheet, editingDebt, partialPaymentDebt, settleDialog]);
+
     const handleMarkPaid = async (id: number, status: "paid" | "unpaid", debt?: Debt) => {
         if (status === "paid" && debt && (debt.direction === "owed" || debt.direction === "owe")) {
             setSettleDialog({ debt });

@@ -95,6 +95,13 @@ export default function BillsPage() {
         loadSubscriptions();
     }, []);
 
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: showAddSheet || !!editingBill || !!payBill }));
+        return () => {
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+        };
+    }, [showAddSheet, editingBill, payBill]);
+
     // Show toast reminders for bills due soon, due today, or overdue
     useEffect(() => {
         if (loading || bills.length === 0) return;
@@ -317,7 +324,7 @@ export default function BillsPage() {
                     </div>
                     <button
                         onClick={() => setShowAddSheet(true)}
-className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                     >
                         <Plus size={24} strokeWidth={2.5} />
                     </button>
@@ -628,7 +635,9 @@ className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex
                                 </div>
                             ) : filteredBills.length === 0 ? (
                                 activeTab === "all" ? (
-                                    <NoBillsEmpty onAddNew={() => setShowAddSheet(true)} />
+                                    <div className="pb-32">
+                                        <NoBillsEmpty onAddNew={() => setShowAddSheet(true)} />
+                                    </div>
                                 ) : (
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
