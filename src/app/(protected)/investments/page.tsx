@@ -69,6 +69,13 @@ export default function InvestmentsPage() {
         loadData();
     }, []);
 
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: isAddModalOpen || isEditModalOpen }));
+        return () => {
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+        };
+    }, [isAddModalOpen, isEditModalOpen]);
+
     const investments = summary?.items || [];
     const totalValue = summary?.totalValue || 0;
     const totalCost = summary?.totalCost || 0;
@@ -526,7 +533,7 @@ export default function InvestmentsPage() {
                                 initial={{ opacity: 0, y: "100%" }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: "100%" }}
-                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
+                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-t-[2.5rem] p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             >
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-xl font-bold text-foreground">
@@ -549,7 +556,7 @@ export default function InvestmentsPage() {
                                 </div>
 
                                 <div className="space-y-5">
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Aset</label>
                                             <input
@@ -574,7 +581,7 @@ export default function InvestmentsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Unit)</label>
                                             <input
@@ -598,7 +605,7 @@ export default function InvestmentsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Harga Beli (Avg)</label>
                                             <input

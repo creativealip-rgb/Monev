@@ -76,6 +76,13 @@ export default function RecurringPage() {
 
     useEffect(() => { load(); }, [load]);
 
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: showForm }));
+        return () => {
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+        };
+    }, [showForm]);
+
     const handleToggle = async (item: RecurringTx) => {
         try {
             const res = await apiFetch(`/api/recurring/${item.id}`, {
@@ -296,7 +303,7 @@ export default function RecurringPage() {
                                 initial={{ opacity: 0, y: "100%" }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: "100%" }}
-                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 max-w-[500px] mx-auto"
+                                className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-t-[2.5rem] p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-12 z-[999999] shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 max-w-[500px] mx-auto"
                             >
                                 {/* Title row */}
                                 <div className="flex items-center justify-between mb-6">

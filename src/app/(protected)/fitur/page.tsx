@@ -18,7 +18,6 @@ import {
     PieChart,
     PiggyBank,
     Receipt,
-    Crown,
     Lock,
     RefreshCw
 } from "lucide-react";
@@ -70,6 +69,15 @@ const features = [
             },
             {
                 id: 104,
+                icon: Zap,
+                title: "Simulasi",
+                desc: "Uji skenario keuangan sebelum ambil keputusan",
+                status: "ready",
+                color: "purple",
+                href: "/simulations"
+            },
+            {
+                id: 105,
                 icon: Receipt,
                 title: "Tagihan",
                 desc: "Kelola tagihan rutin dan utang piutang",
@@ -78,7 +86,7 @@ const features = [
                 href: "/bills"
             },
             {
-                id: 105,
+                id: 106,
                 icon: TrendingUp,
                 title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
@@ -88,31 +96,22 @@ const features = [
                 requiredTier: "kaya" as UserTier
             },
             {
-                id: 109,
-                icon: RefreshCw,
-                title: "Transaksi Berulang",
-                desc: "Set gaji, tagihan rutin, atau pengeluaran berulang otomatis",
-                status: "ready",
-                color: "emerald",
-                href: "/recurring"
-            },
-            {
-                id: 108,
+                id: 107,
                 icon: Users,
-                title: "Hutang & Piutang",
+                title: "Hutang",
                 desc: "Catat dan track utang piutang dengan mudah",
                 status: "ready",
                 color: "rose",
                 href: "/debts"
             },
             {
-                id: 106,
-                icon: Crown,
-                title: "Upgrade",
-                desc: "Upgrade ke akun Pro/Expert untuk fitur premium",
+                id: 108,
+                icon: RefreshCw,
+                title: "Berulang",
+                desc: "Set gaji, tagihan rutin, atau pengeluaran berulang otomatis",
                 status: "ready",
-                color: "indigo",
-                href: "/fitur/upgrade"
+                color: "emerald",
+                href: "/recurring"
             },
         ]
     },
@@ -356,47 +355,56 @@ export default function FiturPage() {
                         <div className="space-y-3">
                             {section.items.map((feature) => {
                                 const Icon = feature.icon;
-                                return (
-                                    <Link
-                                        key={feature.id}
-                                        href={feature.href || "#"}
-                                        className="block"
+                                const isUnavailable = feature.status === "coming" || feature.href === "#";
+                                const card = (
+                                    <motion.div
+                                        whileHover={!isUnavailable ? { scale: 1.02 } : undefined}
+                                        whileTap={!isUnavailable ? { scale: 0.98 } : undefined}
+                                        className={`card-clean p-3 flex items-center gap-4 transition-all ${isUnavailable ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-emerald-200"}`}
                                     >
-                                        <motion.div
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                            className="card-clean p-3 flex items-center gap-4 cursor-pointer hover:border-emerald-200 transition-all"
-                                        >
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
-                                                <Icon className={`text-${feature.color}-600`} size={18} strokeWidth={2.5} />
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${feature.color}-50`}>
+                                            <Icon className={`text-${feature.color}-600`} size={18} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">{feature.title}</h3>
+                                                {feature.status === "ready" && !isUnavailable && !feature.requiredTier && (
+                                                    <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
+                                                        Ready
+                                                    </span>
+                                                )}
+                                                {feature.status === "ready" && !isUnavailable && feature.requiredTier && !isTierSufficient(userTier, feature.requiredTier) && (
+                                                    <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-bold rounded-md border border-amber-100 tracking-tighter uppercase flex items-center gap-0.5">
+                                                        <Lock size={8} /> {feature.requiredTier === "pro" ? "Pro" : "Sultan"}
+                                                    </span>
+                                                )}
+                                                {feature.status === "ready" && !isUnavailable && feature.requiredTier && isTierSufficient(userTier, feature.requiredTier) && (
+                                                    <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
+                                                        Ready
+                                                    </span>
+                                                )}
+                                                {isUnavailable && (
+                                                    <span className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-200 tracking-tighter uppercase">
+                                                        Soon
+                                                    </span>
+                                                )}
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">{feature.title}</h3>
-                                                    {feature.status === "ready" && !feature.requiredTier && (
-                                                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
-                                                            Ready
-                                                        </span>
-                                                    )}
-                                                    {feature.status === "ready" && feature.requiredTier && !isTierSufficient(userTier, feature.requiredTier) && (
-                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-bold rounded-md border border-amber-100 tracking-tighter uppercase flex items-center gap-0.5">
-                                                            <Lock size={8} /> {feature.requiredTier === "pro" ? "Pro" : "Sultan"}
-                                                        </span>
-                                                    )}
-                                                    {feature.status === "ready" && feature.requiredTier && isTierSufficient(userTier, feature.requiredTier) && (
-                                                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
-                                                            Ready
-                                                        </span>
-                                                    )}
-                                                    {feature.status === "coming" && (
-                                                        <span className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-200 tracking-tighter uppercase">
-                                                            Soon
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">{feature.desc}</p>
-                                            </div>
-                                        </motion.div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">{feature.desc}</p>
+                                        </div>
+                                    </motion.div>
+                                );
+
+                                if (isUnavailable) {
+                                    return (
+                                        <div key={feature.id} className="block" aria-disabled="true">
+                                            {card}
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <Link key={feature.id} href={feature.href} className="block">
+                                        {card}
                                     </Link>
                                 );
                             })}
