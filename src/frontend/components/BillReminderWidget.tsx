@@ -98,108 +98,72 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="px-6 mb-8"
+            className="px-4 mb-4 sm:px-6 sm:mb-6"
         >
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.18em]">
                     Tagihan Mendekati
                 </h2>
                 <Link
                     href="/bills"
-                    className="text-xs font-semibold text-sky-600 hover:text-sky-700 transition-colors flex items-center gap-1"
+                    className="text-[11px] font-bold text-sky-600 hover:text-sky-700 transition-colors flex items-center gap-1"
                 >
-                    Lihat Semua
-                    <ArrowRight size={14} />
+                    Semua
+                    <ArrowRight size={13} />
                 </Link>
             </div>
 
             <Link href="/bills">
                 <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                     className={cn(
-                        "relative overflow-hidden rounded-3xl p-6 shadow-lg border transition-all",
+                        "relative overflow-hidden rounded-[24px] border p-4 shadow-sm transition-all",
                         isUrgent
-                            ? "bg-gradient-to-br from-rose-500 to-rose-600 border-rose-400/30"
-                            : "bg-gradient-to-br from-sky-500 to-sky-600 border-sky-400/30"
+                            ? "bg-rose-50 border-rose-100 dark:bg-rose-950/30 dark:border-rose-900/40"
+                            : "bg-sky-50 border-sky-100 dark:bg-sky-950/30 dark:border-sky-900/40"
                     )}
                 >
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 opacity-60" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-400/10 rounded-full blur-2xl -ml-8 -mb-8 opacity-40" />
+                    <div className={cn(
+                        "absolute -right-10 -top-10 h-24 w-24 rounded-full blur-2xl",
+                        isUrgent ? "bg-rose-300/30" : "bg-sky-300/30"
+                    )} />
 
-                    <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-4">
-                            <div>
-                                <p className={cn(
-                                    "text-xs font-medium mb-1",
-                                    isUrgent ? "text-rose-100" : "text-sky-100"
-                                )}>
-                                    Tagihan Terdekat
-                                </p>
-                                <h3 className="text-xl font-bold text-white">
+                    <div className="relative z-10 flex items-center gap-3">
+                        <div className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+                            isUrgent ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300" : "bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300"
+                        )}>
+                            <Calendar size={21} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                            <div className="mb-1.5 flex items-center gap-2">
+                                <h3 className="truncate text-sm font-black text-slate-900 dark:text-white">
                                     {nearestBill.name}
                                 </h3>
-                            </div>
-                            <div className={cn(
-                                "w-12 h-12 rounded-2xl flex items-center justify-center",
-                                isUrgent ? "bg-white/20" : "bg-cyan-400/20"
-                            )}>
-                                <Calendar size={24} className="text-white" />
-                            </div>
-                        </div>
-
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <p className={cn(
-                                    "text-[11px] font-medium mb-1",
-                                    isUrgent ? "text-rose-200" : "text-sky-200"
-                                )}>
-                                    Jumlah Tagihan
-                                </p>
-                                <p className="text-2xl font-bold text-white tabular-nums">
-                                    {formatCurrency(nearestBill.amount).replace("Rp", "Rp ")}
-                                </p>
-                            </div>
-
-                            <div className="text-right">
                                 <div className={cn(
-                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-1",
-                                    isUrgent ? "bg-white/20" : "bg-cyan-400/20"
+                                    "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black",
+                                    isUrgent ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200" : "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-200"
                                 )}>
-                                    <Clock size={14} className="text-white" />
-                                    <span className="text-sm font-bold text-white">
-                                        {daysRemaining} hari lagi
-                                    </span>
+                                    <Clock size={11} />
+                                    {daysRemaining} hari
                                 </div>
-                                {daysRemaining === 0 && (
-                                    <span className="text-xs text-rose-200 font-medium">
-                                        Jatuh tempo hari ini!
-                                    </span>
-                                )}
                             </div>
-                        </div>
-
-                        <div className="mt-5">
+                            <p className="text-lg font-black tabular-nums text-slate-900 dark:text-white">
+                                {formatCurrency(nearestBill.amount).replace("Rp", "Rp ")}
+                            </p>
                             <div className={cn(
-                                "w-full h-2 rounded-full overflow-hidden",
-                                isUrgent ? "bg-white/20" : "bg-sky-400/30"
+                                "mt-2 h-1.5 w-full overflow-hidden rounded-full",
+                                isUrgent ? "bg-rose-200/70 dark:bg-rose-900/60" : "bg-sky-200/70 dark:bg-sky-900/60"
                             )}>
                                 <motion.div
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progressPercent}%` }}
                                     transition={{ duration: 1, ease: "easeOut" }}
-                                    className={cn(
-                                        "h-full rounded-full",
-                                        isUrgent ? "bg-white" : "bg-cyan-300"
-                                    )}
+                                    className={cn("h-full rounded-full", isUrgent ? "bg-rose-500" : "bg-sky-500")}
                                 />
                             </div>
-                            <p className={cn(
-                                "text-[10px] mt-2 font-medium",
-                                isUrgent ? "text-rose-200" : "text-sky-200"
-                            )}>
-                                Progress menuju jatuh tempo
-                            </p>
                         </div>
                     </div>
                 </motion.div>

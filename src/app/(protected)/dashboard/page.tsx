@@ -91,7 +91,7 @@ export default function DashboardPage() {
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
-            <div className="relative min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+            <div className="relative min-h-screen pb-40 bg-sky-50 dark:bg-slate-950">
                 <DashboardHeader
                     userName={userName}
                     userImage={userImage}
@@ -123,7 +123,7 @@ export default function DashboardPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.12 }}
-                        className="px-6 mb-6"
+                        className="px-4 mb-4 sm:px-6 sm:mb-6"
                     >
                         <HealthScoreWidget data={stats.healthScore} />
                     </motion.section>

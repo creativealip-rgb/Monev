@@ -10,20 +10,20 @@ export function HealthScoreWidget({ data }: { data: HealthScoreResult }) {
     const [expanded, setExpanded] = useState(false);
 
     // Circle progress properties
-    const strokeWidth = 8;
-    const radius = 36;
+    const strokeWidth = 7;
+    const radius = 28;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (data.score / 100) * circumference;
 
     return (
         <div className="card-clean overflow-hidden group">
             <div
-                className="p-5 cursor-pointer relative"
+                className="p-4 cursor-pointer relative sm:p-5"
                 onClick={() => setExpanded(!expanded)}
             >
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                        <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center sm:h-20 sm:w-20">
                             {/* Background circle */}
                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80" overflow="visible">
                                 <circle
@@ -51,21 +51,21 @@ export function HealthScoreWidget({ data }: { data: HealthScoreResult }) {
                                 />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-xl font-black text-foreground">{data.score}</span>
+                                <span className="text-lg font-black text-foreground sm:text-xl">{data.score}</span>
                             </div>
                         </div>
 
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-bold text-foreground">Health Score</h3>
+                        <div className="min-w-0">
+                            <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                                <h3 className="text-sm font-black text-foreground sm:text-base">Health Score</h3>
                                 <div
-                                    className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white"
+                                    className="rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white sm:text-[10px]"
                                     style={{ backgroundColor: data.color }}
                                 >
                                     {data.label} {data.emoji}
                                 </div>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2 max-w-[200px]">
+                            <p className="line-clamp-2 max-w-[210px] text-xs text-muted-foreground sm:text-sm">
                                 {data.tip}
                             </p>
                         </div>
