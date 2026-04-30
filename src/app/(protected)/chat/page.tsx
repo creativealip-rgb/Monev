@@ -803,7 +803,7 @@ export default function ChatPage() {
                 </div>
             </div>
 
-            {!isKeyboardOpen && <BottomNav hideOnFocus={false} onFabClick={() => setSmartInputMode("voice")} />}
+            {!isKeyboardOpen && <BottomNav portal hideOnFocus={false} onFabClick={() => setSmartInputMode("voice")} />}
 
             {/* Smart Input Modal */}
             {smartInputMode && (
