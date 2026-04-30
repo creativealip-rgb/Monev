@@ -62,8 +62,16 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
     }, [initialData, isOpen]);
 
     const handleSubmit = async () => {
-        if (!name || !targetAmount || parseFloat(targetAmount) <= 0) {
-            setError("Isi nama goal dan target amount");
+        if (loading) return;
+
+        const targetValue = Number(targetAmount);
+        const currentValue = currentAmount ? Number(currentAmount) : 0;
+        if (!name.trim() || !Number.isFinite(targetValue) || targetValue <= 0 || !Number.isFinite(currentValue) || currentValue < 0) {
+            setError("Isi nama goal dan nominal yang valid");
+            return;
+        }
+        if (currentValue > targetValue) {
+            setError("Nominal terkumpul tidak boleh melebihi target");
             return;
         }
 
@@ -75,9 +83,9 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name,
-                    targetAmount: parseFloat(targetAmount),
-                    currentAmount: parseFloat(currentAmount) || 0,
+                    name: name.trim(),
+                    targetAmount: targetValue,
+                    currentAmount: currentValue,
                     deadline: deadline || undefined,
                     icon: selectedIcon.icon,
                     color: selectedIcon.color,
@@ -253,8 +261,16 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async () => {
-        if (!name || !targetAmount || parseFloat(targetAmount) <= 0) {
-            setError("Isi nama goal dan target amount");
+        if (loading) return;
+
+        const targetValue = Number(targetAmount);
+        const currentValue = currentAmount ? Number(currentAmount) : 0;
+        if (!name.trim() || !Number.isFinite(targetValue) || targetValue <= 0 || !Number.isFinite(currentValue) || currentValue < 0) {
+            setError("Isi nama goal dan nominal yang valid");
+            return;
+        }
+        if (currentValue > targetValue) {
+            setError("Nominal terkumpul tidak boleh melebihi target");
             return;
         }
 
@@ -266,9 +282,9 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name,
-                    targetAmount: parseFloat(targetAmount),
-                    currentAmount: parseFloat(currentAmount) || 0,
+                    name: name.trim(),
+                    targetAmount: targetValue,
+                    currentAmount: currentValue,
                     deadline: deadline || undefined,
                 }),
             });

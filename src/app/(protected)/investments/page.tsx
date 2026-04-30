@@ -126,19 +126,31 @@ export default function InvestmentsPage() {
     }
 
     async function handleSubmit() {
-        if (!formName || !formQuantity || !formBuyPrice || !formCurrentPrice) return;
+        if (isSubmitting) return;
+
+        const quantityValue = Number(formQuantity);
+        const buyPriceValue = Number(formBuyPrice);
+        const currentPriceValue = Number(formCurrentPrice);
+        const dividendsValue = formDividends ? Number(formDividends) : 0;
+        const realizedProfitValue = formRealizedProfit ? Number(formRealizedProfit) : 0;
+
+        if (!formName.trim() || !Number.isFinite(quantityValue) || quantityValue <= 0 || !Number.isFinite(buyPriceValue) || buyPriceValue <= 0 || !Number.isFinite(currentPriceValue) || currentPriceValue < 0 || !Number.isFinite(dividendsValue) || !Number.isFinite(realizedProfitValue)) {
+            toast.error("Data tidak valid", "Nama, jumlah, dan harga wajib diisi dengan angka valid");
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
             const payload = {
-                name: formName,
+                name: formName.trim(),
                 type: formType,
-                quantity: Number(formQuantity),
-                avgBuyPrice: Number(formBuyPrice),
-                currentPrice: Number(formCurrentPrice),
-                platform: formPlatform || undefined,
-                totalDividends: parseFloat(formDividends) || 0,
-                realizedProfit: parseFloat(formRealizedProfit) || 0,
+                quantity: quantityValue,
+                avgBuyPrice: buyPriceValue,
+                currentPrice: currentPriceValue,
+                platform: formPlatform.trim() || undefined,
+                totalDividends: dividendsValue,
+                realizedProfit: realizedProfitValue,
                 icon: formIcon,
                 color: formColor,
                 notes: formNotes || undefined,
@@ -734,10 +746,10 @@ export default function InvestmentsPage() {
 
                                     <button
                                         onClick={handleSubmit}
-                                        disabled={!formName || !formQuantity || !formBuyPrice || !formCurrentPrice || isSubmitting}
+                                        disabled={!formName.trim() || !Number.isFinite(Number(formQuantity)) || Number(formQuantity) <= 0 || !Number.isFinite(Number(formBuyPrice)) || Number(formBuyPrice) <= 0 || !Number.isFinite(Number(formCurrentPrice)) || Number(formCurrentPrice) < 0 || isSubmitting}
                                         className={cn(
                                             "w-full py-4 rounded-2xl text-sm font-bold transition-all mt-4",
-                                            formName && formQuantity
+                                            formName.trim() && Number.isFinite(Number(formQuantity)) && Number(formQuantity) > 0 && Number.isFinite(Number(formBuyPrice)) && Number(formBuyPrice) > 0 && Number.isFinite(Number(formCurrentPrice)) && Number(formCurrentPrice) >= 0 && !isSubmitting
                                                 ? "bg-sky-500 text-white hover:bg-sky-600 shadow-lg shadow-sky-500/25"
                                                 : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                         )}

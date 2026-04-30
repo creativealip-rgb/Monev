@@ -46,13 +46,28 @@ export function AddDebtSheet({
     };
 
     const handleSubmit = async () => {
-        if (!debtorName.trim() || !amount) return;
+        if (loading) return;
+
+        const amountValue = Number(amount);
+        if (!debtorName.trim()) {
+            toast.error("Nama wajib diisi", "Masukkan nama pihak terkait.");
+            return;
+        }
+        if (!Number.isFinite(amountValue) || amountValue <= 0) {
+            toast.error("Nominal tidak valid", "Masukkan nominal lebih dari nol.");
+            return;
+        }
+        if (dueDate && Number.isNaN(new Date(dueDate).getTime())) {
+            toast.error("Tanggal tidak valid", "Pilih tanggal jatuh tempo yang benar.");
+            return;
+        }
+
         setLoading(true);
         try {
             const body = {
-                debtorName,
-                amount: parseFloat(amount),
-                description,
+                debtorName: debtorName.trim(),
+                amount: amountValue,
+                description: description.trim(),
                 dueDate: dueDate || null,
                 direction,
             };

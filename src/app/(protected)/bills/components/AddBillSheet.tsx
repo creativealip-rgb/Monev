@@ -80,12 +80,15 @@ export function AddBillSheet({
     };
 
     const handleSubmit = async () => {
-        if (!name.trim() || !amount) {
-            toast.error("Form tidak lengkap", "Nama tagihan dan jumlah wajib diisi");
+        if (loading) return;
+
+        const amountValue = Number(amount);
+        if (!name.trim() || !Number.isFinite(amountValue) || amountValue <= 0) {
+            toast.error("Form tidak lengkap", "Nama tagihan dan nominal valid wajib diisi");
             return;
         }
 
-        const dueDateNum = parseInt(dueDate);
+        const dueDateNum = parseInt(dueDate, 10);
         if (isNaN(dueDateNum) || dueDateNum < 1 || dueDateNum > 31) {
             toast.error("Tanggal tidak valid", "Tanggal jatuh tempo harus antara 1-31");
             return;
@@ -95,7 +98,7 @@ export function AddBillSheet({
         try {
             const body = {
                 name: name.trim(),
-                amount: parseFloat(amount),
+                amount: amountValue,
                 dueDate: dueDateNum,
                 frequency,
                 icon,
@@ -322,11 +325,11 @@ export function AddBillSheet({
                                 {/* Submit Button */}
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading || !name.trim() || !amount}
+                                    disabled={loading || !name.trim() || !Number.isFinite(Number(amount)) || Number(amount) <= 0}
                                     className={cn(
                                         "w-full py-4 rounded-xl font-bold text-white text-sm mt-2 transition-all",
                                         "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-500/20",
-                                        (loading || !name.trim() || !amount) && "opacity-50 cursor-not-allowed"
+                                        (loading || !name.trim() || !Number.isFinite(Number(amount)) || Number(amount) <= 0) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {loading

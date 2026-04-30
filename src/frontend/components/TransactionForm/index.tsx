@@ -89,16 +89,18 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
 
     if (!isOpen) return null;
 
+    const parsedAmount = Number(amount);
+    const isAmountInvalid = !amount || !Number.isFinite(parsedAmount) || parsedAmount <= 0;
     const isSubmitDisabled = loading ||
-        !amount ||
+        isAmountInvalid ||
         accounts.length === 0 ||
         !selectedCategory ||
         (transactionType === "transfer" && !targetAccountId);
 
     const submitHelperText = accounts.length === 0
         ? "Tambahkan akun saldo terlebih dahulu untuk menyimpan transaksi."
-        : !amount
-            ? "Masukkan nominal transaksi."
+        : isAmountInvalid
+            ? "Masukkan nominal transaksi yang valid."
             : !selectedCategory
                 ? "Pilih kategori transaksi."
                 : null;

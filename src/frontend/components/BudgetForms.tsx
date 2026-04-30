@@ -37,8 +37,11 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
     const expenseCategories = categories.filter(c => c.type === "expense");
 
     const handleSubmit = async () => {
-        if (!selectedCategory || !amount || parseFloat(amount) <= 0) {
-            setError("Pilih kategori dan isi amount");
+        if (loading) return;
+
+        const amountValue = Number(amount);
+        if (!selectedCategory || !Number.isFinite(amountValue) || amountValue <= 0) {
+            setError("Pilih kategori dan isi nominal valid");
             return;
         }
 
@@ -51,7 +54,7 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     categoryId: selectedCategory,
-                    amount: parseFloat(amount),
+                    amount: amountValue,
                     month,
                     year,
                     enableRollover
@@ -205,13 +208,14 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
     const [amount, setAmount] = useState(budget.limit.toString());
 
     const handleSubmit = async () => {
-        if (!amount || parseFloat(amount) <= 0) return;
+        const amountValue = Number(amount);
+        if (!Number.isFinite(amountValue) || amountValue <= 0) return;
 
         try {
             const response = await apiFetch(`/api/budgets/${budget.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: parseFloat(amount) }),
+                body: JSON.stringify({ amount: amountValue }),
             });
 
             const result = await response.json();
