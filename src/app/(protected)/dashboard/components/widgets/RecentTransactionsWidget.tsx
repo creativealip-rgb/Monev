@@ -101,9 +101,16 @@ export function RecentTransactionsWidget({
                 ) : filteredTransactions.length === 0 ? (
                     <NoTransactionsEmpty onAddNew={onAddNew} />
                 ) : (
-                    filteredTransactions.slice(0, 5).map((t) => (
-                        <TransactionItem key={t.id} transaction={t as any} />
-                    ))
+                    <>
+                        {filteredTransactions.slice(0, 5).map((t) => (
+                            <TransactionItem key={t.id} transaction={t as any} />
+                        ))}
+                        {filteredTransactions.length <= 5 && (
+                            <div className="rounded-3xl border border-slate-100 bg-white/70 px-4 py-3 text-center text-[11px] font-semibold text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
+                                Semua transaksi periode ini sudah ditampilkan.
+                            </div>
+                        )}
+                    </>
                 )}
             </motion.div>
         </motion.section>
