@@ -1,21 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect, Suspense } from "react";
-import { useFormStatus } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Lock, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { validatePassword, PASSWORD_MIN_LENGTH, HAS_UPPERCASE, HAS_DIGIT, HAS_SPECIAL } from "@/lib/password-validation";
 
 function PasswordStrength({ password }: { password: string }) {
     const getStrength = (pwd: string): number => {
         let strength = 0;
-        if (pwd.length >= 6) strength += 1;
-        if (pwd.length >= 10) strength += 1;
-        if (/[A-Z]/.test(pwd)) strength += 1;
-        if (/[0-9]/.test(pwd)) strength += 1;
-        if (/[^A-Za-z0-9]/.test(pwd)) strength += 1;
+        if (pwd.length >= PASSWORD_MIN_LENGTH) strength += 1;
+        if (pwd.length >= 12) strength += 1;
+        if (HAS_UPPERCASE.test(pwd)) strength += 1;
+        if (HAS_DIGIT.test(pwd)) strength += 1;
+        if (HAS_SPECIAL.test(pwd)) strength += 1;
         return strength;
     };
 
@@ -52,18 +52,17 @@ function PasswordStrength({ password }: { password: string }) {
     );
 }
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
     return (
         <button
             type="submit"
-            disabled={pending}
+            disabled={isLoading}
             className={cn(
                 "w-full btn-primary py-3 mt-2 flex items-center justify-center gap-2",
-                pending && "opacity-70 cursor-not-allowed"
+                isLoading && "opacity-70 cursor-not-allowed"
             )}
         >
-            {pending ? (
+            {isLoading ? (
                 <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Menyimpan Password...</span>
@@ -96,6 +95,13 @@ function ResetPasswordForm() {
 
         if (!token) {
             setErrorMsg("Token tidak valid atau tidak ditemukan. Cek kembali link email Anda.");
+            setIsLoading(false);
+            return;
+        }
+
+        const passwordCheck = validatePassword(password);
+        if (!passwordCheck.valid) {
+            setErrorMsg(passwordCheck.error || "Password belum memenuhi syarat keamanan.");
             setIsLoading(false);
             return;
         }
@@ -258,7 +264,7 @@ function ResetPasswordForm() {
                     </div>
                 )}
 
-                <SubmitButton />
+                <SubmitButton isLoading={isLoading} />
 
                 <Link
                     href="/login"
@@ -277,8 +283,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100/40 to-cyan-50/30 p-4">
-            <div className="w-full max-w-md p-8 rounded-3xl bg-white/70 backdrop-blur-xl border border-white shadow-2xl shadow-sky-900/10">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100/40 to-cyan-50/30 px-4 py-6 sm:p-4">
+            <div className="w-full max-w-md p-6 sm:p-8 rounded-3xl bg-white/70 backdrop-blur-xl border border-white shadow-2xl shadow-sky-900/10">
                 <Suspense fallback={<div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-sky-500" /><p className="mt-4 text-slate-500">Memuat...</p></div>}>
                     <ResetPasswordForm />
                 </Suspense>

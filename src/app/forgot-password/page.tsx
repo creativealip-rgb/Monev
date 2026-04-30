@@ -1,24 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { ArrowLeft, Mail, Lock, Loader2, AlertCircle, MailCheck } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
     return (
         <button
             type="submit"
-            disabled={pending}
+            disabled={isLoading}
             className={cn(
                 "w-full btn-primary py-3 flex items-center justify-center gap-2",
-                pending && "opacity-70 cursor-not-allowed"
+                isLoading && "opacity-70 cursor-not-allowed"
             )}
         >
-            {pending ? (
+            {isLoading ? (
                 <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Meneruskan permintaan...</span>
@@ -73,7 +71,7 @@ export default function ForgotPasswordPage() {
     if (isSuccess) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100/40 to-cyan-50/30 p-4">
-                <div className="w-full max-w-md p-8 rounded-3xl bg-white/70 backdrop-blur-xl border border-white shadow-2xl shadow-sky-900/10 text-center">
+                <div className="w-full max-w-md p-6 sm:p-8 rounded-3xl bg-white/70 backdrop-blur-xl border border-white shadow-2xl shadow-sky-900/10 text-center">
                     <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <MailCheck className="w-10 h-10 text-emerald-600" />
                     </div>
@@ -95,7 +93,7 @@ export default function ForgotPasswordPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-sky-100/40 to-cyan-50/30 p-4">
-            <div className="w-full max-w-md p-8 rounded-3xl bg-white/70 backdrop-blur-xl border border-white shadow-2xl shadow-sky-900/10 text-center">
+            <div className="w-full max-w-md p-6 sm:p-8 rounded-3xl bg-white/70 backdrop-blur-xl border border-white shadow-2xl shadow-sky-900/10 text-center">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sky-500/30">
@@ -139,7 +137,7 @@ export default function ForgotPasswordPage() {
                     </div>
 
                     <div className="space-y-4">
-                        <SubmitButton />
+                        <SubmitButton isLoading={isLoading} />
 
                         {/* Back to Login */}
                         <Link
