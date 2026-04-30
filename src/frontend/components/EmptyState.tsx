@@ -104,7 +104,7 @@ export function EmptyState({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-                "flex flex-col items-center justify-center py-12 px-6 text-center",
+                "flex flex-col items-center justify-center py-8 sm:py-12 px-6 text-center",
                 className
             )}
         >
@@ -113,7 +113,7 @@ export function EmptyState({
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={cn(
-                    "w-20 h-20 rounded-3xl flex items-center justify-center mb-6",
+                    "w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-white shadow-sm border border-slate-100",
                     config.iconBg
                 )}
             >
@@ -153,8 +153,8 @@ export function NoTransactionsEmpty({ onAddNew }: { onAddNew?: () => void }) {
         <EmptyState
             lottieKey="transaction"
             title="Belum ada transaksi"
-            description="Mulai catat pengeluaran dan pemasukanmu untuk melihat riwayat keuangan"
-            action={onAddNew ? { label: "Tambah Transaksi", onClick: onAddNew } : undefined}
+            description="Catat pemasukan atau pengeluaran pertamamu supaya riwayat keuangan mulai kebaca."
+            action={onAddNew ? { label: "+ Tambah Transaksi", onClick: onAddNew } : undefined}
         />
     );
 }

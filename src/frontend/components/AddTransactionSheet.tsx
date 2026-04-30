@@ -158,7 +158,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                         }}
                         className="fixed bottom-0 left-0 right-0 z-[10002] max-w-[500px] mx-auto cursor-grab active:cursor-grabbing"
                     >
-                        <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto pb-24">
+                        <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto pb-safe">
                             <div className="flex justify-center pt-3 pb-2 touch-none">
                                 <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
                             </div>
@@ -177,7 +177,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                 </button>
                             </div>
 
-                            <div className="px-6 pb-6 space-y-3">
+                            <div className="px-6 pb-8 space-y-3">
                                 {actions.map((action) => {
                                     const Icon = action.icon;
                                     const colors = colorClasses[action.color];
