@@ -20,14 +20,18 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             return NextResponse.json({ error: "Account not found" }, { status: 404 });
         }
 
-        const updated = await updateAccount(userId, accountId, {
-            name: body.name,
-            balance: body.balance,
-            color: body.color,
-            icon: body.icon,
-            type: body.type,
-            updatedAt: new Date(),
-        });
+        const updates: Record<string, unknown> = { updatedAt: new Date() };
+        if (typeof body.name === "string") updates.name = body.name.trim();
+        if (body.balance !== undefined) updates.balance = Number(body.balance);
+        if (typeof body.color === "string") updates.color = body.color;
+        if (typeof body.icon === "string") updates.icon = body.icon;
+        if (typeof body.type === "string") updates.type = body.type;
+
+        if (updates.name === "" || (updates.balance !== undefined && !Number.isFinite(updates.balance as number))) {
+            return NextResponse.json({ success: false, error: "Invalid account data" }, { status: 400 });
+        }
+
+        const updated = await updateAccount(userId, accountId, updates);
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
