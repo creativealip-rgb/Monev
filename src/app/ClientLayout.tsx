@@ -25,13 +25,22 @@ export default function ClientLayout({
     children: React.ReactNode;
 }) {
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+    const [isBottomNavSuppressed, setIsBottomNavSuppressed] = useState(false);
     const pathname = usePathname();
 
     useEffect(() => {
         const openAddTransaction = () => setIsAddSheetOpen(true);
-        window.addEventListener("monev:open-add-transaction", openAddTransaction);
+        const suppressBottomNav = (event: Event) => {
+            setIsBottomNavSuppressed(Boolean((event as CustomEvent<boolean>).detail));
+        };
 
-        return () => window.removeEventListener("monev:open-add-transaction", openAddTransaction);
+        window.addEventListener("monev:open-add-transaction", openAddTransaction);
+        window.addEventListener("monev:suppress-bottom-nav", suppressBottomNav);
+
+        return () => {
+            window.removeEventListener("monev:open-add-transaction", openAddTransaction);
+            window.removeEventListener("monev:suppress-bottom-nav", suppressBottomNav);
+        };
     }, []);
 
     useEffect(() => {
@@ -135,7 +144,7 @@ export default function ClientLayout({
                                     </SecurityGuard>
                                 </main>
 
-                                {pathname !== "/chat" && !isAddSheetOpen && <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />}
+                                {pathname !== "/chat" && !isAddSheetOpen && !isBottomNavSuppressed && <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />}
                                 <AddTransactionSheet
                                     isOpen={isAddSheetOpen}
                                     onClose={() => setIsAddSheetOpen(false)}

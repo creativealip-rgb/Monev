@@ -589,7 +589,7 @@ export default function BudgetsPage() {
                             ))}
                         </div>
                     ) : budgets.length === 0 ? (
-                        <div className="pb-24">
+                        <div className="-mt-10 pb-40 sm:mt-0">
                             <NoBudgetsEmpty onAddNew={() => setIsBudgetModalOpen(true)} />
                         </div>
                     ) : (

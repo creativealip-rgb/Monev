@@ -458,7 +458,7 @@ export default function SavingsPage() {
                             ))}
                         </div>
                     ) : goals.length === 0 ? (
-                        <div className="pb-24">
+                        <div className="pb-36">
                             <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
                         </div>
                     ) : (

@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check, List, LayoutGrid, ChevronDown, Pencil, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
@@ -52,6 +52,13 @@ export default function SaldoPage() {
     const { success: toastSuccess, error: toastError } = useToast();
     const { t } = useI18n();
     const { isStealthMode } = useSecurity();
+
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: isAddOpen }));
+        return () => {
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+        };
+    }, [isAddOpen]);
 
     const accountTypeLabels: Record<string, string> = {
         bank: t("saldo.type.bank"),
@@ -269,13 +276,13 @@ export default function SaldoPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+                        className="mb-40 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
                     >
                         {/* Progress Bar */}
                         <div className="px-6 pt-6">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                    {t("saldo.step")} {step} {t("saldo.of")} 3
+                                    Langkah {step} dari 3
                                 </span>
                                 <button
                                     onClick={resetForm}
