@@ -32,7 +32,7 @@ const iconMap: Record<string, React.ElementType> = {
 const GROUP_ORDER = ["bank", "emoney", "cash", "credit_card", "investment_wallet"];
 
 export default function SaldoPage() {
-    const { accounts, isLoading, refresh } = useAccountsData();
+    const { accounts, isLoading, isFetching, hasError, refresh, retry } = useAccountsData();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [selectedPreset, setSelectedPreset] = useState<AccountPreset | null>(null);
@@ -231,6 +231,7 @@ export default function SaldoPage() {
                     <h2 className="text-3xl font-black relative z-10">{isStealthMode ? "••••••••" : formatCurrency(netWorth)}</h2>
                     <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 relative z-10">
                         <span>{accounts.length} {t("saldo.accountsCount")}</span>
+                        {isFetching && !isLoading && <span>Memperbarui...</span>}
                     </div>
                 </motion.div>
 
@@ -523,6 +524,25 @@ export default function SaldoPage() {
                                 [1, 2, 3].map(i => (
                                     <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
                                 ))
+                            ) : hasError ? (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="rounded-3xl border border-rose-100 bg-rose-50/80 p-6 text-center shadow-sm dark:border-rose-900/40 dark:bg-rose-950/20"
+                                >
+                                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-rose-500 shadow-sm dark:bg-slate-900">
+                                        <Wallet size={26} />
+                                    </div>
+                                    <h3 className="font-black text-slate-900 dark:text-white">Gagal memuat akun</h3>
+                                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Cek koneksi lalu coba muat ulang saldo.</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => retry()}
+                                        className="mt-5 inline-flex items-center justify-center rounded-2xl bg-rose-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/20 active:scale-95"
+                                    >
+                                        Coba Lagi
+                                    </button>
+                                </motion.div>
                             ) : accounts.length === 0 ? (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
@@ -561,13 +581,13 @@ export default function SaldoPage() {
                                             >
                                                 <Icon size={24} />
                                             </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h3>
-                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{accountTypeLabels[acc.type]}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">{acc.name}</h3>
+                                                <p className="truncate text-[10px] font-medium uppercase tracking-tight text-slate-500 dark:text-slate-400">{accountTypeLabels[acc.type]}</p>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="min-w-0 max-w-[120px] text-right sm:max-w-none">
                                                 <p className={cn(
-                                                    "font-black text-sm",
+                                                    "truncate font-black text-sm",
                                                     acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                 )}>
                                                     {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
@@ -655,20 +675,20 @@ export default function SaldoPage() {
                                                 >
                                                     <GroupIcon size={20} />
                                                 </div>
-                                                <div className="flex-1 text-left">
-                                                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                                                <div className="min-w-0 flex-1 text-left">
+                                                    <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">
                                                         {accountTypeLabels[typeId] || typeId}
                                                     </h3>
-                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">
+                                                    <p className="truncate text-[10px] font-medium uppercase tracking-tight text-slate-500 dark:text-slate-400">
                                                         {groupAccounts.length} {t("saldo.accountsCount")}
                                                     </p>
                                                 </div>
-                                                <div className="text-right mr-2">
-                                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                                                <div className="mr-2 min-w-0 max-w-[112px] text-right sm:max-w-none">
+                                                    <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                                         {t("saldo.groupTotal")}
                                                     </p>
                                                     <p className={cn(
-                                                        "font-black text-sm",
+                                                        "truncate font-black text-sm",
                                                         typeId === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                     )}>
                                                         {isStealthMode ? "••••••••" : formatCurrency(Math.abs(groupTotal))}
@@ -712,12 +732,12 @@ export default function SaldoPage() {
                                                                         >
                                                                             <Icon size={18} />
                                                                         </div>
-                                                                        <div className="flex-1">
-                                                                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">{acc.name}</h4>
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <h4 className="truncate text-sm font-bold text-slate-900 dark:text-white">{acc.name}</h4>
                                                                         </div>
-                                                                        <div className="text-right">
+                                                                        <div className="min-w-0 max-w-[112px] text-right sm:max-w-none">
                                                                             <p className={cn(
-                                                                                "font-black text-sm",
+                                                                                "truncate font-black text-sm",
                                                                                 acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                                             )}>
                                                                                 {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
