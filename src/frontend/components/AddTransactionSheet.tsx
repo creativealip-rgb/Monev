@@ -128,6 +128,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
+                        aria-hidden="true"
                         className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[10000]"
                         style={{ opacity: y > 0 ? 1 - (y / 500) : 1 }}
                     />
@@ -157,6 +158,9 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                             }
                         }}
                         className="fixed bottom-0 left-0 right-0 z-[10002] max-w-[500px] mx-auto cursor-grab active:cursor-grabbing"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="add-transaction-sheet-title"
                     >
                         <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto pb-safe">
                             <div className="flex justify-center pt-3 pb-2 touch-none">
@@ -165,13 +169,13 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
 
                             <div className="flex items-center justify-between px-6 pb-4">
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Tambah Transaksi</h2>
+                                    <h2 id="add-transaction-sheet-title" className="text-lg font-bold text-slate-900 dark:text-white">Tambah Transaksi</h2>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">Pilih cara input</p>
                                 </div>
                                 <button
                                     onClick={onClose}
                                     aria-label="Tutup form tambah transaksi"
-                                    className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 >
                                     <X size={18} />
                                 </button>
