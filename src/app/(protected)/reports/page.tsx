@@ -23,7 +23,7 @@ import {
     FileText,
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/frontend/components/UI";
+import { ErrorEmpty, useToast } from "@/frontend/components/UI";
 import { Skeleton } from "@/frontend/components/Skeleton";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -68,16 +68,22 @@ export default function ReportsPage() {
     const [reportPreview, setReportPreview] = useState<ReportPreview | null>(null);
     const [reportHistory, setReportHistory] = useState<ReportHistory[]>([]);
     const [loading, setLoading] = useState(true);
+    const [historyError, setHistoryError] = useState<string | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(true);
+    const [previewError, setPreviewError] = useState<string | null>(null);
 
     const loadReportHistory = async () => {
         try {
+            setHistoryError(null);
             const res = await apiFetch("/api/reports/history");
             const json = await res.json();
-            if (json.success) {
-                setReportHistory(json.data || []);
+            if (!json.success) {
+                throw new Error(json.error || "Gagal memuat riwayat laporan");
             }
+            setReportHistory(json.data || []);
         } catch (error) {
             console.error("Failed to load report history:", error);
+            setHistoryError(error instanceof Error ? error.message : "Gagal memuat riwayat laporan");
         } finally {
             setLoading(false);
         }
@@ -85,24 +91,31 @@ export default function ReportsPage() {
 
     const fetchReportPreview = useCallback(async () => {
         try {
+            setPreviewLoading(true);
+            setPreviewError(null);
             const res = await apiFetch(
                 `/api/analytics/report?month=${selectedMonth + 1}&year=${selectedYear}`
             );
             const json = await res.json();
-            if (json.success) {
-                setReportPreview({
-                    income: json.data.income || 0,
-                    expense: json.data.expense || 0,
-                    balance: json.data.balance || 0,
-                    categories: json.data.categories || [],
-                    allocations: json.data.allocations || [],
-                    goalsProgress: json.data.goalsProgress || [],
-                    investments: json.data.investments || [],
-                    aiInsight: json.data.aiInsight || "",
-                });
+            if (!json.success) {
+                throw new Error(json.error || "Gagal memuat preview laporan");
             }
+            setReportPreview({
+                income: json.data.income || 0,
+                expense: json.data.expense || 0,
+                balance: json.data.balance || 0,
+                categories: json.data.categories || [],
+                allocations: json.data.allocations || [],
+                goalsProgress: json.data.goalsProgress || [],
+                investments: json.data.investments || [],
+                aiInsight: json.data.aiInsight || "",
+            });
         } catch (error) {
             console.error("Failed to fetch report preview:", error);
+            setReportPreview(null);
+            setPreviewError(error instanceof Error ? error.message : "Gagal memuat preview laporan");
+        } finally {
+            setPreviewLoading(false);
         }
     }, [selectedMonth, selectedYear]);
 
@@ -406,8 +419,16 @@ export default function ReportsPage() {
                 </motion.div>
 
                 {/* Report Preview */}
-                {loading || dashboardLoading ? (
+                {loading || dashboardLoading || previewLoading ? (
                     <ReportPreviewSkeleton />
+                ) : previewError ? (
+                    <motion.div variants={itemVariants} className="card-clean p-5">
+                        <ErrorEmpty
+                            title="Gagal memuat preview laporan"
+                            description={previewError}
+                            onRetry={() => { void fetchReportPreview(); }}
+                        />
+                    </motion.div>
                 ) : reportPreview ? (
                     <>
                         {/* Summary Cards */}
@@ -610,7 +631,13 @@ export default function ReportsPage() {
                         <Clock size={18} className="text-slate-500" />
                         Riwayat Download
                     </h2>
-                    {reportHistory.length === 0 ? (
+                    {historyError ? (
+                        <ErrorEmpty
+                            title="Gagal memuat riwayat"
+                            description={historyError}
+                            onRetry={() => { void loadReportHistory(); }}
+                        />
+                    ) : reportHistory.length === 0 ? (
                         <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-6">
                             Belum ada riwayat download
                         </p>

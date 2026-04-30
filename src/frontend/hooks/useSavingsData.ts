@@ -26,7 +26,12 @@ export function useSavingsData() {
     }, [queryClient]);
 
     // Goals Query
-    const { data: goals = [], isLoading: goalsLoading } = useQuery({
+    const {
+        data: goals = [],
+        isLoading: goalsLoading,
+        error: goalsError,
+        refetch: refetchGoals,
+    } = useQuery({
         queryKey: ["goals"],
         queryFn: async () => {
             const res = await apiFetch("/api/goals");
@@ -38,7 +43,7 @@ export function useSavingsData() {
                     currentAmount: goal.currentAmount ?? goal.saved ?? 0,
                 })) as GoalWithProgress[];
             }
-            return [];
+            throw new Error(json.error || "Gagal memuat goals");
         }
     });
 
@@ -49,7 +54,9 @@ export function useSavingsData() {
     return {
         goals,
         loading: goalsLoading || !mounted,
+        error: goalsError,
         mounted,
-        refresh
+        refresh,
+        refetch: refetchGoals,
     };
 }

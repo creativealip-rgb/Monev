@@ -11,7 +11,7 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { AddGoalForm, EditGoalForm, GoalTemplateData } from "@/frontend/components/GoalForms";
 import { GoalDetailModal } from "@/frontend/components/modals/GoalDetailModal";
-import { GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
+import { ErrorEmpty, GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { GoalWithProgress } from "@/types";
 import { useSession } from "next-auth/react";
@@ -191,7 +191,13 @@ function ConfettiCelebration({ goalId, celebratedRef }: {
 }
 
 export default function SavingsPage() {
-    const { goals, loading, refresh } = useSavingsData() as { goals: GoalWithProgress[], loading: boolean, refresh: () => Promise<void> };
+    const { goals, loading, error, refresh, refetch } = useSavingsData() as {
+        goals: GoalWithProgress[];
+        loading: boolean;
+        error: Error | null;
+        refresh: () => Promise<void>;
+        refetch: () => Promise<unknown>;
+    };
     const { isStealthMode } = useSecurity();
     const { t } = useI18n();
 
@@ -457,9 +463,25 @@ export default function SavingsPage() {
                                 <GoalCardSkeleton key={i} />
                             ))}
                         </div>
+                    ) : error ? (
+                        <div className="pb-36">
+                            <ErrorEmpty
+                                title="Gagal memuat tabungan"
+                                description={error.message || "Periksa koneksi Anda, lalu coba muat ulang daftar goal."}
+                                onRetry={() => { void refetch(); }}
+                            />
+                        </div>
                     ) : goals.length === 0 ? (
                         <div className="pb-36">
                             <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
+                        </div>
+                    ) : displayGoals.length === 0 ? (
+                        <div className="pb-36">
+                            <ErrorEmpty
+                                title="Tidak ada goal yang cocok"
+                                description="Ubah filter atau urutan untuk melihat goal lainnya."
+                                onRetry={() => setFilterStatus("all")}
+                            />
                         </div>
                     ) : (
                         <div className="space-y-4">
