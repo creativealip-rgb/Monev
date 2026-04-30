@@ -28,6 +28,8 @@ export default function DebtsPage() {
     const [activeTab, setActiveTab] = useState<"all" | "split" | "regular" | "unpaid" | "paid">("unpaid");
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+    const [settlingId, setSettlingId] = useState<number | null>(null);
     const [settleDialog, setSettleDialog] = useState<{ debt: Debt } | null>(null);
     const [partialPaymentDebt, setPartialPaymentDebt] = useState<Debt | null>(null);
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
@@ -62,10 +64,12 @@ export default function DebtsPage() {
     }, [showAddSheet, editingDebt, partialPaymentDebt, settleDialog]);
 
     const handleMarkPaid = async (id: number, status: "paid" | "unpaid", debt?: Debt) => {
+        if (updatingStatusId || settlingId) return;
         if (status === "paid" && debt && (debt.direction === "owed" || debt.direction === "owe")) {
             setSettleDialog({ debt });
             return;
         }
+        setUpdatingStatusId(id);
         try {
             const res = await apiFetch(`/api/debts/${id}`, {
                 method: "PUT",
@@ -81,11 +85,14 @@ export default function DebtsPage() {
             await loadDebts();
         } catch {
             toast.error("Gagal", "Coba lagi");
+        } finally {
+            setUpdatingStatusId(null);
         }
     };
 
     const handleSettle = async (createTx: boolean, payFromBalance?: boolean) => {
-        if (!settleDialog) return;
+        if (!settleDialog || settlingId) return;
+        setSettlingId(settleDialog.debt.id);
         try {
             const res = await apiFetch("/api/debts/settle", {
                 method: "POST",
@@ -105,6 +112,7 @@ export default function DebtsPage() {
             toast.error("Gagal", "Coba lagi");
         }
         setSettleDialog(null);
+        setSettlingId(null);
         await loadDebts();
     };
 
@@ -500,13 +508,15 @@ export default function DebtsPage() {
                                         <div className="flex flex-col gap-3">
                                             <button
                                                 onClick={() => handleSettle(true, true)}
-                                                className="w-full py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm shadow-lg shadow-rose-500/30 transition-all active:scale-95"
+                                                disabled={!!settlingId}
+                                                className="w-full py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm shadow-lg shadow-rose-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
-                                                Bayar &amp; Potong Saldo
+                                                {settlingId ? "Memproses..." : "Bayar & Potong Saldo"}
                                             </button>
                                             <button
                                                 onClick={() => handleSettle(true, false)}
-                                                className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95"
+                                                disabled={!!settlingId}
+                                                className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
                                                 Tandai Lunas Saja
                                             </button>
@@ -529,13 +539,15 @@ export default function DebtsPage() {
                                         <div className="flex flex-col gap-3">
                                             <button
                                                 onClick={() => handleSettle(true)}
-                                                className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
+                                                disabled={!!settlingId}
+                                                className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
-                                                Ya, Tambah ke Saldo
+                                                {settlingId ? "Memproses..." : "Ya, Tambah ke Saldo"}
                                             </button>
                                             <button
                                                 onClick={() => handleSettle(false)}
-                                                className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95"
+                                                disabled={!!settlingId}
+                                                className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
                                                 Tandai Lunas Saja
                                             </button>

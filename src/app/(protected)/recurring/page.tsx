@@ -49,6 +49,8 @@ export default function RecurringPage() {
 
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingItem, setEditingItem] = useState<RecurringTx | null>(null);
 
     const [form, setForm] = useState({
@@ -94,6 +96,8 @@ export default function RecurringPage() {
     }, [showForm]);
 
     const handleToggle = async (item: RecurringTx) => {
+        if (togglingId) return;
+        setTogglingId(item.id);
         try {
             const res = await apiFetch(`/api/recurring/${item.id}`, {
                 method: "PUT",
@@ -103,12 +107,14 @@ export default function RecurringPage() {
             const result = await res.json();
             if (result.success) {
                 toast.success(item.isActive ? "Dinonaktifkan" : "Diaktifkan", item.description);
-                load();
+                await load();
             } else {
                 toast.error("Gagal", result.error || "Gagal mengubah status");
             }
         } catch {
             toast.error("Gagal", "Terjadi kesalahan jaringan");
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -136,7 +142,8 @@ export default function RecurringPage() {
     };
 
     const handleCreate = async () => {
-        if (!form.description || !form.amount) return;
+        if (!form.description || !form.amount || isSubmitting) return;
+        setIsSubmitting(true);
         try {
             const body = {
                 ...form,
@@ -164,12 +171,14 @@ export default function RecurringPage() {
                 setShowForm(false);
                 setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
                 setEditingItem(null);
-                load();
+                await load();
             } else {
                 toast.error("Gagal", result.error || "Gagal menyimpan");
             }
         } catch {
             toast.error("Gagal", "Terjadi kesalahan jaringan");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -429,16 +438,16 @@ export default function RecurringPage() {
                                     {/* Submit */}
                                     <button
                                         onClick={handleCreate}
-                                        disabled={!form.description || !form.amount}
+                                        disabled={!form.description || !form.amount || isSubmitting}
                                         className={cn(
-                                            "w-full py-4 rounded-xl font-bold text-white text-sm transition-all mt-2",
+                                            "w-full py-4 rounded-xl font-bold text-white text-sm transition-all mt-2 disabled:cursor-not-allowed",
                                             form.type === "expense"
                                                 ? "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20"
                                                 : "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20",
-                                            (!form.description || !form.amount) && "opacity-40 cursor-not-allowed"
+                                            (!form.description || !form.amount || isSubmitting) && "opacity-40 cursor-not-allowed"
                                         )}
                                     >
-                                        {editingItem ? "Perbarui Transaksi" : "Simpan Transaksi"}
+                                        {isSubmitting ? "Menyimpan..." : editingItem ? "Perbarui Transaksi" : "Simpan Transaksi"}
                                     </button>
                                 </div>
                             </motion.div>
