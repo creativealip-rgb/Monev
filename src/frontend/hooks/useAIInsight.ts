@@ -53,21 +53,23 @@ export function useAIInsight(year?: number, month?: number, locale?: string) {
 
     useEffect(() => {
         fetchInsight();
+    }, [fetchInsight]);
 
+    useEffect(() => {
         const refreshInterval = setInterval(() => {
-            if (insight?.generatedAt) {
-                const generatedTime = new Date(insight.generatedAt).getTime();
-                const sixHours = 6 * 60 * 60 * 1000;
-                const now = Date.now();
-                
-                if (now - generatedTime >= sixHours) {
-                    fetchInsight(true);
-                }
+            if (!insight?.generatedAt) return;
+
+            const generatedTime = new Date(insight.generatedAt).getTime();
+            const sixHours = 6 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            if (now - generatedTime >= sixHours) {
+                fetchInsight(true);
             }
         }, 60 * 1000);
 
         return () => clearInterval(refreshInterval);
-    }, [fetchInsight, insight]);
+    }, [fetchInsight, insight?.generatedAt]);
 
     const refresh = useCallback(() => {
         return fetchInsight(true);

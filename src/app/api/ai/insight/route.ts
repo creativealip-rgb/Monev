@@ -165,8 +165,8 @@ export async function GET(req: NextRequest) {
 
         const currentStats = await getMonthlyStats(userId, year, month);
 
-        // Get previous month stats for anomaly detection
-        const prevMonth = new Date(year, now.getMonth() - 1, 1);
+        // Get stats for the month before the requested period, not always the current month.
+        const prevMonth = new Date(year, month - 2, 1);
         const prevStats = await getMonthlyStats(userId, prevMonth.getFullYear(), prevMonth.getMonth() + 1);
 
         const goals = await getGoals(userId);
