@@ -15,14 +15,11 @@ import {
     TrendingUp,
     X,
     Zap,
-    Home,
-    NotebookTabs,
-    Plus,
-    Wallet,
     RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
+import { BottomNav } from "@/frontend/components/BottomNav";
 import { useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
@@ -715,7 +712,10 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div className="shrink-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 shadow-[0_-12px_30px_rgba(15,23,42,0.08)]">
+            <div className={cn(
+                "shrink-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 shadow-[0_-12px_30px_rgba(15,23,42,0.08)]",
+                !isKeyboardOpen && "pb-24"
+            )}>
                 {selectedImage && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -803,33 +803,7 @@ export default function ChatPage() {
                 </div>
             </div>
 
-            {!isKeyboardOpen && (
-                <nav className="shrink-0 bg-white/95 dark:bg-slate-900/95 border-t border-slate-100 dark:border-slate-800 px-2 pb-3 pt-1">
-                    <div className="flex h-14 items-end justify-between">
-                        <Link href="/dashboard" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
-                            <Home size={22} />
-                            <span className="text-[10px] font-semibold">Beranda</span>
-                        </Link>
-                        <Link href="/transactions" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
-                            <NotebookTabs size={22} />
-                            <span className="text-[10px] font-semibold">Riwayat</span>
-                        </Link>
-                        <button type="button" className="flex flex-1 flex-col items-center justify-end pb-1" aria-label="Tambah transaksi">
-                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-sky-600 text-white shadow-lg shadow-sky-500/40">
-                                <Plus size={24} strokeWidth={2.5} />
-                            </span>
-                        </button>
-                        <Link href="/saldo" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
-                            <Wallet size={22} />
-                            <span className="text-[10px] font-semibold">Saldo</span>
-                        </Link>
-                        <Link href="/profile" className="flex h-full flex-1 flex-col items-center justify-center gap-0.5 text-muted-foreground">
-                            <User size={22} />
-                            <span className="text-[10px] font-semibold">Profil</span>
-                        </Link>
-                    </div>
-                </nav>
-            )}
+            {!isKeyboardOpen && <BottomNav onFabClick={() => setSmartInputMode("voice")} />}
 
             {/* Smart Input Modal */}
             {smartInputMode && (
