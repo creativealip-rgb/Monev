@@ -106,7 +106,7 @@ export function OnboardingCard({ show }: OnboardingCardProps) {
                 </Link>
 
                 {/* Quick Stats Preview */}
-                <div className="mt-5 pt-5 border-t border-slate-200 dark:border-slate-700">
+                <div className="hidden mt-5 pt-5 border-t border-slate-200 dark:border-slate-700 sm:block">
                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 text-center">
                         {t("onboarding.afterSetup")}
                     </p>
