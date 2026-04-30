@@ -56,12 +56,14 @@ export async function updateAccount(userId: number, id: number, data: Partial<Ac
  */
 export async function deleteAccount(userId: number, id: number): Promise<void> {
     const db = getDb();
-    await db.transaction(async (tx) => {
-        await tx.delete(transactions)
-            .where(and(eq(transactions.accountId, id), eq(transactions.userId, userId)));
+    db.transaction((tx) => {
+        tx.delete(transactions)
+            .where(and(eq(transactions.accountId, id), eq(transactions.userId, userId)))
+            .run();
 
-        await tx.delete(accounts)
-            .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+        tx.delete(accounts)
+            .where(and(eq(accounts.id, id), eq(accounts.userId, userId)))
+            .run();
     });
 }
 
