@@ -103,16 +103,15 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
     if (!mounted || isKeyboardOpen) return null;
 
     return (
-        <div 
-            className="fixed bottom-0 left-0 right-0 z-[99999]"
-            style={{ pointerEvents: 'auto' }}
+        <div
+            className="fixed inset-x-3 bottom-3 z-[99999] pb-safe pointer-events-none"
         >
-            <div className="w-full max-w-[500px] mx-auto">
-                <div 
-                    className="glass dark:bg-slate-900/90 border-t border-white/40 dark:border-slate-700/50 pb-safe pb-3 pt-1 px-2 rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.3)]"
-                    style={{ pointerEvents: 'auto' }}
+            <div className="absolute inset-x-[-12px] bottom-[-12px] h-28 bg-gradient-to-t from-sky-50 via-sky-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95" />
+            <div className="relative w-full max-w-[460px] mx-auto">
+                <div
+                    className="border border-slate-200/80 bg-white/96 px-2.5 py-1.5 shadow-[0_16px_45px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/96 rounded-[28px] pointer-events-auto"
                 >
-                    <div className="flex items-end justify-between h-14 relative">
+                    <div className="flex items-end justify-between h-12 relative">
                         {leftLinks.map((link) => {
                             const isActive = pathname === link.href;
                             const Icon = link.icon;
@@ -126,7 +125,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                         haptics.tap();
                                     }}
                                     aria-label={link.label}
-                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative z-50 pointer-events-auto"
+                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full select-none relative z-50 pointer-events-auto"
                                 >
                                     <AnimatePresence>
                                         {isActive && (
@@ -141,11 +140,11 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                         )}
                                     </AnimatePresence>
                                     <div className={cn(
-                                        "p-1.5 rounded-xl transition-all duration-300",
+                                        "p-1 rounded-xl transition-all duration-300",
                                         isActive ? "bg-sky-50 dark:bg-sky-900/50" : "hover:bg-muted/50"
                                     )}>
                                         <Icon
-                                            size={22}
+                                            size={20}
                                             className={cn(
                                                 "transition-all duration-300",
                                                 isActive ? "text-sky-500 dark:text-sky-400" : "text-muted-foreground"
@@ -154,7 +153,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                         />
                                     </div>
                                     <span className={cn(
-                                        "text-[10px] font-semibold tracking-tight transition-colors duration-300",
+                                        "text-[9px] font-semibold tracking-tight transition-colors duration-300",
                                         isActive ? "text-sky-500 dark:text-sky-400" : "text-muted-foreground"
                                     )}>
                                         {link.label}
@@ -163,7 +162,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                             );
                         })}
 
-                        <div className="flex-1 flex flex-col items-center justify-end pb-1 relative z-50">
+                        <div className="flex-1 flex flex-col items-center justify-center relative z-50">
                             <motion.button
                                 onClick={handleFabClick}
                                 onPointerDown={handlePointerDown}
@@ -174,13 +173,13 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                 whileTap={{ scale: 0.85 }}
                                 animate={isFabPressed ? { scale: 0.85 } : { scale: 1 }}
                                 className={cn(
-                                    "w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-shadow",
+                                    "w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-shadow",
                                     "bg-gradient-to-br from-sky-500 to-sky-600 text-white",
                                     "shadow-sky-500/40 hover:shadow-sky-500/60",
                                     "pointer-events-auto"
                                 )}
                             >
-                                <Plus size={24} strokeWidth={2.5} />
+                                <Plus size={22} strokeWidth={2.5} />
                             </motion.button>
                         </div>
 
@@ -197,7 +196,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                         haptics.tap();
                                     }}
                                     aria-label={link.label}
-                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full pb-1 select-none relative z-50 pointer-events-auto"
+                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full select-none relative z-50 pointer-events-auto"
                                 >
                                     <AnimatePresence>
                                         {isActive && (
@@ -212,11 +211,11 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                         )}
                                     </AnimatePresence>
                                     <div className={cn(
-                                        "p-1.5 rounded-xl transition-all duration-300",
+                                        "p-1 rounded-xl transition-all duration-300",
                                         isActive ? "bg-sky-50 dark:bg-sky-900/50" : "hover:bg-muted/50"
                                     )}>
                                         <Icon
-                                            size={22}
+                                            size={20}
                                             className={cn(
                                                 "transition-all duration-300",
                                                 isActive ? "text-sky-500 dark:text-sky-400" : "text-muted-foreground"
@@ -225,7 +224,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
                                         />
                                     </div>
                                     <span className={cn(
-                                        "text-[10px] font-semibold tracking-tight transition-colors duration-300",
+                                        "text-[9px] font-semibold tracking-tight transition-colors duration-300",
                                         isActive ? "text-sky-500 dark:text-sky-400" : "text-muted-foreground"
                                     )}>
                                         {link.label}
