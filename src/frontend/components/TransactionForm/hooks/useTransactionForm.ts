@@ -181,7 +181,7 @@ export function useTransactionForm({
             return;
         }
 
-        if (!selectedCategory) {
+        if (transactionType !== "transfer" && !selectedCategory) {
             setError("Pilih kategori");
             haptics.error();
             return;
@@ -211,7 +211,7 @@ export function useTransactionForm({
         const transData = {
             amount: parsedAmount,
             description: finalDescription,
-            categoryId: selectedCategory,
+            categoryId: transactionType === "transfer" ? null : selectedCategory,
             type: transactionType,
             paymentMethod: "cash",
             accountId: selectedAccountId,
