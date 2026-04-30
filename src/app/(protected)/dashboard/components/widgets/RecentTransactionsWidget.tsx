@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { TransactionItem } from "@/frontend/components/TransactionItem";
+import { formatCurrency } from "@/frontend/lib/utils";
 import { TransactionListSkeleton, NoTransactionsEmpty } from "@/frontend/components/UI";
 import { TransactionQuickFilters, filterTransactionsByPeriod } from "@/frontend/components/TransactionQuickFilters";
 import { useI18n } from "@/lib/i18n";
@@ -35,6 +36,24 @@ export function RecentTransactionsWidget({
         return filterTransactionsByPeriod(transactions, filter);
     }, [transactions, filter]);
 
+    const periodSummary = useMemo(() => {
+        return filteredTransactions.reduce(
+            (summary, transaction) => {
+                const amount = Number(transaction.amount) || 0;
+                if (transaction.type === "income") {
+                    return { ...summary, income: summary.income + amount };
+                }
+                if (transaction.type === "expense") {
+                    return { ...summary, expense: summary.expense + amount };
+                }
+                return summary;
+            },
+            { income: 0, expense: 0 }
+        );
+    }, [filteredTransactions]);
+
+    const cashflow = periodSummary.income - periodSummary.expense;
+
     return (
         <motion.section
             initial="hidden"
@@ -49,11 +68,31 @@ export function RecentTransactionsWidget({
                 </Link>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="mb-4">
+            <motion.div variants={itemVariants} className="mb-4 space-y-3">
                 <TransactionQuickFilters
                     activeFilter={filter}
                     onFilterChange={setFilter}
                 />
+                {filteredTransactions.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 rounded-3xl border border-slate-100 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="rounded-2xl bg-emerald-50 p-3 dark:bg-emerald-900/20">
+                            <div className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
+                                <ArrowDownLeft size={12} /> Masuk
+                            </div>
+                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{formatCurrency(periodSummary.income)}</p>
+                        </div>
+                        <div className="rounded-2xl bg-rose-50 p-3 dark:bg-rose-900/20">
+                            <div className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase text-rose-600 dark:text-rose-400">
+                                <ArrowUpRight size={12} /> Keluar
+                            </div>
+                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{formatCurrency(periodSummary.expense)}</p>
+                        </div>
+                        <div className="rounded-2xl bg-sky-50 p-3 dark:bg-sky-900/20">
+                            <div className="mb-1 text-[10px] font-bold uppercase text-sky-600 dark:text-sky-400">Net</div>
+                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{formatCurrency(cashflow)}</p>
+                        </div>
+                    </div>
+                )}
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-3">

@@ -16,6 +16,7 @@ interface AccountSectionProps {
     transactionType?: "expense" | "income" | "transfer";
     onSelectAccount: (accountId: number) => void;
     onSelectTargetAccount?: (accountId: number) => void;
+    onAddAccount?: () => void;
     showTarget?: boolean;
 }
 
@@ -27,6 +28,7 @@ export function AccountSection({
     transactionType,
     onSelectAccount,
     onSelectTargetAccount,
+    onAddAccount,
     showTarget = false,
 }: AccountSectionProps) {
     if (accountsLoading) {
@@ -71,7 +73,19 @@ export function AccountSection({
                         );
                     })}
                     {accounts.length === 0 && (
-                        <div className="text-xs text-slate-400 italic py-2">Belum ada akun saldo.</div>
+                        <div className="w-full rounded-2xl border border-dashed border-sky-200 bg-sky-50/80 p-4 text-center dark:border-sky-900 dark:bg-sky-900/20">
+                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Belum ada akun saldo.</p>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Tambahkan akun dulu supaya transaksi bisa disimpan.</p>
+                            {onAddAccount && (
+                                <button
+                                    type="button"
+                                    onClick={onAddAccount}
+                                    className="mt-3 rounded-xl bg-sky-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-sky-500/20"
+                                >
+                                    + Tambah Akun Saldo
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

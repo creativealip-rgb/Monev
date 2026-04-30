@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Plus, Edit2, Trash2 } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { SplitBillFlow } from "@/frontend/components/SplitBillFlow";
 import { useToast } from "@/frontend/components/UI";
@@ -15,6 +16,7 @@ import type { TransactionFormProps, QuickTemplate } from "./types";
 
 export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormProps) {
     const { success: toastSuccess } = useToast();
+    const router = useRouter();
 
     const {
         transactionType,
@@ -47,6 +49,11 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         handleEditTemplate,
         handleUseQuickTemplate,
     } = useTransactionForm({ isOpen, onClose, onSuccess });
+
+    const handleAddAccount = () => {
+        handleClose();
+        router.push("/saldo");
+    };
 
     const handleSaveAsTemplate = () => {
         if (!selectedCategory || !amount) return;
@@ -84,8 +91,17 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
 
     const isSubmitDisabled = loading ||
         !amount ||
+        accounts.length === 0 ||
         !selectedCategory ||
         (transactionType === "transfer" && !targetAccountId);
+
+    const submitHelperText = accounts.length === 0
+        ? "Tambahkan akun saldo terlebih dahulu untuk menyimpan transaksi."
+        : !amount
+            ? "Masukkan nominal transaksi."
+            : !selectedCategory
+                ? "Pilih kategori transaksi."
+                : null;
 
     const getSubmitButtonClasses = () => {
         if (isSubmitDisabled) {
@@ -177,6 +193,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                             transactionType={transactionType}
                             onSelectAccount={setSelectedAccountId}
                             onSelectTargetAccount={setTargetAccountId}
+                            onAddAccount={handleAddAccount}
                             showTarget={transactionType === "transfer"}
                         />
 
@@ -207,6 +224,11 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     </div>
                                 ) : "Simpan Transaksi"}
                             </button>
+                            {isSubmitDisabled && submitHelperText && (
+                                <p className="mt-2 text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    {submitHelperText}
+                                </p>
+                            )}
 
                             {/* Save as Template Button */}
                             {!showTemplateModal && (

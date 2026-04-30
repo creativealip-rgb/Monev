@@ -280,7 +280,7 @@ export default function SavingsPage() {
         });
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-56 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -458,7 +458,9 @@ export default function SavingsPage() {
                             ))}
                         </div>
                     ) : goals.length === 0 ? (
-                        <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
+                        <div className="pb-24">
+                            <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
+                        </div>
                     ) : (
                         <div className="space-y-4">
                             {displayGoals.map((g: GoalWithProgress, i: number) => {
