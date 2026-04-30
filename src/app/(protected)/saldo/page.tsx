@@ -162,7 +162,7 @@ export default function SaldoPage() {
     };
 
     return (
-        <div className="pb-32 font-sans">
+        <div className="pb-56 font-sans">
             <header className="px-4 sm:px-6 pt-4 sm:pt-6 pb-6 sm:pb-8">
                 <div className="flex justify-between items-start mb-4 sm:mb-6">
                     <div>
@@ -484,13 +484,21 @@ export default function SaldoPage() {
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="text-center py-12"
+                                    className="text-center py-8"
                                 >
-                                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Wallet className="text-slate-400" size={32} />
+                                    <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center mx-auto mb-4">
+                                        <Wallet className="text-sky-500" size={30} />
                                     </div>
                                     <h3 className="text-slate-900 dark:text-white font-bold">{t("saldo.noAccounts")}</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm">{t("saldo.addSample")}</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t("saldo.addSample")}</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => { haptics.medium(); setIsAddOpen(true); }}
+                                        className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 active:scale-95"
+                                    >
+                                        <Plus size={18} />
+                                        Tambah Akun
+                                    </button>
                                 </motion.div>
                             ) : viewMode === "list" ? (
                                 accounts.map((acc, idx) => {

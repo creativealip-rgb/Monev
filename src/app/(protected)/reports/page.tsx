@@ -216,7 +216,7 @@ export default function ReportsPage() {
     const totalExpense = maxExpenseCategories.reduce((sum, c) => sum + c.amount, 0);
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-56 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -380,7 +380,7 @@ export default function ReportsPage() {
                             ) : (
                                 <>
                                     <FileDown size={18} />
-                                    <span>Generate PDF Report</span>
+                                    <span>Buat Laporan PDF</span>
                                 </>
                             )}
                         </button>
@@ -392,14 +392,14 @@ export default function ReportsPage() {
                                 className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-500/20 transition-all"
                             >
                                 <FileSpreadsheet size={16} />
-                                <span>Export CSV</span>
+                                <span>Ekspor CSV</span>
                             </button>
                             <button
                                 onClick={handleEmailReport}
                                 className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-purple-500/10 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-xs font-bold border border-purple-200 dark:border-purple-800 hover:bg-purple-500/20 transition-all"
                             >
                                 <Mail size={16} />
-                                <span>Email Report</span>
+                                <span>Kirim Email</span>
                             </button>
                         </div>
                     </div>
@@ -605,7 +605,7 @@ export default function ReportsPage() {
                 )}
 
                 {/* Download History */}
-                <motion.div variants={itemVariants} className="card-clean p-5">
+                <motion.div variants={itemVariants} className="card-clean p-5 pb-32 sm:pb-5">
                     <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
                         <Clock size={18} className="text-slate-500" />
                         Riwayat Download

@@ -373,7 +373,7 @@ export default function BudgetsPage() {
     }
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-56 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -589,7 +589,9 @@ export default function BudgetsPage() {
                             ))}
                         </div>
                     ) : budgets.length === 0 ? (
-                        <NoBudgetsEmpty onAddNew={() => setIsBudgetModalOpen(true)} />
+                        <div className="pb-24">
+                            <NoBudgetsEmpty onAddNew={() => setIsBudgetModalOpen(true)} />
+                        </div>
                     ) : (
                         <div className="space-y-4">
                             {budgets.map((b, i) => {
