@@ -16,13 +16,10 @@ export default function ProtectedLayout({
     useEffect(() => {
         const checkStatus = async () => {
             try {
-                const response = await apiFetch("/api/profile");
+                const response = await apiFetch("/api/profile", { silent: true });
                 const result = await response.json();
-                if (result.success) {
-                    setHasCompletedOnboarding(result.data.settings?.hasCompletedOnboarding ?? false);
-                }
-            } catch (error) {
-                console.error("Failed to check onboarding status:", error);
+                setHasCompletedOnboarding(result.success ? result.data.settings?.hasCompletedOnboarding ?? false : false);
+            } catch {
                 setHasCompletedOnboarding(false);
             }
         };
