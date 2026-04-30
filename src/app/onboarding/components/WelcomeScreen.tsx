@@ -14,10 +14,10 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
     return (
         <div className="flex-1 flex flex-col h-full">
             {/* Header with Skip Button */}
-            <header className="sticky top-0 z-50 w-full px-6 py-4 flex justify-end">
+            <header className="sticky top-0 z-50 w-full px-6 py-3 flex justify-end">
                 <button
                     onClick={onSkip}
-                    className="text-sm font-semibold text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                    className="min-h-11 px-3 text-sm font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 transition-colors"
                 >
                     Lewati
                 </button>
@@ -87,25 +87,25 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
                         <div className="w-11 h-11 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                             <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                         </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AI Advisor</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI Advisor</span>
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                             <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Analytics</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Analytics</span>
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                             <PiggyBank className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Savings</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Savings</span>
                     </div>
                 </motion.div>
             </div>
 
             {/* CTA Button */}
-            <div className="p-8">
+            <div className="px-8 pt-5 pb-[calc(2rem+env(safe-area-inset-bottom))]">
                 <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

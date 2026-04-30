@@ -169,7 +169,7 @@ export function FeatureCarousel({ onNext, onPrev }: FeatureCarouselProps) {
             </div>
 
             {/* Navigation */}
-            <div className="p-8">
+            <div className="px-8 pt-5 pb-[calc(2rem+env(safe-area-inset-bottom))]">
                 {/* Progress Dots */}
                 <div className="flex items-center justify-center mb-8">
                     <ProgressDots

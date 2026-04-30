@@ -213,7 +213,7 @@ export function QuickSetup({
             </div>
 
             {/* Continue Button */}
-            <div className="sticky bottom-0 p-6 pb-8 bg-gradient-to-t from-sky-50 via-sky-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent">
+            <div className="sticky bottom-0 px-6 pt-5 pb-[calc(2rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-sky-50 via-sky-50/95 to-transparent dark:from-slate-950 dark:via-slate-950/95 dark:to-transparent">
                 <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
