@@ -99,10 +99,14 @@ export function useDashboardStats() {
     const { data: serverTransactions = [], isLoading: transLoading } = useQuery({
         queryKey: ["dashboard", "transactions"],
         queryFn: async () => {
-            const res = await apiFetch("/api/transactions");
-            const json = await res.json();
-            if (json.success) {
-                return json.data as any[];
+            try {
+                const res = await apiFetch("/api/transactions", { silent: true });
+                const json = await res.json();
+                if (json.success) {
+                    return json.data as any[];
+                }
+            } catch {
+                return [];
             }
             return [];
         },
