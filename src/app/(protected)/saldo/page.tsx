@@ -168,7 +168,7 @@ export default function SaldoPage() {
     const handleDeleteAccount = async (accountId: number, withTransactionWarning = true) => {
         if (deletingAccountId) return;
         const message = withTransactionWarning
-            ? "Yakin hapus akun ini? Transaksi terkait tidak akan dihapus."
+            ? "Yakin hapus akun ini? Transaksi terkait juga akan dihapus agar laporan tetap konsisten."
             : "Yakin hapus akun ini?";
         if (!confirm(message)) return;
 
