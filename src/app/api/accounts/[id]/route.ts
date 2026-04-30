@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { updateAccount, deleteAccount, getAccountById } from "@/backend/db/account-operations";
 
+const ACCOUNT_TYPES = new Set(["bank", "emoney", "cash", "credit_card", "investment_wallet"]);
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const session = await auth();
@@ -21,14 +23,25 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
 
         const updates: Record<string, unknown> = { updatedAt: new Date() };
-        if (typeof body.name === "string") updates.name = body.name.trim();
-        if (body.balance !== undefined) updates.balance = Number(body.balance);
-        if (typeof body.color === "string") updates.color = body.color;
-        if (typeof body.icon === "string") updates.icon = body.icon;
-        if (typeof body.type === "string") updates.type = body.type;
-
-        if (updates.name === "" || (updates.balance !== undefined && !Number.isFinite(updates.balance as number))) {
-            return NextResponse.json({ success: false, error: "Invalid account data" }, { status: 400 });
+        if (typeof body.name === "string") {
+            const name = body.name.trim();
+            if (!name) return NextResponse.json({ success: false, error: "Nama akun wajib diisi" }, { status: 400 });
+            updates.name = name;
+        }
+        if (body.balance !== undefined) {
+            const balance = Number(body.balance);
+            if (!Number.isFinite(balance) || balance < 0) {
+                return NextResponse.json({ success: false, error: "Saldo akun tidak valid" }, { status: 400 });
+            }
+            updates.balance = balance;
+        }
+        if (typeof body.color === "string" && body.color.trim()) updates.color = body.color;
+        if (typeof body.icon === "string" && body.icon.trim()) updates.icon = body.icon;
+        if (typeof body.type === "string") {
+            if (!ACCOUNT_TYPES.has(body.type)) {
+                return NextResponse.json({ success: false, error: "Tipe akun tidak valid" }, { status: 400 });
+            }
+            updates.type = body.type;
         }
 
         const updated = await updateAccount(userId, accountId, updates);
