@@ -15,9 +15,10 @@ const logger = createLogger("BottomNav");
 
 interface BottomNavProps {
     onFabClick?: () => void;
+    hideOnFocus?: boolean;
 }
 
-export function BottomNav({ onFabClick }: BottomNavProps) {
+export function BottomNav({ onFabClick, hideOnFocus = true }: BottomNavProps) {
     const pathname = usePathname();
     const [isFabPressed, setIsFabPressed] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -38,7 +39,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
             return window.innerHeight - window.visualViewport.height > 120;
         };
         const updateKeyboardState = () => {
-            const focusedInput = document.activeElement?.matches(focusableSelector) ?? false;
+            const focusedInput = hideOnFocus && (document.activeElement?.matches(focusableSelector) ?? false);
             const viewportKeyboardOpen = getViewportKeyboardState();
             setIsKeyboardOpen(focusedInput || viewportKeyboardOpen);
             document.documentElement.classList.toggle("keyboard-open", focusedInput || viewportKeyboardOpen);
@@ -57,7 +58,7 @@ export function BottomNav({ onFabClick }: BottomNavProps) {
             document.removeEventListener("focusout", updateKeyboardState);
             document.documentElement.classList.remove("keyboard-open");
         };
-    }, []);
+    }, [hideOnFocus]);
 
     const links = [
         { href: "/dashboard", label: t("nav.dashboard"), icon: Home },
