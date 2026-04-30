@@ -25,6 +25,9 @@ export function proxy(request: Request) {
         pathname === "/login" ||
         pathname === "/register" ||
         pathname === "/forgot-password" ||
+        pathname === "/reset-password" ||
+        pathname === "/pricing" ||
+        pathname.startsWith("/help/") ||
         pathname.startsWith("/api/auth/") ||
         pathname === "/manifest.json" ||
         pathname === "/icon.svg" ||
