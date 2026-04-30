@@ -59,6 +59,7 @@ export function AccountSection({
                         return (
                             <button
                                 key={acc.id}
+                                type="button"
                                 onClick={() => onSelectAccount(acc.id)}
                                 className={cn(
                                     "min-w-[140px] p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
@@ -105,6 +106,7 @@ export function AccountSection({
                             return (
                                 <button
                                     key={acc.id}
+                                    type="button"
                                     onClick={() => onSelectTargetAccount?.(acc.id)}
                                     className={cn(
                                         "min-w-[140px] p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
@@ -118,6 +120,21 @@ export function AccountSection({
                                 </button>
                             );
                         })}
+                        {accounts.filter(a => a.id !== selectedAccountId).length === 0 && (
+                            <div className="w-full rounded-2xl border border-dashed border-amber-200 bg-amber-50/80 p-4 text-center dark:border-amber-900 dark:bg-amber-900/20">
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Belum ada akun tujuan.</p>
+                                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Transfer butuh minimal 2 akun saldo yang berbeda.</p>
+                                {onAddAccount && (
+                                    <button
+                                        type="button"
+                                        onClick={onAddAccount}
+                                        className="mt-3 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/20"
+                                    >
+                                        + Tambah Akun Tujuan
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
