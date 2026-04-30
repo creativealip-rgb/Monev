@@ -144,8 +144,10 @@ export async function GET(req: NextRequest) {
         const locale = localeParam || ((session.user as { locale?: string }).locale) || "id";
 
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
+        const requestedYear = Number(searchParams.get("year"));
+        const requestedMonth = Number(searchParams.get("month"));
+        const year = Number.isInteger(requestedYear) && requestedYear >= 2000 ? requestedYear : now.getFullYear();
+        const month = Number.isInteger(requestedMonth) && requestedMonth >= 1 && requestedMonth <= 12 ? requestedMonth : now.getMonth() + 1;
 
         // Check cache unless forced refresh
         if (!forceRefresh) {

@@ -22,20 +22,20 @@ export function OnboardingCard({ show }: OnboardingCardProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="px-6 mb-6"
+            className="px-4 mb-4 sm:px-6 sm:mb-6"
         >
             <div className={cn(
-                "p-6 rounded-3xl border-2 border-dashed",
+                "p-4 rounded-[28px] border-2 border-dashed sm:p-6 sm:rounded-3xl",
                 "bg-gradient-to-br from-sky-50 to-blue-50 dark:from-slate-800 dark:to-slate-900",
                 "border-sky-200 dark:border-slate-700"
             )}>
                 {/* Icon & Title */}
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
-                        <Wallet size={28} className="text-white" />
+                <div className="flex items-center gap-3 mb-3 sm:gap-4 sm:mb-4">
+                    <div className="h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/30 sm:h-14 sm:w-14">
+                        <Wallet size={24} className="text-white sm:size-7" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">
                             {t("onboarding.setupYourAccounts")}
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -45,12 +45,12 @@ export function OnboardingCard({ show }: OnboardingCardProps) {
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-slate-600 dark:text-slate-300 mb-5 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed sm:mb-5">
                     {t("onboarding.setupDescription")}
                 </p>
 
                 {/* Account Type Examples */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className="hidden grid-cols-3 gap-3 mb-5 sm:grid">
                     <motion.div 
                         whileHover={{ scale: 1.05 }}
                         className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-2"
