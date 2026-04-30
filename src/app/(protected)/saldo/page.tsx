@@ -202,7 +202,7 @@ export default function SaldoPage() {
     };
 
     return (
-        <div className="pb-56 font-sans">
+        <div className="overflow-x-hidden pb-56 font-sans">
             <header className="px-4 sm:px-6 pt-4 sm:pt-6 pb-6 sm:pb-8">
                 <div className="flex justify-between items-start mb-4 sm:mb-6">
                     <div>
