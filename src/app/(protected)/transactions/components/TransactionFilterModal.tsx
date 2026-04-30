@@ -70,19 +70,24 @@ export function TransactionFilterModal({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={onClose}
+                            aria-hidden="true"
                             className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
                         />
                         <motion.div
                             initial={{ opacity: 0, y: "100%" }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: "100%" }}
-                            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-8 pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px]"
+                            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-12 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="transaction-filter-title"
                         >
                             <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-xl font-bold text-foreground">Filter Transaksi</h2>
+                                <h2 id="transaction-filter-title" className="text-xl font-bold text-foreground">Filter Transaksi</h2>
                                 <button
                                     onClick={onClose}
-                                    className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
+                                    aria-label="Tutup filter transaksi"
+                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 >
                                     <X size={20} />
                                 </button>

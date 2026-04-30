@@ -298,19 +298,24 @@ export default function RecurringPage() {
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                 className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[999998]"
                                 onClick={closeForm}
+                                aria-hidden="true"
                             />
                             <motion.div
                                 initial={{ opacity: 0, y: "100%" }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: "100%" }}
                                 className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-t-[2.5rem] p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-12 z-[999999] shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 max-w-[500px] mx-auto"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="recurring-sheet-title"
                             >
                                 {/* Title row */}
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-foreground">{editingItem ? "Edit Transaksi" : "Transaksi Berulang Baru"}</h2>
+                                    <h2 id="recurring-sheet-title" className="text-xl font-bold text-foreground">{editingItem ? "Edit Transaksi" : "Transaksi Berulang Baru"}</h2>
                                     <button
                                         onClick={closeForm}
-                                        className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                        aria-label="Tutup form transaksi berulang"
+                                        className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                     >
                                         <X size={20} />
                                     </button>
