@@ -9,7 +9,7 @@ import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
-import { useToast } from "@/frontend/components/UI";
+import { ErrorEmpty, useToast } from "@/frontend/components/UI";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 
@@ -43,6 +43,7 @@ export default function RecurringPage() {
     const [items, setItems] = useState<RecurringTx[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
     const toast = useToast();
 
@@ -60,6 +61,7 @@ export default function RecurringPage() {
 
     const load = useCallback(async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             const [res, catRes] = await Promise.all([
                 apiFetch("/api/recurring"),
@@ -67,8 +69,16 @@ export default function RecurringPage() {
             ]);
             const data = await res.json();
             const catData = await catRes.json();
-            if (data.success) setItems(data.data);
-            if (catData.success) setCategories(catData.data);
+            if (!data.success) {
+                throw new Error(data.error || "Gagal memuat transaksi berulang");
+            }
+            setItems(data.data || []);
+            if (catData.success) {
+                setCategories(catData.data || []);
+            }
+        } catch (error) {
+            console.error("Error loading recurring transactions:", error);
+            setLoadError(error instanceof Error ? error.message : "Gagal memuat transaksi berulang");
         } finally {
             setLoading(false);
         }
@@ -232,6 +242,14 @@ export default function RecurringPage() {
                 {loading ? (
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)}
+                    </div>
+                ) : loadError ? (
+                    <div className="card-clean">
+                        <ErrorEmpty
+                            title="Gagal memuat transaksi berulang"
+                            description={loadError}
+                            onRetry={() => { void load(); }}
+                        />
                     </div>
                 ) : items.length === 0 ? (
                     <motion.div
