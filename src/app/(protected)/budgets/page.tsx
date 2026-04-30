@@ -9,7 +9,7 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { AddBudgetForm, EditBudgetForm } from "@/frontend/components/BudgetForms";
 import { BudgetDetailModal } from "@/frontend/components/modals/BudgetDetailModal";
-import { BudgetCardSkeleton, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
+import { BudgetCardSkeleton, ErrorEmpty, NoBudgetsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 
 const BudgetChart = dynamic(() => import("./components/BudgetChart").then(mod => mod.BudgetChart), {
@@ -123,6 +123,7 @@ export default function BudgetsPage() {
     const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
     const [detailBudget, setDetailBudget] = useState<BudgetSummary | null>(null);
     const [editingBudget, setEditingBudget] = useState<BudgetSummary | null>(null);
@@ -187,6 +188,7 @@ export default function BudgetsPage() {
     async function loadData() {
         try {
             setLoading(true);
+            setLoadError(null);
 
             // Calculate previous month/year
             const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
@@ -205,25 +207,28 @@ export default function BudgetsPage() {
                 prevBudgetsResponse.json()
             ]);
 
-            if (catsResult.success) {
-                setCategories(catsResult.data);
+            if (!catsResult.success) {
+                throw new Error(catsResult.error || "Gagal memuat kategori");
             }
+            setCategories(catsResult.data || []);
 
-            if (budgetsResult.success) {
-                setBudgets(budgetsResult.data);
-                // Initialize rollover state from API response
-                const rolloverState: Record<number, boolean> = {};
-                budgetsResult.data.forEach((b: BudgetSummary & { enableRollover?: boolean }) => {
-                    rolloverState[b.id] = b.enableRollover ?? false;
-                });
-                setRolloverEnabled(rolloverState);
+            if (!budgetsResult.success) {
+                throw new Error(budgetsResult.error || "Gagal memuat budget");
             }
+            setBudgets(budgetsResult.data || []);
+            // Initialize rollover state from API response
+            const rolloverState: Record<number, boolean> = {};
+            (budgetsResult.data || []).forEach((b: BudgetSummary & { enableRollover?: boolean }) => {
+                rolloverState[b.id] = b.enableRollover ?? false;
+            });
+            setRolloverEnabled(rolloverState);
 
             if (prevBudgetsResult.success) {
-                setPrevBudgets(prevBudgetsResult.data);
+                setPrevBudgets(prevBudgetsResult.data || []);
             }
         } catch (error) {
             console.error("Error loading data:", error);
+            setLoadError(error instanceof Error ? error.message : "Gagal memuat data budget");
         } finally {
             setLoading(false);
         }
@@ -587,6 +592,14 @@ export default function BudgetsPage() {
                             {[1, 2, 3, 4].map(i => (
                                 <BudgetCardSkeleton key={i} />
                             ))}
+                        </div>
+                    ) : loadError ? (
+                        <div className="-mt-10 pb-40 sm:mt-0">
+                            <ErrorEmpty
+                                title="Gagal memuat budget"
+                                description={loadError}
+                                onRetry={() => { void loadData(); }}
+                            />
                         </div>
                     ) : budgets.length === 0 ? (
                         <div className="-mt-10 pb-40 sm:mt-0">
