@@ -28,6 +28,13 @@ export default function ClientLayout({
     const pathname = usePathname();
 
     useEffect(() => {
+        const openAddTransaction = () => setIsAddSheetOpen(true);
+        window.addEventListener("monev:open-add-transaction", openAddTransaction);
+
+        return () => window.removeEventListener("monev:open-add-transaction", openAddTransaction);
+    }, []);
+
+    useEffect(() => {
         const platform = Capacitor.getPlatform();
         const isNative = platform === 'ios' || platform === 'android';
 
@@ -128,7 +135,7 @@ export default function ClientLayout({
                                     </SecurityGuard>
                                 </main>
 
-                                {pathname !== "/chat" && <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />}
+                                {pathname !== "/chat" && !isAddSheetOpen && <BottomNav onFabClick={() => setIsAddSheetOpen(true)} />}
                                 <AddTransactionSheet
                                     isOpen={isAddSheetOpen}
                                     onClose={() => setIsAddSheetOpen(false)}

@@ -263,7 +263,7 @@ export default function TransactionsPage() {
     }, [toggleSelectAll, displayTransactions]);
 
     return (
-        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-48 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -464,7 +464,7 @@ export default function TransactionsPage() {
                     searchQuery ? (
                         <NoSearchResultsEmpty query={searchQuery} />
                     ) : (
-                        <NoTransactionsEmpty />
+                        <NoTransactionsEmpty onAddNew={() => window.dispatchEvent(new Event("monev:open-add-transaction"))} />
                     )
                 ) : (
                     <TransactionList
