@@ -62,6 +62,7 @@ export function useTransactionActions({
 
     const executeDelete = useCallback(
         async (id: number, allTransactions: TransactionWithCategory[]) => {
+            if (deletingId !== null) return;
             setDeletingId(id);
 
             const deletedTxn = allTransactions.find((t) => t.id === id) || null;
@@ -90,10 +91,11 @@ export function useTransactionActions({
                 setConfirmDeleteId(null);
             }
         },
-        [refresh, onUndo, toast]
+        [deletingId, refresh, onUndo, toast]
     );
 
     const executeBulkDelete = useCallback(async () => {
+        if (deletingId !== null || selectedIds.size === 0) return;
         setDeletingId(-1);
         try {
             const ids = Array.from(selectedIds);
@@ -102,11 +104,14 @@ export function useTransactionActions({
             );
             deletedTransactionsRef.current = deletedTxns;
 
-            await Promise.all(
+            const responses = await Promise.all(
                 ids.map((id) =>
                     apiFetch(`/api/transactions/${id}`, { method: "DELETE" })
                 )
             );
+            if (responses.some((response) => !response.ok)) {
+                throw new Error("Some transactions failed to delete");
+            }
             await refresh();
 
             // Create a bulk undo transaction
@@ -149,6 +154,7 @@ export function useTransactionActions({
         refresh,
         onUndo,
         toast,
+        deletingId,
     ]);
 
     const bulkExport = useCallback(() => {
