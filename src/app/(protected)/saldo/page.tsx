@@ -106,13 +106,21 @@ export default function SaldoPage() {
     }, [groupedAccounts]);
 
     const handleSave = async () => {
+        if (isSaving) return;
+
+        const balanceValue = balance ? Number(balance) : 0;
+        if (!Number.isFinite(balanceValue)) {
+            toastError("Saldo tidak valid", "Masukkan nominal saldo dengan angka valid.");
+            return;
+        }
+
         setIsSaving(true);
         try {
             haptics.tap();
             const data = {
-                name: selectedPreset?.name || customName,
+                name: selectedPreset?.name || customName.trim(),
                 type: selectedType,
-                balance: parseFloat(balance) || 0,
+                balance: balanceValue,
                 color: selectedPreset?.color || "#3b82f6",
                 icon: selectedPreset?.icon || "Wallet",
             };
@@ -845,15 +853,22 @@ export default function SaldoPage() {
                                 <button
                                     type="button"
                                     onClick={async () => {
-                                        if (!selectedAccountId) return;
+                                        if (!selectedAccountId || isSaving) return;
+
+                                        const balanceValue = editForm.balance ? Number(editForm.balance) : 0;
+                                        if (!editForm.name.trim() || !Number.isFinite(balanceValue)) {
+                                            toastError("Data tidak valid", "Nama akun dan saldo wajib valid.");
+                                            return;
+                                        }
+
                                         setIsSaving(true);
                                         try {
                                             const res = await apiFetch(`/api/accounts/${selectedAccountId}`, {
                                                 method: "PUT",
                                                 headers: { "Content-Type": "application/json" },
                                                 body: JSON.stringify({
-                                                    name: editForm.name,
-                                                    balance: parseFloat(editForm.balance) || 0,
+                                                    name: editForm.name.trim(),
+                                                    balance: balanceValue,
                                                 }),
                                             });
                                             const result = await res.json();

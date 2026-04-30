@@ -168,6 +168,13 @@ export function useTransactionForm({
     }, []);
 
     const handleSubmit = useCallback(async () => {
+        const parsedAmount = Number(amount);
+        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+            setError("Masukkan nominal yang valid");
+            haptics.error();
+            return;
+        }
+
         if (!selectedCategory) {
             setError("Pilih kategori");
             haptics.error();
@@ -177,8 +184,6 @@ export function useTransactionForm({
         setLoading(true);
         haptics.tap();
         setError(null);
-
-        const parsedAmount = parseFloat(amount);
         let finalDescription = description;
 
         // Encrypt description if key is available

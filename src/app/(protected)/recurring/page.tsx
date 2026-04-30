@@ -142,13 +142,21 @@ export default function RecurringPage() {
     };
 
     const handleCreate = async () => {
-        if (!form.description || !form.amount || isSubmitting) return;
+        if (isSubmitting) return;
+
+        const amountValue = Number(form.amount);
+        if (!form.description.trim() || !Number.isFinite(amountValue) || amountValue <= 0) {
+            toast.error("Form tidak lengkap", "Deskripsi dan nominal valid wajib diisi");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const body = {
                 ...form,
-                amount: parseFloat(form.amount),
-                categoryId: form.categoryId ? parseInt(form.categoryId) : undefined,
+                description: form.description.trim(),
+                amount: amountValue,
+                categoryId: form.categoryId ? parseInt(form.categoryId, 10) : null,
             };
 
             let res;
@@ -438,13 +446,13 @@ export default function RecurringPage() {
                                     {/* Submit */}
                                     <button
                                         onClick={handleCreate}
-                                        disabled={!form.description || !form.amount || isSubmitting}
+                                        disabled={!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || isSubmitting}
                                         className={cn(
                                             "w-full py-4 rounded-xl font-bold text-white text-sm transition-all mt-2 disabled:cursor-not-allowed",
                                             form.type === "expense"
                                                 ? "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20"
                                                 : "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20",
-                                            (!form.description || !form.amount || isSubmitting) && "opacity-40 cursor-not-allowed"
+                                            (!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || isSubmitting) && "opacity-40 cursor-not-allowed"
                                         )}
                                     >
                                         {isSubmitting ? "Menyimpan..." : editingItem ? "Perbarui Transaksi" : "Simpan Transaksi"}
