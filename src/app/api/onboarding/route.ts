@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
-import { userSettings, transactions, categories } from "@/backend/db/schema";
+import { userSettings, transactions, categories, accounts } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPin } from "@/lib/security";
 import { revalidatePath } from "next/cache";
@@ -50,8 +50,18 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // 3. Create Initial Balance Transaction if balance > 0
-        if (formData.initialBalance > 0) {
+        // 3. Create Initial Balance Account and Transaction if balance > 0
+        const initialBalance = Number(formData.initialBalance);
+        if (Number.isFinite(initialBalance) && initialBalance > 0) {
+            const initialAccount = await db.insert(accounts).values({
+                userId,
+                name: "Saldo Awal",
+                type: "cash",
+                balance: initialBalance,
+                color: "#2563eb",
+                icon: "Wallet",
+            }).returning().get();
+
             // Find or create an income category
             let incomeCategory = await db.select()
                 .from(categories)
@@ -70,10 +80,12 @@ export async function POST(req: NextRequest) {
             if (incomeCategory) {
                 await db.insert(transactions).values({
                     userId,
-                    amount: formData.initialBalance,
+                    amount: initialBalance,
                     description: "Saldo Awal",
                     type: "income",
                     categoryId: incomeCategory.id,
+                    accountId: initialAccount.id,
+                    paymentMethod: "cash",
                     date: new Date(),
                     isVerified: true,
                 });
