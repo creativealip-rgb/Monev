@@ -7,12 +7,14 @@ import type { TransactionType } from "../types";
 interface TypeSectionProps {
     transactionType: TransactionType;
     onTypeChange: (type: TransactionType) => void;
+    transferDisabled?: boolean;
 }
 
-export function TypeSection({ transactionType, onTypeChange }: TypeSectionProps) {
+export function TypeSection({ transactionType, onTypeChange, transferDisabled = false }: TypeSectionProps) {
     return (
         <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
             <button
+                type="button"
                 onClick={() => onTypeChange("expense")}
                 className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all",
@@ -25,6 +27,7 @@ export function TypeSection({ transactionType, onTypeChange }: TypeSectionProps)
                 Pengeluaran
             </button>
             <button
+                type="button"
                 onClick={() => onTypeChange("income")}
                 className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all",
@@ -37,9 +40,16 @@ export function TypeSection({ transactionType, onTypeChange }: TypeSectionProps)
                 Pemasukan
             </button>
             <button
-                onClick={() => onTypeChange("transfer")}
+                type="button"
+                onClick={() => {
+                    if (!transferDisabled) onTypeChange("transfer");
+                }}
+                disabled={transferDisabled}
+                aria-disabled={transferDisabled}
+                title={transferDisabled ? "Minimal 2 akun saldo untuk transfer" : undefined}
                 className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all",
+                    transferDisabled && "cursor-not-allowed opacity-50",
                     transactionType === "transfer"
                         ? "bg-sky-500 text-white shadow-sm"
                         : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"

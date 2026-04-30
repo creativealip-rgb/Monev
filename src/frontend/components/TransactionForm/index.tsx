@@ -87,23 +87,35 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         onClose();
     };
 
+    const handleTypeChange = (type: typeof transactionType) => {
+        if (type === "transfer" && accounts.length < 2) return;
+        setTransactionType(type);
+    };
+
     if (!isOpen) return null;
 
     const parsedAmount = Number(amount);
     const isAmountInvalid = !amount || !Number.isFinite(parsedAmount) || parsedAmount <= 0;
+    const transferUnavailable = transactionType === "transfer" && accounts.length < 2;
+    const transferTargetInvalid = transactionType === "transfer" && (!targetAccountId || targetAccountId === selectedAccountId);
     const isSubmitDisabled = loading ||
         isAmountInvalid ||
         accounts.length === 0 ||
         !selectedCategory ||
-        (transactionType === "transfer" && (!targetAccountId || targetAccountId === selectedAccountId));
+        transferUnavailable ||
+        transferTargetInvalid;
 
     const submitHelperText = accounts.length === 0
         ? "Tambahkan akun saldo terlebih dahulu untuk menyimpan transaksi."
-        : isAmountInvalid
-            ? "Masukkan nominal transaksi yang valid."
-            : !selectedCategory
-                ? "Pilih kategori transaksi."
-                : null;
+        : transferUnavailable
+            ? "Minimal butuh 2 akun saldo untuk transfer."
+            : transferTargetInvalid
+                ? "Pilih akun tujuan yang berbeda."
+                : isAmountInvalid
+                    ? "Masukkan nominal transaksi yang valid."
+                    : !selectedCategory
+                        ? "Pilih kategori transaksi."
+                        : null;
 
     const getSubmitButtonClasses = () => {
         if (isSubmitDisabled) {
@@ -171,7 +183,8 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                         <section className="space-y-6">
                             <TypeSection
                                 transactionType={transactionType}
-                                onTypeChange={setTransactionType}
+                                onTypeChange={handleTypeChange}
+                                transferDisabled={accounts.length < 2}
                             />
 
                             {/* Amount Section with Quick Templates */}
