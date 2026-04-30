@@ -284,14 +284,14 @@ export default function LoginPage() {
                                 aria-invalid={errors.password ? "true" : "false"}
                                 aria-describedby={errors.password ? "password-error" : undefined}
                                 className={cn(
-                                    "input-modern pl-11 pr-11",
+                                    "input-modern pl-11 pr-14",
                                     submitted && errors.password && "border-red-400 focus:border-red-500 focus:ring-red-500/20"
                                 )}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:text-sky-600"
+                                className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:text-sky-600"
                                 aria-label={showPassword ? "Hide password" : "Show password"}
                             >
                                 {showPassword ? (
@@ -311,12 +311,14 @@ export default function LoginPage() {
 
                     {/* Remember Me & Forgot Password */}
                     <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center gap-2 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                name="remember"
-                                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500/20 cursor-pointer"
-                            />
+                        <label className="flex min-h-11 items-center gap-2 cursor-pointer group">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50">
+                                <input
+                                    type="checkbox"
+                                    name="remember"
+                                    className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/20 cursor-pointer"
+                                />
+                            </span>
                             <span className="text-slate-600 group-hover:text-slate-800 transition-colors">
                                 Ingat saya
                             </span>
