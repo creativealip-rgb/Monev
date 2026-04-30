@@ -46,7 +46,7 @@ export default function SaldoPage() {
     const [showAccountMenu, setShowAccountMenu] = useState<number | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editForm, setEditForm] = useState({ name: "", balance: "", color: "", icon: "" });
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [deletingAccountId, setDeletingAccountId] = useState<number | null>(null);
 
     const haptics = useHaptics();
     const { success: toastSuccess, error: toastError } = useToast();
@@ -165,6 +165,31 @@ export default function SaldoPage() {
         setIsAddOpen(true);
     };
 
+    const handleDeleteAccount = async (accountId: number, withTransactionWarning = true) => {
+        if (deletingAccountId) return;
+        const message = withTransactionWarning
+            ? "Yakin hapus akun ini? Transaksi terkait tidak akan dihapus."
+            : "Yakin hapus akun ini?";
+        if (!confirm(message)) return;
+
+        setDeletingAccountId(accountId);
+        try {
+            const res = await apiFetch(`/api/accounts/${accountId}`, { method: "DELETE" });
+            const result = await res.json();
+            if (result.success) {
+                toastSuccess("Akun dihapus");
+                refresh();
+            } else {
+                toastError("Gagal menghapus");
+            }
+        } catch (err) {
+            toastError("Gagal menghapus");
+        } finally {
+            setDeletingAccountId(null);
+            setShowAccountMenu(null);
+        }
+    };
+
     const getTypeLabel = (typeId: string) => {
         switch (typeId) {
             case "bank": return t("saldo.selectBank");
@@ -214,7 +239,8 @@ export default function SaldoPage() {
                     <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
                         {t("saldo.quickAdd")}
                     </p>
-                    <div className="flex gap-3 overflow-x-auto pb-2">
+                    <div className="relative -mx-1">
+                        <div className="flex gap-3 overflow-x-auto px-1 pb-2 pr-10">
                         {QUICK_ADD_PRESETS.map((preset) => {
                             const Icon = iconMap[preset.icon] || Wallet;
                             return (
@@ -236,6 +262,8 @@ export default function SaldoPage() {
                         >
                             <Plus size={20} />
                         </motion.button>
+                        </div>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-sky-50 to-transparent dark:from-slate-950" />
                     </div>
                 </div>
 
@@ -546,8 +574,10 @@ export default function SaldoPage() {
                                                 </p>
                                             </div>
                                             <div className="relative">
-                                                <button 
-                                                    className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Menu akun ${acc.name}`}
+                                                    className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         haptics.tap();
@@ -555,7 +585,7 @@ export default function SaldoPage() {
                                                         setSelectedAccountId(acc.id);
                                                     }}
                                                 >
-                                                    <MoreVertical size={16} />
+                                                    <MoreVertical size={18} />
                                                 </button>
                                                 <AnimatePresence>
                                                     {showAccountMenu === acc.id && (
@@ -577,30 +607,14 @@ export default function SaldoPage() {
                                                                 <Pencil size={14} /> Edit
                                                             </button>
                                                             <button
-                                                                onClick={async (e) => {
+                                                                onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    if (confirm("Yakin hapus akun ini? Transaksi terkait tidak akan dihapus.")) {
-                                                                        setIsDeleting(true);
-                                                                        try {
-                                                                            const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
-                                                                            const result = await res.json();
-                                                                            if (result.success) {
-                                                                                toastSuccess("Akun dihapus");
-                                                                                refresh();
-                                                                            } else {
-                                                                                toastError("Gagal menghapus");
-                                                                            }
-                                                                        } catch (err) {
-                                                                            toastError("Gagal menghapus");
-                                                                        } finally {
-                                                                            setIsDeleting(false);
-                                                                        }
-                                                                    }
-                                                                    setShowAccountMenu(null);
+                                                                    handleDeleteAccount(acc.id);
                                                                 }}
-                                                                className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                                                disabled={deletingAccountId === acc.id}
+                                                                className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
                                                             >
-                                                                <Trash2 size={14} /> Hapus
+                                                                <Trash2 size={14} /> {deletingAccountId === acc.id ? "Menghapus..." : "Hapus"}
                                                             </button>
                                                         </motion.div>
                                                     )}
@@ -710,8 +724,10 @@ export default function SaldoPage() {
                                                                             </p>
                                                                         </div>
                                                                         <div className="relative">
-                                                                            <button 
-                                                                                className="text-slate-300 dark:text-slate-600 hover:text-slate-500" 
+                                                                            <button
+                                                                                type="button"
+                                                                                aria-label={`Menu akun ${acc.name}`}
+                                                                                className="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
                                                                                     haptics.tap();
@@ -719,7 +735,7 @@ export default function SaldoPage() {
                                                                                     setSelectedAccountId(acc.id);
                                                                                 }}
                                                                             >
-                                                                                <MoreVertical size={14} />
+                                                                                <MoreVertical size={16} />
                                                                             </button>
                                                                             <AnimatePresence>
                                                                                 {showAccountMenu === acc.id && (
@@ -741,30 +757,14 @@ export default function SaldoPage() {
                                                                                             <Pencil size={12} /> Edit
                                                                                         </button>
                                                                                         <button
-                                                                                            onClick={async (e) => {
+                                                                                            onClick={(e) => {
                                                                                                 e.stopPropagation();
-                                                                                                if (confirm("Yakin hapus akun ini?")) {
-                                                                                                    setIsDeleting(true);
-                                                                                                    try {
-                                                                                                        const res = await apiFetch(`/api/accounts/${acc.id}`, { method: "DELETE" });
-                                                                                                        const result = await res.json();
-                                                                                                        if (result.success) {
-                                                                                                            toastSuccess("Akun dihapus");
-                                                                                                            refresh();
-                                                                                                        } else {
-                                                                                                            toastError("Gagal menghapus");
-                                                                                                        }
-                                                                                                    } catch (err) {
-                                                                                                        toastError("Gagal menghapus");
-                                                                                                    } finally {
-                                                                                                        setIsDeleting(false);
-                                                                                                    }
-                                                                                                }
-                                                                                                setShowAccountMenu(null);
+                                                                                                handleDeleteAccount(acc.id, false);
                                                                                             }}
-                                                                                            className="w-full px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
+                                                                                            disabled={deletingAccountId === acc.id}
+                                                                                            className="w-full px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:hover:bg-rose-900/20 flex items-center gap-2"
                                                                                         >
-                                                                                            <Trash2 size={12} /> Hapus
+                                                                                            <Trash2 size={12} /> {deletingAccountId === acc.id ? "Menghapus..." : "Hapus"}
                                                                                         </button>
                                                                                     </motion.div>
                                                                                 )}
