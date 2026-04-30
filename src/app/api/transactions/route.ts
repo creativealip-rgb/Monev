@@ -7,6 +7,7 @@ import {
     createTransaction,
     searchTransactions
 } from "@/backend/db/operations";
+import { getAccountById } from "@/backend/db/account-operations";
 import { createLogger } from "@/lib/logger";
 import type { TransactionWithCategory } from "@/types";
 
@@ -99,16 +100,41 @@ export async function POST(request: Request) {
         const userId = parseInt(session.user.id);
 
         const body = await request.json();
+        const amount = Number(body.amount);
+        const accountId = Number(body.accountId);
+        const targetAccountId = body.targetAccountId !== null && body.targetAccountId !== undefined
+            ? Number(body.targetAccountId)
+            : null;
+
+        if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(accountId)) {
+            return NextResponse.json({ success: false, error: "Valid account and amount are required" }, { status: 400 });
+        }
+
+        const account = await getAccountById(userId, accountId);
+        if (!account) {
+            return NextResponse.json({ success: false, error: "Account not found" }, { status: 400 });
+        }
+
+        if (body.type === "transfer") {
+            if (!Number.isInteger(targetAccountId) || targetAccountId === accountId) {
+                return NextResponse.json({ success: false, error: "Valid target account is required" }, { status: 400 });
+            }
+            const validTargetAccountId = targetAccountId as number;
+            const targetAccount = await getAccountById(userId, validTargetAccountId);
+            if (!targetAccount) {
+                return NextResponse.json({ success: false, error: "Target account not found" }, { status: 400 });
+            }
+        }
 
         const transaction = await createTransaction(userId, {
-            amount: body.amount,
+            amount,
             description: body.description,
             merchantName: body.merchantName,
             categoryId: body.categoryId,
             type: body.type,
             paymentMethod: body.paymentMethod || "cash",
-            accountId: body.accountId,
-            targetAccountId: body.targetAccountId,
+            accountId,
+            targetAccountId: body.type === "transfer" ? targetAccountId! : undefined,
             date: new Date(body.date || Date.now()),
         });
 
