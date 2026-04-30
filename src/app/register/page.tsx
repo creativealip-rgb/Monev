@@ -439,14 +439,14 @@ export default function RegisterPage() {
                                 aria-invalid={errors.password ? "true" : "false"}
                                 aria-describedby={errors.password ? "password-error" : undefined}
                                 className={cn(
-                                    "input-modern pl-11 pr-11",
+                                    "input-modern pl-11 pr-14",
                                     errors.password && "border-red-400 focus:border-red-500 focus:ring-red-500/20"
                                 )}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:text-sky-600"
+                                className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:text-sky-600"
                                 aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                             >
                                 {showPassword ? (
@@ -487,7 +487,7 @@ export default function RegisterPage() {
                                 aria-invalid={errors.confirmPassword ? "true" : "false"}
                                 aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
                                 className={cn(
-                                    "input-modern pl-11 pr-11",
+                                    "input-modern pl-11 pr-14",
                                     errors.confirmPassword && "border-red-400 focus:border-red-500 focus:ring-red-500/20",
                                     !errors.confirmPassword && formData.confirmPassword && formData.confirmPassword === formData.password && "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20"
                                 )}
@@ -495,7 +495,7 @@ export default function RegisterPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:text-sky-600"
+                                className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:text-sky-600"
                                 aria-label={showConfirmPassword ? "Sembunyikan password" : "Tampilkan password"}
                             >
                                 {showConfirmPassword ? (
@@ -505,7 +505,7 @@ export default function RegisterPage() {
                                 )}
                             </button>
                             {!errors.confirmPassword && formData.confirmPassword && formData.confirmPassword === formData.password && (
-                                <CheckCircle2 className="absolute right-11 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
+                                <CheckCircle2 className="absolute right-16 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
                             )}
                         </div>
                         {errors.confirmPassword && (
