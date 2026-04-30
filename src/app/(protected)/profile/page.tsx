@@ -189,14 +189,14 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="relative min-h-screen pb-24">
-            <div className="relative bg-gradient-to-br w-full rounded-b-[3rem] from-sky-500 via-sky-600 to-cyan-700 pb-10 pt-safe pt-3 px-6 shadow-2xl overflow-hidden z-[100]">
+        <div className="relative min-h-screen">
+            <div className="relative bg-gradient-to-br w-full rounded-b-[2.5rem] sm:rounded-b-[3rem] from-sky-500 via-sky-600 to-cyan-700 pb-8 sm:pb-10 pt-safe pt-3 px-6 shadow-2xl overflow-hidden z-[100]">
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-sky-400/30 rounded-full blur-3xl mix-blend-overlay" />
                     <div className="absolute top-1/2 -right-24 w-64 h-64 bg-cyan-400/30 rounded-full blur-3xl mix-blend-overlay" />
                 </div>
 
-                <div className="relative flex items-center justify-between mt-2 mb-6 z-10 w-full">
+                <div className="relative flex items-center justify-between mt-1 mb-3 sm:mt-2 sm:mb-6 z-10 w-full">
                     <div className="flex items-center gap-3">
                         <Link href="/dashboard" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md shadow-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95">
                             <ArrowLeft size={20} strokeWidth={2.5} />
@@ -209,15 +209,15 @@ export default function ProfilePage() {
                 </div>
 
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="flex flex-col items-center relative z-10">
-                    <div className="relative mb-4 group cursor-pointer" onClick={() => setActiveModal("account")}>
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border-4 border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl overflow-hidden ring-4 ring-black/5">
+                    <div className="relative mb-3 sm:mb-4 group cursor-pointer" onClick={() => setActiveModal("account")}>
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border-4 border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl overflow-hidden ring-4 ring-black/5">
                             {user?.image ? (
                                 <Image src={user.image.split('?')[0]} alt={user.firstName || "Profile"} width={96} height={96} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                             ) : (
                                 getInitials()
                             )}
                         </div>
-                        <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-400 rounded-full border-[3px] border-sky-600 flex items-center justify-center shadow-lg">
+                        <div className="absolute bottom-0.5 right-0.5 w-5 h-5 sm:bottom-1 sm:right-1 sm:w-6 sm:h-6 bg-emerald-400 rounded-full border-[3px] border-sky-600 flex items-center justify-center shadow-lg">
                             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                         </div>
                         <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -225,11 +225,11 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    <h2 className="text-2xl font-black tracking-tight text-white mb-1.5 shadow-black/10 drop-shadow-sm text-center px-4">
+                    <h2 className="text-lg sm:text-2xl font-black tracking-tight text-white mb-1 shadow-black/10 drop-shadow-sm text-center px-4">
                         {user?.firstName || user?.name ? `${user.firstName || user.name} ${user.lastName || ""}`.trim() : "Pengguna Baru"}
                     </h2>
 
-                    <span className="text-sky-100/90 text-xs font-bold tracking-widest uppercase mb-5 bg-black/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm shadow-inner">
+                    <span className="text-sky-100/90 text-xs font-bold tracking-widest uppercase mb-3 sm:mb-5 bg-black/10 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm shadow-inner">
                         @{user?.username || user?.email?.split("@")[0] || "username"}
                     </span>
 
@@ -248,7 +248,7 @@ export default function ProfilePage() {
                         </div>
 
                         {user?.tier === "starter" && (
-                            <Link href="/fitur/upgrade" className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-white to-sky-50 text-sky-700 rounded-2xl text-xs font-black shadow-xl shadow-sky-950/20 active:scale-95 transition-all outline-none ring-2 ring-white/50">
+                            <Link href="/fitur/upgrade" className="flex items-center gap-2 px-5 sm:px-6 py-1.5 sm:py-2 bg-gradient-to-r from-white to-sky-50 text-sky-700 rounded-2xl text-xs font-black shadow-xl shadow-sky-950/20 active:scale-95 transition-all outline-none ring-2 ring-white/50">
                                 <Sparkles size={14} fill="currentColor" />
                                 UPGRADE KE PRO
                             </Link>
@@ -263,10 +263,10 @@ export default function ProfilePage() {
                 </motion.div>
             </div>
 
-            <div className="px-6 -mt-6 relative z-[110]">
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onClick={() => setActiveModal("collection")} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl p-4 shadow-xl shadow-slate-200/50 dark:shadow-none flex items-center justify-around cursor-pointer active:scale-95 transition-transform">
+            <div className="px-6 -mt-5 sm:-mt-6 relative z-[110]">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onClick={() => setActiveModal("collection")} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl shadow-slate-200/50 dark:shadow-none flex items-center justify-around cursor-pointer active:scale-95 transition-transform">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500">
                             <Flame size={20} className={streak?.currentStreak > 0 ? "fill-orange-500" : "opacity-30"} />
                         </div>
                         <div>
@@ -276,7 +276,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">
                             <Trophy size={20} className={achievements.length > 0 ? "fill-amber-500" : "opacity-30"} />
                         </div>
                         <div>
@@ -321,10 +321,10 @@ export default function ProfilePage() {
                 </motion.div>
             )}
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-6 space-y-3">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-5 sm:pt-6 space-y-3 pb-56">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="card-clean p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Moon size={20} className="text-slate-600 dark:text-slate-300" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p></div></div><ThemeToggleSwitch /></motion.div>
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }} className="card-clean p-4 space-y-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="card-clean p-4 space-y-4"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center"><span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">$</span></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">Mata Uang</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih mata uang utama</p></div></div><CurrencySelector /></motion.div>
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }} className="card-clean p-4 space-y-4 hidden sm:block"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="card-clean p-4 space-y-4 hidden sm:block"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center"><span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">$</span></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">Mata Uang</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih mata uang utama</p></div></div><CurrencySelector /></motion.div>
                 {menuItems.map((item, index) => {
                     const Icon = item.icon;
                     const colors: Record<string, { bg: string; text: string }> = {
