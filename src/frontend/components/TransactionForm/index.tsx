@@ -95,7 +95,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         isAmountInvalid ||
         accounts.length === 0 ||
         !selectedCategory ||
-        (transactionType === "transfer" && !targetAccountId);
+        (transactionType === "transfer" && (!targetAccountId || targetAccountId === selectedAccountId));
 
     const submitHelperText = accounts.length === 0
         ? "Tambahkan akun saldo terlebih dahulu untuk menyimpan transaksi."

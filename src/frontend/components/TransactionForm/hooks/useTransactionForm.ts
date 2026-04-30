@@ -175,8 +175,20 @@ export function useTransactionForm({
             return;
         }
 
+        if (!selectedAccountId) {
+            setError("Tambahkan akun saldo terlebih dahulu");
+            haptics.error();
+            return;
+        }
+
         if (!selectedCategory) {
             setError("Pilih kategori");
+            haptics.error();
+            return;
+        }
+
+        if (transactionType === "transfer" && (!targetAccountId || targetAccountId === selectedAccountId)) {
+            setError("Pilih akun tujuan yang berbeda");
             haptics.error();
             return;
         }
@@ -215,6 +227,13 @@ export function useTransactionForm({
             });
 
             if (!response.ok) {
+                if (response.status >= 400 && response.status < 500) {
+                    const result = await response.json().catch(() => null);
+                    setError(result?.error || "Transaksi tidak valid");
+                    haptics.error();
+                    return;
+                }
+
                 // Server error or offline — queue for later
                 await OfflineManager.queueTransaction(transData);
                 window.dispatchEvent(new CustomEvent("transactionAdded"));
