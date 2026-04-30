@@ -56,14 +56,13 @@ export async function updateAccount(userId: number, id: number, data: Partial<Ac
  */
 export async function deleteAccount(userId: number, id: number): Promise<void> {
     const db = getDb();
-    // Cascade update transactions as well? 
-    // Or set accountId to null
-    await db.update(transactions)
-        .set({ accountId: null })
-        .where(and(eq(transactions.accountId, id), eq(transactions.userId, userId)));
+    await db.transaction(async (tx) => {
+        await tx.delete(transactions)
+            .where(and(eq(transactions.accountId, id), eq(transactions.userId, userId)));
 
-    await db.delete(accounts)
-        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+        await tx.delete(accounts)
+            .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+    });
 }
 
 /**
