@@ -91,7 +91,7 @@ export default function DashboardPage() {
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
-            <div className="relative min-h-screen pb-40 bg-sky-50 dark:bg-slate-950">
+            <div className="relative min-h-screen pb-64 bg-sky-50 dark:bg-slate-950">
                 <DashboardHeader
                     userName={userName}
                     userImage={userImage}
