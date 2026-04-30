@@ -464,7 +464,10 @@ export default function TransactionsPage() {
                     searchQuery ? (
                         <NoSearchResultsEmpty query={searchQuery} />
                     ) : (
-                        <NoTransactionsEmpty onAddNew={() => window.dispatchEvent(new Event("monev:open-add-transaction"))} />
+                        <NoTransactionsEmpty
+                            noAccounts={accounts.length === 0}
+                            onAddNew={() => window.dispatchEvent(new Event("monev:open-add-transaction"))}
+                        />
                     )
                 ) : (
                     <TransactionList
