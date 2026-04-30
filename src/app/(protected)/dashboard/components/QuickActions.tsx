@@ -26,10 +26,10 @@ export function QuickActions({ onAddTransaction }: QuickActionsProps) {
                 onAddTransaction();
             }}
             className={cn(
-                "fixed bottom-24 right-4 z-[90] h-12 w-12 rounded-full sm:bottom-28 sm:right-6 sm:h-14 sm:w-14",
+                "fixed bottom-24 right-4 z-[90] hidden h-12 w-12 rounded-full md:flex sm:bottom-28 sm:right-6 sm:h-14 sm:w-14",
                 "bg-gradient-to-br from-sky-400 to-sky-600",
                 "shadow-lg shadow-sky-500/30",
-                "flex items-center justify-center",
+                "items-center justify-center",
                 "text-white",
                 "hover:shadow-xl hover:shadow-sky-500/40",
                 "active:shadow-md",
