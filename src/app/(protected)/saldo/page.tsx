@@ -121,7 +121,12 @@ export default function SaldoPage() {
         if (isSaving) return;
 
         const balanceValue = balance ? Number(balance) : 0;
-        if (!Number.isFinite(balanceValue)) {
+        const accountName = selectedPreset?.name || customName.trim();
+        if (!selectedType || !accountName) {
+            toastError("Data belum lengkap", "Pilih tipe akun dan isi nama akun terlebih dahulu.");
+            return;
+        }
+        if (!Number.isFinite(balanceValue) || balanceValue < 0) {
             toastError("Saldo tidak valid", "Masukkan nominal saldo dengan angka valid.");
             return;
         }
@@ -130,7 +135,7 @@ export default function SaldoPage() {
         try {
             haptics.tap();
             const data = {
-                name: selectedPreset?.name || customName.trim(),
+                name: accountName,
                 type: selectedType,
                 balance: balanceValue,
                 color: selectedPreset?.color || "#3b82f6",
@@ -322,6 +327,8 @@ export default function SaldoPage() {
             <main className="px-6 mt-8">
                 {isAddOpen ? (
                     <motion.div
+                        role="region"
+                        aria-labelledby="add-account-title"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
@@ -359,7 +366,7 @@ export default function SaldoPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 className="p-6"
                             >
-                                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6">{t("saldo.selectType")}</h2>
+                                <h2 id="add-account-title" className="text-xl font-black text-slate-900 dark:text-white mb-6">{t("saldo.selectType")}</h2>
                                 <div className="grid grid-cols-3 gap-4 mb-6">
                                     {ACCOUNT_TYPES.map((type) => {
                                         const Icon = iconMap[type.icon] || Wallet;
@@ -401,7 +408,7 @@ export default function SaldoPage() {
                                     <ChevronLeft size={16} />
                                     {t("saldo.back")}
                                 </button>
-                                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-4">{getTypeLabel(selectedType)}</h2>
+                                <h2 id="add-account-title" className="text-xl font-black text-slate-900 dark:text-white mb-4">{getTypeLabel(selectedType)}</h2>
                                 <div className="grid grid-cols-3 gap-4 max-h-64 overflow-y-auto mb-6">
                                     {ACCOUNT_PRESETS[selectedType]?.map((preset) => {
                                         const Icon = iconMap[preset.icon] || Wallet;
@@ -443,6 +450,7 @@ export default function SaldoPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 className="p-6"
                             >
+                                <h2 id="add-account-title" className="sr-only">Detail akun dan saldo awal</h2>
                                 <button
                                     onClick={() => {
                                         haptics.tap();
@@ -472,7 +480,9 @@ export default function SaldoPage() {
                                     ) : (
                                         <>
                                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Custom Account</p>
+                                            <label htmlFor="new-account-name" className="sr-only">Nama akun</label>
                                             <input
+                                                id="new-account-name"
                                                 type="text"
                                                 value={customName}
                                                 onChange={(e) => setCustomName(e.target.value)}
@@ -486,7 +496,9 @@ export default function SaldoPage() {
                                 </div>
 
                                 <div className="mb-6">
+                                    <label htmlFor="new-account-balance" className="sr-only">Saldo awal</label>
                                     <input
+                                        id="new-account-balance"
                                         type="text"
                                         inputMode="numeric"
                                         value={balance === "0" ? "" : balance}
@@ -517,7 +529,10 @@ export default function SaldoPage() {
                                         className="flex-1 py-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {isSaving ? (
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                <span>Menyimpan...</span>
+                                            </>
                                         ) : (
                                             <>
                                                 <Check size={20} />
