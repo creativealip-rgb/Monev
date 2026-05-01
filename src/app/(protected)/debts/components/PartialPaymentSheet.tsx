@@ -35,6 +35,27 @@ export function PartialPaymentSheet({
     const isOwe = debt?.direction === "owe";
     const hasEnoughBalance = balance >= parsedAmount;
 
+    const handleClose = () => {
+        if (loading) return;
+        onClose();
+    };
+
+    const sanitizeNumberInput = (value: string) => value.replace(/[^0-9.]/g, "");
+
+    useEffect(() => {
+        if (!debt) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") handleClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [debt, loading]);
+
     useEffect(() => {
         if (debt && isOwe) {
             apiFetch("/api/balance")
@@ -44,12 +65,12 @@ export function PartialPaymentSheet({
                         setBalance(data.data);
                     }
                 })
-                .catch(console.error);
+                .catch(() => undefined);
         }
     }, [debt, isOwe]);
 
     const handleSubmit = async () => {
-        if (!debt || !isValid) return;
+        if (loading || !debt || !isValid) return;
         if (isOwe && payFromBalance && !hasEnoughBalance) {
             toast.error("Saldo Tidak Cukup", "Saldo kamu tidak cukup untuk membayar hutang ini");
             return;
@@ -125,7 +146,7 @@ export function PartialPaymentSheet({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999998]"
-                            onClick={onClose}
+                            onClick={handleClose}
                             aria-hidden="true"
                         />
                         <motion.div
@@ -143,7 +164,7 @@ export function PartialPaymentSheet({
                                     {isOwe ? "Bayar Hutang" : "Catat Pembayaran Piutang"}
                                 </h2>
                                 <button
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     aria-label="Tutup form pembayaran hutang atau piutang"
                                     className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 >
@@ -185,7 +206,8 @@ export function PartialPaymentSheet({
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-amber-500 focus:outline-none transition-colors text-sm"
                                         placeholder={`Maks ${formatCurrency(remainingAmount)}`}
                                         value={paymentAmount}
-                                        onChange={e => setPaymentAmount(e.target.value)}
+                                        inputMode="decimal"
+                                        onChange={e => setPaymentAmount(sanitizeNumberInput(e.target.value))}
                                         max={remainingAmount}
                                         min={1}
                                     />
@@ -203,6 +225,8 @@ export function PartialPaymentSheet({
                                         return (
                                             <button
                                                 key={fraction}
+                                                type="button"
+                                                aria-pressed={parsedAmount === val}
                                                 onClick={() => setPaymentAmount(String(val))}
                                                 className={cn(
                                                     "px-3 py-1.5 rounded-xl text-xs font-bold transition-all",
@@ -232,6 +256,9 @@ export function PartialPaymentSheet({
                                                 </div>
                                             </div>
                                             <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={payFromBalance}
                                                 onClick={() => setPayFromBalance(!payFromBalance)}
                                                 className={cn(
                                                     "relative w-12 h-6 rounded-full transition-colors",
@@ -255,6 +282,7 @@ export function PartialPaymentSheet({
                                 )}
 
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
                                     disabled={loading || !isValid || (isOwe && payFromBalance && !hasEnoughBalance)}
                                     className={cn(
