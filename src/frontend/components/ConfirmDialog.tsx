@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { Portal } from "./Portal";
 import { cn } from "@/frontend/lib/utils";
@@ -50,10 +50,10 @@ export function ConfirmDialog({
         };
     }, [isOpen, loading, onClose]);
 
+    if (!isOpen) return null;
+
     return (
         <Portal>
-            <AnimatePresence>
-                {isOpen && (
                     <>
                         {/* Backdrop */}
                         <motion.div
@@ -120,8 +120,6 @@ export function ConfirmDialog({
                             </motion.div>
                         </div>
                     </>
-                )}
-            </AnimatePresence>
         </Portal>
     );
 }
