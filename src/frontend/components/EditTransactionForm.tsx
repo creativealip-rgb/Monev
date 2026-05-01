@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Wallet, TrendingUp, Utensils, Car, Gamepad2, ShoppingBag, Heart, BookOpen, Receipt, TrendingUp as InvestIcon, Banknote, Briefcase, MoreHorizontal } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
@@ -89,13 +89,32 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
         }
     };
 
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !loading) {
+                onClose();
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown, true);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown, true);
+        };
+    }, [isOpen, loading, onClose]);
+
     const handleAmountSubmit = () => {
         if (!amount || parseFloat(amount) <= 0) {
             setError("Masukkan nominal yang valid");
             return;
         }
         setError(null);
-        setStep("category");
+        setStep(transaction?.type === "transfer" ? "details" : "category");
     };
 
     const handleCategorySelect = (categoryId: number) => {
@@ -104,7 +123,10 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
     };
 
     const handleSubmit = async () => {
-        if (!selectedCategory || !description || !transaction) {
+        if (loading) return;
+        const isTransfer = transaction?.type === "transfer";
+
+        if (!transaction || !description.trim() || (!isTransfer && !selectedCategory) || !selectedAccountId || (isTransfer && !targetAccountId)) {
             setError("Lengkapi semua field");
             return;
         }
@@ -118,8 +140,8 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     amount: parseFloat(amount),
-                    description,
-                    categoryId: selectedCategory,
+                    description: description.trim(),
+                    categoryId: isTransfer ? null : selectedCategory,
                     type: transaction.type,
                     paymentMethod: "cash",
                     accountId: selectedAccountId,
@@ -144,9 +166,10 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
         }
     };
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
+        if (loading) return;
         onClose();
-    };
+    }, [loading, onClose]);
 
     if (!isOpen || !transaction) return null;
 
@@ -162,7 +185,10 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-0 z-[10001] overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="edit-transaction-title"
+                className="fixed inset-0 z-[10001] overflow-x-hidden overflow-y-auto"
             >
                 <div className="fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-200/30 via-transparent to-transparent dark:from-sky-900/20" />
@@ -173,11 +199,13 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                     <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
                         <button
                             onClick={step === "amount" ? handleClose : () => setStep(step === "category" ? "amount" : "category")}
+                            aria-label={step === "amount" ? "Tutup edit transaksi" : "Kembali ke langkah sebelumnya"}
+                            disabled={loading && step === "amount"}
                             className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400"
                         >
                             {step === "amount" ? <X size={20} /> : <ArrowLeft size={20} />}
                         </button>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Transaksi</h2>
+                        <h2 id="edit-transaction-title" className="text-lg font-bold text-slate-900 dark:text-white">Edit Transaksi</h2>
                         <div className="w-10" />
                     </div>
 
@@ -206,6 +234,8 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                     </div>
                                 </div>
                                 <input
+                                    id="edit-transaction-amount"
+                                    aria-label="Nominal transaksi"
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
@@ -229,6 +259,11 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                         {step === "category" && (
                             <div className="space-y-4">
                                 <p className="text-slate-500 dark:text-slate-400 mb-4">Pilih kategori</p>
+                                {categories.length === 0 && (
+                                    <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                                        Kategori belum tersedia untuk tipe transaksi ini.
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-2 gap-3">
                                     {categories.map((cat) => {
                                         const Icon = categoryIcons[cat.icon] || Wallet;
