@@ -113,10 +113,12 @@ export function CSVImportWizard({ onClose, onSuccess }: CSVImportWizardProps) {
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
                 <div>
-                    <h2 className="text-xl font-black text-slate-900 dark:text-white">Import Transaksi</h2>
+                    <h2 id="csv-import-title" className="text-xl font-black text-slate-900 dark:text-white">Import Transaksi</h2>
                     <p className="text-xs text-slate-500 font-medium">Langkah {step} dari 3</p>
                 </div>
                 <button
+                    type="button"
+                    aria-label="Tutup import CSV"
                     onClick={onClose}
                     className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400"
                 >
@@ -135,10 +137,7 @@ export function CSVImportWizard({ onClose, onSuccess }: CSVImportWizardProps) {
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="flex-1 flex flex-col"
                         >
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className="flex-1 border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] flex flex-col items-center justify-center p-10 cursor-pointer hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/10 transition-all group"
-                            >
+                            <label className="flex-1 w-full text-left border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] flex flex-col items-center justify-center p-10 cursor-pointer hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/10 transition-all group">
                                 <div className="w-20 h-20 rounded-3xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
                                     <Upload size={32} strokeWidth={2.5} />
                                 </div>
@@ -148,12 +147,13 @@ export function CSVImportWizard({ onClose, onSuccess }: CSVImportWizardProps) {
                                 </p>
                                 <input
                                     type="file"
+                                    aria-label="Pilih file CSV transaksi"
                                     ref={fileInputRef}
                                     onChange={handleFileChange}
                                     accept=".csv"
                                     className="hidden"
                                 />
-                            </div>
+                            </label>
 
                             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mt-6">
                                 <h4 className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">
@@ -210,6 +210,7 @@ export function CSVImportWizard({ onClose, onSuccess }: CSVImportWizardProps) {
                             </div>
 
                             <button
+                                type="button"
                                 onClick={handleToPreview}
                                 className="w-full py-4 bg-sky-500 hover:bg-sky-600 text-white font-black rounded-2xl shadow-lg flex items-center justify-center gap-2"
                             >
@@ -260,6 +261,7 @@ export function CSVImportWizard({ onClose, onSuccess }: CSVImportWizardProps) {
                                     </p>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={handleImport}
                                     disabled={isImporting}
                                     className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
@@ -272,6 +274,7 @@ export function CSVImportWizard({ onClose, onSuccess }: CSVImportWizardProps) {
                                     KONFIRMASI IMPOR
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setStep(2)}
                                     disabled={isImporting}
                                     className="w-full py-3 text-slate-400 font-bold text-xs uppercase hover:text-slate-600 transition-colors"
