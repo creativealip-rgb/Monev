@@ -47,6 +47,31 @@ export function PayBillSheet({
     const hasInsufficientBalance = selectedAccount && remainingAmount > selectedAccount.balance;
     const canSubmit = selectedAccountId && !hasInsufficientBalance && !isSubmitting;
 
+    const handleClose = () => {
+        if (!isSubmitting) {
+            onClose();
+        }
+    };
+
+    useEffect(() => {
+        if (!bill) return;
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                handleClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [bill, isSubmitting]);
+
     async function handleSubmit() {
         if (!canSubmit || !bill) return;
 
@@ -96,7 +121,7 @@ export function PayBillSheet({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999998]"
-                            onClick={onClose}
+                            onClick={handleClose}
                             aria-hidden="true"
                         />
                         <motion.div
@@ -123,9 +148,11 @@ export function PayBillSheet({
                                     </div>
                                 </div>
                                 <button
-                                    onClick={onClose}
+                                    type="button"
+                                    onClick={handleClose}
+                                    disabled={isSubmitting}
                                     aria-label="Tutup form pembayaran tagihan"
-                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 >
                                     <X size={20} />
                                 </button>
@@ -162,6 +189,9 @@ export function PayBillSheet({
                                                     key={account.id}
                                                     type="button"
                                                     onClick={() => setSelectedAccountId(account.id.toString())}
+                                                    disabled={isSubmitting}
+                                                    aria-pressed={selectedAccountId === account.id.toString()}
+                                                    aria-label={`Bayar dari ${account.name}, saldo ${formatCurrency(account.balance)}`}
                                                     className={cn(
                                                         "w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3",
                                                         selectedAccountId === account.id.toString()
@@ -205,6 +235,7 @@ export function PayBillSheet({
                                         type="text"
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
+                                        disabled={isSubmitting}
                                         placeholder="Contoh: Bayar listrik Januari"
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-foreground focus:outline-none focus:border-sky-500 transition-colors text-sm"
                                     />
@@ -220,6 +251,7 @@ export function PayBillSheet({
 
                                 {/* Submit Button */}
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
                                     disabled={!canSubmit}
                                     className={cn(

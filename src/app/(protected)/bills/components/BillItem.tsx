@@ -58,6 +58,24 @@ export function BillItem({
     const daysLeft = bill.dueDate - today;
     const isOverdue = daysLeft < 0 && !bill.isPaid;
     const frequency = bill.frequency === "monthly" ? t("bills.frequency.monthly") : bill.frequency === "weekly" ? t("bills.frequency.weekly") : t("bills.frequency.yearly");
+    const billLabel = `${bill.name}, ${frequency}, ${formatCurrency(bill.amount)}`;
+
+    const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.target !== event.currentTarget) return;
+
+        if (event.key === "Enter") {
+            onShowHistory(bill);
+        }
+        if (event.key.toLowerCase() === "e" && onEdit) {
+            onEdit(bill);
+        }
+        if (event.key.toLowerCase() === "p" && onPay && !bill.isPaid) {
+            onPay(bill);
+        }
+        if (event.key === "Delete") {
+            onDelete(bill.id);
+        }
+    };
 
     return (
         <motion.div
@@ -66,8 +84,12 @@ export function BillItem({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.06 }}
             whileHover={{ scale: 1.02 }}
+            role="button"
+            tabIndex={0}
+            aria-label={`${billLabel}. Tekan Enter untuk riwayat, E untuk edit, P untuk bayar, Delete untuk hapus.`}
+            onKeyDown={handleCardKeyDown}
             className={cn(
-                "card-clean p-5 cursor-pointer transition-all",
+                "card-clean p-5 cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/40",
                 bill.isPaid
                     ? "bg-emerald-50/30 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50"
                     : "hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20"
@@ -77,7 +99,10 @@ export function BillItem({
                 {/* Left - Icon and details */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     <button
+                        type="button"
                         onClick={(e) => onToggle(bill.id, e)}
+                        aria-pressed={bill.isPaid}
+                        aria-label={bill.isPaid ? `Tandai ${bill.name} belum dibayar` : `Tandai ${bill.name} sudah dibayar`}
                         className={cn(
                             "w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-all",
                             bill.isPaid
@@ -113,6 +138,8 @@ export function BillItem({
                 <div className="flex items-center gap-1 flex-shrink-0">
                     {!bill.isPaid && onPay && (
                         <button
+                            type="button"
+                            aria-label={`Bayar ${bill.name}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onPay(bill);
@@ -124,6 +151,8 @@ export function BillItem({
                         </button>
                     )}
                     <button
+                        type="button"
+                        aria-label={`Lihat riwayat pembayaran ${bill.name}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onShowHistory(bill);
@@ -135,6 +164,8 @@ export function BillItem({
                     </button>
                     {onEdit && (
                         <button
+                            type="button"
+                            aria-label={`Edit ${bill.name}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onEdit(bill);
@@ -146,6 +177,8 @@ export function BillItem({
                         </button>
                     )}
                     <button
+                        type="button"
+                        aria-label={`Hapus ${bill.name}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onDelete(bill.id);

@@ -160,13 +160,13 @@ export default function BillsPage() {
     async function loadSubscriptions() {
         try {
             setSubsLoading(true);
-            const res = await apiFetch("/api/subscriptions");
+            const res = await apiFetch("/api/subscriptions", { silent: true });
             const result = await res.json();
             if (result.success) {
                 setSubscriptions(result.data);
             }
         } catch (error) {
-            console.error("Error loading subscriptions:", error);
+            // Optional signal; keep the bills page usable if subscription detection fails.
         } finally {
             setSubsLoading(false);
         }
@@ -260,10 +260,8 @@ export default function BillsPage() {
     async function handleDelete() {
         if (!confirmDeleteId) return;
         try {
-            console.log("[handleDelete] Deleting bill:", confirmDeleteId);
             const res = await apiFetch(`/api/bills/${confirmDeleteId}`, { method: "DELETE" });
             const result = await res.json();
-            console.log("[handleDelete] Delete result:", result);
             if (result.success) {
                 setBills(prev => prev.filter(b => b.id !== confirmDeleteId));
                 toast.success(t("bills.billDeleted"));
@@ -297,7 +295,10 @@ export default function BillsPage() {
                     <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                         <div className="hidden md:flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm p-1">
                             <button
+                                type="button"
                                 onClick={() => setViewMode("list")}
+                                aria-pressed={viewMode === "list"}
+                                aria-label="Tampilkan daftar tagihan"
                                 className={cn(
                                     "p-1.5 rounded-full transition-all",
                                     viewMode === "list" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
@@ -306,7 +307,10 @@ export default function BillsPage() {
                                 <List size={16} />
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setViewMode("calendar")}
+                                aria-pressed={viewMode === "calendar"}
+                                aria-label="Tampilkan kalender tagihan"
                                 className={cn(
                                     "p-1.5 rounded-full transition-all",
                                     viewMode === "calendar" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
@@ -317,6 +321,7 @@ export default function BillsPage() {
                         </div>
                         <Link
                             href="/dashboard"
+                            aria-label="Kembali ke dashboard"
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
@@ -327,7 +332,9 @@ export default function BillsPage() {
                         </div>
                     </div>
                     <button
+                        type="button"
                         onClick={() => setShowAddSheet(true)}
+                        aria-label="Tambah tagihan"
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                     >
                         <Plus size={24} strokeWidth={2.5} />
@@ -417,7 +424,10 @@ export default function BillsPage() {
                     className="mx-6 mt-4"
                 >
                     <button
+                        type="button"
                         onClick={() => setShowSubs(!showSubs)}
+                        aria-expanded={showSubs}
+                        aria-controls="detected-subscriptions-list"
                         className="flex items-center justify-between w-full mb-3"
                     >
                         <div className="flex items-center gap-2">
@@ -432,11 +442,19 @@ export default function BillsPage() {
                             <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
                                 {subsLoading ? "..." : subscriptions.length}
                             </span>
-                            <RefreshCw
-                                size={13}
-                                className={cn("text-muted-foreground", subsLoading && "animate-spin")}
+                            <span
+                                role="button"
+                                tabIndex={0}
+                                aria-label="Muat ulang deteksi langganan"
                                 onClick={(e) => { e.stopPropagation(); loadSubscriptions(); }}
-                            />
+                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); loadSubscriptions(); } }}
+                                className="rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                            >
+                                <RefreshCw
+                                    size={13}
+                                    className={cn("text-muted-foreground", subsLoading && "animate-spin")}
+                                />
+                            </span>
                         </div>
                     </button>
 
@@ -446,6 +464,7 @@ export default function BillsPage() {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
+                                id="detected-subscriptions-list"
                                 className="overflow-hidden space-y-2"
                             >
                                 {subsLoading ? (
@@ -492,10 +511,13 @@ export default function BillsPage() {
                         <span className="text-xs text-muted-foreground">{filteredBills.length} Tagihan</span>
                     </div>
 
-                    <div className="flex gap-2 mb-4">
+                    <div className="flex gap-2 mb-4" role="tablist" aria-label="Filter tagihan">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={activeTab === tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={cn(
                                     "py-2 px-3 rounded-xl text-xs font-bold transition-all",
@@ -509,6 +531,7 @@ export default function BillsPage() {
                         ))}
                         {selectedDay !== null && (
                             <button
+                                type="button"
                                 onClick={() => setSelectedDay(null)}
                                 className="ml-auto py-2 px-3 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 transition-all"
                             >
@@ -527,6 +550,8 @@ export default function BillsPage() {
                             {/* Calendar Header */}
                             <div className="flex items-center justify-between mb-4">
                                 <button
+                                    type="button"
+                                    aria-label="Bulan sebelumnya"
                                     onClick={() => {
                                         const newDate = new Date(currentMonth);
                                         newDate.setMonth(newDate.getMonth() - 1);
@@ -540,6 +565,8 @@ export default function BillsPage() {
                                     {currentMonth.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
                                 </span>
                                 <button
+                                    type="button"
+                                    aria-label="Bulan berikutnya"
                                     onClick={() => {
                                         const newDate = new Date(currentMonth);
                                         newDate.setMonth(newDate.getMonth() + 1);
@@ -581,7 +608,12 @@ export default function BillsPage() {
                                         cells.push(
                                             <div
                                                 key={day}
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-pressed={selectedDay === day}
+                                                aria-label={`Filter tagihan tanggal ${day}`}
                                                 onClick={() => setSelectedDay(selectedDay === day ? null : day)}
+                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedDay(selectedDay === day ? null : day); }}
                                                 className={cn(
                                                     "h-10 relative rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-colors cursor-pointer",
                                                     selectedDay === day ? "ring-2 ring-sky-500" : "",

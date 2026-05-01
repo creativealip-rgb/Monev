@@ -79,6 +79,29 @@ export function AddBillSheet({
         setNotes("");
     };
 
+    const isInvalid = !name.trim() || !Number.isFinite(Number(amount)) || Number(amount) <= 0;
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                handleClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, loading]);
+
+    const sanitizeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
+
     const handleSubmit = async () => {
         if (loading) return;
 
@@ -176,6 +199,7 @@ export function AddBillSheet({
                                     {editingBill ? "Edit Tagihan" : "Tambah Tagihan"}
                                 </h2>
                                 <button
+                                    type="button"
                                     onClick={handleClose}
                                     disabled={loading}
                                     aria-label="Tutup form tagihan"
@@ -207,11 +231,12 @@ export function AddBillSheet({
                                         Jumlah (Rp)
                                     </label>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                         placeholder="0"
                                         value={amount}
-                                        onChange={e => setAmount(e.target.value)}
+                                        onChange={e => setAmount(sanitizeNumberInput(e.target.value))}
                                         disabled={loading}
                                         min={0}
                                     />
@@ -224,13 +249,14 @@ export function AddBillSheet({
                                             Tanggal Jatuh Tempo
                                         </label>
                                         <input
-                                            type="number"
+                                            type="text"
+                                            inputMode="numeric"
                                             min={1}
                                             max={31}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             placeholder="1-31"
                                             value={dueDate}
-                                            onChange={e => setDueDate(e.target.value)}
+                                            onChange={e => setDueDate(sanitizeNumberInput(e.target.value).slice(0, 2))}
                                             disabled={loading}
                                         />
                                     </div>
@@ -262,7 +288,10 @@ export function AddBillSheet({
                                             return (
                                                 <button
                                                     key={opt.name}
+                                                    type="button"
                                                     onClick={() => setIcon(opt.name)}
+                                                    aria-pressed={icon === opt.name}
+                                                    aria-label={`Pilih ikon ${opt.label}`}
                                                     disabled={loading}
                                                     className={cn(
                                                         "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all",
@@ -288,7 +317,10 @@ export function AddBillSheet({
                                         {colorOptions.map(c => (
                                             <button
                                                 key={c.value}
+                                                type="button"
                                                 onClick={() => setColor(c.value)}
+                                                aria-pressed={color === c.value}
+                                                aria-label={`Pilih warna ${c.label}`}
                                                 disabled={loading}
                                                 className={cn(
                                                     "w-9 h-9 rounded-full transition-all flex items-center justify-center",
@@ -324,12 +356,13 @@ export function AddBillSheet({
 
                                 {/* Submit Button */}
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
-                                    disabled={loading || !name.trim() || !Number.isFinite(Number(amount)) || Number(amount) <= 0}
+                                    disabled={loading || isInvalid}
                                     className={cn(
                                         "w-full py-4 rounded-xl font-bold text-white text-sm mt-2 transition-all",
                                         "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-500/20",
-                                        (loading || !name.trim() || !Number.isFinite(Number(amount)) || Number(amount) <= 0) && "opacity-50 cursor-not-allowed"
+                                        (loading || isInvalid) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {loading
