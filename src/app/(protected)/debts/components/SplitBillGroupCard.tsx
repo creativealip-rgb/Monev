@@ -87,10 +87,17 @@ Thanks!`;
             className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-sky-100 dark:border-sky-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all"
         >
             {/* Header - Click to expand */}
-            <button
-                type="button"
+            <div
+                role="button"
+                tabIndex={0}
                 className="flex w-full items-center justify-between p-4 text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                 onClick={() => setIsExpanded(!isExpanded)}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setIsExpanded(!isExpanded);
+                    }
+                }}
                 aria-expanded={isExpanded}
                 aria-label={`${isExpanded ? "Tutup" : "Buka"} detail split bill ${transactionDescription}`}
             >
@@ -124,7 +131,7 @@ Thanks!`;
                         )}
                     />
                 </div>
-            </button>
+            </div>
 
             {/* Expanded Details */}
             {isExpanded && (

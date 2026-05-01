@@ -41,8 +41,13 @@ export function ConfirmDialog({
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", handleKeyDown, true);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown, true);
+        };
     }, [isOpen, loading, onClose]);
 
     return (
@@ -89,6 +94,7 @@ export function ConfirmDialog({
 
                                     <div className="w-full space-y-3">
                                         <button
+                                            type="button"
                                             onClick={onConfirm}
                                             disabled={loading}
                                             className={cn(
@@ -102,6 +108,7 @@ export function ConfirmDialog({
                                             {loading ? "Memproses..." : confirmText}
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={onClose}
                                             disabled={loading}
                                             className="w-full py-3.5 rounded-2xl font-bold text-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"

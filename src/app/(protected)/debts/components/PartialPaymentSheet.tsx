@@ -49,10 +49,10 @@ export function PartialPaymentSheet({
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") handleClose();
         };
-        document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleKeyDown, true);
         return () => {
             document.body.style.overflow = previousOverflow;
-            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown, true);
         };
     }, [debt, loading]);
 
@@ -164,7 +164,9 @@ export function PartialPaymentSheet({
                                     {isOwe ? "Bayar Hutang" : "Catat Pembayaran Piutang"}
                                 </h2>
                                 <button
+                                    type="button"
                                     onClick={handleClose}
+                                    disabled={loading}
                                     aria-label="Tutup form pembayaran hutang atau piutang"
                                     className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 >
