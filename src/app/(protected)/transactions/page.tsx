@@ -439,15 +439,46 @@ export default function TransactionsPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setShowExportMenu(true);
-                                            setShowMoreActions(false);
-                                        }}
+                                        onClick={() => setShowExportMenu(!showExportMenu)}
                                         role="menuitem"
+                                        aria-expanded={showExportMenu}
+                                        aria-haspopup="menu"
                                         className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                     >
                                         Export
                                     </button>
+                                    {showExportMenu && (
+                                        <div
+                                            role="menu"
+                                            aria-label="Pilihan export transaksi"
+                                            className="mb-1 rounded-xl bg-slate-50 p-1 dark:bg-slate-800/70"
+                                        >
+                                            <button
+                                                type="button"
+                                                role="menuitem"
+                                                onClick={() => {
+                                                    onExportCSV();
+                                                    setShowExportMenu(false);
+                                                    setShowMoreActions(false);
+                                                }}
+                                                className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                                            >
+                                                Export CSV
+                                            </button>
+                                            <button
+                                                type="button"
+                                                role="menuitem"
+                                                onClick={() => {
+                                                    onExportPDF();
+                                                    setShowExportMenu(false);
+                                                    setShowMoreActions(false);
+                                                }}
+                                                className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                                            >
+                                                Export PDF
+                                            </button>
+                                        </div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => {
