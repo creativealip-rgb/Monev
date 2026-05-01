@@ -61,6 +61,8 @@ export function AccountSection({
                                 key={acc.id}
                                 type="button"
                                 onClick={() => onSelectAccount(acc.id)}
+                                aria-pressed={isSelected}
+                                aria-label={`${transactionType === "transfer" ? "Pilih akun sumber" : "Pilih akun saldo"} ${acc.name} Rp ${acc.balance.toLocaleString("id-ID")}`}
                                 className={cn(
                                     "min-w-[140px] p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
                                     isSelected
@@ -108,6 +110,8 @@ export function AccountSection({
                                     key={acc.id}
                                     type="button"
                                     onClick={() => onSelectTargetAccount?.(acc.id)}
+                                    aria-pressed={isSelected}
+                                    aria-label={`Pilih akun tujuan ${acc.name} Rp ${acc.balance.toLocaleString("id-ID")}`}
                                     className={cn(
                                         "min-w-[140px] p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
                                         isSelected
