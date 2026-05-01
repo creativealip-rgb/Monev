@@ -70,6 +70,20 @@ interface GoalDetailModalProps {
 }
 
 export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: GoalDetailModalProps) {
+    useEffect(() => {
+        if (!isOpen) return;
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") onClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onClose]);
+
     if (!isOpen || !goal) return null;
 
     const isCompleted = goal.percentage >= 100;
@@ -94,12 +108,15 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 50, scale: 0.95 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl p-5 overflow-y-auto max-h-[85vh] relative shadow-2xl"
+                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-t-[2rem] sm:rounded-2xl p-5 overflow-y-auto max-h-[88svh] relative shadow-2xl mt-auto sm:mt-0"
                         onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="goal-detail-title"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Detail Goal</h2>
-                            <button onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
+                            <h2 id="goal-detail-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Detail Goal</h2>
+                            <button type="button" aria-label="Tutup detail goal" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
                                 <X size={16} />
                             </button>
                         </div>
@@ -328,14 +345,18 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
 
                             <div className="grid grid-cols-2 gap-2 pt-1">
                                 <button
+                                    type="button"
                                     onClick={() => onEdit(goal)}
+                                    aria-label={`Edit ${goal.name}`}
                                     className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-sky-500 text-white font-bold text-sm hover:bg-sky-600 transition-all active:scale-95 shadow-lg shadow-sky-500/20"
                                 >
                                     <Edit2 size={16} />
                                     Edit
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => onDelete(goal.id)}
+                                    aria-label={`Hapus ${goal.name}`}
                                     className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all active:scale-95"
                                 >
                                     <Trash2 size={16} />
