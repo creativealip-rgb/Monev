@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Portal } from "./Portal";
 import { cn } from "@/frontend/lib/utils";
 
@@ -28,6 +29,22 @@ export function ConfirmDialog({
     cancelText = "Batal",
     type = "danger"
 }: ConfirmDialogProps) {
+    const titleId = "confirm-dialog-title";
+    const descriptionId = "confirm-dialog-description";
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !loading) {
+                onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, loading, onClose]);
+
     return (
         <Portal>
             <AnimatePresence>
@@ -49,6 +66,10 @@ export function ConfirmDialog({
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby={titleId}
+                                aria-describedby={descriptionId}
                                 className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative focus:outline-none overflow-hidden"
                             >
                                 <div className="flex flex-col items-center text-center">
@@ -61,8 +82,8 @@ export function ConfirmDialog({
                                         <AlertTriangle size={32} />
                                     </div>
 
-                                    <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
-                                    <p className="text-sm text-muted-foreground mb-8">
+                                    <h3 id={titleId} className="text-xl font-bold text-foreground mb-2">{title}</h3>
+                                    <p id={descriptionId} className="text-sm text-muted-foreground mb-8">
                                         {description}
                                     </p>
 
