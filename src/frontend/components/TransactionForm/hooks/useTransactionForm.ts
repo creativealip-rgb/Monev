@@ -93,7 +93,7 @@ export function useTransactionForm({
     // Load categories when type changes
     const loadCategories = useCallback(async (type: TransactionType) => {
         try {
-            const response = await apiFetch("/api/categories");
+            const response = await apiFetch("/api/categories", { silent: true });
             const result = await response.json();
             if (result.success) {
                 const filteredCats = result.data.filter((c: Category) => {
@@ -282,9 +282,14 @@ export function useTransactionForm({
                 window.dispatchEvent(new CustomEvent("transactionAdded"));
 
                 // Show success feedback with Time-Cost
-                const settingsRes = await apiFetch("/api/profile");
-                const profile = await settingsRes.json();
-                const hourlyRate = profile.data?.user?.hourlyRate || 50000;
+                let hourlyRate = 50000;
+                try {
+                    const settingsRes = await apiFetch("/api/profile", { silent: true });
+                    const profile = await settingsRes.json().catch(() => ({ data: null }));
+                    hourlyRate = profile.data?.user?.hourlyRate || hourlyRate;
+                } catch {
+                    // Optional profile data should not block transaction creation.
+                }
                 const hours = parsedAmount / hourlyRate;
 
                 toastSuccess(
