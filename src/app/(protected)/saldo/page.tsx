@@ -56,10 +56,14 @@ export default function SaldoPage() {
     useEffect(() => {
         const shouldSuppressNav = isAddOpen || isEditOpen;
         window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: shouldSuppressNav }));
-        document.body.style.overflow = isEditOpen ? "hidden" : "";
+        document.body.style.overflow = shouldSuppressNav ? "hidden" : "";
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key !== "Escape") return;
+            if (showAccountMenu !== null) {
+                setShowAccountMenu(null);
+                return;
+            }
             if (isEditOpen && !isSaving) setIsEditOpen(false);
             if (isAddOpen && !isSaving) resetForm();
         };
@@ -70,7 +74,7 @@ export default function SaldoPage() {
             document.body.style.overflow = "";
             document.removeEventListener("keydown", handleKeyDown, true);
         };
-    }, [isAddOpen, isEditOpen, isSaving]);
+    }, [isAddOpen, isEditOpen, isSaving, showAccountMenu]);
 
     const accountTypeLabels: Record<string, string> = {
         bank: t("saldo.type.bank"),
@@ -229,6 +233,8 @@ export default function SaldoPage() {
                     <motion.button 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        type="button"
+                        aria-label="Tambah akun saldo"
                         onClick={() => { haptics.medium(); setIsAddOpen(true); }}
                         className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20"
                     >
@@ -265,6 +271,8 @@ export default function SaldoPage() {
                                 <motion.button
                                     key={preset.name}
                                     whileTap={{ scale: 0.95 }}
+                                    type="button"
+                                    aria-label={`Tambah akun ${preset.name}`}
                                     onClick={() => openQuickAdd(preset)}
                                     className="flex-shrink-0 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 transition-all flex items-center gap-2 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md"
                                 >
@@ -275,6 +283,8 @@ export default function SaldoPage() {
                         })}
                         <motion.button
                             whileTap={{ scale: 0.95 }}
+                            type="button"
+                            aria-label="Tambah akun saldo lainnya"
                             onClick={() => { haptics.medium(); setIsAddOpen(true); }}
                             className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20"
                         >
@@ -290,6 +300,9 @@ export default function SaldoPage() {
                     <div className="mt-6 flex items-center gap-2">
                         <motion.button
                             whileTap={{ scale: 0.95 }}
+                            type="button"
+                            aria-pressed={viewMode === "list"}
+                            aria-label="Tampilkan akun sebagai daftar"
                             onClick={() => {
                                 haptics.tap();
                                 setViewMode("list");
@@ -306,6 +319,9 @@ export default function SaldoPage() {
                         </motion.button>
                         <motion.button
                             whileTap={{ scale: 0.95 }}
+                            type="button"
+                            aria-pressed={viewMode === "group"}
+                            aria-label="Tampilkan akun berdasarkan grup"
                             onClick={() => {
                                 haptics.tap();
                                 setViewMode("group");
@@ -327,7 +343,8 @@ export default function SaldoPage() {
             <main className="px-6 mt-8">
                 {isAddOpen ? (
                     <motion.div
-                        role="region"
+                        role="dialog"
+                        aria-modal="true"
                         aria-labelledby="add-account-title"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -341,7 +358,10 @@ export default function SaldoPage() {
                                     Langkah {step} dari 3
                                 </span>
                                 <button
+                                    type="button"
+                                    aria-label="Batalkan tambah akun"
                                     onClick={resetForm}
+                                    disabled={isSaving}
                                     className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1"
                                 >
                                     <X size={14} />
@@ -374,6 +394,8 @@ export default function SaldoPage() {
                                             <motion.button
                                                 key={type.id}
                                                 whileTap={{ scale: 0.95 }}
+                                                type="button"
+                                                aria-label={`Pilih tipe akun ${type.label}`}
                                                 onClick={() => {
                                                     haptics.tap();
                                                     setSelectedType(type.id);
@@ -399,6 +421,7 @@ export default function SaldoPage() {
                                 className="p-6"
                             >
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         haptics.tap();
                                         setStep(1);
@@ -416,6 +439,8 @@ export default function SaldoPage() {
                                             <motion.button
                                                 key={preset.name}
                                                 whileTap={{ scale: 0.95 }}
+                                                type="button"
+                                                aria-label={`Pilih provider ${preset.name}`}
                                                 onClick={() => {
                                                     haptics.tap();
                                                     setSelectedPreset(preset);
@@ -430,6 +455,7 @@ export default function SaldoPage() {
                                     })}
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         haptics.tap();
                                         setSelectedPreset(null);
@@ -452,6 +478,7 @@ export default function SaldoPage() {
                             >
                                 <h2 id="add-account-title" className="sr-only">Detail akun dan saldo awal</h2>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         haptics.tap();
                                         if (selectedPreset) {
@@ -624,6 +651,8 @@ export default function SaldoPage() {
                                                 <button
                                                     type="button"
                                                     aria-label={`Menu akun ${acc.name}`}
+                                                    aria-haspopup="menu"
+                                                    aria-expanded={showAccountMenu === acc.id}
                                                     className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -640,9 +669,13 @@ export default function SaldoPage() {
                                                             initial={{ opacity: 0, scale: 0.95 }}
                                                             animate={{ opacity: 1, scale: 1 }}
                                                             exit={{ opacity: 0, scale: 0.95 }}
+                                                            role="menu"
+                                                            aria-label={`Aksi akun ${acc.name}`}
                                                             className="absolute right-0 top-8 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
                                                         >
                                                             <button
+                                                                type="button"
+                                                                role="menuitem"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
@@ -654,6 +687,8 @@ export default function SaldoPage() {
                                                                 <Pencil size={14} /> Edit
                                                             </button>
                                                             <button
+                                                                type="button"
+                                                                role="menuitem"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleDeleteAccount(acc.id);
@@ -774,6 +809,8 @@ export default function SaldoPage() {
                                                                             <button
                                                                                 type="button"
                                                                                 aria-label={`Menu akun ${acc.name}`}
+                                                                                aria-haspopup="menu"
+                                                                                aria-expanded={showAccountMenu === acc.id}
                                                                                 className="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
@@ -790,9 +827,13 @@ export default function SaldoPage() {
                                                                                         initial={{ opacity: 0, scale: 0.95 }}
                                                                                         animate={{ opacity: 1, scale: 1 }}
                                                                                         exit={{ opacity: 0, scale: 0.95 }}
+                                                                                        role="menu"
+                                                                                        aria-label={`Aksi akun ${acc.name}`}
                                                                                         className="absolute right-0 top-6 w-28 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
                                                                                     >
                                                                                         <button
+                                                                                            type="button"
+                                                                                            role="menuitem"
                                                                                             onClick={(e) => {
                                                                                                 e.stopPropagation();
                                                                                                 setEditForm({ name: acc.name, balance: acc.balance.toString(), color: acc.color, icon: acc.icon || "" });
@@ -804,6 +845,8 @@ export default function SaldoPage() {
                                                                                             <Pencil size={12} /> Edit
                                                                                         </button>
                                                                                         <button
+                                                                                            type="button"
+                                                                                            role="menuitem"
                                                                                             onClick={(e) => {
                                                                                                 e.stopPropagation();
                                                                                                 handleDeleteAccount(acc.id, false);
@@ -846,6 +889,7 @@ export default function SaldoPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            aria-hidden="true"
                             onClick={() => {
                                 if (!isSaving) setIsEditOpen(false);
                             }}
@@ -946,7 +990,7 @@ export default function SaldoPage() {
                                             setIsSaving(false);
                                         }
                                     }}
-                                    disabled={isSaving}
+                                    disabled={isSaving || !editForm.name.trim()}
                                     className="flex-1 py-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? (
