@@ -49,10 +49,10 @@ export function BillHistoryModal({ isOpen, onClose, bill }: BillHistoryModalProp
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleKeyDown);
         return () => {
             document.body.style.overflow = originalOverflow;
-            window.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown);
         };
     }, [isOpen, onClose]);
 

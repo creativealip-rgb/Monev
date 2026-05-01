@@ -65,10 +65,10 @@ export function PayBillSheet({
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleKeyDown);
         return () => {
             document.body.style.overflow = originalOverflow;
-            window.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown);
         };
     }, [bill, isSubmitting]);
 
