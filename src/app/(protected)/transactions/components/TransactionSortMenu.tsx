@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { cn } from "@/frontend/lib/utils";
 import { ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
@@ -21,12 +22,31 @@ export function TransactionSortMenu({
     showSortMenu,
     setShowSortMenu,
 }: TransactionSortMenuProps) {
+    const sortLabel = sortBy === "date" ? "Tanggal" : sortBy === "amount" ? "Jumlah" : "Kategori";
+
+    useEffect(() => {
+        if (!showSortMenu) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setShowSortMenu(false);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [showSortMenu, setShowSortMenu]);
+
     return (
         <div className="relative">
             <motion.button
+                type="button"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowSortMenu(!showSortMenu)}
+                aria-haspopup="menu"
+                aria-expanded={showSortMenu}
+                aria-label={`Urutkan transaksi. Aktif: ${sortLabel} ${sortOrder === "desc" ? "menurun" : "menaik"}`}
                 className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center transition-all",
                     sortBy !== "date" || sortOrder !== "desc"
@@ -40,6 +60,8 @@ export function TransactionSortMenu({
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    role="menu"
+                    aria-label="Pilihan urutan transaksi"
                     className="absolute right-0 top-12 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[160px] z-50"
                 >
                     <p className="text-xs font-bold text-muted-foreground px-2 py-1 uppercase">Urutkan</p>
@@ -50,6 +72,10 @@ export function TransactionSortMenu({
                     ].map((option) => (
                         <button
                             key={option.id}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={sortBy === option.id}
+                            aria-label={`Urutkan berdasarkan ${option.label}${sortBy === option.id ? `, ${sortOrder === "desc" ? "menurun" : "menaik"}` : ""}`}
                             onClick={() => {
                                 if (sortBy === option.id) {
                                     setSortOrder(sortOrder === "desc" ? "asc" : "desc");
