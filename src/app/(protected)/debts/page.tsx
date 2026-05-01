@@ -34,6 +34,7 @@ export default function DebtsPage() {
     const [partialPaymentDebt, setPartialPaymentDebt] = useState<Debt | null>(null);
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
     const [splitViewMode, setSplitViewMode] = useState<"all" | "split" | "regular">("all");
+    const [hasMounted, setHasMounted] = useState(false);
     const toast = useToast();
 
     const loadDebts = useCallback(async () => {
@@ -54,7 +55,10 @@ export default function DebtsPage() {
         }
     }, []);
 
-    useEffect(() => { loadDebts(); }, [loadDebts]);
+    useEffect(() => {
+        setHasMounted(true);
+        void loadDebts();
+    }, [loadDebts]);
 
     const closeSettleDialog = useCallback(() => {
         if (settlingId) return;
@@ -203,6 +207,10 @@ export default function DebtsPage() {
     const displayRegularDebts = activeTab === "unpaid" || activeTab === "regular" || activeTab === "all" 
         ? regularDebts.filter(d => d.status === "unpaid")
         : [];
+
+    if (!hasMounted) {
+        return <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950" suppressHydrationWarning />;
+    }
 
     return (
         <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
