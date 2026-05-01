@@ -41,13 +41,22 @@ export function CategorySection({
                 )}
             </div>
             <div className="grid grid-cols-2 gap-3">
+                {categories.length === 0 && (
+                    <div className="col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-4 text-center dark:border-slate-800 dark:bg-slate-900/40">
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kategori belum tersedia.</p>
+                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Transaksi tetap bisa disimpan tanpa kategori.</p>
+                    </div>
+                )}
                 {categories.map((cat) => {
                     const Icon = categoryIcons[cat.icon] || Wallet;
                     const isSelected = selectedCategory === cat.id;
                     return (
                         <button
                             key={cat.id}
+                            type="button"
                             onClick={() => onCategorySelect(cat.id)}
+                            aria-pressed={isSelected}
+                            aria-label={`Pilih kategori ${cat.name}`}
                             className={cn(
                                 "p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden",
                                 isSelected
