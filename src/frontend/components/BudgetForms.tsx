@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
@@ -10,6 +10,25 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("BudgetForms");
+
+function useModalControls(isOpen: boolean, onClose: () => void, disabled = false) {
+    useEffect(() => {
+        if (!isOpen) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !disabled) onClose();
+        };
+
+        document.addEventListener("keydown", handleKeyDown, true);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown, true);
+        };
+    }, [disabled, isOpen, onClose]);
+}
+
 
 interface Category {
     id: number;
@@ -35,6 +54,8 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
     const [enableRollover, setEnableRollover] = useState(true);
 
     const expenseCategories = categories.filter(c => c.type === "expense");
+    const canSubmit = !!selectedCategory && Number.isFinite(Number(amount)) && Number(amount) > 0 && !loading;
+    useModalControls(isOpen, onClose, loading);
 
     const handleSubmit = async () => {
         if (loading) return;
@@ -89,7 +110,8 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                            onClick={onClose}
+                            aria-hidden="true"
+                            onClick={() => { if (!loading) onClose(); }}
                         />
                         <motion.div
                             key="add-budget-modal"
@@ -97,12 +119,15 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="add-budget-title"
                             className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Budget</h2>
-                                <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <h2 id="add-budget-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Budget</h2>
+                                <button type="button" aria-label="Tutup tambah budget" disabled={loading} onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -121,6 +146,9 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                                         {expenseCategories.map((category) => (
                                             <button
                                                 key={category.id}
+                                                type="button"
+                                                aria-pressed={selectedCategory === category.id}
+                                                aria-label={`Pilih kategori budget ${category.name}`}
                                                 onClick={() => setSelectedCategory(category.id)}
                                                 className={cn(
                                                     "flex items-center gap-3 p-3 rounded-xl border-2 transition-all",
@@ -142,13 +170,15 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Budget Amount</label>
+                                    <label htmlFor="add-budget-amount" className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Budget Amount</label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                         <input
-                                            type="number"
+                                            id="add-budget-amount"
+                                            type="text"
+                                            inputMode="numeric"
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
                                             placeholder="0"
                                             className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                         />
@@ -162,6 +192,10 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                                             <p className="text-[11px] text-slate-500 dark:text-slate-400">Sisa budget bulan ini diteruskan ke bulan depan</p>
                                         </div>
                                         <button
+                                            type="button"
+                                            role="switch"
+                                            aria-checked={enableRollover}
+                                            aria-label="Aktifkan rollover budget"
                                             onClick={() => setEnableRollover(!enableRollover)}
                                             className={cn(
                                                 "w-12 h-6 rounded-full transition-colors relative",
@@ -177,8 +211,9 @@ export function AddBudgetForm({ isOpen, onClose, onSuccess, categories, month, y
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
-                                    disabled={loading}
+                                    disabled={!canSubmit}
                                     className={cn(
                                         "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                         loading
@@ -206,11 +241,15 @@ interface EditBudgetFormProps {
 
 export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudgetFormProps) {
     const [amount, setAmount] = useState(budget.limit.toString());
+    const [loading, setLoading] = useState(false);
+    const canSubmit = Number.isFinite(Number(amount)) && Number(amount) > 0 && !loading;
+    useModalControls(isOpen, onClose, loading);
 
     const handleSubmit = async () => {
         const amountValue = Number(amount);
-        if (!Number.isFinite(amountValue) || amountValue <= 0) return;
+        if (!Number.isFinite(amountValue) || amountValue <= 0 || loading) return;
 
+        setLoading(true);
         try {
             const response = await apiFetch(`/api/budgets/${budget.id}`, {
                 method: "PUT",
@@ -226,6 +265,8 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
             }
         } catch (err) {
             logger.error("Failed to update budget", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -240,7 +281,8 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                            onClick={onClose}
+                            aria-hidden="true"
+                            onClick={() => { if (!loading) onClose(); }}
                         />
                         <motion.div
                             key="edit-budget-modal"
@@ -248,12 +290,15 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="edit-budget-title"
                             className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Edit Budget</h2>
-                                <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <h2 id="edit-budget-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Edit Budget</h2>
+                                <button type="button" aria-label="Tutup edit budget" disabled={loading} onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -270,23 +315,27 @@ export function EditBudgetForm({ isOpen, onClose, onSuccess, budget }: EditBudge
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Budget Amount</label>
+                                <label htmlFor="edit-budget-amount" className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Budget Amount</label>
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                     <input
-                                        type="number"
+                                        id="edit-budget-amount"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
                                         className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white"
                                     />
                                 </div>
                             </div>
 
                             <button
+                                type="button"
                                 onClick={handleSubmit}
+                                disabled={!canSubmit}
                                 className="w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-500 hover:bg-sky-600 transition-all mt-4 shadow-lg shadow-sky-500/30 active:scale-[0.98]"
                             >
-                                Simpan Perubahan
+                                {loading ? "Menyimpan..." : "Simpan Perubahan"}
                             </button>
                         </motion.div>
                     </>
