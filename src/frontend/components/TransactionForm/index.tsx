@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Plus, Edit2, Trash2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { SplitBillFlow } from "@/frontend/components/SplitBillFlow";
 import { useToast } from "@/frontend/components/UI";
@@ -92,6 +93,29 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         setTransactionType(type);
     };
 
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !loading) {
+                if (showTemplateModal) {
+                    setShowTemplateModal(false);
+                    return;
+                }
+                handleClose();
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown, true);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown, true);
+        };
+    }, [handleClose, isOpen, loading, setShowTemplateModal, showTemplateModal]);
+
     if (!isOpen) return null;
 
     const parsedAmount = Number(amount);
@@ -137,7 +161,10 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed inset-0 z-[10001] overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="transaction-form-title"
+                className="fixed inset-0 z-[10001] overflow-x-hidden overflow-y-auto"
             >
                 <div className="fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-200/30 via-transparent to-transparent dark:from-sky-900/20" />
@@ -149,11 +176,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                     <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
                         <button
                             onClick={handleClose}
+                            aria-label="Tutup transaksi baru"
+                            disabled={loading}
                             className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400"
                         >
                             <X size={20} />
                         </button>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                        <h2 id="transaction-form-title" className="text-lg font-bold text-slate-900 dark:text-white">
                             Transaksi Baru
                         </h2>
                         <div className="w-10" />
@@ -234,6 +263,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitDisabled}
+                                aria-describedby={submitHelperText ? "transaction-submit-helper" : undefined}
                                 className={cn(
                                     "w-full py-4 rounded-2xl font-bold text-white shadow-xl transition-all",
                                     getSubmitButtonClasses()
@@ -247,7 +277,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 ) : "Simpan Transaksi"}
                             </button>
                             {isSubmitDisabled && submitHelperText && (
-                                <p className="mt-2 text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                <p id="transaction-submit-helper" className="mt-2 text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                     {submitHelperText}
                                 </p>
                             )}
@@ -256,6 +286,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                             {!showTemplateModal && (
                                 <button
                                     onClick={handleSaveAsTemplate}
+                                    disabled={!selectedCategory || !amount || loading}
                                     className="w-full mt-3 py-3 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 rounded-xl hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors flex items-center justify-center gap-2"
                                 >
                                     <Plus size={14} />
@@ -273,9 +304,12 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 className="fixed inset-0 z-[10003] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
-                                onClick={() => setShowTemplateModal(false)}
+                                onClick={() => !loading && setShowTemplateModal(false)}
                             >
                                 <motion.div
+                                    role="dialog"
+                                    aria-modal="true"
+                                    aria-labelledby="quick-template-title"
                                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                                     animate={{ scale: 1, opacity: 1, y: 0 }}
                                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -284,9 +318,10 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                     className="w-full max-w-[400px] mx-4 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-h-[80vh] overflow-y-auto"
                                 >
                                     <div className="flex items-center justify-between px-6 pt-6 pb-4 bg-white dark:bg-slate-900 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Kelola Template Cepat</h3>
+                                        <h3 id="quick-template-title" className="text-lg font-bold text-slate-900 dark:text-white">Kelola Template Cepat</h3>
                                         <button
                                             onClick={() => setShowTemplateModal(false)}
+                                            aria-label="Tutup kelola template cepat"
                                             className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"
                                         >
                                             <X size={18} />
