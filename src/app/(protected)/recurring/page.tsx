@@ -61,13 +61,31 @@ export default function RecurringPage() {
         categoryId: "",
     });
 
+    const resetForm = () => {
+        setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+        setEditingItem(null);
+    };
+
+    const openCreateForm = () => {
+        resetForm();
+        setShowForm(true);
+    };
+
+    const openEditForm = (item: RecurringTx) => {
+        setEditingItem(item);
+        setForm({ description: item.description, amount: item.amount.toString(), type: item.type, frequency: item.frequency, categoryId: item.categoryId?.toString() || "" });
+        setShowForm(true);
+    };
+
+    const sanitizeAmountInput = (value: string) => value.replace(/[^0-9]/g, "");
+
     const load = useCallback(async () => {
         setLoading(true);
         setLoadError(null);
         try {
             const [res, catRes] = await Promise.all([
                 apiFetch("/api/recurring"),
-                apiFetch("/api/categories"),
+                apiFetch("/api/categories", { silent: true }),
             ]);
             const data = await res.json();
             const catData = await catRes.json();
@@ -95,8 +113,22 @@ export default function RecurringPage() {
         };
     }, [showForm]);
 
+    useEffect(() => {
+        if (!showForm) return;
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !isSubmitting) closeForm();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [showForm, isSubmitting]);
+
     const handleToggle = async (item: RecurringTx) => {
-        if (togglingId) return;
+        if (togglingId || deletingId || isSubmitting) return;
         setTogglingId(item.id);
         try {
             const res = await apiFetch(`/api/recurring/${item.id}`, {
@@ -119,10 +151,12 @@ export default function RecurringPage() {
     };
 
     const handleDelete = (id: number) => {
+        if (deletingId || togglingId || isSubmitting) return;
         setConfirmDeleteId(id);
     };
 
     const executeDelete = async (id: number) => {
+        if (deletingId) return;
         setDeletingId(id);
         try {
             const res = await apiFetch(`/api/recurring/${id}`, { method: "DELETE" });
@@ -191,9 +225,9 @@ export default function RecurringPage() {
     };
 
     const closeForm = () => {
+        if (isSubmitting) return;
         setShowForm(false);
-        setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
-        setEditingItem(null);
+        resetForm();
     };
 
     const filtered = { active: items.filter(i => i.isActive), inactive: items.filter(i => !i.isActive) };
@@ -213,6 +247,7 @@ export default function RecurringPage() {
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
+                            aria-label="Kembali ke dashboard"
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
@@ -223,7 +258,9 @@ export default function RecurringPage() {
                         </div>
                     </div>
                     <button
-                        onClick={() => setShowForm(true)}
+                        type="button"
+                        onClick={openCreateForm}
+                        aria-label="Tambah transaksi berulang"
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
                     >
                         <Plus size={24} strokeWidth={2.5} />
@@ -281,7 +318,8 @@ export default function RecurringPage() {
                             Tambahkan gaji, tagihan rutin, Netflix, atau pengeluaran mingguan kamu
                         </p>
                         <button
-                            onClick={() => setShowForm(true)}
+                            type="button"
+                            onClick={openCreateForm}
                             className="mt-6 flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-95"
                         >
                             <Plus size={16} />
@@ -300,7 +338,7 @@ export default function RecurringPage() {
                                 </div>
                                 <div className="space-y-2.5">
                                     {filtered.active.map(item => (
-                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} onEdit={(i) => { setEditingItem(i); setForm({ description: i.description, amount: i.amount.toString(), type: i.type, frequency: i.frequency, categoryId: i.categoryId?.toString() || "" }); setShowForm(true); }} />
+                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} onEdit={openEditForm} />
                                     ))}
                                 </div>
                             </section>
@@ -315,7 +353,7 @@ export default function RecurringPage() {
                                 </div>
                                 <div className="space-y-2.5 opacity-55">
                                     {filtered.inactive.map(item => (
-                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} onEdit={(i) => { setEditingItem(i); setForm({ description: i.description, amount: i.amount.toString(), type: i.type, frequency: i.frequency, categoryId: i.categoryId?.toString() || "" }); setShowForm(true); }} />
+                                        <RecurringItem key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} onEdit={openEditForm} />
                                     ))}
                                 </div>
                             </section>
@@ -348,7 +386,9 @@ export default function RecurringPage() {
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 id="recurring-sheet-title" className="text-xl font-bold text-foreground">{editingItem ? "Edit Transaksi" : "Transaksi Berulang Baru"}</h2>
                                     <button
+                                        type="button"
                                         onClick={closeForm}
+                                        disabled={isSubmitting}
                                         aria-label="Tutup form transaksi berulang"
                                         className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                     >
@@ -364,7 +404,9 @@ export default function RecurringPage() {
                                             {(["expense", "income"] as const).map(t => (
                                                 <button
                                                     key={t}
+                                                    type="button"
                                                     onClick={() => setForm(f => ({ ...f, type: t, categoryId: "" }))}
+                                                    aria-pressed={form.type === t}
                                                     className={cn(
                                                         "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
                                                         form.type === t
@@ -385,8 +427,9 @@ export default function RecurringPage() {
 
                                     {/* Description */}
                                     <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Transaksi</label>
+                                        <label htmlFor="recurring-description" className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Nama Transaksi</label>
                                         <input
+                                            id="recurring-description"
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
                                             placeholder="Gaji, Netflix, Uang Kos..."
                                             value={form.description}
@@ -396,13 +439,15 @@ export default function RecurringPage() {
 
                                     {/* Amount */}
                                     <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
+                                        <label htmlFor="recurring-amount" className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jumlah (Rp)</label>
                                         <input
-                                            type="number"
+                                            id="recurring-amount"
+                                            type="text"
+                                            inputMode="numeric"
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
                                             placeholder="0"
                                             value={form.amount}
-                                            onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                                            onChange={e => setForm(f => ({ ...f, amount: sanitizeAmountInput(e.target.value) }))}
                                         />
                                     </div>
 
@@ -413,7 +458,9 @@ export default function RecurringPage() {
                                             {(["daily", "weekly", "monthly"] as const).map(freq => (
                                                 <button
                                                     key={freq}
+                                                    type="button"
                                                     onClick={() => setForm(f => ({ ...f, frequency: freq }))}
+                                                    aria-pressed={form.frequency === freq}
                                                     className={cn(
                                                         "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border-2 flex flex-col items-center gap-1",
                                                         form.frequency === freq
@@ -430,8 +477,9 @@ export default function RecurringPage() {
 
                                     {/* Category */}
                                     <div>
-                                        <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Kategori <span className="normal-case font-medium text-muted-foreground">(opsional)</span></label>
+                                        <label htmlFor="recurring-category" className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Kategori <span className="normal-case font-medium text-muted-foreground">(opsional)</span></label>
                                         <select
+                                            id="recurring-category"
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
                                             value={form.categoryId}
                                             onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}
@@ -445,6 +493,7 @@ export default function RecurringPage() {
 
                                     {/* Submit */}
                                     <button
+                                        type="button"
                                         onClick={handleCreate}
                                         disabled={!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || isSubmitting}
                                         className={cn(
@@ -466,7 +515,7 @@ export default function RecurringPage() {
 
             <ConfirmDialog
                 isOpen={!!confirmDeleteId}
-                onClose={() => setConfirmDeleteId(null)}
+                onClose={() => { if (!deletingId) setConfirmDeleteId(null); }}
                 onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
                 title="Hapus Transaksi Berulang"
                 description="Transaksi berulang ini akan dihapus secara permanen. Lanjutkan?"
@@ -490,6 +539,8 @@ function RecurringItem({
     return (
         <motion.div
             layout
+            role="group"
+            aria-label={`${item.description}, ${isIncome ? "pemasukan" : "pengeluaran"} berulang ${freq.label}, ${formatCurrency(item.amount)}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -531,7 +582,10 @@ function RecurringItem({
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
                     <button
+                        type="button"
                         onClick={() => onToggle(item)}
+                        aria-pressed={item.isActive}
+                        aria-label={`${item.isActive ? "Nonaktifkan" : "Aktifkan"} ${item.description}`}
                         className={cn(
                             "p-2 rounded-xl transition-colors",
                             item.isActive ? "hover:bg-emerald-50 dark:hover:bg-emerald-900/20" : "hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -544,14 +598,18 @@ function RecurringItem({
                     </button>
                     {onEdit && (
                         <button
+                            type="button"
                             onClick={() => onEdit(item)}
+                            aria-label={`Edit ${item.description}`}
                             className="p-2 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
                         >
                             <Pencil size={15} className="text-sky-400" />
                         </button>
                     )}
                     <button
+                        type="button"
                         onClick={() => onDelete(item.id)}
+                        aria-label={`Hapus ${item.description}`}
                         className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                         <Trash2 size={15} className="text-red-400" />
