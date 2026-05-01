@@ -168,6 +168,8 @@ export function useTransactionForm({
     }, []);
 
     const handleSubmit = useCallback(async () => {
+        if (loading) return;
+
         const parsedAmount = Number(amount);
         if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
             setError("Masukkan nominal yang valid");
@@ -309,7 +311,7 @@ export function useTransactionForm({
         } finally {
             setLoading(false);
         }
-    }, [selectedCategory, amount, description, encryptionKey, transactionType, selectedAccountId, targetAccountId, categories, haptics, toastSuccess, onSuccess, onClose]);
+    }, [selectedCategory, amount, description, encryptionKey, transactionType, selectedAccountId, targetAccountId, categories, haptics, toastSuccess, onSuccess, onClose, loading]);
 
     const handleClose = useCallback(() => {
         setAmount("");
