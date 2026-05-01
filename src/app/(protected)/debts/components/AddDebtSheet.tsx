@@ -29,6 +29,27 @@ export function AddDebtSheet({
     const [loading, setLoading] = useState(false);
     const toast = useToast();
 
+    const handleClose = () => {
+        if (loading) return;
+        onClose();
+    };
+
+    const sanitizeNumberInput = (value: string) => value.replace(/[^0-9.]/g, "");
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") handleClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, loading]);
+
     useEffect(() => {
         if (editingDebt) {
             setDirection(editingDebt.direction);
@@ -107,7 +128,7 @@ export function AddDebtSheet({
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999998]"
-                            onClick={onClose}
+                            onClick={handleClose}
                             aria-hidden="true"
                         />
                         <motion.div
@@ -121,7 +142,7 @@ export function AddDebtSheet({
                             <div className="flex items-center justify-between mb-6">
                                 <h2 id="debt-sheet-title" className="text-xl font-bold text-foreground">{editingDebt ? "Edit" : "Catat"} Hutang / Piutang</h2>
                                 <button
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     aria-label="Tutup form hutang atau piutang"
                                     className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                 >
@@ -133,6 +154,8 @@ export function AddDebtSheet({
                                 <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Jenis</label>
                                 <div className="flex gap-2 mb-5 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl">
                                     <button
+                                        type="button"
+                                        aria-pressed={direction === "owe"}
                                         onClick={() => setDirection("owe")}
                                         className={cn(
                                             "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all",
@@ -144,6 +167,8 @@ export function AddDebtSheet({
                                         Saya Berhutang
                                     </button>
                                     <button
+                                        type="button"
+                                        aria-pressed={direction === "owed"}
                                         onClick={() => setDirection("owed")}
                                         className={cn(
                                             "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all",
@@ -167,6 +192,7 @@ export function AddDebtSheet({
                                         placeholder="Contoh: Pak Budi / Shopee Paylater"
                                         value={debtorName}
                                         onChange={e => setDebtorName(e.target.value)}
+                                        autoComplete="name"
                                     />
                                 </div>
 
@@ -177,7 +203,9 @@ export function AddDebtSheet({
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                         placeholder="500000"
                                         value={amount}
-                                        onChange={e => setAmount(e.target.value)}
+                                        inputMode="decimal"
+                                        min={1}
+                                        onChange={e => setAmount(sanitizeNumberInput(e.target.value))}
                                     />
                                 </div>
 
@@ -202,6 +230,7 @@ export function AddDebtSheet({
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
                                     disabled={loading || !debtorName.trim() || !amount}
                                     className={cn(

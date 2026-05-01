@@ -56,6 +56,25 @@ export default function DebtsPage() {
 
     useEffect(() => { loadDebts(); }, [loadDebts]);
 
+    const closeSettleDialog = useCallback(() => {
+        if (settlingId) return;
+        setSettleDialog(null);
+    }, [settlingId]);
+
+    useEffect(() => {
+        if (!settleDialog) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") closeSettleDialog();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [settleDialog, closeSettleDialog]);
+
     useEffect(() => {
         window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: showAddSheet || !!editingDebt || !!partialPaymentDebt || !!settleDialog }));
         return () => {
@@ -117,10 +136,12 @@ export default function DebtsPage() {
     };
 
     const handleDelete = (id: number) => {
+        if (deletingId) return;
         setConfirmDeleteId(id);
     };
 
     const executeDelete = async (id: number) => {
+        if (deletingId) return;
         setDeletingId(id);
         try {
             const res = await apiFetch(`/api/debts/${id}`, { method: "DELETE" });
@@ -195,6 +216,7 @@ export default function DebtsPage() {
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
+                            aria-label="Kembali ke dashboard"
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
@@ -205,6 +227,8 @@ export default function DebtsPage() {
                         </div>
                     </div>
                     <button
+                        type="button"
+                        aria-label="Tambah hutang atau piutang"
                         onClick={() => setShowAddSheet(true)}
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                     >
@@ -260,6 +284,8 @@ export default function DebtsPage() {
                         {(["unpaid", "paid"] as const).map(tab => (
                             <button
                                 key={tab}
+                                type="button"
+                                aria-pressed={activeTab === tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
                                     "flex-1 py-2 rounded-xl text-sm font-bold transition-all",
@@ -283,6 +309,8 @@ export default function DebtsPage() {
                             {(["all", "split", "regular"] as const).map(filter => (
                                 <button
                                     key={filter}
+                                    type="button"
+                                    aria-pressed={splitViewMode === filter}
                                     onClick={() => setSplitViewMode(filter)}
                                     className={cn(
                                         "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
@@ -483,13 +511,16 @@ export default function DebtsPage() {
                             <motion.div
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                 className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999998]"
-                                onClick={() => setSettleDialog(null)}
+                                onClick={closeSettleDialog}
                             />
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                                className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[999999] bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl max-w-[500px] mx-auto"
+                                className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[999999] bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl max-w-[500px] mx-auto max-h-[90vh] overflow-y-auto"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="settle-debt-title"
                             >
                                 {settleDialog.debt.direction === "owe" ? (
                                     // Hutang dialog
@@ -497,7 +528,7 @@ export default function DebtsPage() {
                                         <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center mb-4">
                                             <TrendingDown size={24} className="text-rose-500" />
                                         </div>
-                                        <h3 className="text-lg font-black text-foreground mb-1">Bayar Hutang</h3>
+                                        <h3 id="settle-debt-title" className="text-lg font-black text-foreground mb-1">Bayar Hutang</h3>
                                         <p className="text-sm text-muted-foreground mb-2">
                                             Kamu akan membayar hutang ke <strong>{settleDialog.debt.debtorName}</strong> sebesar{" "}
                                             <strong className="text-rose-600">{formatCurrency(settleDialog.debt.amount)}</strong>
@@ -507,6 +538,7 @@ export default function DebtsPage() {
                                         </p>
                                         <div className="flex flex-col gap-3">
                                             <button
+                                                type="button"
                                                 onClick={() => handleSettle(true, true)}
                                                 disabled={!!settlingId}
                                                 className="w-full py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm shadow-lg shadow-rose-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -514,6 +546,7 @@ export default function DebtsPage() {
                                                 {settlingId ? "Memproses..." : "Bayar & Potong Saldo"}
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleSettle(true, false)}
                                                 disabled={!!settlingId}
                                                 className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -528,7 +561,7 @@ export default function DebtsPage() {
                                         <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
                                             <TrendingUp size={24} className="text-emerald-500" />
                                         </div>
-                                        <h3 className="text-lg font-black text-foreground mb-1">Piutang Lunas! 🎉</h3>
+                                        <h3 id="settle-debt-title" className="text-lg font-black text-foreground mb-1">Piutang Lunas!</h3>
                                         <p className="text-sm text-muted-foreground mb-2">
                                             <strong>{settleDialog.debt.debtorName}</strong> telah membayar{" "}
                                             <strong className="text-emerald-600">{formatCurrency(settleDialog.debt.amount)}</strong>
@@ -538,6 +571,7 @@ export default function DebtsPage() {
                                         </p>
                                         <div className="flex flex-col gap-3">
                                             <button
+                                                type="button"
                                                 onClick={() => handleSettle(true)}
                                                 disabled={!!settlingId}
                                                 className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -545,6 +579,7 @@ export default function DebtsPage() {
                                                 {settlingId ? "Memproses..." : "Ya, Tambah ke Saldo"}
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleSettle(false)}
                                                 disabled={!!settlingId}
                                                 className="w-full py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-foreground font-bold text-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"

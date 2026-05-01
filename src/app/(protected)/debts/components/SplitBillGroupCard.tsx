@@ -36,9 +36,12 @@ export function SplitBillGroupCard({
     onRefresh
 }: SplitBillGroupCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const { success: toastSuccess } = useToast();
+    const [payingId, setPayingId] = useState<number | null>(null);
+    const { success: toastSuccess, error: toastError } = useToast();
 
     const handleMarkAsPaid = async (debtId: number, debtorName: string) => {
+        if (payingId) return;
+        setPayingId(debtId);
         try {
             const response = await apiFetch(`/api/debts/${debtId}`, {
                 method: "PUT",
@@ -50,12 +53,16 @@ export function SplitBillGroupCard({
             });
 
             const result = await response.json();
-            if (result.success) {
+            if (result.success || response.ok) {
                 toastSuccess("Berhasil!", `${debtorName} telah melunasi hutang`);
                 onRefresh?.();
+            } else {
+                toastError("Gagal", result.error || "Gagal memperbarui status");
             }
-        } catch (error) {
-            console.error("Error marking debt as paid:", error);
+        } catch {
+            toastError("Gagal", "Coba lagi");
+        } finally {
+            setPayingId(null);
         }
     };
 
@@ -80,9 +87,12 @@ Thanks!`;
             className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-sky-100 dark:border-sky-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all"
         >
             {/* Header - Click to expand */}
-            <div
-                className="flex items-center justify-between p-4 cursor-pointer"
+            <button
+                type="button"
+                className="flex w-full items-center justify-between p-4 text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                 onClick={() => setIsExpanded(!isExpanded)}
+                aria-expanded={isExpanded}
+                aria-label={`${isExpanded ? "Tutup" : "Buka"} detail split bill ${transactionDescription}`}
             >
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-900/50 dark:to-blue-900/50 flex items-center justify-center">
@@ -114,7 +124,7 @@ Thanks!`;
                         )}
                     />
                 </div>
-            </div>
+            </button>
 
             {/* Expanded Details */}
             {isExpanded && (
@@ -163,6 +173,8 @@ Thanks!`;
                                     {participant.status === "unpaid" && (
                                         <>
                                             <button
+                                                type="button"
+                                                aria-label={`Tagih ${participant.debtorName} via WhatsApp`}
                                                 onClick={() => sendWAReminder(participant.debtorName, participant.amount)}
                                                 className="p-1.5 text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-lg transition-colors"
                                                 title="Tagih via WA"
@@ -170,6 +182,9 @@ Thanks!`;
                                                 <MessageCircle size={14} />
                                             </button>
                                             <button
+                                                type="button"
+                                                aria-label={`Tandai ${participant.debtorName} lunas`}
+                                                disabled={payingId === participant.id}
                                                 onClick={() => handleMarkAsPaid(participant.id, participant.debtorName)}
                                                 className="p-1.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                                                 title="Tandai Lunas"
