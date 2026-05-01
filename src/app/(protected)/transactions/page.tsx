@@ -375,15 +375,55 @@ export default function TransactionsPage() {
                                 >
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setShowSortMenu(true);
-                                            setShowMoreActions(false);
-                                        }}
+                                        onClick={() => setShowSortMenu((value) => !value)}
                                         role="menuitem"
+                                        aria-expanded={showSortMenu}
+                                        aria-haspopup="menu"
                                         className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                     >
                                         Urutkan
                                     </button>
+                                    {showSortMenu && (
+                                        <div
+                                            role="menu"
+                                            aria-label="Pilihan urutan transaksi"
+                                            className="mb-1 rounded-xl bg-slate-50 p-1 dark:bg-slate-800/70"
+                                        >
+                                            {[
+                                                { id: "date", label: "Tanggal" },
+                                                { id: "amount", label: "Jumlah" },
+                                                { id: "category", label: "Kategori" },
+                                            ].map((option) => (
+                                                <button
+                                                    key={option.id}
+                                                    type="button"
+                                                    role="menuitemradio"
+                                                    aria-checked={sortBy === option.id}
+                                                    onClick={() => {
+                                                        if (sortBy === option.id) {
+                                                            setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+                                                        } else {
+                                                            setSortBy(option.id as typeof sortBy);
+                                                            setSortOrder("desc");
+                                                        }
+                                                        setShowSortMenu(false);
+                                                        setShowMoreActions(false);
+                                                    }}
+                                                    className={cn(
+                                                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors",
+                                                        sortBy === option.id
+                                                            ? "bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                                                            : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                                                    )}
+                                                >
+                                                    {option.label}
+                                                    {sortBy === option.id && (
+                                                        <span aria-hidden="true">{sortOrder === "desc" ? "↓" : "↑"}</span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => {
