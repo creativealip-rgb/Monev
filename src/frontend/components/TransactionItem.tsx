@@ -143,6 +143,7 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
     const isExpense = transaction.type === "expense";
     const isIncome = transaction.type === "income";
     const Icon = style.icon;
+    const transactionLabel = `${displayDescription}, ${transaction.categoryName || "Lainnya"}, ${formatCurrency(transaction.amount)}`;
 
     // Swipe mechanism
     const x = useMotionValue(0);
@@ -154,6 +155,8 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
             <div className="absolute inset-0 flex items-stretch">
                 <motion.button
                     type="button"
+                    tabIndex={-1}
+                    aria-hidden="true"
                     style={{ opacity: leftActionOpacity }}
                     onClick={(event) => {
                         event.stopPropagation();
@@ -167,6 +170,8 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                 <div className="flex-1 bg-transparent" />
                 <motion.button
                     type="button"
+                    tabIndex={-1}
+                    aria-hidden="true"
                     style={{ opacity: rightActionOpacity }}
                     onClick={(event) => {
                         event.stopPropagation();
@@ -206,6 +211,23 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                         onClick?.();
                     }
                 }}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onClick?.();
+                    }
+                    if (event.key.toLowerCase() === "e") {
+                        event.preventDefault();
+                        onEdit?.(transaction);
+                    }
+                    if (event.key === "Delete" || event.key === "Backspace") {
+                        event.preventDefault();
+                        onDelete?.(transaction.id);
+                    }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${transactionLabel}. Tekan Enter untuk detail, E untuk edit, Delete untuk hapus.`}
                 className={cn(
                     "relative z-10 flex w-full items-center cursor-pointer p-4 card-clean",
                     "transition-shadow duration-300"
@@ -213,6 +235,9 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
             >
                 {showCheckbox && (
                     <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        aria-label={`${isSelected ? "Batalkan pilihan" : "Pilih"} transaksi ${displayDescription}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onSelect?.(transaction.id);
