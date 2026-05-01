@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
@@ -122,10 +122,10 @@ export function AddDebtSheet({
         }
     };
 
+    if (!isOpen) return null;
+
     return (
         <Portal>
-            <AnimatePresence>
-                {isOpen && (
                     <>
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -250,8 +250,6 @@ export function AddDebtSheet({
                             </div>
                         </motion.div>
                     </>
-                )}
-            </AnimatePresence>
         </Portal>
     );
 }
