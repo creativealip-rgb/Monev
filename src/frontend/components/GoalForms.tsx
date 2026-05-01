@@ -61,6 +61,26 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
         }
     }, [initialData, isOpen]);
 
+    const sanitizeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
+
+    const handleClose = () => {
+        if (!loading) onClose();
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") handleClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, loading]);
+
     const handleSubmit = async () => {
         if (loading) return;
 
@@ -122,7 +142,7 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                            onClick={onClose}
+                            onClick={handleClose}
                         />
                         <motion.div
                             key="add-goal-modal"
@@ -132,10 +152,13 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             onClick={(e) => e.stopPropagation()}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="add-goal-title"
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Goal</h2>
-                                <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <h2 id="add-goal-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Goal</h2>
+                                <button type="button" aria-label="Tutup form goal" disabled={loading} onClick={handleClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -165,7 +188,10 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                                         {goalIcons.map((item) => (
                                             <button
                                                 key={item.icon}
+                                                type="button"
                                                 onClick={() => setSelectedIcon(item)}
+                                                aria-pressed={selectedIcon.icon === item.icon}
+                                                aria-label={`Pilih ikon ${item.label}`}
                                                 className={cn(
                                                     "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-all",
                                                     selectedIcon.icon === item.icon
@@ -190,9 +216,10 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                         <input
-                                            type="number"
+                                            type="text"
+                                            inputMode="numeric"
                                             value={targetAmount}
-                                            onChange={(e) => setTargetAmount(e.target.value)}
+                                            onChange={(e) => setTargetAmount(sanitizeNumberInput(e.target.value))}
                                             placeholder="0"
                                             className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                         />
@@ -205,9 +232,10 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-[10px]">Rp</span>
                                             <input
-                                                type="number"
+                                                type="text"
+                                                inputMode="numeric"
                                                 value={currentAmount}
-                                                onChange={(e) => setCurrentAmount(e.target.value)}
+                                                onChange={(e) => setCurrentAmount(sanitizeNumberInput(e.target.value))}
                                                 placeholder="0"
                                                 className="w-full pl-8 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                             />
@@ -225,8 +253,9 @@ export function AddGoalForm({ isOpen, onClose, onSuccess, initialData }: AddGoal
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
-                                    disabled={loading}
+                                    disabled={loading || !name.trim() || !Number.isFinite(Number(targetAmount)) || Number(targetAmount) <= 0}
                                     className={cn(
                                         "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                         loading
@@ -259,6 +288,26 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
     const [deadline, setDeadline] = useState(goal.deadline ? new Date(goal.deadline).toISOString().split("T")[0] : "");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const sanitizeNumberInput = (value: string) => value.replace(/[^0-9]/g, "");
+
+    const handleClose = () => {
+        if (!loading) onClose();
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") handleClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, loading]);
 
     const handleSubmit = async () => {
         if (loading) return;
@@ -315,7 +364,7 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                            onClick={onClose}
+                            onClick={handleClose}
                         />
                         <motion.div
                             key="edit-goal-modal"
@@ -325,10 +374,13 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
                             onClick={(e) => e.stopPropagation()}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="edit-goal-title"
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Edit Goal</h2>
-                                <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <h2 id="edit-goal-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Edit Goal</h2>
+                                <button type="button" aria-label="Tutup form edit goal" disabled={loading} onClick={handleClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -356,9 +408,10 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
                                         <input
-                                            type="number"
+                                            type="text"
+                                            inputMode="numeric"
                                             value={targetAmount}
-                                            onChange={(e) => setTargetAmount(e.target.value)}
+                                            onChange={(e) => setTargetAmount(sanitizeNumberInput(e.target.value))}
                                             className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white"
                                         />
                                     </div>
@@ -370,9 +423,10 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-[10px]">Rp</span>
                                             <input
-                                                type="number"
+                                                type="text"
+                                                inputMode="numeric"
                                                 value={currentAmount}
-                                                onChange={(e) => setCurrentAmount(e.target.value)}
+                                                onChange={(e) => setCurrentAmount(sanitizeNumberInput(e.target.value))}
                                                 className="w-full pl-8 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                             />
                                         </div>
@@ -389,8 +443,9 @@ export function EditGoalForm({ isOpen, onClose, onSuccess, goal }: EditGoalFormP
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
-                                    disabled={loading}
+                                    disabled={loading || !name.trim() || !Number.isFinite(Number(targetAmount)) || Number(targetAmount) <= 0}
                                     className={cn(
                                         "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                         loading

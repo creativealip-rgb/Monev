@@ -297,6 +297,7 @@ export default function SavingsPage() {
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
+                            aria-label="Kembali ke dashboard"
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
@@ -328,7 +329,9 @@ export default function SavingsPage() {
                             </select>
                         </div>
                         <button
+                            type="button"
                             onClick={() => setIsGoalModalOpen(true)}
+                            aria-label="Tambah goal"
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                         >
                             <Plus size={24} strokeWidth={2.5} />
@@ -372,7 +375,10 @@ export default function SavingsPage() {
             {/* Goal Templates Section */}
             <div className="px-6 mt-4">
                 <button
+                    type="button"
                     onClick={() => setShowTemplates(!showTemplates)}
+                    aria-expanded={showTemplates}
+                    aria-controls="goal-template-list"
                     className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 border border-sky-200 dark:border-sky-800 text-sm font-semibold text-sky-700 dark:text-sky-300 hover:from-sky-100 dark:hover:from-sky-900/40 transition-all"
                 >
                     <div className="flex items-center gap-2">
@@ -388,6 +394,7 @@ export default function SavingsPage() {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
+                            id="goal-template-list"
                             className="overflow-hidden"
                         >
                             <div className="mt-3 grid grid-cols-2 gap-2.5">
@@ -400,7 +407,9 @@ export default function SavingsPage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.05 }}
                                             whileTap={{ scale: 0.96 }}
+                                            type="button"
                                             onClick={() => handleTemplateClick(tpl)}
+                                            aria-label={`Gunakan template goal ${tpl.name}`}
                                             className={cn(
                                                 "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent",
                                                 "bg-white dark:bg-slate-900 shadow-sm",
@@ -499,7 +508,11 @@ export default function SavingsPage() {
                                         key={g.id}
                                         data-testid="savings-goal-card"
                                         whileHover={{ scale: 1.02 }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`Detail goal ${g.name}, progress ${Math.round(g.percentage)} persen`}
                                         onClick={() => setDetailGoal(g)}
+                                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setDetailGoal(g); }}
                                         className={cn(
                                             "card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-emerald-200/40 dark:hover:shadow-emerald-900/20 transition-all",
                                             isCompleted && "overflow-visible"
@@ -680,9 +693,9 @@ export default function SavingsPage() {
 
             {/* Add Goal Modal */}
             <AddGoalForm
-                isOpen={!!goalInitialData}
-                onClose={() => setGoalInitialData(null)}
-                onSuccess={refresh}
+                isOpen={isGoalModalOpen || !!goalInitialData}
+                onClose={() => { setIsGoalModalOpen(false); setGoalInitialData(null); }}
+                onSuccess={() => { refresh(); setIsGoalModalOpen(false); setGoalInitialData(null); }}
                 initialData={goalInitialData || undefined}
             />
 
