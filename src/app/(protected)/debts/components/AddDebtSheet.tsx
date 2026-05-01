@@ -44,9 +44,11 @@ export function AddDebtSheet({
             if (event.key === "Escape") handleClose();
         };
         document.addEventListener("keydown", handleKeyDown, true);
+        window.addEventListener("keydown", handleKeyDown, true);
         return () => {
             document.body.style.overflow = previousOverflow;
             document.removeEventListener("keydown", handleKeyDown, true);
+            window.removeEventListener("keydown", handleKeyDown, true);
         };
     }, [isOpen, loading]);
 
