@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Portal } from "@/frontend/components/Portal";
 import { cn } from "@/frontend/lib/utils";
 import { X, Check } from "lucide-react";
@@ -60,6 +61,25 @@ export function TransactionFilterModal({
     amountRange,
     setAmountRange,
 }: TransactionFilterModalProps) {
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                onClose();
+            }
+        };
+
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, onClose]);
+
     return (
         <Portal>
             <AnimatePresence>
@@ -85,6 +105,7 @@ export function TransactionFilterModal({
                             <div className="flex items-center justify-between mb-8">
                                 <h2 id="transaction-filter-title" className="text-xl font-bold text-foreground">Filter Transaksi</h2>
                                 <button
+                                    type="button"
                                     onClick={onClose}
                                     aria-label="Tutup filter transaksi"
                                     className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
@@ -98,6 +119,8 @@ export function TransactionFilterModal({
                                     <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Akun</p>
                                     <div className="flex flex-wrap gap-2">
                                         <button
+                                            type="button"
+                                            aria-pressed={filterAccount === "all"}
                                             onClick={() => setFilterAccount("all")}
                                             className={cn(
                                                 "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2",
@@ -111,6 +134,9 @@ export function TransactionFilterModal({
                                         {accounts.map((account) => (
                                             <button
                                                 key={account.id}
+                                                type="button"
+                                                aria-pressed={filterAccount === account.id}
+                                                aria-label={`Filter akun ${account.name}`}
                                                 onClick={() => setFilterAccount(account.id)}
                                                 className={cn(
                                                     "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 flex items-center gap-2",
@@ -136,6 +162,8 @@ export function TransactionFilterModal({
                                         ].map((type) => (
                                             <button
                                                 key={type.id}
+                                                type="button"
+                                                aria-pressed={filterType === type.id}
                                                 onClick={() => setFilterType(type.id as "all" | "expense" | "income")}
                                                 className={cn(
                                                     "flex-1 py-3 px-4 rounded-2xl text-sm font-semibold transition-all border-2",
@@ -154,6 +182,8 @@ export function TransactionFilterModal({
                                     <p className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Kategori</p>
                                     <div className="flex flex-wrap gap-2">
                                         <button
+                                            type="button"
+                                            aria-pressed={filterCategory === "all"}
                                             onClick={() => setFilterCategory("all")}
                                             className={cn(
                                                 "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2",
@@ -167,6 +197,9 @@ export function TransactionFilterModal({
                                         {categories.map((cat) => (
                                             <button
                                                 key={cat.id}
+                                                type="button"
+                                                aria-pressed={filterCategory === cat.id}
+                                                aria-label={`Filter kategori ${cat.name}`}
                                                 onClick={() => setFilterCategory(cat.id)}
                                                 className={cn(
                                                     "px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 flex items-center gap-2",
@@ -213,6 +246,7 @@ export function TransactionFilterModal({
                                         ].map((preset) => (
                                             <button
                                                 key={preset.label}
+                                                type="button"
                                                 onClick={() => {
                                                     const end = new Date();
                                                     const start = new Date();
@@ -259,6 +293,7 @@ export function TransactionFilterModal({
 
                                 <div className="flex gap-4 pt-4">
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             setFilterAccount("all");
                                             setFilterCategory("all");
@@ -271,6 +306,7 @@ export function TransactionFilterModal({
                                         Reset Filter
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={onClose}
                                         className="flex-[2] py-4 px-6 rounded-2xl text-sm font-bold text-white bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-500/25 transition-all"
                                     >

@@ -431,7 +431,8 @@ export default function TransactionsPage() {
                 <div className="relative mb-4 mt-4">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <input
-                        type="text"
+                        type="search"
+                        aria-label="Cari transaksi"
                         placeholder={t("transactions.search")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
