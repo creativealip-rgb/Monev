@@ -399,6 +399,8 @@ export default function BudgetsPage() {
                         </div>
                     </div>
                     <button
+                        type="button"
+                        aria-label="Tambah budget"
                         onClick={() => {
                             if (!canCreateBudget(budgets.length, userTier)) {
                                 const msg = t("budgets.tierLimit")
@@ -424,6 +426,7 @@ export default function BudgetsPage() {
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <button
+                            type="button"
                             onClick={() => navigateMonth("prev")}
                             className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                             aria-label={t("budgets.previousMonth")}
@@ -435,6 +438,7 @@ export default function BudgetsPage() {
                             <p className="text-sm font-black text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
                         </div>
                         <button
+                            type="button"
                             onClick={() => navigateMonth("next")}
                             className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                             aria-label={t("budgets.nextMonth")}
@@ -445,6 +449,7 @@ export default function BudgetsPage() {
                     </div>
                     {(selectedMonth !== new Date().getMonth() + 1 || selectedYear !== new Date().getFullYear()) && (
                         <button
+                            type="button"
                             onClick={goToCurrentMonth}
                             className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold transition-colors"
                         >
@@ -532,6 +537,8 @@ export default function BudgetsPage() {
                     {/* Template Button & Section */}
                     <div className="mb-4">
                         <button
+                            type="button"
+                            aria-expanded={showTemplates}
                             onClick={() => setShowTemplates(!showTemplates)}
                             className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 border border-sky-200 dark:border-sky-800 text-sm font-semibold text-sky-700 dark:text-sky-300 hover:from-sky-100 dark:hover:from-sky-900/40 transition-all"
                         >
@@ -563,6 +570,7 @@ export default function BudgetsPage() {
                                             {BUDGET_TEMPLATES.map(tpl => (
                                                 <motion.button
                                                     key={tpl.id}
+                                                    type="button"
                                                     whileTap={{ scale: 0.98 }}
                                                     onClick={() => handleApplyTemplate(tpl.id)}
                                                     disabled={applyingTemplate !== null}
@@ -620,8 +628,16 @@ export default function BudgetsPage() {
                                 return (
                                     <motion.div
                                         key={b.id}
+                                        role="button"
+                                        tabIndex={0}
                                         whileHover={{ scale: 1.02 }}
                                         onClick={() => setDetailBudget(b)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                setDetailBudget(b);
+                                            }
+                                        }}
                                         className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20 transition-all"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
@@ -666,6 +682,9 @@ export default function BudgetsPage() {
                                         {rolloverAmt > 0 && (
                                             <div className="mt-3 flex items-center justify-between">
                                                 <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={isRollover}
                                                     onClick={(e) => toggleRollover(b.id, e)}
                                                     className={cn(
                                                         "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
