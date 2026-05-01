@@ -114,7 +114,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
             return;
         }
         setError(null);
-        setStep(transaction?.type === "transfer" ? "details" : "category");
+        setStep(transaction?.type === "transfer" || categories.length === 0 ? "details" : "category");
     };
 
     const handleCategorySelect = (categoryId: number) => {
@@ -126,7 +126,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
         if (loading) return;
         const isTransfer = transaction?.type === "transfer";
 
-        if (!transaction || !description.trim() || (!isTransfer && !selectedCategory) || !selectedAccountId || (isTransfer && !targetAccountId)) {
+        if (!transaction || !description.trim() || (!isTransfer && categories.length > 0 && !selectedCategory) || !selectedAccountId || (isTransfer && !targetAccountId)) {
             setError("Lengkapi semua field");
             return;
         }
@@ -141,7 +141,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                 body: JSON.stringify({
                     amount: parseFloat(amount),
                     description: description.trim(),
-                    categoryId: isTransfer ? null : selectedCategory,
+                    categoryId: isTransfer ? null : (selectedCategory ?? null),
                     type: transaction.type,
                     paymentMethod: "cash",
                     accountId: selectedAccountId,
