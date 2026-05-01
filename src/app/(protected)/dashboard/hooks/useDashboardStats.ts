@@ -83,7 +83,7 @@ export function useDashboardStats() {
     const { data: serverStats, isLoading: statsLoading } = useQuery({
         queryKey: ["dashboard", "stats", currentYear, currentMonth],
         queryFn: async () => {
-            const res = await apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`);
+            const res = await apiFetch(`/api/stats?year=${currentYear}&month=${currentMonth}`, { silent: true });
             const json = await res.json();
             if (json.success && json.data) {
                 OfflineManager.setCache("dashboard_stats", json.data);
@@ -136,7 +136,7 @@ export function useDashboardStats() {
     const { data: bills = [] } = useQuery({
         queryKey: ["dashboard", "bills"],
         queryFn: async () => {
-            const res = await apiFetch("/api/bills");
+            const res = await apiFetch("/api/bills", { silent: true });
             const json = await res.json();
             if (json.success) {
                 return json.data as any[];
