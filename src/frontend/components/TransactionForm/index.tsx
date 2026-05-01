@@ -338,21 +338,25 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                                             quickTemplates.map((template) => (
                                                 <div
                                                     key={template.id}
-                                                    className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700"
+                                                    className="flex min-w-0 items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700"
                                                 >
-                                                    <div className="flex-1">
-                                                        <p className="font-bold text-slate-900 dark:text-white text-sm">{template.label}</p>
-                                                        <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(template.amount)} • {template.categoryName}</p>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate font-bold text-slate-900 dark:text-white text-sm">{template.label}</p>
+                                                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{formatCurrency(template.amount)} • {template.categoryName}</p>
                                                     </div>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex shrink-0 gap-2">
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleEditTemplate(template)}
+                                                            aria-label={`Edit template ${template.label}`}
                                                             className="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 hover:bg-sky-200 dark:hover:bg-sky-900/50 transition-colors"
                                                         >
                                                             <Edit2 size={16} />
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleDeleteTemplate(template.id)}
+                                                            aria-label={`Hapus template ${template.label}`}
                                                             className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors"
                                                         >
                                                             <Trash2 size={16} />

@@ -384,9 +384,14 @@ export function useTransactionForm({
                 body: JSON.stringify(transData),
             });
 
-            const settingsRes = await apiFetch("/api/profile", { silent: true });
-            const profile = await settingsRes.json();
-            const hourlyRate = profile.data?.user?.hourlyRate || 50000;
+            let hourlyRate = 50000;
+            try {
+                const settingsRes = await apiFetch("/api/profile", { silent: true });
+                const profile = await settingsRes.json().catch(() => ({ data: null }));
+                hourlyRate = profile.data?.user?.hourlyRate || hourlyRate;
+            } catch {
+                // Optional profile data should not block quick template creation.
+            }
             const hours = template.amount / hourlyRate;
 
             if (response.ok) {
