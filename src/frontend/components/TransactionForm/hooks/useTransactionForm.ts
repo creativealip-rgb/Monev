@@ -142,6 +142,29 @@ export function useTransactionForm({
         }
     }, [isOpen, transactionType, loadCategories]);
 
+    useEffect(() => {
+        if (!isOpen || accounts.length === 0) return;
+
+        const sourceExists = accounts.some((account) => account.id === selectedAccountId);
+        const nextSourceId = sourceExists ? selectedAccountId : accounts[0].id;
+
+        if (!sourceExists) {
+            setSelectedAccountId(nextSourceId);
+        }
+
+        if (transactionType !== "transfer") {
+            if (targetAccountId !== null) setTargetAccountId(null);
+            return;
+        }
+
+        const targetExists = accounts.some(
+            (account) => account.id === targetAccountId && account.id !== nextSourceId
+        );
+        if (!targetExists) {
+            setTargetAccountId(accounts.find((account) => account.id !== nextSourceId)?.id ?? null);
+        }
+    }, [accounts, isOpen, selectedAccountId, targetAccountId, transactionType]);
+
     // Listen for smart input data
     useEffect(() => {
         const handleSmartInput = (e: CustomEvent) => {
