@@ -125,7 +125,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
     const isSubmitDisabled = loading ||
         isAmountInvalid ||
         accounts.length === 0 ||
-        (transactionType !== "transfer" && !selectedCategory) ||
+        (transactionType !== "transfer" && categories.length > 0 && !selectedCategory) ||
         transferUnavailable ||
         transferTargetInvalid;
 
@@ -137,7 +137,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 ? "Pilih akun tujuan yang berbeda."
                 : isAmountInvalid
                     ? "Masukkan nominal transaksi yang valid."
-                    : transactionType !== "transfer" && !selectedCategory
+                    : transactionType !== "transfer" && categories.length > 0 && !selectedCategory
                         ? "Pilih kategori transaksi."
                         : null;
 
