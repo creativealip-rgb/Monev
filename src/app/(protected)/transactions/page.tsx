@@ -298,12 +298,15 @@ export default function TransactionsPage() {
                                 setShowSortMenu={setShowSortMenu}
                             />
                             <motion.button
+                                type="button"
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => {
                                     setShowBulkActions(!showBulkActions);
                                     if (showBulkActions) clearSelection();
                                 }}
+                                aria-pressed={showBulkActions}
+                                aria-label={showBulkActions ? "Selesai pilih banyak transaksi" : t("transactions.bulkSelectTitle")}
                                 className={cn(
                                     "w-10 h-10 rounded-full flex items-center justify-center transition-all",
                                     showBulkActions
@@ -322,9 +325,11 @@ export default function TransactionsPage() {
                                 onExportPDF={onExportPDF}
                             />
                             <motion.button
+                                type="button"
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => setIsImportModalOpen(true)}
+                                aria-label="Import CSV"
                                 className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
                                 title="Import CSV"
                             >
@@ -333,9 +338,11 @@ export default function TransactionsPage() {
                         </div>
 
                         <motion.button
+                            type="button"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsFilterModalOpen(true)}
+                            aria-label="Filter transaksi"
                             className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center transition-all",
                                 activeFiltersCount > 0
@@ -348,22 +355,31 @@ export default function TransactionsPage() {
 
                         <div className="relative sm:hidden">
                             <motion.button
+                                type="button"
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => setShowMoreActions((value) => !value)}
+                                aria-expanded={showMoreActions}
+                                aria-haspopup="menu"
+                                aria-label="Aksi transaksi lainnya"
                                 className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                                 title="Aksi lainnya"
                             >
                                 <MoreHorizontal size={20} />
                             </motion.button>
                             {showMoreActions && (
-                                <div className="absolute right-0 top-12 z-[120] w-44 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-2 shadow-xl backdrop-blur-md">
+                                <div
+                                    role="menu"
+                                    aria-label="Aksi transaksi lainnya"
+                                    className="absolute right-0 top-12 z-[120] w-44 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-2 shadow-xl backdrop-blur-md"
+                                >
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setShowSortMenu(true);
                                             setShowMoreActions(false);
                                         }}
+                                        role="menuitem"
                                         className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                     >
                                         Urutkan
@@ -375,6 +391,8 @@ export default function TransactionsPage() {
                                             if (showBulkActions) clearSelection();
                                             setShowMoreActions(false);
                                         }}
+                                        role="menuitemcheckbox"
+                                        aria-checked={showBulkActions}
                                         className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                     >
                                         {showBulkActions ? "Selesai pilih" : "Pilih banyak"}
@@ -385,6 +403,7 @@ export default function TransactionsPage() {
                                             setShowExportMenu(true);
                                             setShowMoreActions(false);
                                         }}
+                                        role="menuitem"
                                         className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                     >
                                         Export
@@ -395,6 +414,7 @@ export default function TransactionsPage() {
                                             setIsImportModalOpen(true);
                                             setShowMoreActions(false);
                                         }}
+                                        role="menuitem"
                                         className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                     >
                                         Import CSV
