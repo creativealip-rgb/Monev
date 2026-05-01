@@ -62,7 +62,7 @@ export function useTransactionsData(searchQuery: string = "") {
     const { data: categories = [] } = useQuery({
         queryKey: ["dashboard", "categories"], // Share cache with dashboard
         queryFn: async () => {
-            const res = await apiFetch("/api/categories");
+            const res = await apiFetch("/api/categories", { silent: true });
             const json = await res.json();
             if (json.success) {
                 OfflineManager.setCache("dashboard_categories", json.data);

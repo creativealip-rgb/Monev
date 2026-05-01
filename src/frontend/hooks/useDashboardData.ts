@@ -101,7 +101,7 @@ export function useDashboardData() {
     const { data: profile, isLoading: profileLoading } = useQuery({
         queryKey: ["dashboard", "profile"],
         queryFn: async () => {
-            const res = await apiFetch("/api/profile");
+            const res = await apiFetch("/api/profile", { silent: true });
             const json = await res.json();
             if (json.success && json.data?.user) {
                 OfflineManager.setCache("dashboard_profile", json.data.user);
@@ -123,7 +123,7 @@ export function useDashboardData() {
     const { data: categories = [] } = useQuery({
         queryKey: ["dashboard", "categories"],
         queryFn: async () => {
-            const res = await apiFetch("/api/categories");
+            const res = await apiFetch("/api/categories", { silent: true });
             const json = await res.json();
             if (json.success) {
                 OfflineManager.setCache("dashboard_categories", json.data);
