@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getCouponByCode, useCoupon, hasUserClaimedCoupon, getCouponClaimCount } from "@/backend/db/operations";
+import { getCouponByCode, useCoupon as redeemCoupon, hasUserClaimedCoupon, getCouponClaimCount } from "@/backend/db/operations";
 
 export async function POST(req: NextRequest) {
     const session = await auth();
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Kuota kupon sudah habis" }, { status: 400 });
         }
 
-        await useCoupon(coupon.id, userId, coupon.tier as "pro" | "sultan");
+        await redeemCoupon(coupon.id, userId, coupon.tier as "pro" | "sultan");
 
         return NextResponse.json({
             success: true,
