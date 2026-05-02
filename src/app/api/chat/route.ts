@@ -143,6 +143,50 @@ function findMatchingGoal(goals: Goal[], query: string): Goal | null {
     return null;
 }
 
+function isBalanceLookup(message: string): boolean {
+    const text = normalizeSearchText(message);
+    if (!text) return false;
+    return /\b(saldo|kekayaan|rekening|akun|wallet|walet|ewallet|e wallet|dompet|cash|bank|bca|mandiri|bri|bni|gopay|ovo|dana|shopeepay)\b/i.test(text)
+        && !/\b(tambah|catat|masuk|keluar|transfer|bayar|beli|buat|update|ubah|hapus)\b/i.test(text);
+}
+
+function formatAccountType(type: string): string {
+    const labels: Record<string, string> = {
+        bank: "Rekening",
+        cash: "Cash",
+        e_wallet: "E-wallet",
+        ewallet: "E-wallet",
+        investment: "Investasi",
+        credit_card: "Kartu kredit",
+    };
+    return labels[type] || type.replace(/_/g, " ");
+}
+
+async function buildBalanceLookupReply(userId: number): Promise<string> {
+    const [accounts, investments] = await Promise.all([
+        getAccounts(userId),
+        getInvestments(userId),
+    ]);
+    const accountRows = accounts.map((account) => {
+        const signedBalance = account.type === "credit_card" ? -account.balance : account.balance;
+        return { ...account, signedBalance };
+    });
+    const totalAccounts = accountRows.reduce((sum, account) => sum + account.signedBalance, 0);
+    const totalInvestments = investments.reduce((sum, investment) => sum + (investment.quantity * investment.currentPrice), 0);
+    const totalWealth = totalAccounts + totalInvestments;
+
+    if (accountRows.length === 0 && investments.length === 0) {
+        return "Belum ada saldo akun atau investasi yang tercatat, Bos. Tambahin dulu dari halaman Saldo ya.";
+    }
+
+    const accountList = accountRows.length > 0
+        ? accountRows.map((account, index) => `${index + 1}. ${account.name} (${formatAccountType(account.type)}): Rp ${account.signedBalance.toLocaleString("id-ID")}`).join("\n")
+        : "Belum ada akun saldo.";
+    const investmentLine = totalInvestments > 0 ? `\nInvestasi: Rp ${totalInvestments.toLocaleString("id-ID")}` : "";
+
+    return `Ini data saldo yang kebaca dari halaman Saldo, Bos:\n\n${accountList}\n\nTotal saldo akun: Rp ${totalAccounts.toLocaleString("id-ID")}${investmentLine}\nTotal kekayaan: Rp ${totalWealth.toLocaleString("id-ID")}`;
+}
+
 async function askFinanceAgentWithTimeout(...args: Parameters<typeof askFinanceAgent>): ReturnType<typeof askFinanceAgent> {
     if (Date.now() < aiCircuitOpenUntil) {
         logger.warn("[ChatAPI] AI circuit open, returning fallback without provider call");
@@ -305,6 +349,12 @@ export async function POST(req: NextRequest) {
             }
 
             const reply = "Saya sudah paham itu transaksi, tapi nominalnya belum kebaca jelas. Coba tulis contoh: `makan pagi 20rb`.";
+            await logAIChat(userId, "assistant", reply);
+            return NextResponse.json({ reply });
+        }
+
+        if (!imageBase64 && isBalanceLookup(message || "")) {
+            const reply = await buildBalanceLookupReply(userId);
             await logAIChat(userId, "assistant", reply);
             return NextResponse.json({ reply });
         }
