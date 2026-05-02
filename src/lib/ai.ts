@@ -61,7 +61,17 @@ export interface FinancialContext {
         income: number;
         expense: number;
         balance: number;
+        totalAccounts?: number;
+        accountCount?: number;
+        totalInvestments?: number;
+        totalWealth?: number;
     };
+    accounts?: Array<{
+        id: number;
+        name: string;
+        type: string;
+        balance: number;
+    }>;
     goals: Array<{
         id: number;
         name: string;
@@ -656,7 +666,14 @@ Tugas Anda adalah:
 DATA BULAN INI:
 - Pemasukan: Rp ${context.monthlyStats.income.toLocaleString('id-ID')}
 - Pengeluaran: Rp ${context.monthlyStats.expense.toLocaleString('id-ID')}
-- Saldo (Pemasukan - Pengeluaran): Rp ${context.monthlyStats.balance.toLocaleString('id-ID')}
+- Saldo transaksi bulan ini (Pemasukan - Pengeluaran): Rp ${context.monthlyStats.balance.toLocaleString('id-ID')}
+
+DATA SALDO / AKUN (SUMBER HALAMAN SALDO):
+${context.accounts && context.accounts.length > 0 ? context.accounts.map(a => `- [ID: ${a.id}] ${a.name} (${a.type}): Rp ${a.balance.toLocaleString('id-ID')}`).join("\n") : "Belum ada akun saldo"}
+Total Saldo Akun: Rp ${(context.monthlyStats.totalAccounts || 0).toLocaleString('id-ID')}
+Jumlah Akun: ${context.monthlyStats.accountCount || 0}
+Total Kekayaan (Saldo Akun + Investasi): Rp ${(context.monthlyStats.totalWealth || 0).toLocaleString('id-ID')}
+PENTING: Jika user bertanya "total kekayaan", "saldo", atau data dari halaman Saldo, gunakan Total Kekayaan/Total Saldo Akun di bagian DATA SALDO / AKUN ini. Jangan pakai Saldo transaksi bulan ini sebagai total kekayaan.
 
 DATA INVESTASI:
 ${context.investments ? context.investments.map(i => `- [ID: ${i.id}] ${i.name} (${i.type}): ${i.quantity} unit @ Rp ${i.currentPrice.toLocaleString('id-ID')}/unit = Total Rp ${i.totalValue.toLocaleString('id-ID')} (${i.platform || 'Manual'})`).join("\n") : "Belum ada data investasi"}

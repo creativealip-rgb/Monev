@@ -11,6 +11,7 @@ import {
     getBills, getBillById, createBill, updateBill, deleteBill, toggleBillPaid,
     getDailyAICount, logAIChat, getUserSettings
 } from "@/backend/db/operations";
+import { getAccounts } from "@/backend/db/account-operations";
 import { logger } from "@/lib/logger";
 import { askFinanceAgent, getPsychologicalImpact } from "@/lib/ai";
 import { canUseAI, UserTier } from "@/lib/tier-gate";
@@ -323,13 +324,16 @@ export async function POST(req: NextRequest) {
 
         // Fetch full context only for finance-heavy questions; greetings/tests stay lightweight.
         const now = new Date();
-        const needsFullContext = Boolean(imageBase64) || /\b(analisis|analisa|budget|anggaran|goal|target|transaksi|pengeluaran|pemasukan|saldo|tagihan|investasi|hapus|ubah|update|cari|search|laporan|bulan|berapa|simulasi|beli|keuangan)\b/i.test(String(message || ""));
+        const needsFullContext = Boolean(imageBase64) || /\b(analisis|analisa|budget|anggaran|goal|target|transaksi|pengeluaran|pemasukan|saldo|akun|rekening|kekayaan|total|tagihan|investasi|hapus|ubah|update|cari|search|laporan|bulan|berapa|simulasi|beli|keuangan)\b/i.test(String(message || ""));
         const stats = await getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1);
         const allGoals = needsFullContext ? await getGoals(userId) : [];
         const allBudgets = needsFullContext ? await getBudgets(userId, now.getMonth() + 1, now.getFullYear()) : [];
         const rawTransactions = needsFullContext ? await getTransactions(userId, 30) : [];
         const allInvestments = needsFullContext ? await getInvestments(userId) : [];
         const allBills = needsFullContext ? await getBills(userId) : [];
+        const allAccounts = needsFullContext ? await getAccounts(userId) : [];
+        const totalAccounts = allAccounts.reduce((sum, account) => account.type === "credit_card" ? sum - account.balance : sum + account.balance, 0);
+        const totalInvestments = allInvestments.reduce((sum, investment) => sum + (investment.quantity * investment.currentPrice), 0);
         logger.info(`[ChatAPI] Context mode: ${needsFullContext ? "full" : "lite"}`);
 
         const goalsContext = allGoals.map(g => ({
@@ -350,6 +354,13 @@ export async function POST(req: NextRequest) {
             percent: (b.spent / b.amount) * 100
         }));
 
+        const accountsContext = allAccounts.map((account) => ({
+            id: account.id,
+            name: account.name,
+            type: account.type,
+            balance: account.type === "credit_card" ? -account.balance : account.balance,
+        }));
+
         const transactionsContext = rawTransactions.map((t) => {
             try {
                 return {
@@ -368,7 +379,14 @@ export async function POST(req: NextRequest) {
 
         // Get AI response
         const aiResponse = await askFinanceAgentWithTimeout(message || "Analyze this image", {
-            monthlyStats: stats,
+            monthlyStats: {
+                ...stats,
+                totalAccounts,
+                accountCount: allAccounts.length,
+                totalInvestments,
+                totalWealth: totalAccounts + totalInvestments,
+            },
+            accounts: accountsContext,
             goals: goalsContext,
             budgets: budgetsContext,
             transactions: transactionsContext,
