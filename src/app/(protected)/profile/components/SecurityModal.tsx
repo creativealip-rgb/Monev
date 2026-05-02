@@ -37,7 +37,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
     const [loadingSessions, setLoadingSessions] = useState(false);
 
     const handleSaveSecurity = async () => {
-        if (formData.isAppLockEnabled && !formData.securityPin) {
+        if (formData.isAppLockEnabled && !formData.securityPin && !formData.hasSecurityPin) {
             toast.error("Validasi", "Harap atur PIN sebelum mengaktifkan App Lock.");
             return;
         }
@@ -46,19 +46,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
             return;
         }
 
-        await apiFetch("/api/profile", {
-            method: "POST",
-            body: JSON.stringify({
-                type: "settings",
-                securityPin: formData.securityPin,
-                decoyPin: formData.decoyPin,
-                isAppLockEnabled: formData.isAppLockEnabled,
-                isBiometricEnabled: formData.isBiometricEnabled,
-                autoLockTimeout: formData.autoLockTimeout
-            })
-        });
-        toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
-        onSave();
+        await onSave();
     };
 
     const handleRevokeSessions = async () => {
@@ -256,7 +244,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 <Toggle 
                     checked={formData.isAppLockEnabled} 
                     onChange={() => {
-                        if (!formData.isAppLockEnabled && !formData.securityPin) {
+                        if (!formData.isAppLockEnabled && !formData.securityPin && !formData.hasSecurityPin) {
                             setShowPinInput(true);
                         }
                         setFormData((prev: any) => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }));
@@ -268,13 +256,13 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
             <SettingItem
                 icon={Shield}
                 title="Atur PIN"
-                description={formData.securityPin ? "PIN sudah diatur" : "Belum diatur"}
+                description={formData.securityPin || formData.hasSecurityPin ? "PIN sudah diatur" : "Belum diatur"}
                 onClick={() => {
                     setShowPinInput(!showPinInput);
                 }}
             >
                 <span className="text-sm font-medium text-sky-600">
-                    {formData.securityPin ? "Ubah" : "Atur"}
+                    {formData.securityPin || formData.hasSecurityPin ? "Ubah" : "Atur"}
                 </span>
             </SettingItem>
 

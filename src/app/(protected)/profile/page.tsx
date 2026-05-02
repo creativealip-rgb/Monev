@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -72,6 +72,7 @@ export default function ProfilePage() {
         primaryGoalId: "",
         securityPin: "",
         decoyPin: "",
+        hasSecurityPin: false,
         isAppLockEnabled: false,
         isBiometricEnabled: false,
         autoLockTimeout: 300000,
@@ -88,6 +89,29 @@ export default function ProfilePage() {
     const [newCategory, setNewCategory] = useState({ name: "", type: "expense" as "expense" | "income", icon: "Tag", color: "#ec4899" });
 
     const imagePreviewUrl = useObjectURL(formData.image);
+
+    useEffect(() => {
+        if (!user && !settings) return;
+
+        setFormData((prev) => ({
+            ...prev,
+            firstName: user?.firstName || "",
+            lastName: user?.lastName || "",
+            username: user?.username || "",
+            image: user?.image || "",
+            whatsappId: user?.whatsappId || "",
+            telegramId: user?.telegramId?.toString() || "",
+            hourlyRate: settings?.hourlyRate?.toString() || "",
+            primaryGoalId: settings?.primaryGoalId?.toString() || "",
+            securityPin: "",
+            decoyPin: "",
+            hasSecurityPin: !!settings?.hasPin,
+            isAppLockEnabled: !!settings?.isAppLockEnabled,
+            isBiometricEnabled: !!settings?.isBiometricEnabled,
+            autoLockTimeout: settings?.autoLockTimeout ?? 300000,
+            financialPersona: settings?.financialPersona ?? null,
+        }));
+    }, [user, settings]);
 
     const getInitials = () => {
         if (!user) return "??";
@@ -143,7 +167,7 @@ export default function ProfilePage() {
     };
 
     const handleSaveSecurity = async () => {
-        if (formData.isAppLockEnabled && !formData.securityPin) {
+        if (formData.isAppLockEnabled && !formData.securityPin && !formData.hasSecurityPin) {
             toast.error("Validasi", "Harap atur PIN sebelum mengaktifkan App Lock.");
             return;
         }
@@ -151,20 +175,37 @@ export default function ProfilePage() {
             toast.error("Validasi", "PIN harus 6 digit angka.");
             return;
         }
+        if (formData.decoyPin && formData.decoyPin.length !== 6) {
+            toast.error("Validasi", "PIN palsu harus 6 digit angka.");
+            return;
+        }
 
-        await apiFetch("/api/profile", {
+        const payload: Record<string, unknown> = {
+            type: "settings",
+            decoyPin: formData.decoyPin,
+            isAppLockEnabled: formData.isAppLockEnabled,
+            isBiometricEnabled: formData.isBiometricEnabled,
+            autoLockTimeout: formData.autoLockTimeout,
+        };
+
+        if (formData.securityPin) {
+            payload.securityPin = formData.securityPin;
+        }
+
+        const response = await apiFetch("/api/profile", {
             method: "POST",
-            body: JSON.stringify({
-                type: "settings",
-                securityPin: formData.securityPin,
-                decoyPin: formData.decoyPin,
-                isAppLockEnabled: formData.isAppLockEnabled,
-                isBiometricEnabled: formData.isBiometricEnabled
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
-        toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
-        setActiveModal(null);
-        loadData();
+        const result = await response.json();
+
+        if (result.success) {
+            toast.success("Berhasil", "Pengaturan keamanan berhasil disimpan!");
+            setActiveModal(null);
+            loadData();
+        } else {
+            toast.error("Gagal", result.error || "Gagal menyimpan pengaturan keamanan.");
+        }
     };
 
     const handleGeneratePersona = async () => {

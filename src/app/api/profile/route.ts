@@ -18,6 +18,7 @@ import fs from "fs";
 import path from "path";
 import { canUseTelegram, UserTier } from "@/lib/tier-gate";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { hashPin } from "@/lib/security";
 
 export async function GET() {
     try {
@@ -175,7 +176,25 @@ export async function POST(req: NextRequest) {
                     if (type === "profile") {
                         await updateUser(userId, data);
                     } else if (type === "settings") {
-                        await updateUserSettings(userId, data);
+                        const settingsData = { ...data };
+
+                        if (typeof settingsData.securityPin === "string") {
+                            if (settingsData.securityPin.length === 6) {
+                                settingsData.securityPin = await hashPin(settingsData.securityPin);
+                            } else if (!settingsData.securityPin) {
+                                delete settingsData.securityPin;
+                            }
+                        }
+
+                        if (typeof settingsData.decoyPin === "string") {
+                            if (settingsData.decoyPin.length === 6) {
+                                settingsData.decoyPin = await hashPin(settingsData.decoyPin);
+                            } else if (!settingsData.decoyPin) {
+                                settingsData.decoyPin = null;
+                            }
+                        }
+
+                        await updateUserSettings(userId, settingsData);
                     } else if (type === "disconnectTelegram") {
                         await unlinkTelegramAccount(userId);
                     }
