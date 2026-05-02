@@ -299,16 +299,16 @@ export default function RegisterPage() {
                     <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <MailCheck className="w-10 h-10 text-emerald-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-3">Cek Email Anda</h2>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-3">Akun Berhasil Dibuat</h2>
                     <p className="text-slate-600 mb-6 leading-relaxed">
-                        Kami telah mengirimkan link verifikasi ke <span className="font-semibold text-slate-800">{formData.email}</span>.
-                        Silakan klik link tersebut untuk mengaktifkan akun Anda.
+                        Akun <span className="font-semibold text-slate-800">{formData.email}</span> sudah siap dipakai.
+                        Kalau email verifikasi masuk, Anda tetap bisa membukanya untuk keamanan tambahan.
                     </p>
                     <Link
                         href="/login"
                         className="btn-primary w-full py-3 inline-flex justify-center"
                     >
-                        Kembali ke Login
+                        Masuk Sekarang
                     </Link>
                 </div>
             </div>
