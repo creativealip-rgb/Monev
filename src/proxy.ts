@@ -31,6 +31,7 @@ export function proxy(request: Request) {
         pathname === "/privacy" ||
         pathname.startsWith("/help/") ||
         pathname.startsWith("/api/auth/") ||
+        pathname === "/api/internal/seed-admin" ||
         pathname === "/manifest.json" ||
         pathname === "/icon.svg" ||
         pathname === "/sw.js" ||
