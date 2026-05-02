@@ -94,21 +94,34 @@ export default function ReportsPage() {
             setPreviewLoading(true);
             setPreviewError(null);
             const res = await apiFetch(
-                `/api/analytics/report?month=${selectedMonth + 1}&year=${selectedYear}`
+                `/api/analytics?month=${selectedMonth + 1}&year=${selectedYear}`
             );
             const json = await res.json();
-            if (!json.success) {
+            if (!res.ok || json.error) {
                 throw new Error(json.error || "Gagal memuat preview laporan");
             }
+
+            const categories = [
+                ...(json.categoryBreakdown?.expense || []).map((category: Record<string, unknown>) => ({ ...category, type: "expense" })),
+                ...(json.categoryBreakdown?.income || []).map((category: Record<string, unknown>) => ({ ...category, type: "income" })),
+            ];
+
+            const goalsProgress = (json.goalsProgress || []).map((goal: Record<string, unknown>) => ({
+                name: String(goal.name || "Target"),
+                current: Number(goal.current ?? goal.currentAmount ?? 0),
+                target: Number(goal.target ?? goal.targetAmount ?? 0),
+                percentage: Number(goal.percentage ?? goal.progress ?? 0),
+            }));
+
             setReportPreview({
-                income: json.data.income || 0,
-                expense: json.data.expense || 0,
-                balance: json.data.balance || 0,
-                categories: json.data.categories || [],
-                allocations: json.data.allocations || [],
-                goalsProgress: json.data.goalsProgress || [],
-                investments: json.data.investments || [],
-                aiInsight: json.data.aiInsight || "",
+                income: json.income || 0,
+                expense: json.expense || 0,
+                balance: json.balance || 0,
+                categories,
+                allocations: json.allocations || [],
+                goalsProgress,
+                investments: json.investments || [],
+                aiInsight: json.insights || "",
             });
         } catch (error) {
             console.error("Failed to fetch report preview:", error);

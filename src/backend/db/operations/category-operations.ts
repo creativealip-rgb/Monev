@@ -10,12 +10,56 @@ import { eq, and, sql, or } from "drizzle-orm";
  * @param userId - User ID to fetch categories for. If undefined, returns only global categories.
  * @returns Array of categories accessible to the user
  */
+const DEFAULT_CATEGORIES: Array<{
+    name: string;
+    icon: string;
+    color: string;
+    type: "expense" | "income";
+}> = [
+    { name: "Makan & Minuman", icon: "Utensils", color: "#ef4444", type: "expense" },
+    { name: "Transportasi", icon: "Car", color: "#f97316", type: "expense" },
+    { name: "Tagihan", icon: "Receipt", color: "#6366f1", type: "expense" },
+    { name: "Belanja", icon: "ShoppingBag", color: "#ec4899", type: "expense" },
+    { name: "Hiburan", icon: "Gamepad2", color: "#8b5cf6", type: "expense" },
+    { name: "Kesehatan", icon: "HeartPulse", color: "#22c55e", type: "expense" },
+    { name: "Pendidikan", icon: "GraduationCap", color: "#06b6d4", type: "expense" },
+    { name: "Tabungan", icon: "PiggyBank", color: "#14b8a6", type: "expense" },
+    { name: "Lainnya", icon: "Wallet", color: "#94a3b8", type: "expense" },
+    { name: "Gaji", icon: "Banknote", color: "#22c55e", type: "income" },
+    { name: "Freelance", icon: "Briefcase", color: "#0ea5e9", type: "income" },
+    { name: "Pemasukan Lainnya", icon: "CircleDollarSign", color: "#10b981", type: "income" },
+];
+
+function ensureDefaultCategories(userId: number): void {
+    const db = getDb();
+    const existing = db.select({ name: categories.name, type: categories.type })
+        .from(categories)
+        .where(or(
+            sql`${categories.userId} IS NULL`,
+            eq(categories.userId, userId)
+        ))
+        .all();
+
+    const existingKeys = new Set(existing.map((category) => `${category.type}:${category.name}`));
+    const missingDefaults = DEFAULT_CATEGORIES.filter(
+        (category) => !existingKeys.has(`${category.type}:${category.name}`)
+    );
+
+    if (missingDefaults.length === 0) return;
+
+    db.insert(categories)
+        .values(missingDefaults.map((category) => ({ ...category, userId })))
+        .run();
+}
+
 export async function getCategories(userId?: number): Promise<Category[]> {
     const db = getDb();
     if (!userId) {
         // Return only global categories if no user is specified
         return db.select().from(categories).where(sql`${categories.userId} IS NULL`).all();
     }
+
+    ensureDefaultCategories(userId);
 
     // Return global categories + user specific categories
     return db.select()
