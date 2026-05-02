@@ -171,7 +171,9 @@ export default function DocumentationPage() {
                                 className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
                             >
                                 <button
+                                    type="button"
                                     onClick={() => setExpandedSection(expandedSection === sectionIndex ? null : sectionIndex)}
+                                    aria-expanded={expandedSection === sectionIndex}
                                     className="w-full p-4 flex items-center gap-4 text-left"
                                 >
                                     <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", colors[section.color])}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -8,7 +8,7 @@ import { TransferModal } from "@/frontend/components/TransferModal";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { HealthScoreWidget } from "@/frontend/components/HealthScoreWidget";
 import { BillReminderWidget } from "@/frontend/components/BillReminderWidget";
-import { useToast, TransactionListSkeleton, NoTransactionsEmpty } from "@/frontend/components/UI";
+import { useToast } from "@/frontend/components/UI";
 
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useSecurity } from "@/components/SecurityProvider";
@@ -38,7 +38,6 @@ export default function DashboardPage() {
     const { isStealthMode, toggleStealth } = useSecurity();
 
     const {
-        transactions,
         allTransactions,
         stats,
         userName,
@@ -63,6 +62,14 @@ export default function DashboardPage() {
 
     const today = new Date();
     const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
+    const hasOpenOverlay = showBalanceDetail || showTransferModal || isAddSheetOpen;
+
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: hasOpenOverlay }));
+        return () => {
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
+        };
+    }, [hasOpenOverlay]);
 
     const handleRefresh = async () => {
         haptics.medium();
@@ -91,7 +98,7 @@ export default function DashboardPage() {
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
-            <div className="relative min-h-screen pb-64 bg-sky-50 dark:bg-slate-950">
+            <div className="relative min-h-screen bg-sky-50 pb-64 dark:bg-slate-950">
                 <DashboardHeader
                     userName={userName}
                     userImage={userImage}

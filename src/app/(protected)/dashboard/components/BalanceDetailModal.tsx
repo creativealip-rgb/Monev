@@ -1,8 +1,9 @@
 "use client";
 
-import { createPortal } from "react-dom";
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
+import { Portal } from "@/frontend/components/Portal";
 import { formatCurrency } from "@/frontend/lib/utils";
 
 export interface BalanceDetailModalProps {
@@ -23,6 +24,25 @@ export function BalanceDetailModal({
     stats,
     onClose,
 }: BalanceDetailModalProps) {
+    useEffect(() => {
+        if (!show || !mounted) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [mounted, onClose, show]);
+
     if (!show || !mounted) return null;
 
     const total = (stats.totalAccounts || 0) + (stats.totalGoals || 0) + (stats.totalInvestments || 0);
@@ -44,8 +64,9 @@ export function BalanceDetailModal({
         );
     })();
 
-    return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    return (
+        <Portal>
+            <div className="fixed inset-0 z-[9999] flex items-end justify-center p-3 sm:items-center sm:p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -54,17 +75,22 @@ export function BalanceDetailModal({
                 onClick={onClose}
             />
             <motion.div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="balance-detail-title"
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-[92%] max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 shadow-2xl overflow-hidden z-10 shadow-sky-200/30 dark:shadow-sky-900/20"
+                className="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl shadow-sky-200/30 dark:border-slate-700 dark:bg-slate-900 dark:shadow-sky-900/20 sm:p-8"
             >
                 <div className="absolute inset-0 bg-gradient-to-b from-sky-50/40 to-white/10 dark:from-sky-950/40 dark:to-slate-900/10 pointer-events-none" />
 
                 <div className="flex justify-end mb-2 relative z-10">
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-100 bg-slate-50 text-muted-foreground transition-all hover:bg-slate-100 hover:text-foreground dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+                        aria-label="Tutup rincian saldo"
                     >
                         <X size={16} />
                     </button>
@@ -72,7 +98,7 @@ export function BalanceDetailModal({
 
                 <div className="text-center mb-6 relative z-10">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3">Total Kekayaan Bersih</p>
-                    <h3 className="text-3xl font-black text-foreground tracking-tight tabular-nums">
+                    <h3 id="balance-detail-title" className="text-2xl font-black tracking-tight text-foreground tabular-nums sm:text-3xl">
                         {!mounted ? "..." : formatCurrency(total)}
                     </h3>
                 </div>
@@ -130,7 +156,7 @@ export function BalanceDetailModal({
                     </p>
                 </div>
             </motion.div>
-        </div>,
-        document.body
+            </div>
+        </Portal>
     );
 }

@@ -209,7 +209,7 @@ export default function ProfilePage() {
                 </div>
 
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="flex flex-col items-center relative z-10">
-                    <div className="relative mb-3 sm:mb-4 group cursor-pointer" onClick={() => setActiveModal("account")}>
+                    <button type="button" className="relative mb-3 sm:mb-4 group cursor-pointer" onClick={() => setActiveModal("account")} aria-label="Edit profil">
                         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border-4 border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl overflow-hidden ring-4 ring-black/5">
                             {user?.image ? (
                                 <Image src={user.image.split('?')[0]} alt={user.firstName || "Profile"} width={96} height={96} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -223,7 +223,7 @@ export default function ProfilePage() {
                         <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Camera size={24} className="text-white" />
                         </div>
-                    </div>
+                    </button>
 
                     <h2 className="text-lg sm:text-2xl font-black tracking-tight text-white mb-1 shadow-black/10 drop-shadow-sm text-center px-4">
                         {user?.firstName || user?.name ? `${user.firstName || user.name} ${user.lastName || ""}`.trim() : "Pengguna Baru"}
@@ -264,7 +264,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="px-6 -mt-5 sm:-mt-6 relative z-[110]">
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onClick={() => setActiveModal("collection")} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl shadow-slate-200/50 dark:shadow-none flex items-center justify-around cursor-pointer active:scale-95 transition-transform">
+                <motion.button type="button" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onClick={() => setActiveModal("collection")} className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl shadow-slate-200/50 dark:shadow-none flex items-center justify-around cursor-pointer active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-500/40" aria-label="Buka koleksi badge dan streak">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500">
                             <Flame size={20} className={streak?.currentStreak > 0 ? "fill-orange-500" : "opacity-30"} />
@@ -299,7 +299,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     </div>
-                </motion.div>
+                </motion.button>
             </div>
 
             {formData.financialPersona && (
@@ -311,7 +311,7 @@ export default function ProfilePage() {
                                 <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md"><Sparkles size={20} className="text-yellow-300" /></div>
                                 <h3 className="font-black text-xs uppercase tracking-widest opacity-80">Profil Psikologi Keuangan</h3>
                             </div>
-                            <button onClick={handleGeneratePersona} className="p-2 hover:bg-white/10 rounded-full transition-colors"><Zap size={16} /></button>
+                            <button type="button" onClick={handleGeneratePersona} className="p-2 hover:bg-white/10 rounded-full transition-colors"><Zap size={16} /></button>
                         </div>
                         <div className="mt-4 relative z-10">
                             <h2 className="text-2xl font-black tracking-tight leading-tight">{formData.financialPersona.title || formData.financialPersona.persona}</h2>
@@ -348,7 +348,7 @@ export default function ProfilePage() {
                     }
 
                     return (
-                        <motion.button key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * index + 0.45 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
+                        <motion.button type="button" key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * index + 0.45 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
                             <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
                             {item.hasArrow && <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />}
                         </motion.button>
@@ -402,7 +402,7 @@ export default function ProfilePage() {
                     </div>
                 </motion.div>
                 
-                <motion.button initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
+                <motion.button type="button" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signOut({ callbackUrl: "/login" })} className="w-full p-4 card-clean border-rose-200/50 flex items-center gap-4 hover:bg-rose-500/10 hover:border-rose-300/50 transition-all mt-6">
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center"><LogOut size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-rose-500 dark:text-rose-400 tracking-tight">{t("profile.signOut")}</span>
                 </motion.button>
             </motion.div>

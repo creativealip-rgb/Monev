@@ -57,8 +57,17 @@ export function HeroBalanceCard({
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-12 opacity-20" />
 
             <div
-                className="relative z-10 cursor-pointer group"
+                className="relative z-10 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-sky-600"
+                role="button"
+                tabIndex={0}
+                aria-label="Buka rincian saldo"
                 onClick={onBalanceClick}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onBalanceClick();
+                    }
+                }}
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -70,6 +79,7 @@ export function HeroBalanceCard({
                             <ThemeSelector />
                         </div>
                         <button
+                            type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onToggleHideBalance();
@@ -170,6 +180,7 @@ export function HeroBalanceCard({
             </div>
 
             <button
+                type="button"
                 onClick={onTransferClick}
                 className="mt-4 w-full py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-sm hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
             >

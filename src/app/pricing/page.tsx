@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {
     Check, X, Zap, Crown, Rocket,
-    ArrowRight, ChevronLeft, HelpCircle
+    ArrowRight, HelpCircle
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
@@ -150,7 +150,7 @@ export default function PricingPage() {
                                 className={cn(
                                     "relative p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] flex flex-col h-full transition-all duration-500 group",
                                     tier.highlight
-                                        ? "bg-white dark:bg-slate-900 border-2 border-sky-500 shadow-2xl shadow-sky-500/20 scale-105 z-10"
+                                        ? "bg-white dark:bg-slate-900 border-2 border-sky-500 shadow-2xl shadow-sky-500/20 lg:scale-105 z-10"
                                         : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800 hover:border-sky-200"
                                 )}
                             >
