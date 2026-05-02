@@ -169,11 +169,13 @@ export default function FAQPage() {
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {faqCategories.map((category) => (
                         <button
+                            type="button"
                             key={category.id}
                             onClick={() => {
                                 setActiveCategory(category.id);
                                 setExpandedQuestion(null);
                             }}
+                            aria-pressed={activeCategory === category.id}
                             className={cn(
                                 "px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all",
                                 activeCategory === category.id
@@ -204,7 +206,9 @@ export default function FAQPage() {
                                 className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
                             >
                                 <button
+                                    type="button"
                                     onClick={() => setExpandedQuestion(expandedQuestion === index ? null : index)}
+                                    aria-expanded={expandedQuestion === index}
                                     className="w-full p-4 flex items-center gap-4 text-left"
                                 >
                                     <div className="flex-1">

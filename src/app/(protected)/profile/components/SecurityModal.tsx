@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Shield, Lock, Zap, Fingerprint, Trash2, LogOut, Smartphone, Key, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Check, Shield, Lock, Zap, Fingerprint, Trash2, Smartphone, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -15,11 +15,10 @@ interface SecurityModalProps {
     onSave: () => void;
 }
 
-export function SecurityModal({ formData, setFormData, onClose, onSave }: SecurityModalProps) {
+export function SecurityModal({ formData, setFormData, onSave }: SecurityModalProps) {
     const toast = useToast();
-    const { deleteLocalData, reauthenticate } = useSecurity();
+    const { reauthenticate } = useSecurity();
     const [showPinInput, setShowPinInput] = useState(false);
-    const [activeSection, setActiveSection] = useState<string | null>(null);
     
     // Change Password state
     const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -184,12 +183,7 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
         }
     };
 
-    const formatTimeout = (ms: number) => {
-        if (ms === -1) return "Tidak pernah";
-        if (ms < 60000) return `${ms / 1000} detik`;
-        if (ms < 3600000) return `${ms / 60000} menit`;
-        return `${ms / 3600000} jam`;
-    };
+    const canSaveSecurity = !formData.securityPin || formData.securityPin.length === 6;
 
     const SettingItem = ({ 
         icon: Icon, 
@@ -234,6 +228,7 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
 
     const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
         <button
+            type="button"
             onClick={(e) => {
                 e.stopPropagation();
                 onChange();
@@ -263,7 +258,6 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                     onChange={() => {
                         if (!formData.isAppLockEnabled && !formData.securityPin) {
                             setShowPinInput(true);
-                            setActiveSection("pin");
                         }
                         setFormData((prev: any) => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }));
                     }}
@@ -277,7 +271,6 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                 description={formData.securityPin ? "PIN sudah diatur" : "Belum diatur"}
                 onClick={() => {
                     setShowPinInput(!showPinInput);
-                    setActiveSection(showPinInput ? null : "pin");
                 }}
             >
                 <span className="text-sm font-medium text-sky-600">
@@ -424,6 +417,7 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                             <div className="flex items-center justify-between">
                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Perangkat Aktif</p>
                                 <button
+            type="button"
                                     onClick={handleRevokeSessions}
                                     disabled={loadingSessions}
                                     className="text-xs font-medium text-rose-600 hover:text-rose-700 disabled:opacity-50"
@@ -467,6 +461,7 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                                                 </div>
                                             </div>
                                             <button
+            type="button"
                                                 onClick={() => handleRevokeSession(session.id)}
                                                 className="text-xs font-medium text-rose-600 hover:text-rose-700 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                                             >
@@ -483,12 +478,13 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
 
             {/* Save Button */}
             <motion.button
+                type="button"
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSaveSecurity}
-                disabled={formData.securityPin && formData.securityPin.length !== 6}
+                disabled={!canSaveSecurity}
                 className={cn(
                     "w-full mt-4 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all",
-                    formData.securityPin && formData.securityPin.length === 6
+                    canSaveSecurity
                         ? "bg-sky-500 text-white hover:bg-sky-600"
                         : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
                 )}
@@ -510,6 +506,7 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
                         </div>
                     </div>
                     <button
+            type="button"
                         onClick={() => setShowPasswordForm(!showPasswordForm)}
                         className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
                     >
@@ -627,6 +624,7 @@ export function SecurityModal({ formData, setFormData, onClose, onSave }: Securi
 
                                 {/* Save Button */}
                                 <button
+            type="button"
                                     onClick={handleChangePassword}
                                     disabled={!passwordData.currentPassword || !passwordData.newPassword || passwordData.newPassword.length < 8}
                                     className={cn(

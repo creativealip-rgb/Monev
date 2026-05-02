@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase, X, Trash2, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,12 +15,16 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { ErrorEmpty, NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
 import { useSession } from "next-auth/react";
 import { UserTier, canCreateInvestment, getTierConfig } from "@/lib/tier-gate";
-import { TierGateOverlay, TierLimitBanner } from "@/frontend/components/TierGateOverlay";
+import { TierGateOverlay } from "@/frontend/components/TierGateOverlay";
 import { Investment, InvestmentSummary } from "@/types";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { Portal } from "@/frontend/components/Portal";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { useSecurity } from "@/components/SecurityProvider";
+
+type InvestmentFilter = "all" | Investment["type"];
+type InvestmentSort = "name" | "value" | "profit" | "type";
+type SortOrder = "asc" | "desc";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
     TrendingUp, TrendingDown, DollarSign, PieChart, BarChart, Award, Bitcoin, Globe, Briefcase
@@ -42,9 +46,9 @@ export default function InvestmentsPage() {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     
     // Filter & Sort state
-    const [filterType, setFilterType] = useState<"all" | "stock" | "crypto" | "bond" | "mutual_fund" | "gold" | "forex">("all");
-    const [sortBy, setSortBy] = useState<"name" | "value" | "profit" | "type">("name");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+    const [filterType, setFilterType] = useState<InvestmentFilter>("all");
+    const [sortBy, setSortBy] = useState<InvestmentSort>("name");
+    const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
     
     const { isStealthMode } = useSecurity();
     const toast = useToast();
@@ -71,8 +75,22 @@ export default function InvestmentsPage() {
     }, []);
 
     useEffect(() => {
-        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: isAddModalOpen || isEditModalOpen }));
+        const isSheetOpen = isAddModalOpen || isEditModalOpen;
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: isSheetOpen }));
+        if (!isSheetOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") closeModals();
+        };
+        document.addEventListener("keydown", handleKeyDown, true);
+        window.addEventListener("keydown", handleKeyDown, true);
+
         return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown, true);
+            window.removeEventListener("keydown", handleKeyDown, true);
             window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
         };
     }, [isAddModalOpen, isEditModalOpen]);
@@ -256,6 +274,23 @@ export default function InvestmentsPage() {
         setFormRealizedProfit("");
     }
 
+    const filterOptions: Array<{ value: InvestmentFilter; label: string }> = [
+        { value: "all", label: "Semua" },
+        { value: "stock", label: "Saham" },
+        { value: "crypto", label: "Kripto" },
+        { value: "bond", label: "Obligasi" },
+        { value: "mutual_fund", label: "Reksa Dana" },
+        { value: "gold", label: "Emas" },
+        { value: "other", label: "Lainnya" },
+    ];
+
+    const sortOptions: Array<{ value: InvestmentSort; label: string }> = [
+        { value: "name", label: "Nama" },
+        { value: "value", label: "Nilai" },
+        { value: "profit", label: "Profit" },
+        { value: "type", label: "Tipe" },
+    ];
+
     const typeOptions = [
         { value: "stock", label: "Saham" },
         { value: "crypto", label: "Crypto" },
@@ -305,30 +340,27 @@ export default function InvestmentsPage() {
                         <div className="hidden md:flex items-center gap-2">
                             <select
                                 value={filterType}
-                                onChange={(e) => setFilterType(e.target.value as any)}
+                                onChange={(e) => setFilterType(e.target.value as InvestmentFilter)}
                                 className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                             >
-                                <option value="all">Semua</option>
-                                <option value="stock">Saham</option>
-                                <option value="crypto">Kripto</option>
-                                <option value="bond">Obligasi</option>
-                                <option value="mutual_fund">Reksa Dana</option>
-                                <option value="gold">Emas</option>
-                                <option value="forex">Forex</option>
+                                {filterOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                             <select
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as any)}
+                                onChange={(e) => setSortBy(e.target.value as InvestmentSort)}
                                 className="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                             >
-                                <option value="name">Nama</option>
-                                <option value="value">Nilai</option>
-                                <option value="profit">Profit</option>
-                                <option value="type">Tipe</option>
+                                {sortOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
                             </select>
                         </div>
                         <button
+                            type="button"
                             onClick={openAddModal}
+                            aria-label="Tambah aset investasi"
                             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-500 hover:bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 active:scale-95 transition-all"
                         >
                             <Plus size={24} strokeWidth={2.5} />
@@ -337,10 +369,49 @@ export default function InvestmentsPage() {
                 </div>
             </motion.header>
 
+            <div className="mx-4 mt-4 rounded-2xl border border-sky-100 bg-white/80 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 md:hidden">
+                <div className="grid grid-cols-2 gap-2">
+                    <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <SlidersHorizontal size={14} />
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value as InvestmentFilter)}
+                            className="min-w-0 flex-1 bg-transparent focus:outline-none"
+                            aria-label="Filter tipe aset"
+                        >
+                            {filterOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <ArrowUpDown size={14} />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as InvestmentSort)}
+                            className="min-w-0 flex-1 bg-transparent focus:outline-none"
+                            aria-label="Urutkan aset"
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                    className="mt-2 w-full rounded-xl bg-sky-50 px-3 py-2 text-xs font-black text-sky-700 transition active:scale-[0.98] dark:bg-sky-900/30 dark:text-sky-300"
+                    aria-label={`Urutan ${sortOrder === "asc" ? "naik" : "turun"}`}
+                >
+                    Urutan: {sortOrder === "asc" ? "Naik" : "Turun"}
+                </button>
+            </div>
+
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="mx-4 sm:mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
             >
                 <p className="text-cyan-200 text-xs font-medium mb-1">Total Nilai Aset</p>
                 <h2 className="text-2xl font-bold mb-6 tabular-nums">
@@ -387,7 +458,7 @@ export default function InvestmentsPage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mx-6 mt-6 p-6 card-clean"
+                        className="mx-4 sm:mx-6 mt-6 p-5 sm:p-6 card-clean"
                     >
                         <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
                             <PieChart size={14} />
@@ -410,8 +481,8 @@ export default function InvestmentsPage() {
                                             outerRadius={85}
                                             paddingAngle={2}
                                             dataKey="value"
-                                            label={({ name, percent }: any) =>
-                                                `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`
+                                            label={({ name, percent }: { name?: string; percent?: number }) =>
+                                                `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`
                                             }
                                             labelLine={false}
                                         >
@@ -424,8 +495,8 @@ export default function InvestmentsPage() {
                                             ))}
                                         </Pie>
                                         <Tooltip
-                                            formatter={(value: any) => [
-                                                isStealthMode
+                                            formatter={(value: number | string | readonly (number | string)[] | undefined) => [
+                                                isStealthMode || value === undefined || Array.isArray(value)
                                                     ? "••••••••"
                                                     : formatCurrency(Number(value)),
                                                 "Nilai",
@@ -460,7 +531,7 @@ export default function InvestmentsPage() {
                 )}
             </AnimatePresence>
 
-            <div className="px-6 mt-8">
+            <div className="px-4 sm:px-6 mt-8">
                 <h3 className="text-sm font-bold text-foreground mb-4">Daftar Aset</h3>
 
                 {loading ? (
@@ -496,13 +567,14 @@ export default function InvestmentsPage() {
                             const isProfit = profit >= 0;
 
                             return (
-                                <motion.div
+                                <motion.button
+                                    type="button"
                                     key={inv.id}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: i * 0.05 }}
                                     onClick={() => openEditModal(inv)}
-                                    className="card-clean p-5 group relative cursor-pointer hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20 transition-all active:scale-[0.98]"
+                                    className="card-clean w-full p-5 text-left group relative cursor-pointer hover:shadow-lg hover:shadow-sky-200/40 dark:hover:shadow-sky-900/20 transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-3">
@@ -543,7 +615,7 @@ export default function InvestmentsPage() {
                                             </div>
                                         )}
                                     </div>
-                                </motion.div>
+                                </motion.button>
                             );
                         })}
                     </div>
@@ -577,6 +649,7 @@ export default function InvestmentsPage() {
                                     </h2>
                                     {isEditModalOpen && selectedAsset && (
                                         <button
+                                            type="button"
                                             onClick={() => handleDelete(selectedAsset.id)}
                                             aria-label="Hapus aset investasi"
                                             className="ml-auto mr-3 flex h-11 w-11 items-center justify-center rounded-full text-rose-500 transition-colors hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-900/50"
@@ -585,6 +658,7 @@ export default function InvestmentsPage() {
                                         </button>
                                     )}
                                     <button
+                                        type="button"
                                         onClick={closeModals}
                                         aria-label="Tutup form aset investasi"
                                         className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
@@ -609,7 +683,7 @@ export default function InvestmentsPage() {
                                             <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Tipe</label>
                                             <select
                                                 value={formType}
-                                                onChange={(e) => setFormType(e.target.value as any)}
+                                                onChange={(e) => setFormType(e.target.value as Investment["type"])}
                                                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-sky-500 focus:outline-none transition-colors text-sm"
                                             >
                                                 {typeOptions.map(t => (
@@ -671,7 +745,9 @@ export default function InvestmentsPage() {
                                         <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                                             {iconOptions.map(opt => (
                                                 <button
+                                                    type="button"
                                                     key={opt.name}
+                                                    aria-pressed={formIcon === opt.name}
                                                     onClick={() => setFormIcon(opt.name)}
                                                     className={cn(
                                                         "flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-all",
@@ -688,7 +764,10 @@ export default function InvestmentsPage() {
                                         <div className="flex gap-3">
                                             {colorOptions.map(c => (
                                                 <button
+                                                    type="button"
                                                     key={c}
+                                                    aria-label={`Pilih warna ${c}`}
+                                                    aria-pressed={formColor === c}
                                                     onClick={() => setFormColor(c)}
                                                     className={cn(
                                                         "w-8 h-8 rounded-full transition-all flex-shrink-0",
@@ -745,6 +824,7 @@ export default function InvestmentsPage() {
                                     </div>
 
                                     <button
+                                        type="button"
                                         onClick={handleSubmit}
                                         disabled={!formName.trim() || !Number.isFinite(Number(formQuantity)) || Number(formQuantity) <= 0 || !Number.isFinite(Number(formBuyPrice)) || Number(formBuyPrice) <= 0 || !Number.isFinite(Number(formCurrentPrice)) || Number(formCurrentPrice) < 0 || isSubmitting}
                                         className={cn(

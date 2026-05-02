@@ -16,6 +16,7 @@ export function QuickActions({ onAddTransaction }: QuickActionsProps) {
 
     return (
         <motion.button
+            type="button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
