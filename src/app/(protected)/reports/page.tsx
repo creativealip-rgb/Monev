@@ -260,7 +260,7 @@ export default function ReportsPage() {
                         <div className="flex flex-col">
                             <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Laporan Keuangan</h1>
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
-                                Generate & Export Laporan
+                                Buat dan ekspor laporan
                             </p>
                         </div>
                     </div>
@@ -425,7 +425,7 @@ export default function ReportsPage() {
                                 className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-purple-500/10 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-xs font-bold border border-purple-200 dark:border-purple-800 hover:bg-purple-500/20 transition-all"
                             >
                                 <Mail size={16} />
-                                <span>Kirim Email</span>
+                                <span>Kirim PDF via Email</span>
                             </button>
                         </div>
                     </div>
