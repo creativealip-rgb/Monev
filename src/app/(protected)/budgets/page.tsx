@@ -422,51 +422,45 @@ export default function BudgetsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative mx-4 mt-4 overflow-hidden rounded-[2rem] border border-white/60 bg-gradient-to-br from-slate-950 via-sky-700 to-cyan-500 p-4 text-white shadow-2xl shadow-sky-500/25 sm:mx-6 sm:mt-6 sm:p-5"
+                className="relative mx-4 mt-3 overflow-hidden rounded-[1.65rem] border border-white/50 bg-gradient-to-br from-slate-950 via-sky-700 to-cyan-500 p-3.5 text-white shadow-xl shadow-sky-500/20 sm:mx-6 sm:mt-5 sm:p-4"
             >
-                <div className="pointer-events-none absolute inset-x-4 top-32 h-32 rounded-full bg-cyan-300/25 blur-3xl sm:inset-x-6" />
-                <div className="relative flex items-center justify-between gap-3 rounded-2xl bg-white/12 p-2 ring-1 ring-white/20 backdrop-blur-md">
+                <div className="pointer-events-none absolute inset-x-4 top-20 h-24 rounded-full bg-cyan-300/20 blur-3xl sm:inset-x-6" />
+                <div className="relative flex items-center justify-between gap-2">
                     <button
                         type="button"
                         onClick={() => navigateMonth("prev")}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95"
                         aria-label={t("budgets.previousMonth")}
                     >
-                        <ChevronLeft size={20} />
+                        <ChevronLeft size={18} />
                     </button>
                     <div className="min-w-0 text-center">
-                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100/80">{t("budgets.monthlyBudget")}</p>
-                        <p className="mt-0.5 truncate text-lg font-black tracking-tight text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
+                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-100/75">{t("budgets.monthlyBudget")}</p>
+                        <p className="truncate text-base font-black tracking-tight text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
                     </div>
                     <button
                         type="button"
                         onClick={() => navigateMonth("next")}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
                         aria-label={t("budgets.nextMonth")}
                         disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
                     >
-                        <ChevronLeft size={20} className="rotate-180" />
+                        <ChevronLeft size={18} className="rotate-180" />
                     </button>
                 </div>
 
-                <div className="relative mt-5 grid grid-cols-[1fr_auto] gap-4">
-                    <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-100/80">Terpakai</p>
-                        <p className="mt-1 text-3xl font-black tracking-tight tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
-                        <p className="mt-1 text-xs font-semibold text-white/65 tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
-                    </div>
-                    <div className="flex h-20 w-20 flex-col items-center justify-center rounded-3xl bg-white/15 ring-1 ring-white/20 backdrop-blur-md">
-                        <p className="text-2xl font-black tabular-nums">{Math.round(totalPercentage)}%</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-100/75">batas</p>
-                    </div>
+                <div className="relative mt-3">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-cyan-100/75">Terpakai</p>
+                    <p className="mt-0.5 text-2xl font-black tracking-tight tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-white/65 tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
                 </div>
 
-                <div className="relative mt-5">
-                    <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-white/70">
+                <div className="relative mt-3">
+                    <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold text-white/70">
                         <span>Sisa {isStealthMode ? "******" : formatCurrency(totalRemaining)}</span>
                         <span>{budgets.length} kategori</span>
                     </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-slate-950/35 ring-1 ring-white/10">
+                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-slate-950/35 ring-1 ring-white/10">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${totalPercentage}%` }}
@@ -477,6 +471,9 @@ export default function BudgetsPage() {
                                     totalPercentage > 75 ? "bg-amber-300" : "bg-emerald-300"
                             )}
                         />
+                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black leading-none text-white drop-shadow-sm">
+                            {Math.round(totalPercentage)}% batas
+                        </span>
                     </div>
                 </div>
 
@@ -484,7 +481,7 @@ export default function BudgetsPage() {
                     <button
                         type="button"
                         onClick={goToCurrentMonth}
-                        className="relative mt-4 rounded-full bg-white/15 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white ring-1 ring-white/20 transition-colors hover:bg-white/25"
+                        className="relative mt-3 rounded-full bg-white/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white ring-1 ring-white/20 transition-colors hover:bg-white/25"
                     >
                         Kembali ke bulan ini
                     </button>
