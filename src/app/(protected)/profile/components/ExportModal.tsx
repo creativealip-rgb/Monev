@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, type PointerEvent, type TouchEvent } from "react";
 import { Download, Upload, Cloud, FileJson, FileSpreadsheet, FileText, CheckCircle2, AlertCircle, Loader2, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -14,6 +14,7 @@ interface ExportModalProps {
 export function ExportModal({ onClose }: ExportModalProps) {
     const toast = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const lastTouchTabRef = useRef(0);
     const [activeTab, setActiveTab] = useState<"export" | "import" | "cloud">("export");
     const [isLoading, setIsLoading] = useState(false);
     const [importFile, setImportFile] = useState<File | null>(null);
@@ -119,11 +120,25 @@ export function ExportModal({ onClose }: ExportModalProps) {
         }
     };
 
+    const handleTabPointerCapture = (event: PointerEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>) => {
+        const target = event.target as HTMLElement;
+        const tab = target.closest<HTMLElement>("[data-export-tab]")?.dataset.exportTab as typeof activeTab | undefined;
+        if (!tab) return;
+
+        const now = Date.now();
+        if (now - lastTouchTabRef.current < 250) return;
+        lastTouchTabRef.current = now;
+        setActiveTab(tab);
+    };
+
     const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab; label: string; icon: any }) => (
         <button
+            type="button"
+            data-export-tab={id}
+            aria-pressed={activeTab === id}
             onClick={() => setActiveTab(id)}
             className={cn(
-                "flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
+                "flex-1 min-h-12 touch-manipulation select-none py-3 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
                 activeTab === id 
                     ? "bg-sky-500 text-white shadow-lg shadow-sky-500/25" 
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -137,7 +152,11 @@ export function ExportModal({ onClose }: ExportModalProps) {
     return (
         <div className="space-y-4">
             {/* Tabs */}
-            <div className="flex gap-2">
+            <div
+                className="flex gap-2"
+                onPointerUpCapture={handleTabPointerCapture}
+                onTouchEndCapture={handleTabPointerCapture}
+            >
                 <TabButton id="export" label="Export" icon={Download} />
                 <TabButton id="import" label="Import" icon={Upload} />
                 <TabButton id="cloud" label="Cloud" icon={Cloud} />
