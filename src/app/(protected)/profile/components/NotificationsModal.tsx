@@ -63,6 +63,10 @@ export function NotificationsModal({ onClose, loadData }: NotificationsModalProp
                 </div>
             </div>
 
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-xs font-medium leading-relaxed text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
+                Status: tombol ini menyimpan preferensi. Yang sudah dipakai backend saat ini adalah report bulanan/mingguan via cron/email/Telegram bila channel aktif. Push notif realtime di dashboard belum aktif.
+            </div>
+
             <div className="space-y-3">
                 {[
                     { id: "dailyReport", label: "Laporan Harian", desc: "Ringkasan pengeluaran setiap sore" },
