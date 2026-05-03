@@ -173,7 +173,7 @@ export function ProfileModals({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[2147483647] flex items-end justify-center p-0 sm:items-center sm:p-4"
+                        className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[2147483647] flex items-end justify-center p-3 pt-[calc(1rem+env(safe-area-inset-top))] sm:items-center sm:p-4"
                         onClick={onClose}
                     >
                         <motion.div
@@ -182,7 +182,7 @@ export function ProfileModals({
                             exit={{ opacity: 0, y: 80, scale: 0.98 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl max-h-[92vh] sm:max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden pb-safe"
+                            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 relative overflow-hidden pb-safe"
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="profile-modal-title"
