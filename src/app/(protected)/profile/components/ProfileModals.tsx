@@ -200,7 +200,7 @@ export function ProfileModals({
                                     <X size={20} />
                                 </button>
                             </div>
-                            <div className="overflow-y-auto flex-1 px-5 sm:px-6 pb-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+                            <div className="overflow-y-auto flex-1 px-5 sm:px-6 pt-5 pb-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
                                 {renderModalContent()}
                             </div>
                         </motion.div>
