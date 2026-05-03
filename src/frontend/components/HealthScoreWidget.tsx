@@ -9,21 +9,23 @@ import type { HealthScoreResult } from "@/lib/health-score";
 export function HealthScoreWidget({ data }: { data: HealthScoreResult }) {
     const [expanded, setExpanded] = useState(false);
 
+    const isEmptyScore = data.label === "Belum Ada Data";
+
     // Circle progress properties
-    const strokeWidth = 7;
-    const radius = 28;
+    const strokeWidth = isEmptyScore ? 6 : 7;
+    const radius = isEmptyScore ? 25 : 28;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (data.score / 100) * circumference;
 
     return (
         <div className="card-clean overflow-hidden group">
             <div
-                className="p-4 cursor-pointer relative sm:p-5"
+                className={cn("relative cursor-pointer", isEmptyScore ? "p-3.5 sm:p-4" : "p-4 sm:p-5")}
                 onClick={() => setExpanded(!expanded)}
             >
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                        <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center sm:h-20 sm:w-20">
+                        <div className={cn("relative flex flex-shrink-0 items-center justify-center", isEmptyScore ? "h-14 w-14 sm:h-16 sm:w-16" : "h-16 w-16 sm:h-20 sm:w-20")}>
                             {/* Background circle */}
                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80" overflow="visible">
                                 <circle
@@ -51,7 +53,7 @@ export function HealthScoreWidget({ data }: { data: HealthScoreResult }) {
                                 />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-lg font-black text-foreground sm:text-xl">{data.score}</span>
+                                <span className={cn("font-black text-foreground", isEmptyScore ? "text-base sm:text-lg" : "text-lg sm:text-xl")}>{data.score}</span>
                             </div>
                         </div>
 

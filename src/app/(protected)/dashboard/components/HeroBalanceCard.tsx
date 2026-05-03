@@ -44,10 +44,14 @@ export function HeroBalanceCard({
 }: HeroBalanceCardProps) {
     const { t, locale } = useI18n();
     const { themeConfig } = useHeroTheme();
+    const totalIncome = stats.income || 0;
+    const totalExpense = (stats.expense || 0) + (stats.fees || 0);
+    const isEmptyFinancial = mounted && !hideBalance && (stats.accountCount || 0) === 0 && (stats.totalAccounts || 0) === 0 && totalIncome === 0 && totalExpense === 0;
 
     return (
         <div className={cn(
             "card-clean relative overflow-hidden rounded-[28px] border border-white/10 text-white p-4 cursor-pointer sm:rounded-[32px] sm:p-6",
+            isEmptyFinancial && "p-4 sm:p-5",
             "bg-gradient-to-br transition-all duration-300 hover:scale-[1.01] hover:-translate-y-1 hover:brightness-110 hover:shadow-2xl hover:shadow-sky-500/10",
             themeConfig.gradient,
             themeConfig.shadowColor
@@ -111,16 +115,19 @@ export function HeroBalanceCard({
                     </div>
                 </div>
 
-                <h2 className="text-2xl font-bold tracking-tight mb-1 group-hover:scale-[1.02] transition-transform origin-left tabular-nums sm:text-3xl">
+                <h2 className={cn(
+                    "font-bold tracking-tight mb-1 group-hover:scale-[1.02] transition-transform origin-left tabular-nums",
+                    isEmptyFinancial ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"
+                )}>
                     {!mounted ? "Loading..." : hideBalance ? "******" : formatCurrency(stats.totalAccounts || 0)}
                 </h2>
-                <p className="text-white/60 text-[10px] font-medium mb-4 sm:mb-6">
-                    Saldo dari {stats.accountCount || 0} akun
+                <p className={cn("text-white/75 text-[11px] font-medium", isEmptyFinancial ? "mb-3" : "mb-4 sm:mb-6")}>
+                    {isEmptyFinancial ? "Tambahkan akun pertama untuk mulai melihat ringkasan." : `Saldo dari ${stats.accountCount || 0} akun`}
                 </p>
             </div>
 
-            <div className="flex gap-3">
-                <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 border sm:p-4 border-white/10">
+            <div className={cn("flex gap-3", isEmptyFinancial && "gap-2")}>
+                <div className={cn("flex-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/10", isEmptyFinancial ? "p-2.5 sm:p-3" : "p-3 sm:p-4")}>
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                             <ArrowDownRight size={14} className="text-emerald-300" />
@@ -129,7 +136,7 @@ export function HeroBalanceCard({
                     </div>
                     <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                         <p className="truncate font-bold text-[12px] text-emerald-300 tabular-nums sm:text-[13px]">
-                            + {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.income).replace("Rp", "")}
+                            + {!mounted ? "..." : hideBalance ? "******" : formatCurrency(totalIncome).replace("Rp", "")}
                         </p>
                         {mounted && !hideBalance && stats.incomeGrowth !== undefined && stats.incomeGrowth !== 0 && (
                             <span className={cn(
@@ -149,7 +156,7 @@ export function HeroBalanceCard({
                     </div>
                 </div>
 
-                <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 border sm:p-4 border-white/10">
+                <div className={cn("flex-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/10", isEmptyFinancial ? "p-2.5 sm:p-3" : "p-3 sm:p-4")}>
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-6 h-6 rounded-lg bg-rose-500/20 flex items-center justify-center">
                             <ArrowUpRight size={14} className="text-rose-300" />
@@ -158,7 +165,7 @@ export function HeroBalanceCard({
                     </div>
                     <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                         <p className="truncate font-bold text-[12px] text-rose-300 tabular-nums sm:text-[13px]">
-                            − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(stats.expense + (stats.fees || 0)).replace("Rp", "")}
+                            − {!mounted ? "..." : hideBalance ? "******" : formatCurrency(totalExpense).replace("Rp", "")}
                         </p>
                         {mounted && !hideBalance && stats.expenseGrowth !== undefined && stats.expenseGrowth !== 0 && (
                             <span className={cn(
