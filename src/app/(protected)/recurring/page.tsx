@@ -33,10 +33,10 @@ interface Category {
     type: string;
 }
 
-const FREQ_LABELS: Record<string, { label: string; short: string; emoji: string }> = {
-    daily: { label: "Harian", short: "/ hari", emoji: "📅" },
-    weekly: { label: "Mingguan", short: "/ minggu", emoji: "📆" },
-    monthly: { label: "Bulanan", short: "/ bulan", emoji: "🗓️" },
+const FREQ_LABELS: Record<string, { label: string; short: string }> = {
+    daily: { label: "Harian", short: "/ hari" },
+    weekly: { label: "Mingguan", short: "/ minggu" },
+    monthly: { label: "Bulanan", short: "/ bulan" },
 };
 
 export default function RecurringPage() {
@@ -468,7 +468,7 @@ export default function RecurringPage() {
                                                             : "border-slate-100 dark:border-slate-700 text-muted-foreground"
                                                     )}
                                                 >
-                                                    <span className="text-base">{FREQ_LABELS[freq].emoji}</span>
+                                                    <Repeat size={15} strokeWidth={2.4} />
                                                     {FREQ_LABELS[freq].label}
                                                 </button>
                                             ))}
@@ -558,7 +558,7 @@ function RecurringItem({
                     }
                     {/* Frequency dot */}
                     <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
-                        <span className="text-[8px]">{freq.emoji}</span>
+                        <Repeat size={9} className={isIncome ? "text-emerald-600" : "text-rose-600"} strokeWidth={2.8} />
                     </div>
                 </div>
 
