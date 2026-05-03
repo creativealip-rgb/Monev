@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getDb, getRawDb } from "@/backend/db";
 import { transactions } from "@/backend/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { HeadObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
 import path from "path";
 
@@ -42,6 +43,82 @@ function getBackupDir() {
 
 function getBackupPath(userId: number) {
     return path.join(getBackupDir(), `user-${userId}.json`);
+}
+
+function getR2Config() {
+    const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+    const bucket = process.env.R2_BUCKET_NAME;
+    if (!accountId || !accessKeyId || !secretAccessKey || !bucket) return null;
+
+    return {
+        bucket,
+        endpoint: process.env.R2_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`,
+        accessKeyId,
+        secretAccessKey,
+    };
+}
+
+function getR2Client(config: NonNullable<ReturnType<typeof getR2Config>>) {
+    return new S3Client({
+        region: "auto",
+        endpoint: config.endpoint,
+        credentials: {
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
+        },
+    });
+}
+
+function getBackupKey(userId: number, filename = "backup-latest.json") {
+    return `users/${userId}/${filename}`;
+}
+
+async function saveCloudBackup(userId: number, payload: ReturnType<typeof createBackupPayload>) {
+    const config = getR2Config();
+    if (!config) {
+        await mkdir(getBackupDir(), { recursive: true });
+        await writeFile(getBackupPath(userId), JSON.stringify(payload, null, 2), "utf8");
+        return { storage: "local", key: getBackupPath(userId) };
+    }
+
+    const client = getR2Client(config);
+    const body = JSON.stringify(payload, null, 2);
+    const historyKey = getBackupKey(userId, `history/backup-${payload.exportDate.replace(/[:.]/g, "-")}.json`);
+
+    await client.send(new PutObjectCommand({ Bucket: config.bucket, Key: getBackupKey(userId), Body: body, ContentType: "application/json" }));
+    await client.send(new PutObjectCommand({ Bucket: config.bucket, Key: historyKey, Body: body, ContentType: "application/json" }));
+    return { storage: "r2", key: getBackupKey(userId) };
+}
+
+async function readCloudBackup(userId: number) {
+    const config = getR2Config();
+    if (!config) {
+        return JSON.parse(await readFile(getBackupPath(userId), "utf8"));
+    }
+
+    const client = getR2Client(config);
+    const result = await client.send(new GetObjectCommand({ Bucket: config.bucket, Key: getBackupKey(userId) }));
+    const text = await result.Body?.transformToString();
+    if (!text) throw new Error("Backup cloud kosong");
+    return JSON.parse(text);
+}
+
+async function hasCloudBackup(userId: number) {
+    const config = getR2Config();
+    if (!config) {
+        const files: string[] = await readdir(getBackupDir()).catch(() => [] as string[]);
+        return files.includes(`user-${userId}.json`);
+    }
+
+    try {
+        await getR2Client(config).send(new HeadObjectCommand({ Bucket: config.bucket, Key: getBackupKey(userId) }));
+        return true;
+    } catch (error: any) {
+        if (error?.$metadata?.httpStatusCode === 404 || error?.name === "NotFound") return false;
+        throw error;
+    }
 }
 
 function tableExists(table: string) {
@@ -291,16 +368,14 @@ export async function PUT(req: NextRequest) {
         const body = await req.json();
         const action = body?.action;
 
-        await mkdir(getBackupDir(), { recursive: true });
-
         if (action === "backup") {
             const payload = createBackupPayload(userId, session.user.email);
-            await writeFile(getBackupPath(userId), JSON.stringify(payload, null, 2), "utf8");
-            return NextResponse.json({ success: true, backupAt: payload.exportDate, message: "Backup cloud berhasil" });
+            const saved = await saveCloudBackup(userId, payload);
+            return NextResponse.json({ success: true, backupAt: payload.exportDate, storage: saved.storage, message: "Backup cloud berhasil" });
         }
 
         if (action === "restore") {
-            const payload = JSON.parse(await readFile(getBackupPath(userId), "utf8"));
+            const payload = await readCloudBackup(userId);
             const data = normalizeBackupPayload(payload);
             if (!data) return NextResponse.json({ success: false, error: "Backup cloud tidak valid" }, { status: 400 });
 
@@ -309,9 +384,7 @@ export async function PUT(req: NextRequest) {
         }
 
         if (action === "status") {
-            const files: string[] = await readdir(getBackupDir()).catch(() => [] as string[]);
-            const hasBackup = files.includes(`user-${userId}.json`);
-            return NextResponse.json({ success: true, hasBackup });
+            return NextResponse.json({ success: true, hasBackup: await hasCloudBackup(userId), storage: getR2Config() ? "r2" : "local" });
         }
 
         return NextResponse.json({ success: false, error: "Action tidak dikenal" }, { status: 400 });
