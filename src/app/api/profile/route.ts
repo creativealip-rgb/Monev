@@ -136,10 +136,22 @@ export async function POST(req: NextRequest) {
 
                 const user = await getUserById(userId);
                 if (telegramId && user) {
-                    if (canUseTelegram(user.tier as UserTier)) {
-                        await linkTelegramAccount(userId, telegramId);
-                        await sendTelegramMessage(telegramId, `🎉 **Selamat Datang, ${firstName || "Sultan"}!**\n\nAkun Telegram kamu berhasil terhubung.`);
+                    if (!canUseTelegram(user.tier as UserTier)) {
+                        return NextResponse.json({
+                            success: false,
+                            message: "Fitur Telegram hanya tersedia untuk Sultan! 👑",
+                        }, { status: 403 });
                     }
+
+                    const linkResult = await linkTelegramAccount(userId, telegramId);
+                    if (!linkResult.success) {
+                        return NextResponse.json({
+                            success: false,
+                            message: linkResult.message,
+                        }, { status: 400 });
+                    }
+
+                    await sendTelegramMessage(telegramId, `🎉 **Selamat Datang, ${firstName || "Sultan"}!**\n\nAkun Telegram kamu berhasil terhubung.`);
                 } else if (telegramId === null) {
                     await unlinkTelegramAccount(userId);
                 }
@@ -175,6 +187,32 @@ export async function POST(req: NextRequest) {
                 
                     if (type === "profile") {
                         await updateUser(userId, data);
+                    } else if (type === "telegram") {
+                        const telegramId = parseInt(String(data.telegramId || ""), 10);
+                        if (!telegramId) {
+                            return NextResponse.json({
+                                success: false,
+                                message: "ID Telegram tidak valid.",
+                            }, { status: 400 });
+                        }
+
+                        const user = await getUserById(userId);
+                        if (!user || !canUseTelegram(user.tier as UserTier)) {
+                            return NextResponse.json({
+                                success: false,
+                                message: "Fitur Telegram hanya tersedia untuk Sultan! 👑",
+                            }, { status: 403 });
+                        }
+
+                        const linkResult = await linkTelegramAccount(userId, telegramId);
+                        if (!linkResult.success) {
+                            return NextResponse.json({
+                                success: false,
+                                message: linkResult.message,
+                            }, { status: 400 });
+                        }
+
+                        await sendTelegramMessage(telegramId, "🎉 **Selamat Datang!**\n\nAkun Telegram kamu berhasil terhubung dengan Monev.");
                     } else if (type === "settings") {
                         const settingsData = { ...data };
 
@@ -198,9 +236,12 @@ export async function POST(req: NextRequest) {
                     } else if (type === "disconnectTelegram") {
                         await unlinkTelegramAccount(userId);
                     }
-                } catch (parseError) {
-                    // Silently handle JSON parse errors - likely empty body
-                    console.warn("Request body is empty or invalid JSON");
+                } catch (parseError: any) {
+                    console.error("API Profile JSON Update Error:", parseError);
+                    return NextResponse.json({
+                        success: false,
+                        message: parseError?.message || "Gagal menyimpan profil.",
+                    }, { status: 400 });
                 }
             }
         }
