@@ -141,7 +141,7 @@ export function EmptyState({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={action.onClick}
-                    className="px-6 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 transition-colors shadow-lg shadow-sky-500/25"
+                    className="mb-24 px-6 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 transition-colors shadow-lg shadow-sky-500/25 sm:mb-0"
                 >
                     {action.label}
                 </motion.button>
@@ -206,6 +206,7 @@ export function NoBillsEmpty({ onAddNew }: { onAddNew?: () => void }) {
     return (
         <EmptyState
             icon={ReceiptText}
+            className="-mt-16 sm:mt-0"
             title="Tidak ada tagihan"
             description="Catat tagihan rutin seperti listrik, internet, atau langganan bulanan"
             action={onAddNew ? { label: "Tambah Tagihan", onClick: onAddNew } : undefined}
