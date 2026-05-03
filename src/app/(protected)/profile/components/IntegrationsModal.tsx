@@ -32,10 +32,11 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
         try {
             const response = await apiFetch("/api/profile", {
                 method: "POST",
-                body: JSON.stringify({ 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                     type: "telegram",
-                    telegramId: formData.telegramId 
-                })
+                    telegramId: formData.telegramId,
+                }),
             });
             const result = await response.json();
             
@@ -58,7 +59,8 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
         try {
             const response = await apiFetch("/api/profile", {
                 method: "POST",
-                body: JSON.stringify({ type: "disconnectTelegram" })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "disconnectTelegram" }),
             });
             const result = await response.json();
             
