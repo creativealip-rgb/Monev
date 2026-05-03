@@ -101,6 +101,13 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
         }
     };
 
+    const handleToggleAppLock = () => {
+        if (!formData.isAppLockEnabled && !formData.securityPin && !formData.hasSecurityPin) {
+            setShowPinInput(true);
+        }
+        setFormData((prev: any) => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }));
+    };
+
     const handleToggleBiometric = async () => {
         const nextValue = !formData.isBiometricEnabled;
 
@@ -209,12 +216,20 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
         onClick?: () => void,
         danger?: boolean
     }) => (
-        <div 
+        <div
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
             className={cn(
-                "flex items-center justify-between py-4 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0",
-                onClick && "cursor-pointer"
+                "flex min-h-[64px] touch-manipulation items-center justify-between py-4 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0",
+                onClick && "cursor-pointer active:opacity-80"
             )}
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (onClick && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
         >
             <div className="flex items-center gap-3">
                 <div className={cn(
@@ -242,14 +257,17 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 e.stopPropagation();
                 onChange();
             }}
+            onTouchEnd={(e) => {
+                e.stopPropagation();
+            }}
             className={cn(
-                "relative w-12 h-6 rounded-full transition-colors p-1",
+                "relative h-8 w-14 rounded-full p-1 transition-colors touch-manipulation",
                 checked ? "bg-sky-500" : "bg-slate-200 dark:bg-slate-700"
             )}
         >
             <motion.div
                 animate={{ x: checked ? 24 : 0 }}
-                className="w-4 h-4 bg-white rounded-full shadow"
+                className="h-6 w-6 rounded-full bg-white shadow"
             />
         </button>
     );
@@ -261,15 +279,11 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 icon={Lock}
                 title="Kunci Aplikasi"
                 description="PIN saat membuka aplikasi"
+                onClick={handleToggleAppLock}
             >
                 <Toggle 
                     checked={formData.isAppLockEnabled} 
-                    onChange={() => {
-                        if (!formData.isAppLockEnabled && !formData.securityPin && !formData.hasSecurityPin) {
-                            setShowPinInput(true);
-                        }
-                        setFormData((prev: any) => ({ ...prev, isAppLockEnabled: !prev.isAppLockEnabled }));
-                    }}
+                    onChange={handleToggleAppLock}
                 />
             </SettingItem>
 
@@ -323,8 +337,8 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                                         setFormData((prev: any) => ({ ...prev, securityPin: val }));
                                     }
                                 }}
-                                className="absolute opacity-0 w-full h-full inset-0 cursor-pointer"
-                                style={{ position: 'relative', height: '1px', width: '1px', margin: '-1px' }}
+                                className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                placeholder="______"
                                 autoFocus
                             />
                             
@@ -358,8 +372,8 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                                             setFormData((prev: any) => ({ ...prev, decoyPin: val }));
                                         }
                                     }}
-                                    className="absolute opacity-0"
-                                    style={{ position: 'relative', height: '1px', width: '1px', margin: '-1px' }}
+                                    className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-center font-mono text-base tracking-[0.4em] text-slate-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    placeholder="______"
                                 />
                             </div>
                         </div>
@@ -372,6 +386,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 icon={Fingerprint}
                 title="Sidik Jari / Wajah"
                 description="Login dengan biometrik"
+                onClick={handleToggleBiometric}
             >
                 <Toggle 
                     checked={formData.isBiometricEnabled} 

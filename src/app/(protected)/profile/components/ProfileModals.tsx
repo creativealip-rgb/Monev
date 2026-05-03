@@ -159,7 +159,7 @@ export function ProfileModals({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-end justify-center p-0 sm:items-center sm:p-4"
+                        className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[2147483647] flex items-end justify-center p-0 sm:items-center sm:p-4"
                         onClick={onClose}
                     >
                         <motion.div
