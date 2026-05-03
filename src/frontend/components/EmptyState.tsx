@@ -37,8 +37,8 @@ interface EmptyStateProps {
 
 const variantConfig = {
     default: {
-        iconBg: "bg-slate-100 dark:bg-slate-800",
-        iconColor: "text-muted-foreground",
+        iconBg: "bg-sky-50 dark:bg-sky-950/60 border-sky-100 dark:border-sky-800/60",
+        iconColor: "text-sky-500 dark:text-sky-300",
         titleColor: "text-foreground",
         descColor: "text-muted-foreground"
     },
@@ -115,7 +115,7 @@ export function EmptyState({
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={cn(
-                    "w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-white shadow-sm border border-slate-100",
+                    "w-20 h-20 rounded-3xl flex items-center justify-center mb-5 shadow-sm border",
                     config.iconBg
                 )}
             >
