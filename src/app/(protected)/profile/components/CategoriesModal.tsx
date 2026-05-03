@@ -211,6 +211,22 @@ export function CategoriesModal({ categories, loadData }: CategoriesModalProps) 
                 <TabButton id="tags" label="Tag" icon={Hash} />
             </div>
 
+            {activeTab === "categories" && (
+                <div className="rounded-xl border border-pink-100 bg-pink-50 p-3 text-[11px] font-medium text-pink-700 dark:border-pink-900/40 dark:bg-pink-900/20 dark:text-pink-300">
+                    Kategori custom sudah aktif untuk pilihan kategori transaksi dan budget.
+                </div>
+            )}
+            {activeTab === "templates" && (
+                <div className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-[11px] font-medium text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
+                    Template ini disimpan di perangkat sebagai preset transaksi cepat. Integrasi ke form transaksi belum aktif, jadi sementara hanya untuk catatan/preset lokal.
+                </div>
+            )}
+            {activeTab === "tags" && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+                    Tag disiapkan untuk label lintas kategori seperti #urgent atau #bisnis. Belum tersambung ke transaksi, jadi sekarang hanya tersimpan lokal.
+                </div>
+            )}
+
             <AnimatePresence mode="wait">
                 {/* Categories Tab */}
                 {activeTab === "categories" && (

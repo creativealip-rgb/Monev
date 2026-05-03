@@ -81,6 +81,10 @@ export async function GET(request: Request) {
             }
         });
 
+        const totalBudget = budgets.reduce((sum: number, budget: any) => sum + Number(budget.amount || 0), 0);
+        const totalBudgetSpent = budgets.reduce((sum: number, budget: any) => sum + Number(budget.spent || 0), 0);
+        const budgetRemaining = Math.max(0, totalBudget - totalBudgetSpent);
+
         const healthScore = calculateHealthScore({
             income: stats.income,
             expense: stats.expense,
@@ -113,6 +117,9 @@ export async function GET(request: Request) {
                 ...assets,
                 totalAccounts,
                 accountCount,
+                weeklyBudgetTotal: totalBudget,
+                weeklyBudgetSpent: totalBudgetSpent,
+                weeklyBudgetRemaining: budgetRemaining,
                 growth,
                 incomeGrowth,
                 expenseGrowth,

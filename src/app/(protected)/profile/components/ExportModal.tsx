@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { Download, Upload, Cloud, FileJson, FileSpreadsheet, FileText, CheckCircle2, AlertCircle, Loader2, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
-import { useSecurity } from "@/components/SecurityProvider";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
 
@@ -13,7 +12,6 @@ interface ExportModalProps {
 }
 
 export function ExportModal({ onClose }: ExportModalProps) {
-    const { reauthenticate } = useSecurity();
     const toast = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<"export" | "import" | "cloud">("export");
@@ -27,13 +25,10 @@ export function ExportModal({ onClose }: ExportModalProps) {
         to: new Date().toISOString().split('T')[0]
     });
 
-    const handleExport = async (format: string) => {
-        const isVerified = await reauthenticate();
-        if (isVerified) {
-            const url = `/api/export?format=${format}&from=${dateRange.from}&to=${dateRange.to}`;
-            window.open(url, "_blank");
-            toast.success("Export", `Export ${format.toUpperCase()} sedang diproses...`);
-        }
+    const handleExport = (format: string) => {
+        const url = `/api/export?format=${format}&from=${dateRange.from}&to=${dateRange.to}`;
+        window.open(url, "_blank");
+        toast.success("Export", `Export ${format.toUpperCase()} sedang diproses...`);
     };
 
     const handleImport = async () => {
@@ -42,13 +37,13 @@ export function ExportModal({ onClose }: ExportModalProps) {
             return;
         }
 
-        const isVerified = await reauthenticate();
-        if (!isVerified) return;
+        toast.info("Import belum aktif", "Untuk sekarang fitur yang sudah siap adalah export data.");
+        return;
 
         setIsLoading(true);
         try {
             const formData = new FormData();
-            formData.append("file", importFile);
+            formData.append("file", importFile as File);
 
             const res = await apiFetch("/api/export", {
                 method: "POST",
@@ -71,6 +66,9 @@ export function ExportModal({ onClose }: ExportModalProps) {
     };
 
     const handleCloudBackup = async () => {
+        toast.info("Cloud backup belum aktif", "Fitur ini masih disiapkan. Pakai export JSON untuk backup manual dulu.");
+        return;
+
         setIsLoading(true);
         try {
             const res = await apiFetch("/api/export", {
@@ -94,6 +92,9 @@ export function ExportModal({ onClose }: ExportModalProps) {
     };
 
     const handleRestoreFromCloud = async () => {
+        toast.info("Cloud restore belum aktif", "Restore cloud belum tersedia di versi ini.");
+        return;
+
         if (!confirm("Restore akan menimpa data lokal Anda. Lanjutkan?")) return;
 
         setIsLoading(true);
@@ -211,10 +212,10 @@ export function ExportModal({ onClose }: ExportModalProps) {
                         </div>
 
                         <p className="text-xs text-slate-500">Pilih format export:</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => handleExport("json")}
-                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-sky-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
                                 <FileJson size={24} className="text-sky-500" />
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">JSON</span>
@@ -222,7 +223,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                             </button>
                             <button
                                 onClick={() => handleExport("csv")}
-                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
                                 <FileSpreadsheet size={24} className="text-emerald-500" />
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">CSV</span>
@@ -230,7 +231,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                             </button>
                             <button
                                 onClick={() => handleExport("pdf")}
-                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
                                 <FileText size={24} className="text-rose-500" />
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">PDF</span>
@@ -238,7 +239,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                             </button>
                             <button
                                 onClick={() => handleExport("bca_csv")}
-                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
                                 <span className="text-xl">🏦</span>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">BCA</span>
@@ -246,7 +247,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                             </button>
                             <button
                                 onClick={() => handleExport("mandiri_csv")}
-                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
                                 <span className="text-xl">💳</span>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Mandiri</span>
@@ -254,7 +255,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                             </button>
                             <button
                                 onClick={() => handleExport("bni_csv")}
-                                className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-md transition-all flex flex-col items-center gap-2 group"
                             >
                                 <span className="text-xl">🏦</span>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">BNI</span>
@@ -324,7 +325,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-800 flex gap-2">
                             <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-amber-700 dark:text-amber-400">
-                                Import akan menambahkan transaksi baru. Pastikan format file sesuai.
+                                Import belum aktif di versi ini. Untuk backup aman sekarang, pakai Export JSON dulu.
                             </p>
                         </div>
                     </motion.div>
@@ -376,7 +377,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                         </div>
 
                         <p className="text-xs text-slate-500 text-center">
-                            Data Anda dienkripsi dan tersimpan dengan aman di server kami.
+                            Cloud backup belum aktif. Gunakan Export JSON untuk backup manual sementara.
                         </p>
                     </motion.div>
                 )}

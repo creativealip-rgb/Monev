@@ -75,16 +75,29 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                 return;
             }
 
-            // Save transaction directly
+            const accountsResponse = await apiFetch("/api/accounts");
+            const accountsResult = await accountsResponse.json();
+            const accounts = accountsResult.data || [];
+            const defaultAccount = accounts.find((account: any) => account.isActive !== false) || accounts[0];
+
+            if (!defaultAccount?.id) {
+                setError("Akun saldo belum ada. Tambahkan akun di halaman Saldo dulu.");
+                setSaving(false);
+                return;
+            }
+
+            // Save transaction directly. The transactions API requires accountId.
             const response = await apiFetch("/api/transactions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     amount: result.amount,
                     description: result.description || result.merchantName || "Transaksi",
+                    merchantName: result.merchantName || null,
                     categoryId: category.id,
                     type: "expense",
-                    paymentMethod: "cash",
+                    paymentMethod: defaultAccount.type || "cash",
+                    accountId: defaultAccount.id,
                     date: new Date().toISOString(),
                 }),
             });
