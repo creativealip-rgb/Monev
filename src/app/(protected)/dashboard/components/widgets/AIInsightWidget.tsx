@@ -35,11 +35,13 @@ export function AIInsightWidget({ insight, type, generatedAt, onRefresh }: AIIns
                         <span className={cn("text-[10px] font-black uppercase tracking-widest opacity-70", text)}>AI Insight</span>
                         <div className="flex items-center gap-2">
                             {formattedTime && (
-                                <span className="text-[9px] text-slate-400">Updated {formattedTime}</span>
+                                <span className="text-[9px] text-slate-500 dark:text-slate-400">Diperbarui {formattedTime}</span>
                             )}
                             <button
+                                type="button"
                                 onClick={onRefresh}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                aria-label="Muat ulang insight AI"
+                                className="text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
                             >
                                 <RefreshCw size={12} />
                             </button>

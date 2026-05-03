@@ -89,6 +89,7 @@ export function HeroBalanceCard({
                                 onToggleHideBalance();
                             }}
                             className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                            aria-label={hideBalance ? (locale === "id" ? "Tampilkan saldo" : "Show balance") : (locale === "id" ? "Sembunyikan saldo" : "Hide balance")}
                             title={hideBalance ? (locale === "id" ? "Tampilkan saldo" : "Show balance") : (locale === "id" ? "Sembunyikan saldo" : "Hide balance")}
                         >
                             {hideBalance ? (
@@ -189,6 +190,7 @@ export function HeroBalanceCard({
             <button
                 type="button"
                 onClick={onTransferClick}
+                aria-label="Buka form transfer saldo"
                 className="mt-4 w-full py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-sm hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
             >
                 <ArrowRightLeft size={16} />

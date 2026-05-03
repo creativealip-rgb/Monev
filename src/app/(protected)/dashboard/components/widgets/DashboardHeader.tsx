@@ -87,6 +87,8 @@ export function DashboardHeader({
                     )}
 
                     <motion.button
+                        type="button"
+                        aria-label="Buka notifikasi"
                         whileHover={{ scale: 1.08, rotate: 8 }}
                         whileTap={{ scale: 0.92 }}
                         className="relative h-9 w-9 rounded-full glass-card flex items-center justify-center text-muted-foreground dark:text-sky-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 transition-all"
