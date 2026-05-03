@@ -38,9 +38,6 @@ export function ExportModal({ onClose }: ExportModalProps) {
             return;
         }
 
-        toast.info("Import belum aktif", "Untuk sekarang fitur yang sudah siap adalah export data.");
-        return;
-
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -67,9 +64,6 @@ export function ExportModal({ onClose }: ExportModalProps) {
     };
 
     const handleCloudBackup = async () => {
-        toast.info("Cloud backup belum aktif", "Fitur ini masih disiapkan. Pakai export JSON untuk backup manual dulu.");
-        return;
-
         setIsLoading(true);
         try {
             const res = await apiFetch("/api/export", {
@@ -93,9 +87,6 @@ export function ExportModal({ onClose }: ExportModalProps) {
     };
 
     const handleRestoreFromCloud = async () => {
-        toast.info("Cloud restore belum aktif", "Restore cloud belum tersedia di versi ini.");
-        return;
-
         if (!confirm("Restore akan menimpa data lokal Anda. Lanjutkan?")) return;
 
         setIsLoading(true);
@@ -344,7 +335,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-800 flex gap-2">
                             <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-amber-700 dark:text-amber-400">
-                                Import belum aktif di versi ini. Untuk backup aman sekarang, pakai Export JSON dulu.
+                                Import JSON aktif untuk backup Monev. Data akan ditambahkan tanpa menghapus data lama.
                             </p>
                         </div>
                     </motion.div>
@@ -396,7 +387,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
                         </div>
 
                         <p className="text-xs text-slate-500 text-center">
-                            Cloud backup belum aktif. Gunakan Export JSON untuk backup manual sementara.
+                            Cloud backup aktif di server Monev. Backup tersimpan per akun dan bisa direstore dari tombol di atas.
                         </p>
                     </motion.div>
                 )}
