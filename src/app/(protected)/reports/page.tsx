@@ -242,7 +242,7 @@ export default function ReportsPage() {
     const totalExpense = maxExpenseCategories.reduce((sum, c) => sum + c.amount, 0);
 
     return (
-        <div className="min-h-screen pb-56 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-32 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}

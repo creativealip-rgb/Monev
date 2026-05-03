@@ -315,7 +315,7 @@ export default function FiturPage() {
     const userTier: UserTier = session?.user?.tier || "starter";
 
     return (
-        <div className="min-h-screen pb-48 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-32 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
