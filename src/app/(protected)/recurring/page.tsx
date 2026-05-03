@@ -313,7 +313,7 @@ export default function RecurringPage() {
                         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 flex items-center justify-center mb-5 shadow-inner">
                             <Repeat size={36} className="text-emerald-400" />
                         </div>
-                        <p className="font-black text-foreground text-lg">Belum ada teman setia 😅</p>
+                        <p className="font-black text-foreground text-lg">Belum ada transaksi berulang</p>
                         <p className="text-xs text-muted-foreground mt-2 max-w-[220px] leading-relaxed">
                             Tambahkan gaji, tagihan rutin, Netflix, atau pengeluaran mingguan kamu
                         </p>
