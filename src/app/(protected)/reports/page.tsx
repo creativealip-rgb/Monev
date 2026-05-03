@@ -240,6 +240,7 @@ export default function ReportsPage() {
         .slice(0, 5) || [];
 
     const totalExpense = maxExpenseCategories.reduce((sum, c) => sum + c.amount, 0);
+    const hasPreviewMoney = Boolean(reportPreview && (reportPreview.income > 0 || reportPreview.expense > 0 || reportPreview.balance > 0));
 
     return (
         <div className="min-h-screen pb-32 bg-sky-50 dark:bg-slate-950">
@@ -445,8 +446,8 @@ export default function ReportsPage() {
                 ) : reportPreview ? (
                     <>
                         {/* Summary Cards */}
-                        <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3">
-                            <div className="card-clean p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                        <motion.div variants={itemVariants} className={cn("grid grid-cols-3", hasPreviewMoney ? "gap-3" : "gap-2")}>
+                            <div className={cn("card-clean bg-gradient-to-br from-emerald-500 to-emerald-600 text-white", hasPreviewMoney ? "p-4" : "p-3")}>
                                 <div className="flex items-center gap-1 mb-2">
                                     <TrendingUp size={14} className="opacity-80" />
                                     <span className="text-[8px] font-bold uppercase tracking-wider opacity-80">Pemasukan</span>
@@ -454,7 +455,7 @@ export default function ReportsPage() {
                                 <p className="text-sm font-bold truncate">{formatCurrency(reportPreview.income)}</p>
                             </div>
 
-                            <div className="card-clean p-4 bg-gradient-to-br from-rose-500 to-rose-600 text-white">
+                            <div className={cn("card-clean bg-gradient-to-br from-rose-500 to-rose-600 text-white", hasPreviewMoney ? "p-4" : "p-3")}>
                                 <div className="flex items-center gap-1 mb-2">
                                     <TrendingDown size={14} className="opacity-80" />
                                     <span className="text-[8px] font-bold uppercase tracking-wider opacity-80">Pengeluaran</span>
@@ -462,7 +463,7 @@ export default function ReportsPage() {
                                 <p className="text-sm font-bold truncate">{formatCurrency(reportPreview.expense)}</p>
                             </div>
 
-                            <div className="card-clean p-4 bg-gradient-to-br from-sky-500 to-cyan-600 text-white">
+                            <div className={cn("card-clean bg-gradient-to-br from-sky-500 to-cyan-600 text-white", hasPreviewMoney ? "p-4" : "p-3")}>
                                 <div className="flex items-center gap-1 mb-2">
                                     <PieChart size={14} className="opacity-80" />
                                     <span className="text-[8px] font-bold uppercase tracking-wider opacity-80">Saldo</span>
