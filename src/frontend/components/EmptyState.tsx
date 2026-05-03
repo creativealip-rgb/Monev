@@ -3,7 +3,8 @@
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
-    LucideIcon
+    LucideIcon,
+    ReceiptText
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
@@ -151,7 +152,7 @@ export function EmptyState({
 export function NoTransactionsEmpty({ onAddNew, noAccounts }: { onAddNew?: () => void; noAccounts?: boolean }) {
     return (
         <EmptyState
-            lottieKey="transaction"
+            icon={ReceiptText}
             title={noAccounts ? "Tambahkan akun dulu" : "Belum ada transaksi"}
             description={
                 noAccounts
