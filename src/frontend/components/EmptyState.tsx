@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
     LucideIcon,
-    ReceiptText
+    ReceiptText,
+    WalletCards
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
@@ -182,7 +183,7 @@ export function NoSearchResultsEmpty({ query }: { query?: string }) {
 export function NoBudgetsEmpty({ onAddNew }: { onAddNew?: () => void }) {
     return (
         <EmptyState
-            lottieKey="wallet"
+            icon={WalletCards}
             title="Belum ada budget"
             description="Atur batas pengeluaran bulananmu untuk kategori tertentu"
             action={onAddNew ? { label: "Buat Budget", onClick: onAddNew } : undefined}
@@ -204,7 +205,7 @@ export function NoGoalsEmpty({ onAddNew }: { onAddNew?: () => void }) {
 export function NoBillsEmpty({ onAddNew }: { onAddNew?: () => void }) {
     return (
         <EmptyState
-            lottieKey="receipt"
+            icon={ReceiptText}
             title="Tidak ada tagihan"
             description="Catat tagihan rutin seperti listrik, internet, atau langganan bulanan"
             action={onAddNew ? { label: "Tambah Tagihan", onClick: onAddNew } : undefined}
