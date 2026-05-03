@@ -362,7 +362,7 @@ export default function ProfilePage() {
                 </motion.div>
             )}
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-5 sm:pt-6 space-y-3 pb-56">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-5 sm:pt-6 space-y-3 pb-6">
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="card-clean p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Moon size={20} className="text-slate-600 dark:text-slate-300" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p></div></div><ThemeToggleSwitch /></motion.div>
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }} className="card-clean p-4 space-y-4 hidden sm:block"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="card-clean p-4 space-y-4 hidden sm:block"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center"><span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">$</span></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">Mata Uang</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih mata uang utama</p></div></div><CurrencySelector /></motion.div>
@@ -448,7 +448,7 @@ export default function ProfilePage() {
                 </motion.button>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center mt-8"><p className="text-xs text-slate-400">Monev v1.0.0</p></motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center mt-4 pb-32"><p className="text-xs text-slate-400">Monev v1.0.0</p></motion.div>
 
             <ProfileModals
                 activeModal={activeModal}
