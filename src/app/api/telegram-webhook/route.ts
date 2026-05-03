@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { processAndSaveTransaction } from "@/lib/transaction-pipeline";
+import { getAccounts } from "@/backend/db/account-operations";
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
@@ -198,6 +199,10 @@ export async function POST(req: NextRequest) {
                 }
             } else if (lowerText === '/start' || lowerText === 'test' || lowerText === '/id') {
                 await sendTelegramMessage(chatId, `Halo! Saya asisten keuangan kamu. 🚀\n\n🆔 **ID Telegram Kamu:** \`${chatId}\`\n(Copy ID ini dan paste di Menu Profil Website untuk menghubungkan akun)\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- \`/burn\` : Cek runway/ketahanan dana\n- \`/idle\` : Cek uang nganggur\n- \`/inflation [jumlah] [tahun]\` : Hitung efek inflasi\n- \`set goal [nama]\` : Set target utama\n- \`set rate [angka]\` : Set gaji per jam\n- \`/link\` : Cara menghubungkan akun`);
+            } else if (isBalanceLookup(text || "")) {
+                const reply = await buildTelegramStatusReply(userId);
+                await addChatMessage(userId, 'assistant', reply);
+                await sendTelegramMessage(chatId, reply);
             } else {
                 // Fallback to Smart NLP
 
@@ -216,6 +221,7 @@ export async function POST(req: NextRequest) {
                         const allTransactions = await getTransactions(userId, 30);
                         const allCats = await getCategories();
                         const allInvestments = await getInvestments(userId);
+                        const allAccounts = await getAccounts(userId);
                         const allBills = await getBills(userId);
 
                         const goalsContext = allGoals.map(g => ({
@@ -255,6 +261,17 @@ export async function POST(req: NextRequest) {
                             platform: i.platform
                         }));
 
+                        const accountsContext = allAccounts
+                            .filter(account => account.isActive !== false)
+                            .map(account => ({
+                                id: account.id,
+                                name: account.name,
+                                type: account.type,
+                                balance: Number(account.balance || 0),
+                            }));
+                        const totalAccounts = accountsContext.reduce((sum, account) => sum + account.balance, 0);
+                        const totalInvestments = investmentsContext.reduce((sum, investment) => sum + investment.totalValue, 0);
+
                         const billsContext = allBills.map(b => ({
                             id: b.id,
                             name: b.name,
@@ -269,7 +286,14 @@ export async function POST(req: NextRequest) {
                         const history = historyRaw.map(h => ({ role: h.role as "user" | "assistant", content: h.content }));
 
                         const aiReply = await askFinanceAgent(text, {
-                            monthlyStats: stats,
+                            monthlyStats: {
+                                ...stats,
+                                totalAccounts,
+                                accountCount: accountsContext.length,
+                                totalInvestments,
+                                totalWealth: totalAccounts + totalInvestments,
+                            },
+                            accounts: accountsContext,
                             goals: goalsContext,
                             budgets: budgetsContext,
                             transactions: transactionsContext,
@@ -344,6 +368,53 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
+}
+
+function isBalanceLookup(message: string) {
+    return /(saldo|akun|rekening|wallet|dompet|e-?wallet|dana|gopay|ovo|shopeepay|bca|bri|bni|mandiri|cash|tunai|kekayaan|asset|aset|total kekayaan|net worth|\/status)/i.test(message);
+}
+
+async function buildTelegramStatusReply(userId: number) {
+    const now = new Date();
+    const [stats, accounts, investments, goals, budgets] = await Promise.all([
+        getMonthlyStats(userId, now.getFullYear(), now.getMonth() + 1),
+        getAccounts(userId),
+        (async () => {
+            const { getInvestments } = await import("@/backend/db/operations");
+            return getInvestments(userId);
+        })(),
+        getGoals(userId),
+        getBudgets(userId, now.getMonth() + 1, now.getFullYear()),
+    ]);
+
+    const activeAccounts = accounts.filter(account => account.isActive !== false);
+    const totalAccounts = activeAccounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+    const totalInvestments = investments.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.currentPrice || 0)), 0);
+    const totalWealth = totalAccounts + totalInvestments;
+
+    const accountLines = activeAccounts.length
+        ? activeAccounts
+            .map(account => `- ${account.name} (${account.type}): Rp ${Number(account.balance || 0).toLocaleString("id-ID")}`)
+            .join("\n")
+        : "- Belum ada akun di halaman Saldo";
+
+    const goalLines = goals.length
+        ? goals.slice(0, 5).map((goal, index) => {
+            const remaining = Math.max(0, Number(goal.targetAmount || 0) - Number(goal.currentAmount || 0));
+            const percent = goal.targetAmount > 0 ? (Number(goal.currentAmount || 0) / Number(goal.targetAmount || 1)) * 100 : 0;
+            return `${index + 1}. ${goal.name}\n   - Terkumpul: Rp ${Number(goal.currentAmount || 0).toLocaleString("id-ID")} dari Rp ${Number(goal.targetAmount || 0).toLocaleString("id-ID")} (${percent.toFixed(1)}%)\n   - Sisa: Rp ${remaining.toLocaleString("id-ID")}`;
+        }).join("\n")
+        : "- Belum ada target goal";
+
+    const budgetLines = budgets.length
+        ? budgets.slice(0, 5).map((budget, index) => {
+            const remaining = Math.max(0, Number(budget.amount || 0) - Number(budget.spent || 0));
+            const percent = budget.amount > 0 ? (Number(budget.spent || 0) / Number(budget.amount || 1)) * 100 : 0;
+            return `${index + 1}. ${budget.category?.name || "Lainnya"}\n   - Limit: Rp ${Number(budget.amount || 0).toLocaleString("id-ID")}\n   - Terpakai: Rp ${Number(budget.spent || 0).toLocaleString("id-ID")} (${percent.toFixed(1)}%)\n   - Sisa: Rp ${remaining.toLocaleString("id-ID")}`;
+        }).join("\n")
+        : "- Belum ada budget bulan ini";
+
+    return `Saat ini, inilah kondisi keuangan Bos:\n\n### Total Kekayaan (dari halaman Saldo):\n${accountLines}\n- Total Saldo Akun: Rp ${totalAccounts.toLocaleString("id-ID")}\n- Total Investasi: Rp ${totalInvestments.toLocaleString("id-ID")}\n- Total Kekayaan: Rp ${totalWealth.toLocaleString("id-ID")}\n\n### Pemasukan dan Pengeluaran Bulan Ini:\n- Pemasukan: Rp ${stats.income.toLocaleString("id-ID")}\n- Pengeluaran: Rp ${stats.expense.toLocaleString("id-ID")}\n- Saldo Transaksi Bulan Ini: Rp ${stats.balance.toLocaleString("id-ID")}\n\n### Target Goal:\n${goalLines}\n\n### Budget Bulan Ini:\n${budgetLines}\n\nCatatan: total kekayaan diambil dari halaman Saldo, bukan dari riwayat transaksi.`;
 }
 
 async function getTelegramFileUrl(fileId: string) {
