@@ -42,6 +42,7 @@ export function DuplicateBanner({
                             Ditemukan {duplicateCount} transaksi yang mungkin duplikat
                         </p>
                         <motion.button
+                            type="button"
                             whileTap={{ scale: 0.95 }}
                             onClick={onToggleDuplicates}
                             className={cn(
@@ -55,8 +56,10 @@ export function DuplicateBanner({
                             {showDuplicatesOnly ? "Lihat Semua" : "Lihat"}
                         </motion.button>
                         <motion.button
+                            type="button"
                             whileTap={{ scale: 0.95 }}
                             onClick={onDismiss}
+                            aria-label="Abaikan peringatan duplikat"
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             title="Abaikan duplikat ini"
                         >

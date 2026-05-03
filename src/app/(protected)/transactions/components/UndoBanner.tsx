@@ -91,6 +91,7 @@ export function UndoBanner({
 
                         {/* Undo button */}
                         <motion.button
+                            type="button"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={onUndo}
@@ -115,7 +116,9 @@ export function UndoBanner({
 
                         {/* Dismiss */}
                         <button
+                            type="button"
                             onClick={onDismiss}
+                            aria-label="Tutup pemberitahuan transaksi dihapus"
                             className="w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 transition-colors flex-shrink-0"
                         >
                             <X size={14} />
