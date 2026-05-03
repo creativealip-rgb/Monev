@@ -22,7 +22,6 @@ import { QuickStatsWidget } from "./components/widgets/QuickStatsWidget";
 import { RecentTransactionsWidget } from "./components/widgets/RecentTransactionsWidget";
 import { FeaturesWidget } from "./components/widgets/FeaturesWidget";
 import { AIInsightSection } from "./components/AIInsightSection";
-import { QuickActions } from "./components/QuickActions";
 import { OnboardingCard } from "./components/OnboardingCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
 
@@ -182,7 +181,6 @@ export default function DashboardPage() {
                     onSuccess={handleAddTransactionSuccess}
                 />
 
-                <QuickActions onAddTransaction={() => setIsAddSheetOpen(true)} />
             </div>
         </PullToRefresh>
     );
