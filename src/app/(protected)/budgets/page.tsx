@@ -143,7 +143,7 @@ export default function BudgetsPage() {
     useEffect(() => {
         loadData();
 
-        // Listen for transaction added event
+        // Reload the selected period when transactions change elsewhere.
         const handleTransactionAdded = () => {
             loadData();
         };
@@ -152,7 +152,7 @@ export default function BudgetsPage() {
         return () => {
             window.removeEventListener("transactionAdded", handleTransactionAdded);
         };
-    }, []);
+    }, [selectedMonth, selectedYear]);
 
     // Budget threshold toast notifications (once per session per budget per threshold)
     const notifiedBudgetsRef = useRef<Set<string>>(new Set());
@@ -340,6 +340,7 @@ export default function BudgetsPage() {
 
     const totalBudget = budgets.reduce((sum, b) => sum + getEffectiveLimit(b), 0);
     const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
+    const totalRemaining = Math.max(totalBudget - totalSpent, 0);
     const totalPercentage = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
 
     async function handleApplyTemplate(templateId: string) {
@@ -421,64 +422,73 @@ export default function BudgetsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-4 sm:mx-6 mt-4 sm:mt-6 p-4 sm:p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="relative mx-4 mt-4 overflow-hidden rounded-[2rem] border border-white/60 bg-gradient-to-br from-slate-950 via-sky-700 to-cyan-500 p-4 text-white shadow-2xl shadow-sky-500/25 sm:mx-6 sm:mt-6 sm:p-5"
             >
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => navigateMonth("prev")}
-                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                            aria-label={t("budgets.previousMonth")}
-                        >
-                            <ChevronLeft size={18} className="text-white" />
-                        </button>
-                        <div className="text-center">
-                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{t("budgets.monthlyBudget")}</p>
-                            <p className="text-sm font-black text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => navigateMonth("next")}
-                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                            aria-label={t("budgets.nextMonth")}
-                            disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
-                        >
-                            <ChevronLeft size={18} className="text-white rotate-180" />
-                        </button>
+                <div className="pointer-events-none absolute inset-x-4 top-32 h-32 rounded-full bg-cyan-300/25 blur-3xl sm:inset-x-6" />
+                <div className="relative flex items-center justify-between gap-3 rounded-2xl bg-white/12 p-2 ring-1 ring-white/20 backdrop-blur-md">
+                    <button
+                        type="button"
+                        onClick={() => navigateMonth("prev")}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95"
+                        aria-label={t("budgets.previousMonth")}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <div className="min-w-0 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100/80">{t("budgets.monthlyBudget")}</p>
+                        <p className="mt-0.5 truncate text-lg font-black tracking-tight text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
                     </div>
-                    {(selectedMonth !== new Date().getMonth() + 1 || selectedYear !== new Date().getFullYear()) && (
-                        <button
-                            type="button"
-                            onClick={goToCurrentMonth}
-                            className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold transition-colors"
-                        >
-                            Hari Ini
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        onClick={() => navigateMonth("next")}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+                        aria-label={t("budgets.nextMonth")}
+                        disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
+                    >
+                        <ChevronLeft size={20} className="rotate-180" />
+                    </button>
                 </div>
-                <div className="flex items-end justify-between mb-4">
+
+                <div className="relative mt-5 grid grid-cols-[1fr_auto] gap-4">
                     <div>
-                        <p className="text-2xl font-bold tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
-                        <p className="text-white/60 text-xs tabular-nums">{t("budgets.used")} {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-100/80">Terpakai</p>
+                        <p className="mt-1 text-3xl font-black tracking-tight tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
+                        <p className="mt-1 text-xs font-semibold text-white/65 tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
                     </div>
-                    <div className="text-right">
-                        <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
-                        <p className="text-white/60 text-xs">{t("budgets.limit")}</p>
+                    <div className="flex h-20 w-20 flex-col items-center justify-center rounded-3xl bg-white/15 ring-1 ring-white/20 backdrop-blur-md">
+                        <p className="text-2xl font-black tabular-nums">{Math.round(totalPercentage)}%</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-100/75">batas</p>
                     </div>
                 </div>
-                <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${totalPercentage}%` }}
-                        transition={{ duration: 1 }}
-                        className={cn(
-                            "h-full rounded-full",
-                            totalPercentage > 90 ? "bg-rose-400" :
-                                totalPercentage > 75 ? "bg-amber-400" : "bg-emerald-400"
-                        )}
-                    />
+
+                <div className="relative mt-5">
+                    <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-white/70">
+                        <span>Sisa {isStealthMode ? "******" : formatCurrency(totalRemaining)}</span>
+                        <span>{budgets.length} kategori</span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-slate-950/35 ring-1 ring-white/10">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${totalPercentage}%` }}
+                            transition={{ duration: 1 }}
+                            className={cn(
+                                "h-full rounded-full shadow-[0_0_18px_rgba(255,255,255,0.25)]",
+                                totalPercentage > 90 ? "bg-rose-400" :
+                                    totalPercentage > 75 ? "bg-amber-300" : "bg-emerald-300"
+                            )}
+                        />
+                    </div>
                 </div>
+
+                {(selectedMonth !== new Date().getMonth() + 1 || selectedYear !== new Date().getFullYear()) && (
+                    <button
+                        type="button"
+                        onClick={goToCurrentMonth}
+                        className="relative mt-4 rounded-full bg-white/15 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white ring-1 ring-white/20 transition-colors hover:bg-white/25"
+                    >
+                        Kembali ke bulan ini
+                    </button>
+                )}
 
                 {/* Projected Warning */}
                 {(() => {
