@@ -679,7 +679,7 @@ export default function BillsPage() {
                                 </div>
                             ) : filteredBills.length === 0 ? (
                                 activeTab === "all" ? (
-                                    <div className="pb-32">
+                                    <div className="pb-44">
                                         <NoBillsEmpty onAddNew={() => setShowAddSheet(true)} />
                                     </div>
                                 ) : (
