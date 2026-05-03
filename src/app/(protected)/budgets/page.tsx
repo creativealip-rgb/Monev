@@ -472,7 +472,7 @@ export default function BudgetsPage() {
                             )}
                         />
                         <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black leading-none text-white drop-shadow-sm">
-                            {Math.round(totalPercentage)}% batas
+                            {Math.round(totalPercentage)}% terpakai
                         </span>
                     </div>
                 </div>

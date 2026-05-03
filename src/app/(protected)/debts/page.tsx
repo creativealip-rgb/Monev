@@ -411,10 +411,17 @@ export default function DebtsPage() {
                                     <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
                                         <Users size={32} className="text-slate-400" />
                                     </div>
-                                    <p className="font-bold text-foreground mb-1">Belum ada hutang aktif</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Tap + untuk mencatat hutang, piutang, atau split bill baru.
+                                    <p className="font-bold text-foreground mb-1">Belum ada catatan aktif</p>
+                                    <p className="text-xs text-muted-foreground max-w-[260px]">
+                                        Catat hutang, piutang, atau split bill pertama agar semua pinjaman mudah dipantau.
                                     </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddSheet(true)}
+                                        className="mt-5 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 active:scale-95"
+                                    >
+                                        Tambah Catatan
+                                    </button>
                                 </motion.div>
                             )}
 
@@ -443,10 +450,17 @@ export default function DebtsPage() {
                                     <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
                                         <Users size={32} className="text-slate-400" />
                                     </div>
-                                    <p className="font-bold text-foreground mb-1">Belum ada hutang biasa</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Tap + untuk mencatat hutang atau piutang baru
+                                    <p className="font-bold text-foreground mb-1">Belum ada hutang/piutang biasa</p>
+                                    <p className="text-xs text-muted-foreground max-w-[260px]">
+                                        Catat orang yang kamu pinjami atau pinjaman yang perlu kamu bayar.
                                     </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddSheet(true)}
+                                        className="mt-5 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 active:scale-95"
+                                    >
+                                        Tambah Hutang/Piutang
+                                    </button>
                                 </motion.div>
                             )}
                         </AnimatePresence>

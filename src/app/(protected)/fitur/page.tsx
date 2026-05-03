@@ -370,7 +370,7 @@ export default function FiturPage() {
                                                 <h3 className="text-[13px] font-bold text-slate-700 tracking-tight">{feature.title}</h3>
                                                 {feature.status === "ready" && !isUnavailable && !feature.requiredTier && (
                                                     <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
-                                                        Ready
+                                                        Siap
                                                     </span>
                                                 )}
                                                 {feature.status === "ready" && !isUnavailable && feature.requiredTier && !isTierSufficient(userTier, feature.requiredTier) && (
@@ -380,12 +380,12 @@ export default function FiturPage() {
                                                 )}
                                                 {feature.status === "ready" && !isUnavailable && feature.requiredTier && isTierSufficient(userTier, feature.requiredTier) && (
                                                     <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md border border-emerald-100 tracking-tighter uppercase">
-                                                        Ready
+                                                        Siap
                                                     </span>
                                                 )}
                                                 {isUnavailable && (
                                                     <span className="px-1.5 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-200 tracking-tighter uppercase">
-                                                        Soon
+                                                        Segera
                                                     </span>
                                                 )}
                                             </div>

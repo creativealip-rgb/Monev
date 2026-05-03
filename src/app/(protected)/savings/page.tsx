@@ -351,7 +351,7 @@ export default function SavingsPage() {
                         <p className="text-2xl font-bold tabular-nums">
                             {isStealthMode ? "••••••••" : formatCurrency(totalSaved)}
                         </p>
-                        <p className="text-white/60 text-xs tabular-nums">dari {goals.length} goals</p>
+                        <p className="text-white/60 text-xs tabular-nums">dari {goals.length} target</p>
                     </div>
                     <div className="text-right">
                         <p className="text-xl font-bold tabular-nums">{Math.round(totalPercentage)}%</p>
@@ -459,11 +459,11 @@ export default function SavingsPage() {
                              {userTier === "starter" && (
                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                     <Zap size={10} className="text-slate-500" />
-                                    <span className="text-[9px] font-bold text-slate-500 uppercase">Limit: 1</span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase">1 slot tersedia</span>
                                 </div>
                             )}
                         </div>
-                        <span className="text-xs text-muted-foreground">{goals.length} Goals</span>
+                        <span className="text-xs text-muted-foreground">{goals.length} target</span>
                     </div>
 
                     {loading ? (

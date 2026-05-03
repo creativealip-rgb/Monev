@@ -23,7 +23,7 @@ export interface HealthScoreBreakdown {
 
 export interface HealthScoreResult {
     score: number;
-    label: "Kritis" | "Perlu Perhatian" | "Sehat" | "Istimewa";
+    label: "Belum Ada Data" | "Kritis" | "Perlu Perhatian" | "Sehat" | "Istimewa";
     color: string;
     emoji: string;
     breakdown: HealthScoreBreakdown;
@@ -31,6 +31,7 @@ export interface HealthScoreResult {
 }
 
 export function calculateHealthScore(data: HealthScoreData): HealthScoreResult {
+    const hasAnyData = data.income > 0 || data.expense > 0 || data.streakDays > 0 || data.budgets.length > 0 || data.goalsCount > 0 || data.totalOwe > 0 || data.totalOwed > 0;
     const breakdown: HealthScoreBreakdown = {
         savings: { score: 0, max: 30, label: "Tingkat Tabungan" },
         streak: { score: 0, max: 25, label: "Konsistensi" },
@@ -38,6 +39,17 @@ export function calculateHealthScore(data: HealthScoreData): HealthScoreResult {
         goals: { score: 0, max: 10, label: "Tujuan Keuangan" },
         debt: { score: 0, max: 10, label: "Manajemen Hutang" },
     };
+
+    if (!hasAnyData) {
+        return {
+            score: 0,
+            label: "Belum Ada Data",
+            color: "#64748b",
+            emoji: "✨",
+            breakdown,
+            tip: "Tambahkan akun, pemasukan, atau transaksi pertama agar Monev bisa menghitung kesehatan keuanganmu.",
+        };
+    }
 
     // 1. Savings Rate (0–30 pts)
     if (data.income > 0) {
