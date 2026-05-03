@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Check, Shield, Lock, Zap, Fingerprint, Trash2, Smartphone, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -20,6 +20,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
     const toast = useToast();
     const { reauthenticate } = useSecurity();
     const [showPinInput, setShowPinInput] = useState(false);
+    const lastTouchActionRef = useRef<{ action: string; at: number } | null>(null);
     
     // Change Password state
     const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -201,24 +202,56 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
 
     const canSaveSecurity = !formData.securityPin || formData.securityPin.length === 6;
 
+    const runSecurityAction = (action: string) => {
+        if (action === "toggle-app-lock") handleToggleAppLock();
+        if (action === "open-pin") setShowPinInput((prev) => !prev);
+        if (action === "toggle-biometric") handleToggleBiometric();
+        if (action === "toggle-sessions") {
+            setShowSessions((prev) => {
+                if (!prev) loadSessions();
+                return !prev;
+            });
+        }
+    };
+
+    const handleSecurityPointerCapture = (event: any) => {
+        const target = event.target as HTMLElement | null;
+        if (!target || target.closest("input, select, textarea, button, a")) return;
+
+        const actionElement = target.closest<HTMLElement>("[data-security-action]");
+        const action = actionElement?.dataset.securityAction;
+        if (!action) return;
+
+        const now = Date.now();
+        if (lastTouchActionRef.current?.action === action && now - lastTouchActionRef.current.at < 350) return;
+        lastTouchActionRef.current = { action, at: now };
+
+        event.preventDefault();
+        event.stopPropagation();
+        runSecurityAction(action);
+    };
+
     const SettingItem = ({ 
         icon: Icon, 
         title, 
         description, 
         children,
         onClick,
-        danger
+        danger,
+        action
     }: { 
         icon: any, 
         title: string, 
         description: string, 
         children?: React.ReactNode,
         onClick?: () => void,
-        danger?: boolean
+        danger?: boolean,
+        action?: string
     }) => (
         <div
             role={onClick ? "button" : undefined}
             tabIndex={onClick ? 0 : undefined}
+            data-security-action={action}
             className={cn(
                 "flex min-h-[64px] touch-manipulation items-center justify-between py-4 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0",
                 onClick && "cursor-pointer active:opacity-80"
@@ -273,13 +306,18 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
     );
 
     return (
-        <div className="space-y-2">
+        <div
+            className="space-y-2"
+            onPointerUpCapture={handleSecurityPointerCapture}
+            onTouchEndCapture={handleSecurityPointerCapture}
+        >
             {/* App Lock */}
             <SettingItem
                 icon={Lock}
                 title="Kunci Aplikasi"
                 description="PIN saat membuka aplikasi"
                 onClick={handleToggleAppLock}
+                action="toggle-app-lock"
             >
                 <Toggle 
                     checked={formData.isAppLockEnabled} 
@@ -295,6 +333,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 onClick={() => {
                     setShowPinInput(!showPinInput);
                 }}
+                action="open-pin"
             >
                 <span className="text-sm font-medium text-sky-600">
                     {formData.securityPin || formData.hasSecurityPin ? "Ubah" : "Atur"}
@@ -387,6 +426,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 title="Sidik Jari / Wajah"
                 description="Login dengan biometrik"
                 onClick={handleToggleBiometric}
+                action="toggle-biometric"
             >
                 <Toggle 
                     checked={formData.isBiometricEnabled} 
@@ -422,6 +462,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                     setShowSessions(!showSessions);
                     if (!showSessions) loadSessions();
                 }}
+                action="toggle-sessions"
             >
                 <span className="text-sm font-medium text-sky-600">
                     {showSessions ? "Tutup" : "Kelola"}

@@ -49,6 +49,7 @@ export function ProfileModals({
 
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
+        document.body.classList.add("monev-profile-modal-open");
         window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: true }));
 
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -59,6 +60,7 @@ export function ProfileModals({
 
         return () => {
             document.body.style.overflow = previousOverflow;
+            document.body.classList.remove("monev-profile-modal-open");
             document.removeEventListener("keydown", handleKeyDown, true);
             window.removeEventListener("keydown", handleKeyDown, true);
             window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
@@ -153,6 +155,18 @@ export function ProfileModals({
 
     return (
         <Portal>
+            <style jsx global>{`
+                body.monev-profile-modal-open iframe,
+                body.monev-profile-modal-open [id*="telegram" i],
+                body.monev-profile-modal-open [class*="telegram" i],
+                body.monev-profile-modal-open [id*="support" i],
+                body.monev-profile-modal-open [class*="support" i],
+                body.monev-profile-modal-open [id*="chat-widget" i],
+                body.monev-profile-modal-open [class*="chat-widget" i] {
+                    pointer-events: none !important;
+                    visibility: hidden !important;
+                }
+            `}</style>
             <AnimatePresence>
                 {activeModal && (
                     <motion.div
