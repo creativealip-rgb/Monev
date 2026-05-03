@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type PointerEvent, type TouchEvent } from "react";
 import { Plus, Trash2, Tag, Hash, Sparkles, Save, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -37,6 +37,7 @@ interface CategoriesModalProps {
 
 export function CategoriesModal({ categories, loadData }: CategoriesModalProps) {
     const toast = useToast();
+    const lastTouchTabRef = useRef(0);
     const [activeTab, setActiveTab] = useState<"categories" | "templates" | "tags">("categories");
     const [loading, setLoading] = useState(false);
     
@@ -187,11 +188,25 @@ export function CategoriesModal({ categories, loadData }: CategoriesModalProps) 
         saveTags(tags.filter(t => t.id !== id));
     };
 
+    const handleTabPointerCapture = (event: PointerEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>) => {
+        const target = event.target as HTMLElement;
+        const tab = target.closest<HTMLElement>("[data-category-tab]")?.dataset.categoryTab as typeof activeTab | undefined;
+        if (!tab) return;
+
+        const now = Date.now();
+        if (now - lastTouchTabRef.current < 250) return;
+        lastTouchTabRef.current = now;
+        setActiveTab(tab);
+    };
+
     const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab; label: string; icon: any }) => (
         <button
+            type="button"
+            data-category-tab={id}
+            aria-pressed={activeTab === id}
             onClick={() => setActiveTab(id)}
             className={cn(
-                "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5",
+                "flex-1 min-h-11 touch-manipulation select-none py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5",
                 activeTab === id 
                     ? "bg-pink-500 text-white" 
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
@@ -205,7 +220,11 @@ export function CategoriesModal({ categories, loadData }: CategoriesModalProps) 
     return (
         <div className="space-y-4">
             {/* Tabs */}
-            <div className="flex gap-2">
+            <div
+                className="flex gap-2"
+                onPointerUpCapture={handleTabPointerCapture}
+                onTouchEndCapture={handleTabPointerCapture}
+            >
                 <TabButton id="categories" label="Kategori" icon={Tag} />
                 <TabButton id="templates" label="Template" icon={Sparkles} />
                 <TabButton id="tags" label="Tag" icon={Hash} />
