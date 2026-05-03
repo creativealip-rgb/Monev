@@ -7,6 +7,7 @@ import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
 import { useSecurity } from "@/components/SecurityProvider";
+import { isBiometricSupported } from "@/lib/biometric";
 
 interface SecurityModalProps {
     formData: any;
@@ -73,7 +74,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
             const res = await apiFetch("/api/profile/sessions");
             const result = await res.json();
             if (result.success) {
-                setSessions(result.sessions || []);
+                setSessions(result.sessions || result.data || []);
             }
         } catch {
             setSessions([]);
@@ -84,8 +85,10 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
 
     const handleRevokeSession = async (sessionId: string) => {
         try {
-            const res = await apiFetch(`/api/profile/sessions/${sessionId}`, {
-                method: "DELETE"
+            const res = await apiFetch("/api/profile/sessions", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sessionId })
             });
             if (res.ok) {
                 toast.success("Berhasil!", "Sesi berhasil diakhiri");
@@ -96,6 +99,24 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
         } catch {
             toast.error("Gagal", "Terjadi kesalahan");
         }
+    };
+
+    const handleToggleBiometric = async () => {
+        const nextValue = !formData.isBiometricEnabled;
+
+        if (nextValue) {
+            const supported = await isBiometricSupported();
+            if (!supported) {
+                toast.error("Tidak didukung", "Biometrik belum tersedia di browser/perangkat ini.");
+                return;
+            }
+            if (!formData.isAppLockEnabled || (!formData.securityPin && !formData.hasSecurityPin)) {
+                toast.error("PIN dibutuhkan", "Aktifkan Kunci Aplikasi dan atur PIN dulu sebelum biometrik.");
+                return;
+            }
+        }
+
+        setFormData((prev: any) => ({ ...prev, isBiometricEnabled: nextValue }));
     };
 
     const handleDeleteAccount = async () => {
@@ -354,7 +375,7 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
             >
                 <Toggle 
                     checked={formData.isBiometricEnabled} 
-                    onChange={() => setFormData((prev: any) => ({ ...prev, isBiometricEnabled: !prev.isBiometricEnabled }))}
+                    onChange={handleToggleBiometric}
                 />
             </SettingItem>
 
@@ -433,18 +454,18 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                                                    {session.device?.type === 'mobile' ? (
+                                                    {(session.deviceInfo || "").toLowerCase().includes("mobile") ? (
                                                         <Smartphone size={16} className="text-slate-600 dark:text-slate-400" />
                                                     ) : (
-                                                        <span className="text-xs">💻</span>
+                                                        <span className="text-xs">PC</span>
                                                     )}
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-medium text-slate-900 dark:text-white">
-                                                        {session.device?.name || 'Unknown Device'}
+                                                        {session.deviceInfo || 'Unknown Device'} {session.isCurrent ? '(Saat ini)' : ''}
                                                     </p>
                                                     <p className="text-[10px] text-slate-500">
-                                                        {session.ip} • {new Date(session.lastActive).toLocaleDateString('id-ID')}
+                                                        {session.ipAddress || 'Unknown IP'} - {new Date(session.lastActiveAt || session.createdAt).toLocaleDateString('id-ID')}
                                                     </p>
                                                 </div>
                                             </div>
