@@ -115,8 +115,8 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                         aria-labelledby="goal-detail-title"
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <h2 id="goal-detail-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Detail Goal</h2>
-                            <button type="button" aria-label="Tutup detail goal" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
+                            <h2 id="goal-detail-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Detail Target</h2>
+                            <button type="button" aria-label="Tutup detail target" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
                                 <X size={16} />
                             </button>
                         </div>
@@ -156,7 +156,7 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                             ? "text-emerald-600 dark:text-emerald-400"
                                             : "text-slate-500 dark:text-slate-400"
                                     )}>
-                                        {isCompleted ? "Goal Tercapai" : "Active Goal"}
+                                        {isCompleted ? "Target Tercapai" : "Target Aktif"}
                                     </span>
                                 </div>
                             </div>

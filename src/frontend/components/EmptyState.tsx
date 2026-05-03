@@ -194,8 +194,8 @@ export function NoGoalsEmpty({ onAddNew }: { onAddNew?: () => void }) {
         <EmptyState
             lottieKey="piggy"
             title="Belum ada tabungan"
-            description="Mulai menabung untuk impianmu! Buat goal dan pantau progressnya"
-            action={onAddNew ? { label: "Buat Goal", onClick: onAddNew } : undefined}
+            description="Mulai menabung untuk impianmu! Buat target dan pantau progresnya."
+            action={onAddNew ? { label: "Buat Target", onClick: onAddNew } : undefined}
         />
     );
 }

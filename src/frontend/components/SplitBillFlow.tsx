@@ -410,7 +410,7 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
                                 
                                 {/* Share Section */}
                                 <div className="pt-4 space-y-3">
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Invite Participants</p>
+                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Undang Peserta</p>
                                     <div className="space-y-2">
                                         {participants.filter(p => p.id !== "1").map((participant) => (
                                             <div key={participant.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
@@ -426,15 +426,17 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleCopyLink(participant)}
-                                                        className="p-2 text-slate-400 hover:text-sky-500 transition-colors"
-                                                        title="Copy payment link"
+                                                        aria-label={`Salin tautan pembayaran untuk ${participant.name}`}
+                                                        className="p-2 text-slate-500 hover:text-sky-500 transition-colors dark:text-slate-400"
+                                                        title="Salin tautan pembayaran"
                                                     >
                                                         <Copy size={16} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleShareToWhatsapp(participant)}
                                                         className="p-2 text-emerald-500 hover:text-emerald-600 transition-colors"
-                                                        title="Share via WhatsApp"
+                                                        aria-label={`Bagikan tagihan ke WhatsApp untuk ${participant.name}`}
+                                                        title="Bagikan via WhatsApp"
                                                     >
                                                         <MessageCircle size={16} />
                                                     </button>
