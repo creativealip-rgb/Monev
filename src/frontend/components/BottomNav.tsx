@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, NotebookTabs, Wallet, Plus, User } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -95,12 +95,18 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
         }
     };
 
+    const router = useRouter();
+    const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
+
     const handleNavClick = (href: string, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         logger.debug("Navigating to:", href);
         haptics.tap();
-        window.location.href = href;
+        
+        // In APK build, we need trailing slashes for static export folders to work
+        const finalHref = isApk && !href.endsWith('/') ? `${href}/` : href;
+        router.push(finalHref);
     };
 
     if (!mounted || isKeyboardOpen) return null;

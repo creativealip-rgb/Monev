@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.creativealip.monev',
   appName: 'Monev',
   webDir: 'out',
+  server: {
+    androidScheme: 'https',
+    allowMixedContent: true
+  },
   plugins: {
     StatusBar: {
       overlaysWebView: true,

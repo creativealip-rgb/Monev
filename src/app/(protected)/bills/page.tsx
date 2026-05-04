@@ -328,7 +328,7 @@ export default function BillsPage() {
                         </Link>
                         <div className="flex flex-col">
                             <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Tagihan</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Pantau Semua Kewajiban</p>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Jangan Sampai Telat Bayar</p>
                         </div>
                     </div>
                     <button

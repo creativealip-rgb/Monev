@@ -51,7 +51,15 @@ sqlite.db*
 playwright-report/
 test-results/
 build-output.txt
+build_log.txt
 *.bak
+*.apk
+
+# scratch scripts
+*.cjs
+*.mjs
+!next.config.mjs
+!scripts/
 
 # local agent / nested workspace artifacts
 my-agent-finance/

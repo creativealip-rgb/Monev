@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { Plus, ShieldAlert, ArrowLeft, Flame, Zap, TrendingUp, RotateCcw, ChevronLeft } from "lucide-react";
+import { Plus, ShieldAlert, ArrowLeft, Flame, Zap, TrendingUp, RotateCcw, ChevronLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
@@ -58,7 +58,7 @@ const categoryIcons: Record<string, string> = {
 
 const BUDGET_TEMPLATES: Array<{ id: string; name: string; icon: string; color: string; allocations: Array<{ category: string; pct: number }> }> = [
     {
-        id: "503020",
+        id: "50-30-20",
         name: "50/30/20",
         icon: "⚖️",
         color: "from-sky-500 to-cyan-500",
@@ -355,7 +355,7 @@ export default function BudgetsPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    template: templateId === "503020" ? "50-30-20" : templateId,
+                    template: templateId,
                     monthlyIncome,
                     month: selectedMonth,
                     year: selectedYear
@@ -422,56 +422,66 @@ export default function BudgetsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative mx-4 mt-3 overflow-hidden rounded-[1.65rem] border border-white/50 bg-gradient-to-br from-slate-950 via-sky-700 to-cyan-500 p-3.5 text-white shadow-xl shadow-sky-500/20 sm:mx-6 sm:mt-5 sm:p-4"
+                className="card-clean relative mx-4 mt-3 overflow-hidden p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900 shadow-xl sm:mx-6 sm:mt-5"
             >
-                <div className="pointer-events-none absolute inset-x-4 top-20 h-24 rounded-full bg-cyan-300/20 blur-3xl sm:inset-x-6" />
-                <div className="relative flex items-center justify-between gap-2">
-                    <button
-                        type="button"
-                        onClick={() => navigateMonth("prev")}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95"
-                        aria-label={t("budgets.previousMonth")}
-                    >
-                        <ChevronLeft size={18} />
-                    </button>
-                    <div className="min-w-0 text-center">
-                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-100/75">{t("budgets.monthlyBudget")}</p>
-                        <p className="truncate text-base font-black tracking-tight text-white">{monthNames[selectedMonth - 1]} {selectedYear}</p>
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">{t("budgets.monthlyBudget")}</span>
+                    
+                    {/* Month Selector Pill */}
+                    <div className="flex shrink-0 items-center bg-white/10 border border-white/10 rounded-full shadow-sm text-white">
+                        <button
+                            type="button"
+                            onClick={() => navigateMonth("prev")}
+                            className="p-1.5 hover:bg-white/10 rounded-full transition-all"
+                        >
+                            <ChevronLeft size={14} className="text-white/70" />
+                        </button>
+                        <span className="text-[10px] font-bold px-2 min-w-[80px] text-center text-white capitalize tracking-tight">
+                            {monthNames[selectedMonth - 1]} {selectedYear}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => navigateMonth("next")}
+                            disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
+                            className="p-1.5 hover:bg-white/10 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft size={14} className="rotate-180 text-white/70" />
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => navigateMonth("next")}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
-                        aria-label={t("budgets.nextMonth")}
-                        disabled={selectedMonth === new Date().getMonth() + 1 && selectedYear === new Date().getFullYear()}
-                    >
-                        <ChevronLeft size={18} className="rotate-180" />
-                    </button>
                 </div>
 
-                <div className="relative mt-3">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-cyan-100/75">Terpakai</p>
-                    <p className="mt-0.5 text-2xl font-black tracking-tight tabular-nums">{isStealthMode ? "******" : formatCurrency(totalSpent)}</p>
-                    <p className="mt-0.5 text-[11px] font-semibold text-white/65 tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
+                <div className="flex flex-col mb-6">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Terpakai</p>
+                    <h2 className="text-3xl font-black tracking-tight tabular-nums">
+                        {isStealthMode ? "******" : formatCurrency(totalSpent)}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs font-medium text-slate-400 tabular-nums">dari {isStealthMode ? "******" : formatCurrency(totalBudget)}</p>
+                        <span className="w-1 h-1 rounded-full bg-slate-700" />
+                        <p className="text-xs font-medium text-emerald-400">Sisa {isStealthMode ? "******" : formatCurrency(totalRemaining)}</p>
+                    </div>
                 </div>
 
-                <div className="relative mt-3">
-                    <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold text-white/70">
-                        <span>Sisa {isStealthMode ? "******" : formatCurrency(totalRemaining)}</span>
+                <div className="relative">
+                    <div className="mb-2 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <span>Progress Anggaran</span>
                         <span>{budgets.length} kategori</span>
                     </div>
-                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-slate-950/35 ring-1 ring-white/10">
+                    <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/5 border border-white/5">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${totalPercentage}%` }}
                             transition={{ duration: 1 }}
                             className={cn(
-                                "h-full rounded-full shadow-[0_0_18px_rgba(255,255,255,0.25)]",
-                                totalPercentage > 90 ? "bg-rose-400" :
-                                    totalPercentage > 75 ? "bg-amber-300" : "bg-emerald-300"
+                                "h-full rounded-full transition-all duration-500",
+                                totalPercentage > 90 ? "bg-gradient-to-r from-rose-500 to-rose-400" :
+                                    totalPercentage > 75 ? "bg-gradient-to-r from-amber-500 to-amber-400" : 
+                                    "bg-gradient-to-r from-emerald-500 to-emerald-400"
                             )}
                         />
-                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black leading-none text-white drop-shadow-sm">
+                    </div>
+                    <div className="mt-1.5 text-right">
+                        <span className="text-[10px] font-black text-slate-300">
                             {Math.round(totalPercentage)}% terpakai
                         </span>
                     </div>
@@ -549,10 +559,10 @@ export default function BudgetsPage() {
                             onClick={() => setShowTemplates(!showTemplates)}
                             className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 border border-sky-200 dark:border-sky-800 text-sm font-semibold text-sky-700 dark:text-sky-300 hover:from-sky-100 dark:hover:from-sky-900/40 transition-all"
                         >
-                                <div className="flex items-center gap-2">
-                                    <Zap size={16} />
-                                    {t("budgets.useTemplate")}
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <Sparkles size={16} className="text-sky-500" />
+                                {t("budgets.useTemplate")}
+                            </div>
                             <span className="text-xs">{showTemplates ? "✕" : "→"}</span>
                         </button>
 
@@ -564,35 +574,55 @@ export default function BudgetsPage() {
                                     exit={{ opacity: 0, height: 0 }}
                                     className="overflow-hidden"
                                 >
-                                    <div className="mt-3 p-4 card-clean">
-                                        <p className="text-xs text-muted-foreground mb-3">{t("budgets.estimate")}:</p>
-                                        <input
-                                            type="text"
-                                            placeholder="Rp 5.000.000"
-                                            value={incomeEstimate}
-                                            onChange={e => setIncomeEstimate(e.target.value)}
-                                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-semibold mb-4 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                                        />
-                                        <div className="space-y-3">
-                                            {BUDGET_TEMPLATES.map(tpl => (
+                                    <div className="mt-3 p-5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">{t("budgets.estimate")}:</p>
+                                        <div className="relative mb-6">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">Rp</span>
+                                            <input
+                                                type="text"
+                                                placeholder="5.000.000"
+                                                value={incomeEstimate}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/\D/g, "");
+                                                    setIncomeEstimate(val ? Number(val).toLocaleString("id-ID") : "");
+                                                }}
+                                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-base font-black focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all shadow-sm"
+                                            />
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {BUDGET_TEMPLATES.map((tpl, idx) => (
                                                 <motion.button
                                                     key={tpl.id}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    whileTap={{ scale: 0.96 }}
                                                     type="button"
-                                                    whileTap={{ scale: 0.98 }}
                                                     onClick={() => handleApplyTemplate(tpl.id)}
                                                     disabled={applyingTemplate !== null}
                                                     className={cn(
-                                                        "w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r text-white text-left transition-all",
-                                                        tpl.color,
-                                                        applyingTemplate === tpl.id && "opacity-60"
+                                                        "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent",
+                                                        "bg-white dark:bg-slate-900 shadow-sm transition-all",
+                                                        "hover:shadow-md hover:border-sky-200 dark:hover:border-sky-800",
+                                                        applyingTemplate === tpl.id && "opacity-60 grayscale cursor-wait"
                                                     )}
                                                 >
-                                                    <span className="text-2xl">{tpl.icon}</span>
-                                                    <div className="flex-1">
-                                                        <p className="font-bold text-sm">{t(`budgets.${tpl.id}`)}</p>
-                                                        <p className="text-xs text-white/80">{t(`budgets.${tpl.id}.desc`)}</p>
+                                                    <div className={cn(
+                                                        "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner",
+                                                        "bg-gradient-to-br opacity-90",
+                                                        tpl.color
+                                                    )}>
+                                                        {applyingTemplate === tpl.id ? (
+                                                            <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                                                        ) : (
+                                                            tpl.icon
+                                                        )}
                                                     </div>
-                                                    {applyingTemplate === tpl.id && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />}
+                                                    <div className="text-center">
+                                                        <p className="text-xs font-bold text-foreground leading-tight">{t(`budgets.${tpl.id}`)}</p>
+                                                        <p className="text-[9px] font-medium text-muted-foreground mt-0.5 line-clamp-1">{t(`budgets.${tpl.id}.desc`)}</p>
+                                                    </div>
                                                 </motion.button>
                                             ))}
                                         </div>
@@ -617,7 +647,7 @@ export default function BudgetsPage() {
                             />
                         </div>
                     ) : budgets.length === 0 ? (
-                        <div className="-mt-10 pb-40 sm:mt-0">
+                        <div className="mt-6 pb-20 sm:mt-8">
                             <NoBudgetsEmpty onAddNew={() => setIsBudgetModalOpen(true)} />
                         </div>
                     ) : (

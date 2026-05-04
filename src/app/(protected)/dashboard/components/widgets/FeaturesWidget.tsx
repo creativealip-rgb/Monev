@@ -57,27 +57,31 @@ export function FeaturesWidget({ userTier }: FeaturesWidgetProps) {
                 className="grid grid-cols-3 gap-y-8 gap-x-4 justify-items-center"
             >
                 {mainFeatures.map((feature) => {
+                    const isSoon = feature.label === "features.investments";
                     const isLocked =
-                        (feature.label === "features.analytics" && !canAccessAnalytics(userTier)) ||
-                        (feature.label === "features.investments" && !canAccessInvestments(userTier));
+                        !isSoon &&
+                        (feature.label === "features.analytics" && !canAccessAnalytics(userTier));
 
                     return (
-                        <Link
-                            key={feature.label}
-                            href={feature.href}
-                            className="relative group"
-                        >
-                            <FeatureItem
-                                label={t(feature.label)}
-                                icon={feature.icon}
-                                color={feature.color}
-                            />
-                            {isLocked && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
-                                    <Lock size={10} className="text-slate-400" />
-                                </div>
-                            )}
-                        </Link>
+                        <div key={feature.label} className="relative group">
+                            <Link href={isSoon ? "#" : feature.href} className={isSoon ? "cursor-default" : ""}>
+                                <FeatureItem
+                                    label={t(feature.label)}
+                                    icon={feature.icon}
+                                    color={feature.color}
+                                />
+                                {isLocked && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                                        <Lock size={10} className="text-slate-400" />
+                                    </div>
+                                )}
+                                {isSoon && (
+                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-sky-500 text-white text-[9px] font-bold rounded-full shadow-sm whitespace-nowrap">
+                                        SOON
+                                    </div>
+                                )}
+                            </Link>
+                        </div>
                     );
                 })}
             </motion.div>

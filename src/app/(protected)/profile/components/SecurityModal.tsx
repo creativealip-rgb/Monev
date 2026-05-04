@@ -8,6 +8,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
 import { useSecurity } from "@/components/SecurityProvider";
 import { isBiometricSupported } from "@/lib/biometric";
+import { useRouter } from "next/navigation";
 
 interface SecurityModalProps {
     formData: any;
@@ -18,6 +19,8 @@ interface SecurityModalProps {
 
 export function SecurityModal({ formData, setFormData, onSave }: SecurityModalProps) {
     const toast = useToast();
+    const router = useRouter();
+    const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
     const { reauthenticate } = useSecurity();
     const [showPinInput, setShowPinInput] = useState(false);
     const lastTouchActionRef = useRef<{ action: string; at: number } | null>(null);
@@ -190,7 +193,9 @@ export function SecurityModal({ formData, setFormData, onSave }: SecurityModalPr
                 });
                 setShowPasswordForm(false);
                 setTimeout(() => {
-                    window.location.href = "/login?changed=success";
+                    const path = "/login";
+                    const query = "?changed=success";
+                    router.push(isApk ? `${path}/${query}` : `${path}${query}`);
                 }, 1500);
             } else {
                 toast.error("Gagal", result.error || "Password saat ini salah!");

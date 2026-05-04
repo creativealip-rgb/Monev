@@ -10,9 +10,10 @@ interface NetWorthProps {
     goals: number;
     isLoading?: boolean;
     hideBalance?: boolean;
+    headerAction?: React.ReactNode;
 }
 
-export function NetWorthCard({ balance, investments, goals, isLoading = false, hideBalance = false }: NetWorthProps) {
+export function NetWorthCard({ balance, investments, goals, isLoading = false, hideBalance = false, headerAction }: NetWorthProps) {
     const showAmount = !hideBalance;
     const total = balance + investments + goals;
 
@@ -26,6 +27,7 @@ export function NetWorthCard({ balance, investments, goals, isLoading = false, h
         <div className="card-clean p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:brightness-110 hover:shadow-2xl hover:shadow-sky-500/10">
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Net Worth</span>
+                {headerAction}
             </div>
 
             <motion.h2

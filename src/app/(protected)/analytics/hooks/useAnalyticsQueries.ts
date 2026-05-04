@@ -1,6 +1,6 @@
 "use client";
 
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, keepPreviousData } from "@tanstack/react-query";
 import { apiFetch } from "@/frontend/lib/api-client";
 import type { TransactionWithCategory } from "@/types";
 import type { AnalyticsData } from "../components/types";
@@ -121,6 +121,7 @@ export function getAnalyticsQueryOptions(filters: AnalyticsFilterParams) {
         },
         staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
+        placeholderData: keepPreviousData,
     });
 }
 
@@ -140,6 +141,7 @@ export function getFinancialMapQueryOptions(filters: AnalyticsFilterParams) {
         },
         staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
+        placeholderData: keepPreviousData,
     });
 }
 

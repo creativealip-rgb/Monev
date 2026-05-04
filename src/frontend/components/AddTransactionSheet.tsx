@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { TransactionForm } from "./TransactionForm/index";
 import { SmartInput } from "./SmartInput";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";
 
 interface AddTransactionSheetProps {
@@ -44,6 +45,8 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
     const [y, setY] = useState(0);
     const { data: session } = useSession();
+    const router = useRouter();
+    const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
     const userTier: UserTier = session?.user?.tier || "starter";
     const hasSmartAccess = canAccessSmartInput(userTier);
 
@@ -192,7 +195,14 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                             key={action.id}
                                             whileHover={{ scale: isLocked ? 1 : 1.02 }}
                                             whileTap={{ scale: isLocked ? 1 : 0.98 }}
-                                            onClick={() => isLocked ? window.location.href = '/fitur/upgrade' : handleAction(action.id)}
+                                            onClick={() => {
+                                                if (isLocked) {
+                                                    const path = '/fitur/upgrade';
+                                                    router.push(isApk ? `${path}/` : path);
+                                                } else {
+                                                    handleAction(action.id);
+                                                }
+                                            }}
                                             aria-label={`${action.label}${isLocked ? ' (Upgrade required)' : ''}`}
                                             aria-disabled={isLocked}
                                             className={cn(

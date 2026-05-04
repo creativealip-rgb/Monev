@@ -315,7 +315,7 @@ export default function RecurringPage() {
                         </div>
                         <p className="font-black text-foreground text-lg">Belum ada transaksi berulang</p>
                         <p className="text-xs text-muted-foreground mt-2 max-w-[220px] leading-relaxed">
-                            Tambahkan gaji, tagihan rutin, Netflix, atau pengeluaran mingguan kamu
+                            Biar aplikasi yang catat otomatis Pemasukan (Gaji) atau Pengeluaran tetap (Langganan Netflix) kamu.
                         </p>
                         <button
                             type="button"

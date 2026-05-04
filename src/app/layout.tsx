@@ -60,7 +60,9 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const session = await auth();
+    // Skip auth check during APK build (static export)
+    const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
+    const session = isApk ? null : await auth();
 
     return (
         <html lang="id" suppressHydrationWarning>

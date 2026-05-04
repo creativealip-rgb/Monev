@@ -80,7 +80,7 @@ const features = [
                 id: 105,
                 icon: Receipt,
                 title: "Tagihan",
-                desc: "Kelola tagihan rutin dan utang piutang",
+                desc: "Catat & ingatkan tagihan sebelum jatuh tempo",
                 status: "ready",
                 color: "rose",
                 href: "/bills"
@@ -90,10 +90,9 @@ const features = [
                 icon: TrendingUp,
                 title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
-                status: "ready",
+                status: "coming",
                 color: "amber",
-                href: "/investments",
-                requiredTier: "kaya" as UserTier
+                href: "#"
             },
             {
                 id: 107,
@@ -108,7 +107,7 @@ const features = [
                 id: 108,
                 icon: RefreshCw,
                 title: "Berulang",
-                desc: "Set gaji, tagihan rutin, atau pengeluaran berulang otomatis",
+                desc: "Otomatis catat gaji atau pengeluaran fix bulanan",
                 status: "ready",
                 color: "emerald",
                 href: "/recurring"

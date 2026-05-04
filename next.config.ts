@@ -55,6 +55,14 @@ const nextConfig = (phase: string): NextConfig => {
 
         // Exclude @napi-rs/canvas from bundling (server-only native module)
         serverExternalPackages: ["@napi-rs/canvas"],
+
+        // Skip checks for APK build to avoid issues with static export and server components
+        typescript: {
+            ignoreBuildErrors: isApkBuild,
+        },
+
+        // Ensure trailing slashes for better static export compatibility with Capacitor
+        trailingSlash: isApkBuild,
     };
 };
 

@@ -24,6 +24,7 @@ import { FeaturesWidget } from "./components/widgets/FeaturesWidget";
 import { AIInsightSection } from "./components/AIInsightSection";
 import { OnboardingCard } from "./components/OnboardingCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
+import { NotificationsModal } from "@/frontend/components/modals/NotificationsModal";
 
 import { useDashboardStats } from "./hooks/useDashboardStats";
 import { useOnboarding } from "./hooks/useOnboarding";
@@ -58,6 +59,7 @@ export default function DashboardPage() {
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
     const today = new Date();
     const formattedDate = mounted ? format(today, "EEEE, d MMMM yyyy", { locale: id }) : "";
@@ -105,6 +107,7 @@ export default function DashboardPage() {
                     streak={stats.streak}
                     formattedDate={formattedDate}
                     mounted={mounted}
+                    onNotificationsClick={() => setIsNotificationsOpen(true)}
                 />
 
                 <HeroBalanceWidget
@@ -179,6 +182,11 @@ export default function DashboardPage() {
                     isOpen={isAddSheetOpen}
                     onClose={() => setIsAddSheetOpen(false)}
                     onSuccess={handleAddTransactionSuccess}
+                />
+
+                <NotificationsModal
+                    isOpen={isNotificationsOpen}
+                    onClose={() => setIsNotificationsOpen(false)}
                 />
 
             </div>

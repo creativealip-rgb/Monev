@@ -1,6 +1,6 @@
 import { getDb } from "@/backend/db";
 import { pushSubscriptions, notificationLogs } from "@/backend/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 /**
  * Save or update a push subscription for a user.
@@ -165,5 +165,50 @@ export async function logNotification(data: {
             status: data.status,
             errorMessage: data.errorMessage || null,
         })
+        .run();
+}
+
+/**
+ * Get notification logs for a user, sorted by newest first.
+ */
+export async function getNotificationLogs(userId: number, limit: number = 20) {
+    const db = getDb();
+    return db
+        .select()
+        .from(notificationLogs)
+        .where(eq(notificationLogs.userId, userId))
+        .orderBy(desc(notificationLogs.createdAt))
+        .limit(limit)
+        .all();
+}
+
+/**
+ * Mark specific notifications as read.
+ */
+export async function markNotificationsAsRead(userId: number, notificationIds: number[]) {
+    const db = getDb();
+    if (notificationIds.length === 0) return;
+    
+    await db
+        .update(notificationLogs)
+        .set({ isRead: true })
+        .where(
+            and(
+                eq(notificationLogs.userId, userId),
+                inArray(notificationLogs.id, notificationIds)
+            )
+        )
+        .run();
+}
+
+/**
+ * Mark all notifications as read for a user.
+ */
+export async function markAllNotificationsAsRead(userId: number) {
+    const db = getDb();
+    await db
+        .update(notificationLogs)
+        .set({ isRead: true })
+        .where(eq(notificationLogs.userId, userId))
         .run();
 }
