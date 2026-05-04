@@ -10,8 +10,18 @@ const adminPath = 'src/app/admin';
 const bakApiPath = '_bak_api';
 const bakAdminPath = '_bak_admin';
 
-// Function to safely move directory on Windows
-function moveDirectory(from, to) {
+// Server-only paths that must be moved for static export
+// (Server Actions, auth pages that import them, etc.)
+const serverActionPaths = [
+    { src: 'src/backend/actions', bak: '_bak_backend_actions' },
+    { src: 'src/app/login', bak: '_bak_login' },
+    { src: 'src/app/register', bak: '_bak_register' },
+    { src: 'src/app/onboarding', bak: '_bak_onboarding' },
+    { src: 'src/lib/usage-tracker.ts', bak: '_bak_usage_tracker.ts' },
+];
+
+// Function to safely move a file or directory on Windows
+function movePath(from, to) {
     if (!existsSync(from)) {
         console.log(`⚠️ Source not found: ${from}`);
         return false;
@@ -37,8 +47,8 @@ function moveDirectory(from, to) {
     }
 }
 
-// Function to restore directory
-function restoreDirectory(from, to) {
+// Function to restore a file or directory
+function restorePath(from, to) {
     if (!existsSync(from)) {
         console.log(`⚠️ Backup not found: ${from}`);
         return false;
@@ -76,8 +86,15 @@ if (existsSync(typesPath)) {
 }
 
 // Move API and Admin folders
-const apiMoved = moveDirectory(apiPath, bakApiPath);
-const adminMoved = moveDirectory(adminPath, bakAdminPath);
+const apiMoved = movePath(apiPath, bakApiPath);
+const adminMoved = movePath(adminPath, bakAdminPath);
+
+// Move server action files (static export doesn't support "use server")
+const movedActions = [];
+for (const { src, bak } of serverActionPaths) {
+    const moved = movePath(src, bak);
+    movedActions.push({ src, bak, moved });
+}
 
 try {
     console.log('🏗️  [Monev Build] Menjalankan Next.js build...');
@@ -142,9 +159,16 @@ try {
     
     // Restore directories
     if (apiMoved) {
-        restoreDirectory(bakApiPath, apiPath);
+        restorePath(bakApiPath, apiPath);
     }
     if (adminMoved) {
-        restoreDirectory(bakAdminPath, adminPath);
+        restorePath(bakAdminPath, adminPath);
+    }
+    
+    // Restore server action files
+    for (const { src, bak, moved } of movedActions) {
+        if (moved) {
+            restorePath(bak, src);
+        }
     }
 }

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { savePushSubscription } from "@/backend/db/operations/push-operations";
 
-// In-memory store for development. In production, use a proper database table.
-// You'd add a `pushSubscriptions` table to your Drizzle schema.
-const subscriptions = new Map<string, { userId: number; subscription: PushSubscription }>();
-
-interface PushSubscription {
+interface PushSubscriptionPayload {
     endpoint: string;
     keys: {
         p256dh: string;
@@ -21,20 +18,25 @@ export async function POST(req: NextRequest) {
         }
         const userId = parseInt(session.user.id);
 
-        const subscription = await req.json() as PushSubscription;
+        const subscription = await req.json() as PushSubscriptionPayload;
 
-        if (!subscription.endpoint) {
+        if (!subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
             return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
         }
 
-        // Store subscription (keyed by endpoint for easy lookup)
-        subscriptions.set(subscription.endpoint, { userId, subscription });
+        // Persist subscription to database (upsert by endpoint)
+        const subscriptionId = await savePushSubscription(
+            userId,
+            subscription,
+            req.headers.get("user-agent") || undefined
+        );
 
-        console.log(`[Push] User ${userId} subscribed: ${subscription.endpoint.slice(0, 50)}...`);
+        console.log(`[Push] User ${userId} subscribed (id: ${subscriptionId}): ${subscription.endpoint.slice(0, 50)}...`);
 
         return NextResponse.json({
             success: true,
             message: "Push subscription saved",
+            subscriptionId,
         });
     } catch (error) {
         console.error("[Push] Subscribe error:", error);

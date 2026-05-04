@@ -3,16 +3,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { users, adminActivityLog } from "@/backend/db/schema";
 import { eq, sql } from "drizzle-orm";
-
-interface PushSubscriptionJSON {
-    endpoint: string;
-    keys: {
-        p256dh: string;
-        auth: string;
-    };
-}
-
-const pushSubscriptions = new Map<string, { userId: number; subscription: PushSubscriptionJSON }>();
+import { sendPushToUser } from "@/lib/send-push";
 
 export async function GET(req: NextRequest) {
     try {
@@ -96,6 +87,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Message too long (max 500 chars)" }, { status: 400 });
         }
 
+        // Get target user IDs
         let userIds: number[] = [];
 
         if (target === "all") {
@@ -112,28 +104,27 @@ export async function POST(req: NextRequest) {
             userIds = tierUsers.map(u => u.id);
         }
 
-        const subscriptions = [];
+        // Send real push notifications using the database-backed sender
+        let totalSent = 0;
+        let totalFailed = 0;
+
         for (const userId of userIds) {
-            for (const [endpoint, sub] of pushSubscriptions.entries()) {
-                if (sub.userId === userId) {
-                    subscriptions.push(sub.subscription);
-                }
-            }
-        }
-
-        let successCount = 0;
-        let failedCount = 0;
-
-        for (const subscription of subscriptions) {
             try {
-                await sendPushNotification(subscription, message);
-                successCount++;
+                const result = await sendPushToUser(userId, {
+                    title: "Monev",
+                    body: message.trim(),
+                    url: "/dashboard",
+                    tag: "admin-broadcast",
+                }, "custom");
+                totalSent += result.sent;
+                totalFailed += result.failed;
             } catch (error) {
-                console.error("[Push] Failed to send:", error);
-                failedCount++;
+                console.error(`[Admin Push] Failed for user ${userId}:`, error);
+                totalFailed++;
             }
         }
 
+        // Log the activity
         await db.insert(adminActivityLog).values({
             adminId: currentUserId,
             action: "send_notification",
@@ -142,9 +133,9 @@ export async function POST(req: NextRequest) {
                 message,
                 target,
                 tier,
-                userCount: userIds.length,
-                successCount,
-                failedCount,
+                totalRecipients: userIds.length,
+                successCount: totalSent,
+                failedCount: totalFailed,
             }),
         });
 
@@ -154,19 +145,13 @@ export async function POST(req: NextRequest) {
                 target,
                 tier,
                 totalRecipients: userIds.length,
-                subscriptionsFound: subscriptions.length,
-                successCount,
-                failedCount,
+                subscriptionsFound: totalSent + totalFailed,
+                successCount: totalSent,
+                failedCount: totalFailed,
             },
         });
     } catch (error) {
         console.error("[Admin Notifications POST] Error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-}
-
-async function sendPushNotification(subscription: PushSubscriptionJSON, message: string) {
-    console.log("[Push] Would send notification to:", subscription.endpoint);
-    console.log("[Push] Message:", message);
-    return true;
 }

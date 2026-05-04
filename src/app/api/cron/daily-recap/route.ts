@@ -4,6 +4,7 @@ import { getDb } from '@/backend/db';
 import { transactions, bills, userSettings } from '@/backend/db/schema';
 import { sql, and, eq, gte, lte, gt, lt } from 'drizzle-orm';
 import { sendDailyRecapEmail } from '@/lib/mailer';
+import { sendPushToUser } from '@/lib/send-push';
 
 export async function GET() {
     try {
@@ -11,8 +12,7 @@ export async function GET() {
         const results = [];
 
         for (const user of users) {
-            // Skip users without telegramId
-            if (!user.telegramId) continue;
+            // Process all users, even if they don't have a telegramId
             const userId = user.id;
 
             // 1. Get Today's Stats
@@ -145,7 +145,9 @@ export async function GET() {
             }
 
             // 8. Send to Telegram
-            await sendTelegramMessage(user.telegramId, message);
+            if (user.telegramId) {
+                await sendTelegramMessage(user.telegramId, message);
+            }
             
             // 9. Send Email (if enabled and has email)
             const userEmail = user.email;
@@ -180,6 +182,31 @@ export async function GET() {
                 } catch (emailError) {
                     console.error(`Failed to send email to ${userEmail}:`, emailError);
                 }
+            }
+            
+            // 10. Send Push Notification (if enabled)
+            try {
+                const pushSettings = await db
+                    .select()
+                    .from(userSettings)
+                    .where(eq(userSettings.userId, user.id))
+                    .get();
+                
+                const pushEnabled = pushSettings?.pushEnabled !== false;
+                const dailyReportEnabled = pushSettings?.dailyReport !== false;
+                
+                if (pushEnabled && dailyReportEnabled) {
+                    await sendPushToUser(user.id, {
+                        title: "Monev",
+                        body: isSafe
+                            ? "Pengeluaran hari ini masih aman. Lihat rekap lengkapnya!"
+                            : "Ada catatan penting tentang pengeluaranmu hari ini.",
+                        url: "/dashboard",
+                        tag: "daily-recap",
+                    }, "daily_reminder");
+                }
+            } catch (pushError) {
+                console.error(`[Push] Failed for user ${user.id}:`, pushError);
             }
             
             results.push({ userId: user.id, status: "sent", expense });

@@ -3,6 +3,7 @@ import { getDb } from "@/backend/db";
 import { users, userSettings, transactions, categories } from "@/backend/db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { sendPushToUser } from "@/lib/send-push";
 
 const CRON_SECRET = process.env.CRON_SECRET || "monev-cron-secret";
 
@@ -123,6 +124,18 @@ export async function GET(req: Request) {
                 });
 
                 await sendTelegramMessage(user.telegramId, message);
+
+                // Send push notification (privacy-safe, no financial data)
+                try {
+                    await sendPushToUser(user.id, {
+                        title: "Ringkasan Monev",
+                        body: "Ringkasan mingguan kamu sudah siap.",
+                        url: "/analytics",
+                        tag: "weekly-insight",
+                    }, "weekly_summary");
+                } catch (pushError) {
+                    console.error(`[weekly-insight] Push failed for user ${user.id}:`, pushError);
+                }
 
                 results.push({
                     userId: user.id,

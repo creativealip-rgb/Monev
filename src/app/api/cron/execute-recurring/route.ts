@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/backend/db";
 import { recurringTransactions, transactions, accounts } from "@/backend/db/schema";
 import { eq, lt } from "drizzle-orm";
+import { sendPushToUser } from "@/lib/send-push";
 
 /**
  * Cron job untuk auto-execute recurring transactions
@@ -91,6 +92,30 @@ export async function POST() {
         }
         
         console.log(`[CRON] Completed: ${executed.length} executed, ${failed.length} failed`);
+        
+        // Send push notifications to affected users
+        const userIds = [...new Set(executed.map(e => {
+            // Find the recurring transaction to get the userId
+            const recurring = dueRecurring.find(r => r.id === e.id);
+            return recurring?.userId;
+        }).filter(Boolean))] as number[];
+
+        for (const userId of userIds) {
+            const userExecuted = executed.filter(e => {
+                const recurring = dueRecurring.find(r => r.id === e.id);
+                return recurring?.userId === userId;
+            });
+            try {
+                await sendPushToUser(userId, {
+                    title: "Monev",
+                    body: `${userExecuted.length} transaksi otomatis telah dijalankan.`,
+                    url: "/recurring",
+                    tag: "recurring-executed",
+                }, "recurring_executed");
+            } catch (pushError) {
+                console.error(`[CRON] Push failed for user ${userId}:`, pushError);
+            }
+        }
         
         return NextResponse.json({
             success: true,

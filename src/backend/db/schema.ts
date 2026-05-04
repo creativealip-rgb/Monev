@@ -391,6 +391,41 @@ export const achievements = sqliteTable("achievements", {
     unlockedAt: integer("unlocked_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+// Push subscriptions table (VAPID Web Push)
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    platform: text("platform", { enum: ["web", "android", "ios"] }).notNull().default("web"),
+    userAgent: text("user_agent"),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_push_subscriptions_user_id").on(table.userId),
+    activeIdx: index("idx_push_subscriptions_active").on(table.isActive),
+}));
+
+// Notification logs table (audit trail)
+export const notificationLogs = sqliteTable("notification_logs", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    subscriptionId: integer("subscription_id").references(() => pushSubscriptions.id),
+    type: text("type", { enum: ["daily_reminder", "budget_alert", "bill_reminder", "weekly_summary", "recurring_executed", "custom"] }).notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    url: text("url"),
+    status: text("status", { enum: ["sent", "failed", "skipped"] }).notNull(),
+    errorMessage: text("error_message"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_notification_logs_user_id").on(table.userId),
+    typeIdx: index("idx_notification_logs_type").on(table.type),
+    statusIdx: index("idx_notification_logs_status").on(table.status),
+}));
+
 // Usage tracking table
 export const usageTracking = sqliteTable("usage_tracking", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -434,6 +469,8 @@ export type Streak = typeof streaks.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type BillPayment = typeof billPayments.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NotificationLog = typeof notificationLogs.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -457,6 +494,8 @@ export type InsertAiAnomaliesCache = typeof aiAnomaliesCache.$inferInsert;
 export type InsertStreak = typeof streaks.$inferInsert;
 export type InsertAchievement = typeof achievements.$inferInsert;
 export type InsertBillPayment = typeof billPayments.$inferInsert;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type InsertNotificationLog = typeof notificationLogs.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -489,3 +528,7 @@ export const insertSplitBillMemberSchema = createInsertSchema(splitBillMembers);
 export const selectSplitBillMemberSchema = createSelectSchema(splitBillMembers);
 export const insertAiAnomaliesCacheSchema = createInsertSchema(aiAnomaliesCache);
 export const selectAiAnomaliesCacheSchema = createSelectSchema(aiAnomaliesCache);
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions);
+export const selectPushSubscriptionSchema = createSelectSchema(pushSubscriptions);
+export const insertNotificationLogSchema = createInsertSchema(notificationLogs);
+export const selectNotificationLogSchema = createSelectSchema(notificationLogs);
