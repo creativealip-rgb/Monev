@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
         visible: { opacity: 1, y: 0 }
     };
 
-    const [isDownloading, setIsDownloading] = useState(false);
+
     const selectedAccountLabel = selectedAccountId === "all"
         ? "Semua akun"
         : accounts.find((account) => String(account.id) === selectedAccountId)?.name || "Semua akun";
@@ -113,57 +113,6 @@ export default function AnalyticsPage() {
     const selectedPeriodLabel = dateRange
         ? `${dateRange.start} s/d ${dateRange.end}`
         : `${currentDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" })} · ${selectedAccountLabel} · ${selectedCategoryLabel}`;
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                showDateRangePicker &&
-                dateRangePickerRef.current &&
-                !dateRangePickerRef.current.contains(event.target as Node)
-            ) {
-                setShowDateRangePicker(false);
-            }
-        }
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [showDateRangePicker]);
-
-    const handleDownloadReport = async () => {
-        if (!data) return;
-        // Tier gate: only Pro/Sultan
-        if (!canSeeFullAnalytics) {
-            toast.error(t("analytics.premiumFeature"), t("analytics.pdfExportTier"));
-            return;
-        }
-        setIsDownloading(true);
-        try {
-            const { exportAnalyticsPDF } = await import("@/lib/pdf-export");
-            await exportAnalyticsPDF({
-                month: currentDate.getMonth() + 1,
-                year: currentDate.getFullYear(),
-                periodLabel: selectedPeriodLabel,
-                income: data.income || 0,
-                expense: data.expense || 0,
-                balance: (data.income || 0) - (data.expense || 0),
-                categoryStats: [
-                    ...(data.categoryBreakdown?.expense || []),
-                    ...(data.categoryBreakdown?.income || []),
-                ].map((cat: CategoryBreakdown | { categoryName: string; total: number }) => ({
-                    categoryName: "categoryName" in cat ? cat.categoryName : cat.name,
-                    total: "total" in cat ? cat.total : cat.amount,
-                })),
-                anomalies: data.spendingPatterns?.anomalies || [],
-                actionItems: getAnalyticsActionItems(data),
-            });
-            toast.success(t("analytics.pdfDownloadSuccess"));
-        } catch (err) {
-            console.error("PDF export error:", err);
-            toast.error(t("analytics.pdfDownloadFailed"), t("analytics.pdfExportError"));
-        } finally {
-            setIsDownloading(false);
-        }
-    };
 
     useEffect(() => {
         if (!data || dateRange || hasAutoAdjustedMonthRef.current) {
@@ -313,67 +262,7 @@ export default function AnalyticsPage() {
                         </div>
                     </div>
 
-                    <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:w-auto sm:mx-0 sm:px-0 sm:pb-0">
-                        <button
-                            onClick={handleDownloadReport}
-                            disabled={isDownloading}
-                            className={cn(
-                                "flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-[10px] font-bold shadow-lg shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50 sm:px-3",
-                                isDownloading && "animate-pulse"
-                            )}
-                        >
-                            <FileDown size={14} />
-                            <span className="hidden xs:inline sm:inline">Laporan</span>
-                        </button>
 
-                        <div className="flex shrink-0 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm">
-                            <div className="hidden sm:flex items-center gap-1.5 px-3 border-r border-slate-200 dark:border-slate-800">
-                                <Flame size={12} className="text-orange-500" />
-                                <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
-                                    {data.summary?.streakDays || 0}
-                                </span>
-                            </div>
-                            {dateRange ? (
-                                <button
-                                    onClick={() => {
-                                        setDateRange(null);
-                                        setCurrentDate(new Date());
-                                    }}
-                                    className="flex items-center gap-1 px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
-                                >
-                                    <Calendar size={12} className="text-sky-500" />
-                                    <span className="text-[10px] font-bold px-1 min-w-[60px] text-center text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
-                                        Custom
-                                    </span>
-                                    <span className="text-[8px] text-slate-400">✕</span>
-                                </button>
-                            ) : (
-                                <div className="flex items-center px-1 py-1">
-                                    <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                                        <ChevronRight className="rotate-180 w-3.5 h-3.5 text-slate-400" />
-                                    </button>
-                                    <span className="text-[10px] font-bold px-1.5 min-w-[64px] text-center text-slate-600 dark:text-slate-400 capitalize tracking-tight sm:px-2 sm:min-w-[80px]">
-                                        {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
-                                    </span>
-                                    <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                                    </button>
-                                </div>
-                            )}
-                            <button
-                                onClick={() => setShowDateRangePicker(!showDateRangePicker)}
-                                aria-label="Toggle date picker"
-                                className={cn(
-                                    "p-1.5 mx-1 rounded-full transition-all",
-                                    showDateRangePicker || dateRange
-                                        ? "bg-sky-100 dark:bg-sky-900/30 text-sky-600"
-                                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
-                                )}
-                            >
-                                <Calendar size={14} />
-                            </button>
-                        </div>
-                    </div>
 </div>
             </motion.header>
 
@@ -443,12 +332,67 @@ export default function AnalyticsPage() {
                 </motion.div>
             )}
 
-            <div className="p-6 space-y-6">
-                <NetWorthCard
+            {/* Main Content Area */}
+            <div className={cn(
+                "transition-all duration-300",
+                analyticsQuery.isFetching && "opacity-60 pointer-events-none grayscale-[0.2]"
+            )}>
+                <div className="p-6 space-y-6">
+                    <NetWorthCard
                     balance={data.balance}
                     investments={data.totalInvestments || 0}
                     goals={data.goalsProgress?.reduce((acc: number, g: GoalProgress) => acc + g.currentAmount, 0) || 0}
                     hideBalance={isStealthMode}
+                    headerAction={
+                        <div className="flex shrink-0 items-center bg-white/10 border border-white/10 rounded-full shadow-sm text-white relative z-20">
+                            <div className="hidden sm:flex items-center gap-1.5 px-3 border-r border-white/10">
+                                <Flame size={12} className="text-orange-400" />
+                                <span className="text-[10px] font-bold text-orange-400">
+                                    {data.summary?.streakDays || 0}
+                                </span>
+                            </div>
+                            {dateRange ? (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setDateRange(null);
+                                        setCurrentDate(new Date());
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 hover:bg-white/10 rounded-full transition-all"
+                                >
+                                    <Calendar size={12} className="text-sky-300" />
+                                    <span className="text-[10px] font-bold px-1 min-w-[60px] text-center text-white uppercase tracking-tighter">
+                                        Custom
+                                    </span>
+                                    <span className="text-[8px] text-white/60">✕</span>
+                                </button>
+                            ) : (
+                                <div className="flex items-center px-1 py-1">
+                                    <button onClick={(e) => { e.preventDefault(); changeMonth(-1); }} className="p-1 hover:bg-white/10 rounded-full transition-all">
+                                        <ChevronRight className="rotate-180 w-3.5 h-3.5 text-white/60" />
+                                    </button>
+                                    <span className="text-[10px] font-bold px-1.5 min-w-[64px] text-center text-white capitalize tracking-tight sm:px-2 sm:min-w-[80px]">
+                                        {currentDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" })}
+                                    </span>
+                                    <button onClick={(e) => { e.preventDefault(); changeMonth(1); }} className="p-1 hover:bg-white/10 rounded-full transition-all">
+                                        <ChevronRight className="w-3.5 h-3.5 text-white/60" />
+                                    </button>
+                                </div>
+                            )}
+                            <button
+                                onClick={(e) => { e.preventDefault(); setShowDateRangePicker(!showDateRangePicker); }}
+                                aria-label="Toggle date picker"
+                                className={cn(
+                                    "p-1.5 mx-1 rounded-full transition-all",
+                                    showDateRangePicker || dateRange
+                                        ? "bg-sky-500/30 text-sky-300"
+                                        : "hover:bg-white/10 text-white/60"
+                                )}
+                            >
+                                <Calendar size={14} />
+                            </button>
+                        </div>
+                    }
                 />
 
                 <div className="grid grid-cols-2 gap-3">
@@ -560,6 +504,8 @@ export default function AnalyticsPage() {
                     />
                 )}
             </motion.div>
+            </div>
+
             <AnalyticsTransactionsModal
                 isOpen={drilldownFilter !== null}
                 onClose={() => setDrilldownFilter(null)}

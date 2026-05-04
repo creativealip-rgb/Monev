@@ -63,8 +63,9 @@ export function RecentTransactionsWidget({
         >
             <motion.div variants={itemVariants} className="flex items-center justify-between mb-3">
                 <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">{t("dashboard.recentTransactions")}</h2>
-                <Link href="/transactions" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
+                <Link href="/transactions" className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1">
                     {t("dashboard.viewAll")}
+                    <ChevronRight size={14} />
                 </Link>
             </motion.div>
 

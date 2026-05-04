@@ -29,7 +29,7 @@ export function StickyCTA() {
                 opacity: isVisible ? 1 : 0 
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed bottom-0 left-0 right-0 z-[100] p-4"
+            className="fixed bottom-0 left-0 right-0 z-[100] p-4 pb-safe"
         >
             <div className="max-w-7xl mx-auto">
                 <div className="glass-card bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-2xl shadow-slate-900/20 flex items-center justify-between gap-4">

@@ -129,4 +129,5 @@ export interface DashboardHeaderProps {
     streak: { current: number; longest: number } | undefined;
     formattedDate: string;
     mounted: boolean;
+    onNotificationsClick?: () => void;
 }

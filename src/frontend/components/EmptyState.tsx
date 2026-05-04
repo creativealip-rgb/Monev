@@ -5,7 +5,10 @@ import dynamic from "next/dynamic";
 import {
     LucideIcon,
     ReceiptText,
-    WalletCards
+    Wallet,
+    PiggyBank,
+    Receipt,
+    Repeat
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 
@@ -88,6 +91,7 @@ function LottieIcon({ animationKey, className }: { animationKey: string; classNa
     );
 }
 
+import { useRouter } from "next/navigation";
 import React from "react";
 
 export function EmptyState({
@@ -115,23 +119,23 @@ export function EmptyState({
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className={cn(
-                    "w-24 h-24 rounded-3xl flex items-center justify-center mb-5 shadow-lg border",
+                    "w-16 h-16 rounded-3xl flex items-center justify-center mb-4",
                     config.iconBg
                 )}
             >
                 {lottieKey ? (
-                    <LottieIcon animationKey={lottieKey} className="w-16 h-16" />
+                    <LottieIcon animationKey={lottieKey} className="w-10 h-10" />
                 ) : Icon ? (
-                    <Icon className={cn("w-12 h-12", config.iconColor)} strokeWidth={1.8} />
+                    <Icon className={cn("w-8 h-8", config.iconColor)} strokeWidth={2} />
                 ) : null}
             </motion.div>
 
-            <h3 className={cn("text-lg font-bold mb-2", config.titleColor)}>
+            <p className={cn("font-bold mb-1", config.titleColor)}>
                 {title}
-            </h3>
+            </p>
 
             {description && (
-                <p className={cn("text-sm max-w-xs mb-6", config.descColor)}>
+                <p className={cn("text-xs max-w-[260px] mb-5", config.descColor)}>
                     {description}
                 </p>
             )}
@@ -141,7 +145,7 @@ export function EmptyState({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={action.onClick}
-                    className="mb-24 px-6 py-3 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 transition-colors shadow-lg shadow-sky-500/25 sm:mb-0"
+                    className="mt-2 px-5 py-3 bg-sky-500 text-white text-sm font-bold rounded-2xl shadow-lg shadow-sky-500/25 active:scale-95"
                 >
                     {action.label}
                 </motion.button>
@@ -151,6 +155,9 @@ export function EmptyState({
 }
 
 export function NoTransactionsEmpty({ onAddNew, noAccounts }: { onAddNew?: () => void; noAccounts?: boolean }) {
+    const router = useRouter();
+    const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
+
     return (
         <EmptyState
             icon={ReceiptText}
@@ -162,7 +169,13 @@ export function NoTransactionsEmpty({ onAddNew, noAccounts }: { onAddNew?: () =>
             }
             action={
                 noAccounts
-                    ? { label: "+ Tambah Akun", onClick: () => { window.location.href = "/saldo"; } }
+                    ? { 
+                        label: "+ Tambah Akun", 
+                        onClick: () => { 
+                            const path = "/saldo";
+                            router.push(isApk ? `${path}/` : path); 
+                        } 
+                    }
                     : onAddNew ? { label: "+ Tambah Transaksi", onClick: onAddNew } : undefined
             }
         />
@@ -183,7 +196,7 @@ export function NoSearchResultsEmpty({ query }: { query?: string }) {
 export function NoBudgetsEmpty({ onAddNew }: { onAddNew?: () => void }) {
     return (
         <EmptyState
-            icon={WalletCards}
+            icon={Wallet}
             title="Belum ada budget"
             description="Atur batas pengeluaran bulananmu untuk kategori tertentu"
             action={onAddNew ? { label: "Buat Budget", onClick: onAddNew } : undefined}
@@ -194,7 +207,7 @@ export function NoBudgetsEmpty({ onAddNew }: { onAddNew?: () => void }) {
 export function NoGoalsEmpty({ onAddNew }: { onAddNew?: () => void }) {
     return (
         <EmptyState
-            lottieKey="piggy"
+            icon={PiggyBank}
             title="Belum ada tabungan"
             description="Mulai menabung untuk impianmu! Buat target dan pantau progresnya."
             action={onAddNew ? { label: "Buat Target", onClick: onAddNew } : undefined}
@@ -205,10 +218,10 @@ export function NoGoalsEmpty({ onAddNew }: { onAddNew?: () => void }) {
 export function NoBillsEmpty({ onAddNew }: { onAddNew?: () => void }) {
     return (
         <EmptyState
-            icon={ReceiptText}
-            className="-mt-16 sm:mt-0"
+            icon={Receipt}
+            className="mt-8"
             title="Tidak ada tagihan"
-            description="Catat tagihan rutin seperti listrik, internet, atau langganan bulanan"
+            description="Catat tagihan yang harus dibayar tiap bulan (Listrik, PayLater). Kami ingatkan sebelum jatuh tempo!"
             action={onAddNew ? { label: "Tambah Tagihan", onClick: onAddNew } : undefined}
         />
     );

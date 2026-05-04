@@ -511,7 +511,7 @@ export async function GET(req: NextRequest) {
             messages: [
                 {
                     role: "system",
-                    content: `You are a financial anomaly detection expert. Analyze the transaction data and identify potential issues or unusual patterns. Respond in ${locale === "id" ? "Bahasa Indonesia" : "English"}.`,
+                    content: `You are a financial anomaly detection expert. Analyze the transaction data and identify potential issues or unusual patterns. Respond in ${locale === "id" ? "Bahasa Indonesia" : "English"}. You must respond with a JSON object containing two fields: "anomalies" (an array of anomaly objects) and "summary" (a string summarizing the analysis).`,
                 },
                 {
                     role: "user",

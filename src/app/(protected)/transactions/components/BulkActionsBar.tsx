@@ -30,7 +30,7 @@ export function BulkActionsBar({
             exit={{ opacity: 0, y: 100 }}
             role="region"
             aria-label="Aksi massal transaksi"
-            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 pb-8 z-50"
+            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50"
         >
             <div className="max-w-[500px] mx-auto flex items-center justify-between gap-3">
                 <div className="min-w-0 flex items-center gap-3">

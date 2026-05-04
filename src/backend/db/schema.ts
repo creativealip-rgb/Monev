@@ -419,6 +419,7 @@ export const notificationLogs = sqliteTable("notification_logs", {
     url: text("url"),
     status: text("status", { enum: ["sent", "failed", "skipped"] }).notNull(),
     errorMessage: text("error_message"),
+    isRead: integer("is_read", { mode: "boolean" }).notNull().default(false),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 }, (table) => ({
     userIdIdx: index("idx_notification_logs_user_id").on(table.userId),

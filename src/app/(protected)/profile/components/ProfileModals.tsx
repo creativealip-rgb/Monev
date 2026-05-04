@@ -12,8 +12,11 @@ import { CollectionModal } from "./CollectionModal";
 import { CategoriesModal } from "./CategoriesModal";
 import { ExportModal } from "./ExportModal";
 import { FinancialModal } from "./FinancialModal";
+import { ReportsModal } from "./ReportsModal";
+import { AppSettingsModal } from "./AppSettingsModal";
+import { AboutModal } from "./AboutModal";
 
-type ModalType = "account" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "financial";
+type ModalType = "account" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "financial" | "reports" | "app_settings" | "about";
 
 interface ProfileModalsProps {
     activeModal: ModalType | null;
@@ -74,9 +77,12 @@ export function ProfileModals({
             case "security": return "Keamanan Aplikasi";
             case "export": return "Export Data";
             case "financial": return "Konfigurasi Keuangan";
+            case "reports": return "Laporan Keuangan";
             case "notifications": return "Notifikasi";
             case "collection": return "Koleksi Badge";
             case "categories": return "Kategori Custom";
+            case "app_settings": return "Pengaturan Aplikasi";
+            case "about": return "Tentang Monev";
             default: return "";
         }
     };
@@ -147,6 +153,18 @@ export function ProfileModals({
                         onClose={onClose}
                         onSave={onSaveSettings}
                     />
+                );
+            case "reports":
+                return (
+                    <ReportsModal onClose={onClose} />
+                );
+            case "app_settings":
+                return (
+                    <AppSettingsModal />
+                );
+            case "about":
+                return (
+                    <AboutModal />
                 );
             default:
                 return null;

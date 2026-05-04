@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare } from "lucide-react";
+import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare, FileText, Info } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { CurrencySelector } from "@/frontend/components/CurrencySelector";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { useI18n } from "@/lib/i18n";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useSecurity } from "@/components/SecurityProvider";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
@@ -35,15 +36,33 @@ const ALL_BADGES = [
     { type: "first_invest", name: "Investor Muda", description: "Melakukan investasi pertama kali. 📈", icon: "📈" },
 ];
 
-const menuItems = [
-    { id: "account", icon: UserIcon, label: "profile.accountSettings", color: "blue", hasArrow: true },
-    { id: "financial", icon: Wallet, label: "profile.financialConfig", color: "emerald", hasArrow: true },
-    { id: "categories", icon: Tag, label: "profile.customCategories", color: "pink", hasArrow: true },
-    { id: "notifications", icon: Bell, label: "profile.notifications", color: "purple", hasArrow: true },
-    { id: "integrations", icon: MessageCircle, label: "profile.botIntegrations", color: "indigo", hasArrow: true },
-    { id: "security", icon: Shield, label: "profile.security", color: "amber", hasArrow: true },
-    { id: "export", icon: Database, label: "profile.dataBackup", color: "sky", hasArrow: true },
-    { id: "download", icon: Smartphone, label: "profile.downloadApp", color: "sky", hasArrow: true, isDownload: true },
+const menuGroups = [
+    {
+        title: "Akun & Keuangan",
+        items: [
+            { id: "account", icon: UserIcon, label: "profile.accountSettings", color: "blue", hasArrow: true },
+            { id: "financial", icon: Wallet, label: "profile.financialConfig", color: "emerald", hasArrow: true },
+            { id: "reports", icon: FileText, label: "Laporan Keuangan", color: "sky", hasArrow: true, rawLabel: true },
+            { id: "categories", icon: Tag, label: "profile.customCategories", color: "pink", hasArrow: true },
+        ]
+    },
+    {
+        title: "Sistem & Keamanan",
+        items: [
+            { id: "security", icon: Shield, label: "profile.security", color: "amber", hasArrow: true },
+            { id: "notifications", icon: Bell, label: "profile.notifications", color: "purple", hasArrow: true },
+            { id: "integrations", icon: MessageCircle, label: "profile.botIntegrations", color: "indigo", hasArrow: true },
+        ]
+    },
+    {
+        title: "Data & Aplikasi",
+        items: [
+            { id: "export", icon: Database, label: "profile.dataBackup", color: "sky", hasArrow: true },
+            { id: "app_settings", icon: Smartphone, label: "Pengaturan Aplikasi", color: "blue", hasArrow: true, rawLabel: true },
+            { id: "download", icon: Download, label: "profile.downloadApp", color: "sky", hasArrow: true, isDownload: true },
+            { id: "about", icon: Info, label: "Tentang Monev", color: "slate", hasArrow: true, rawLabel: true },
+        ]
+    }
 ];
 
 const helpItems = [
@@ -54,12 +73,14 @@ const helpItems = [
 
 export default function ProfilePage() {
     const { data: session } = useSession();
+    const router = useRouter();
+    const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
     const { t } = useI18n();
     const { user, settings, goals, streak, achievements, categories, loading, loadData, setUser } = useProfileData();
     const { isStealthMode, toggleStealth, reauthenticate, deleteLocalData } = useSecurity();
     const toast = useToast();
 
-    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | null>(null);
+    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "reports" | "app_settings" | "about" | null>(null);
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -126,7 +147,7 @@ export default function ProfilePage() {
     };
 
     const handleMenuClick = (id: string) => {
-        if (["account", "financial", "integrations", "security", "notifications", "categories", "export"].includes(id)) {
+        if (["account", "financial", "integrations", "security", "notifications", "categories", "export", "reports", "app_settings", "about"].includes(id)) {
             setActiveModal(id as any);
         }
     };
@@ -362,39 +383,62 @@ export default function ProfilePage() {
                 </motion.div>
             )}
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-5 sm:pt-6 space-y-3 pb-6">
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="card-clean p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Moon size={20} className="text-slate-600 dark:text-slate-300" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.theme")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Ubah tampilan aplikasi</p></div></div><ThemeToggleSwitch /></motion.div>
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }} className="card-clean p-4 space-y-4 hidden sm:block"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Globe size={20} className="text-sky-600 dark:text-sky-400" /></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">{t("profile.language")}</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih bahasa aplikasi</p></div></div><LanguageSelector /></motion.div>
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="card-clean p-4 space-y-4 hidden sm:block"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center"><span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">$</span></div><div><p className="font-semibold text-slate-900 dark:text-white text-sm">Mata Uang</p><p className="text-xs text-slate-500 dark:text-slate-400">Pilih mata uang utama</p></div></div><CurrencySelector /></motion.div>
-                {menuItems.map((item, index) => {
-                    const Icon = item.icon;
-                    const colors: Record<string, { bg: string; text: string }> = {
-                        blue: { bg: "bg-blue-50", text: "text-blue-600" },
-                        emerald: { bg: "bg-emerald-50", text: "text-emerald-600" },
-                        purple: { bg: "bg-purple-50", text: "text-purple-600" },
-                        amber: { bg: "bg-amber-50", text: "text-amber-600" },
-                        indigo: { bg: "bg-indigo-50", text: "text-indigo-600" },
-                        sky: { bg: "bg-sky-50", text: "text-sky-600" },
-                        pink: { bg: "bg-pink-50", text: "text-pink-600" },
-                    };
-                    const color = colors[item.color];
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-5 sm:pt-6 space-y-8 pb-6">
+                {menuGroups.map((group, gIndex) => (
+                    <div key={gIndex} className="space-y-3">
+                        <div className="flex items-center gap-2 px-2">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{group.title}</h3>
+                            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800/50" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                            {group.items.map((item, index) => {
+                                const Icon = item.icon;
+                                const colors: Record<string, { bg: string; text: string }> = {
+                                    blue: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-600 dark:text-blue-400" },
+                                    emerald: { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-600 dark:text-emerald-400" },
+                                    purple: { bg: "bg-purple-50 dark:bg-purple-900/20", text: "text-purple-600 dark:text-purple-400" },
+                                    amber: { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-600 dark:text-amber-400" },
+                                    indigo: { bg: "bg-indigo-50 dark:bg-indigo-900/20", text: "text-indigo-600 dark:text-indigo-400" },
+                                    sky: { bg: "bg-sky-50 dark:bg-sky-900/20", text: "text-sky-600 dark:text-sky-400" },
+                                    pink: { bg: "bg-pink-50 dark:bg-pink-900/20", text: "text-pink-600 dark:text-pink-400" },
+                                    slate: { bg: "bg-slate-50 dark:bg-slate-900/20", text: "text-slate-600 dark:text-slate-400" },
+                                };
+                                const color = colors[item.color] || colors.slate;
+                                const itemLabel = item.rawLabel ? item.label : t(item.label);
 
-                    if (item.id === "download") {
-                        return (
-                            <motion.a key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * index + 0.45 }} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
-                                <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
-                                <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 uppercase tracking-tighter">APK</span><ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" /></div>
-                            </motion.a>
-                        );
-                    }
+                                if (item.id === "download") {
+                                    return (
+                                        <motion.a key={index} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * index }} href="/monev-app.apk" download="monev-app.apk" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all no-underline">
+                                            <div className="flex items-center gap-4">
+                                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
+                                                    <Icon size={18} strokeWidth={2.5} />
+                                                </div>
+                                                <span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{itemLabel}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-sky-500 bg-sky-50 dark:bg-sky-900/40 px-2 py-1 rounded-lg border border-sky-100 dark:border-sky-800 uppercase tracking-tighter">APK</span>
+                                                <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />
+                                            </div>
+                                        </motion.a>
+                                    );
+                                }
 
-                    return (
-                        <motion.button type="button" key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.08 * index + 0.45 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4"><div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}><Icon size={18} strokeWidth={2.5} /></div><span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{t(item.label)}</span></div>
-                            {item.hasArrow && <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />}
-                        </motion.button>
-                    );
-                })}
+                                return (
+                                    <motion.button type="button" key={index} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * index }} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleMenuClick(item.id)} className="w-full p-4 card-clean flex items-center justify-between group hover:border-sky-300/50 hover:shadow-md transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", color.bg, color.text)}>
+                                                <Icon size={18} strokeWidth={2.5} />
+                                            </div>
+                                            <span className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{itemLabel}</span>
+                                        </div>
+                                        {item.hasArrow && <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-sky-400 transition-colors" />}
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
                 
                 {/* Help & Support Section */}
                 <motion.div 
@@ -417,27 +461,33 @@ export default function ProfilePage() {
                             };
                             
                             return (
-                                <motion.a
+                                <motion.button
                                     key={index}
-                                    href={item.href}
-                                    target={item.href.startsWith('http') ? '_blank' : undefined}
-                                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                                    type="button"
+                                    onClick={() => {
+                                        if (item.href.startsWith('mailto:')) {
+                                            window.location.href = item.href;
+                                        } else {
+                                            const finalHref = isApk && !item.href.endsWith('/') ? `${item.href}/` : item.href;
+                                            router.push(finalHref);
+                                        }
+                                    }}
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 1.05 + index * 0.05 }}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="w-full p-4 card-clean flex items-center gap-4 group hover:border-slate-300/50 hover:shadow-md transition-all no-underline"
+                                    className="w-full p-4 card-clean flex items-center gap-4 group hover:border-slate-300/50 hover:shadow-md transition-all text-left"
                                 >
                                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", colors[item.color])}>
                                         <Icon size={18} strokeWidth={2.5} />
                                     </div>
-                                    <div className="flex-1 text-left">
+                                    <div className="flex-1">
                                         <p className="font-bold text-[13px] text-slate-700 dark:text-slate-200 tracking-tight">{item.label}</p>
                                         <p className="text-[10px] text-slate-500">{item.description}</p>
                                     </div>
                                     <ChevronLeft size={16} className="text-slate-300 rotate-180 group-hover:text-slate-400 transition-colors" />
-                                </motion.a>
+                                </motion.button>
                             );
                         })}
                     </div>

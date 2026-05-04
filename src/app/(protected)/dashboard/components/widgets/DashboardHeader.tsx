@@ -1,10 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Bell, ChevronRight, Sparkles, Crown, Zap } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
+import { apiFetch } from "@/frontend/lib/api-client";
 import type { TierStyle, DashboardHeaderProps } from "../../types";
 
 const TIER_STYLES: Record<string, TierStyle> = {
@@ -20,9 +22,31 @@ export function DashboardHeader({
     streak,
     formattedDate,
     mounted,
+    onNotificationsClick,
 }: DashboardHeaderProps) {
-    const tierStyle = TIER_STYLES[userTier];
+    const tierStyle = TIER_STYLES[userTier] || TIER_STYLES.starter;
     const TierIcon = tierStyle.icon;
+
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        if (mounted) {
+            fetchUnreadCount();
+        }
+    }, [mounted]);
+
+    async function fetchUnreadCount() {
+        try {
+            const response = await apiFetch("/api/notifications");
+            if (response.ok) {
+                const result = await response.json();
+                const unread = result.data?.filter((n: any) => !n.isRead).length || 0;
+                setUnreadCount(unread);
+            }
+        } catch (error) {
+            console.error("Error fetching unread count:", error);
+        }
+    }
 
     return (
         <header className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50">
@@ -89,12 +113,18 @@ export function DashboardHeader({
                     <motion.button
                         type="button"
                         aria-label="Buka notifikasi"
+                        onClick={() => {
+                            onNotificationsClick?.();
+                            setUnreadCount(0); // Optimistic clear
+                        }}
                         whileHover={{ scale: 1.08, rotate: 8 }}
                         whileTap={{ scale: 0.92 }}
                         className="relative h-9 w-9 rounded-full glass-card flex items-center justify-center text-muted-foreground dark:text-sky-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 transition-all"
                     >
                         <Bell size={17} strokeWidth={2.5} />
-                        <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white animate-pulse" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-slate-900 animate-pulse" />
+                        )}
                     </motion.button>
                 </div>
             </div>

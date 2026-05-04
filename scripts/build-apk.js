@@ -1,4 +1,4 @@
-import { existsSync, renameSync, mkdirSync, rmSync, cpSync } from 'fs';
+import { existsSync, renameSync, mkdirSync, rmSync, cpSync, readdirSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 
@@ -74,15 +74,39 @@ function restorePath(from, to) {
     }
 }
 
-// Clean up generated types that may cause issues
-const typesPath = '.next/dev/types';
-if (existsSync(typesPath)) {
+// Clean up .next folder to prevent issues with stale dev types
+const dotNextPath = '.next';
+if (existsSync(dotNextPath)) {
     try {
-        rmSync(typesPath, { recursive: true, force: true });
-        console.log('✅ Cleaned generated types');
+        rmSync(dotNextPath, { recursive: true, force: true });
+        console.log('✅ Cleaned .next folder');
     } catch (e) {
-        console.warn('⚠️ Could not clean types:', e.message);
+        console.warn('⚠️ Could not clean .next folder:', e.message);
     }
+}
+
+// Clean up out folder
+const outPath = 'out';
+if (existsSync(outPath)) {
+    try {
+        rmSync(outPath, { recursive: true, force: true });
+        console.log('✅ Cleaned out folder');
+    } catch (e) {
+        console.warn('⚠️ Could not clean out folder:', e.message);
+    }
+}
+
+// Prevent recursive bundling: Remove ALL APKs from public/ before building
+try {
+    const publicFiles = readdirSync('public');
+    publicFiles.forEach(file => {
+        if (file.endsWith('.apk')) {
+            unlinkSync(path.join('public', file));
+            console.log(`✅ Removed old APK from public/: ${file}`);
+        }
+    });
+} catch (e) {
+    console.warn('⚠️ Could not clean old APKs from public/ folder:', e.message);
 }
 
 // Move API and Admin folders
