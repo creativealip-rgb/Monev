@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useToast } from "@/frontend/components/UI";
+import { useWebPush } from "@/frontend/hooks/useWebPush";
+import { Smartphone, Zap, ZapOff } from "lucide-react";
 
 interface NotificationsModalProps {
     onClose: () => void;
@@ -14,11 +16,13 @@ interface NotificationsModalProps {
 
 export function NotificationsModal({ onClose, loadData }: NotificationsModalProps) {
     const toast = useToast();
+    const { isSupported, isSubscribed, subscribe, unsubscribe, isLoading } = useWebPush() as any;
     const [notifToggles, setNotifToggles] = useState({
         dailyReport: true,
         budgetAlert: true,
         transactionUpdate: true,
-        promoNews: false
+        promoNews: false,
+        pushEnabled: true
     });
 
     const [reportPrefs, setReportPrefs] = useState({
@@ -62,10 +66,55 @@ export function NotificationsModal({ onClose, loadData }: NotificationsModalProp
                     </div>
                 </div>
             </div>
-
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-xs font-medium leading-relaxed text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
-                Status: tombol ini menyimpan preferensi. Yang sudah dipakai backend saat ini adalah report bulanan/mingguan via cron/email/Telegram bila channel aktif. Push notif realtime di dashboard belum aktif.
-            </div>
+            
+            {/* Realtime Push Section */}
+            {isSupported && (
+                <div className={cn(
+                    "p-5 rounded-3xl border transition-all duration-300",
+                    isSubscribed 
+                        ? "bg-green-50 border-green-100 dark:bg-green-900/10 dark:border-green-900/30" 
+                        : "bg-amber-50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30"
+                )}>
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className={cn(
+                                "p-2 rounded-xl shadow-sm",
+                                isSubscribed ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+                            )}>
+                                {isSubscribed ? <Zap size={20} /> : <ZapOff size={20} />}
+                            </div>
+                            <div>
+                                <p className="font-bold text-slate-900 dark:text-white text-sm">Realtime Push</p>
+                                <p className="text-[10px] text-slate-500 font-medium">
+                                    {isSubscribed ? "Notifikasi aktif di perangkat ini" : "Aktifkan untuk menerima notifikasi instan"}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <button
+                            onClick={async () => {
+                                if (isSubscribed) {
+                                    const ok = await unsubscribe();
+                                    if (ok) toast.success("Berhasil", "Notifikasi push dinonaktifkan");
+                                } else {
+                                    const ok = await subscribe();
+                                    if (ok) toast.success("Berhasil", "Notifikasi push aktif!");
+                                    else toast.error("Gagal", "Gagal mengaktifkan notifikasi. Pastikan izin diberikan.");
+                                }
+                            }}
+                            disabled={isLoading}
+                            className={cn(
+                                "px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95",
+                                isSubscribed
+                                    ? "bg-white text-red-500 border border-red-100 hover:bg-red-50"
+                                    : "bg-amber-500 text-white shadow-md shadow-amber-500/20 hover:bg-amber-600"
+                            )}
+                        >
+                            {isLoading ? "..." : (isSubscribed ? "MATIKAN" : "AKTIFKAN")}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-3">
                 {[

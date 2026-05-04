@@ -18,6 +18,7 @@ import { cn } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 import { OfflineBadge } from "@/frontend/components/OfflineBadge";
+import { InstallPrompt } from "@/frontend/components/InstallPrompt";
 
 export default function ClientLayout({
     children,
@@ -110,6 +111,7 @@ export default function ClientLayout({
                                 <NativeNotificationService />
                                 <NotificationListenerService />
                                 <OfflineBadge />
+                                <InstallPrompt />
                                 <div className={cn(
                                     "fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100",
                                     !["/login", "/register"].includes(pathname) && "dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"

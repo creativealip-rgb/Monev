@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { removePushSubscription } from "@/backend/db/operations/push-operations";
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,8 +15,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing endpoint" }, { status: 400 });
         }
 
-        // Remove subscription from store
-        // In production, delete from pushSubscriptions table
+        // Remove subscription from database
+        await removePushSubscription(endpoint);
+
         console.log(`[Push] User ${session.user.id} unsubscribed: ${endpoint.slice(0, 50)}...`);
 
         return NextResponse.json({

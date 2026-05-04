@@ -19,6 +19,7 @@ export function useWebPush() {
     const [isSupported, setIsSupported] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if ("serviceWorker" in navigator && "PushManager" in window) {
@@ -28,6 +29,7 @@ export function useWebPush() {
     }, []);
 
     async function checkSubscription() {
+        setIsLoading(true);
         try {
             const reg = await navigator.serviceWorker.register("/push-sw.js");
             setRegistration(reg);
@@ -36,20 +38,27 @@ export function useWebPush() {
             setIsSubscribed(!!sub);
         } catch (error) {
             logger.error("Registration failed", error);
+        } finally {
+            setIsLoading(false);
         }
     }
 
     async function subscribe(): Promise<boolean> {
         if (!registration) return false;
+        setIsLoading(true);
 
         try {
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") return false;
+            if (permission !== "granted") {
+                setIsLoading(false);
+                return false;
+            }
 
             // Get VAPID key from server
             const res = await apiFetch("/api/push/vapid-key");
             if (!res.ok) {
                 logger.error("Failed to get VAPID key");
+                setIsLoading(false);
                 return false;
             }
             const { publicKey } = await res.json();
@@ -71,11 +80,14 @@ export function useWebPush() {
         } catch (error) {
             logger.error("Subscribe failed", error);
             return false;
+        } finally {
+            setIsLoading(false);
         }
     }
 
     async function unsubscribe(): Promise<boolean> {
         if (!registration) return false;
+        setIsLoading(true);
 
         try {
             const sub = await registration.pushManager.getSubscription();
@@ -92,10 +104,12 @@ export function useWebPush() {
         } catch (error) {
             logger.error("Unsubscribe failed", error);
             return false;
+        } finally {
+            setIsLoading(false);
         }
     }
 
-    return { isSupported, isSubscribed, subscribe, unsubscribe };
+    return { isSupported, isSubscribed, subscribe, unsubscribe, isLoading };
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

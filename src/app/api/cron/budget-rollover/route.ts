@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rolloverAllUsers } from "@/backend/db/budget-operations";
+import { sendPushToUser } from "@/lib/send-push";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,23 @@ export async function GET(req: NextRequest) {
         }
 
         const results = await rolloverAllUsers(lastMonth, lastMonthYear, currentMonth, currentYear);
+
+        // Send push notifications to affected users
+        if (Array.isArray(results)) {
+            const userIds = [...new Set(results.map((r: { userId?: number }) => r.userId).filter(Boolean))] as number[];
+            for (const userId of userIds) {
+                try {
+                    await sendPushToUser(userId, {
+                        title: "Monev",
+                        body: "Budget bulan baru sudah siap. Yuk cek budget kamu!",
+                        url: "/budgets",
+                        tag: "budget-rollover",
+                    }, "budget_alert");
+                } catch (pushError) {
+                    console.error(`[budget-rollover] Push failed for user ${userId}:`, pushError);
+                }
+            }
+        }
 
         return NextResponse.json({
             success: true,
