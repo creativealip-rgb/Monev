@@ -1,8 +1,27 @@
 import { existsSync, renameSync, mkdirSync, rmSync, cpSync, readdirSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
+import os from 'os';
 
-console.log('🚀 [Monev Build] Menyiapkan build statis untuk APK...');
+// Function to get local IP address
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost';
+}
+
+const localIP = getLocalIP();
+const defaultApiUrl = `http://${localIP}:3000`;
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
+console.log(`🚀 [Monev Build] Menyiapkan build statis untuk APK...`);
+console.log(`🔗 [Monev Build] API Target: ${apiUrl}`);
 
 // Define paths
 const apiPath = 'src/app/api';
@@ -16,8 +35,6 @@ const serverActionPaths = [
     { src: 'src/backend/actions', bak: '_bak_backend_actions' },
     { src: 'src/app/login', bak: '_bak_login' },
     { src: 'src/app/register', bak: '_bak_register' },
-    { src: 'src/app/onboarding', bak: '_bak_onboarding' },
-    { src: 'src/lib/usage-tracker.ts', bak: '_bak_usage_tracker.ts' },
 ];
 
 // Function to safely move a file or directory on Windows
@@ -129,6 +146,9 @@ try {
         env: { 
             ...process.env, 
             IS_APK: 'true',
+            NEXT_PUBLIC_IS_APK: 'true',
+            NEXT_PUBLIC_API_URL: apiUrl,
+            NEXTAUTH_URL: apiUrl,
             NEXT_TYPESCRIPT_CHECK: 'false',
             NEXT_ESLINT_CHECK: 'false',
             SKIP_ENV_VALIDATION: 'true'
