@@ -169,10 +169,16 @@ try {
     console.log('📦 [Monev Build] Building APK...');
     
     // Set JAVA_HOME and ANDROID_HOME for the build
-    const javaHome = 'C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.2.10-hotspot';
-    const androidHome = 'C:\\Users\\SELULAR TV\\AppData\\Local\\Android\\Sdk';
+    // - On Linux CI/VPS: use the system Java and Android SDK env when available
+    // - On Windows dev machine: override these via env if needed
+    const javaHome = process.env.JAVA_HOME || '/usr/lib/jvm/java-21-openjdk-amd64';
+    const androidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT || '';
+
+    if (!androidHome) {
+        throw new Error('ANDROID_HOME/ANDROID_SDK_ROOT belum diset. Install Android SDK + set env dulu.');
+    }
     
-    execSync('cd android && gradlew assembleDebug', {
+    execSync('cd android && (./gradlew assembleDebug || gradlew assembleDebug)', {
         stdio: 'inherit',
         shell: true,
         env: {
