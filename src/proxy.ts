@@ -38,6 +38,7 @@ export function proxy(request: Request) {
         pathname === "/sw.js" ||
         pathname.endsWith(".apk") ||
         pathname.startsWith("/workbox-") ||
+        pathname === "/monev-app.apk" ||
         pathname.startsWith("/_next/") ||
         pathname.endsWith(".png") ||
         pathname.endsWith(".jpg") ||
