@@ -24,6 +24,10 @@ const eslintConfig = defineConfig([
     "inspect-*.js",
     // Ignore Capacitor config (uses Capacitor types)
     "capacitor.config.ts",
+
+    // Ignore Android build artifacts (created by APK build)
+    "android/**",
+    "public/_next/**",
   ]),
   {
     plugins: {
