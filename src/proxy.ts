@@ -36,6 +36,7 @@ export function proxy(request: Request) {
         pathname === "/manifest.json" ||
         pathname === "/icon.svg" ||
         pathname === "/sw.js" ||
+        pathname.endsWith(".apk") ||
         pathname.startsWith("/workbox-") ||
         pathname.startsWith("/_next/") ||
         pathname.endsWith(".png") ||
