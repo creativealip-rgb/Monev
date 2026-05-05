@@ -16,10 +16,20 @@ import { CurrencyProvider } from "@/frontend/lib/currency-context";
 import { I18nProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/frontend/components/Toast";
 import { cn } from "@/frontend/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 import { OfflineBadge } from "@/frontend/components/OfflineBadge";
 import { InstallPrompt } from "@/frontend/components/InstallPrompt";
+
+function getNativeBarTheme(pathname: string) {
+    if (["/login", "/register"].includes(pathname)) {
+        return { top: "#ffffff", bottom: "#ffffff", style: "light" as const };
+    }
+    if (pathname === "/chat") {
+        return { top: "#020617", bottom: "#020617", style: "dark" as const };
+    }
+    return { top: "#f0f9ff", bottom: "#ffffff", style: "light" as const };
+}
 
 export default function ClientLayout({
     children,
@@ -99,11 +109,8 @@ export default function ClientLayout({
             // Init Capacitor plugins
             (async () => {
                 try {
-                    // Keep Android system bars readable and prevent content from bleeding underneath.
-                    const { StatusBar, Style } = await import("@capacitor/status-bar");
+                    const { StatusBar } = await import("@capacitor/status-bar");
                     await StatusBar.setOverlaysWebView({ overlay: false });
-                    await StatusBar.setStyle({ style: Style.Dark });
-                    await StatusBar.setBackgroundColor({ color: '#020617' });
                 } catch (e) { console.warn("[StatusBar]", e); }
 
                 try {
@@ -143,6 +150,19 @@ export default function ClientLayout({
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return;
+
+        const nativeTheme = getNativeBarTheme(pathname);
+        document.documentElement.style.setProperty("--native-system-bar-top", nativeTheme.top);
+        document.documentElement.style.setProperty("--native-system-bar-bottom", nativeTheme.bottom);
+
+        import("@capacitor/status-bar").then(async ({ StatusBar, Style }) => {
+            await StatusBar.setStyle({ style: nativeTheme.style === "dark" ? Style.Light : Style.Dark });
+            await StatusBar.setBackgroundColor({ color: nativeTheme.top });
+        }).catch((error) => console.warn("[StatusBar]", error));
+    }, [pathname]);
 
     return (
         <HeroThemeProvider>
