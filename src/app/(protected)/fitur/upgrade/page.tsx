@@ -57,11 +57,6 @@ const TIER_CARDS = [
     }
 ];
 
-const MAYAR_PAYMENT_LINKS: Partial<Record<UserTier, string>> = {
-    pro: "https://alipcreative.myr.id/plink/Monev-Pro-Monthly",
-    sultan: "https://alipcreative.myr.id/plink/Monev-Sultan-Monthly",
-};
-
 export default function UpgradePage() {
     const { data: session, update: updateSession } = useSession();
     const currentTier: UserTier = session?.user?.tier || "starter";
@@ -70,16 +65,35 @@ export default function UpgradePage() {
 
     const [couponCode, setCouponCode] = useState("");
     const [isApplying, setIsApplying] = useState(false);
+    const [loadingTier, setLoadingTier] = useState<UserTier | null>(null);
     const [showFullMatrix, setShowFullMatrix] = useState(false);
 
-    const handleUpgradeClick = (tier: UserTier) => {
-        const paymentLink = MAYAR_PAYMENT_LINKS[tier];
-        if (!paymentLink) {
+    const handleUpgradeClick = async (tier: UserTier) => {
+        if (tier !== "pro" && tier !== "sultan") {
             toast.error("Paket Tidak Tersedia", "Link pembayaran untuk paket ini belum tersedia");
             return;
         }
 
-        window.location.href = paymentLink;
+        setLoadingTier(tier);
+        try {
+            const res = await apiFetch("/api/payments/mayar/create-invoice", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tier }),
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success || !data.paymentUrl) {
+                toast.error("Gagal Membuat Invoice", data.error || "Coba lagi beberapa saat lagi");
+                return;
+            }
+
+            window.location.href = data.paymentUrl;
+        } catch {
+            toast.error("Error", "Tidak bisa menghubungi payment gateway");
+        } finally {
+            setLoadingTier(null);
+        }
     };
 
     const handleApplyCoupon = async () => {
@@ -222,7 +236,7 @@ export default function UpgradePage() {
 
                                 <button
                                     type="button"
-                                    disabled={isCurrent}
+                                    disabled={isCurrent || loadingTier === tier.id}
                                     onClick={() => handleUpgradeClick(tier.id)}
                                     className={cn(
                                         "w-full py-4 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg",
@@ -233,7 +247,12 @@ export default function UpgradePage() {
                                                 : "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-slate-900/20"
                                     )}
                                 >
-                                    {isCurrent ? "Paket Saat Ini" : `Upgrade ke ${config.name}`}
+                                    {loadingTier === tier.id ? (
+                                        <span className="inline-flex items-center justify-center gap-2">
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Membuat Invoice...
+                                        </span>
+                                    ) : isCurrent ? "Paket Saat Ini" : `Upgrade ke ${config.name}`}
                                 </button>
                             </motion.div>
                         );
