@@ -36,8 +36,7 @@ const bakAdminPath = '_bak_admin';
 // (Server Actions, auth pages that import them, etc.)
 const serverActionPaths = [
     { src: 'src/backend/actions', bak: '_bak_backend_actions' },
-    { src: 'src/app/login', bak: '_bak_login' },
-    { src: 'src/app/register', bak: '_bak_register' },
+    { src: 'src/app/login/actions.ts', bak: '_bak_login_actions.ts' },
 ];
 
 // Function to safely move a file or directory on Windows

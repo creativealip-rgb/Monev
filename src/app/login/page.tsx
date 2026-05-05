@@ -8,7 +8,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { loginAction } from "./actions";
 
 interface FormErrors {
     email?: string;
@@ -177,10 +176,14 @@ export default function LoginPage() {
         setErrors({});
 
         try {
-            const result = await loginAction(formData.email, formData.password);
+            const result = await signIn("credentials", {
+                email: formData.email,
+                password: formData.password,
+                redirect: false,
+            });
 
-            if (!result.success) {
-                setErrors({ general: result.error || "Login gagal" });
+            if (result?.error) {
+                setErrors({ general: "Email atau password salah" });
                 setShake(true);
                 setTimeout(() => setShake(false), 500);
             } else {
@@ -188,9 +191,9 @@ export default function LoginPage() {
                 router.refresh();
             }
         } catch {
-            // Server action may throw redirect on success
-            router.push("/dashboard");
-            router.refresh();
+            setErrors({ general: "Login gagal. Coba lagi sebentar lagi." });
+            setShake(true);
+            setTimeout(() => setShake(false), 500);
         } finally {
             setIsPending(false);
         }
