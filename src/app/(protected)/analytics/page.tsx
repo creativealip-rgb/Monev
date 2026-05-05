@@ -241,12 +241,12 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen overflow-x-hidden pb-6 pt-[calc(var(--safe-area-top)+5.25rem)] bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen overflow-x-hidden pb-28 bg-sky-50 dark:bg-slate-950">
             {/* Standardized Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="fixed top-0 left-1/2 z-[100] w-full max-w-[500px] -translate-x-1/2 pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 pb-3 border-b border-sky-100/50 dark:border-slate-900 sm:px-6 sm:pb-4"
+                className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 pb-3 border-b border-sky-100/50 dark:border-slate-800/50 sm:px-6 sm:pb-4"
             >
                 <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
