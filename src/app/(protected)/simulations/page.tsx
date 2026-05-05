@@ -211,14 +211,17 @@ export default function SimulationsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Simulasi</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">What-If Simulator</p>
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Simulasi</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">What-If Simulator</p>
                         </div>
                     </div>
                 </div>
 
+            </motion.header>
+
+            <div className="px-4 sm:px-6 py-5 sm:py-8 pb-40">
                 {/* Tabs */}
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2 mb-5">
                     {[
                         { key: "simulasi" as const, label: "Simulasi", icon: Zap },
                         { key: "riwayat" as const, label: "Riwayat", icon: Clock },
@@ -248,9 +251,6 @@ export default function SimulationsPage() {
                         </button>
                     ))}
                 </div>
-            </motion.header>
-
-            <div className="px-4 sm:px-6 py-5 sm:py-8 pb-40">
                 <AnimatePresence mode="wait">
                     {activeTab === "simulasi" ? (
                         <motion.div
