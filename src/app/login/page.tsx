@@ -74,8 +74,12 @@ function GoogleLoginButton() {
         setIsLoading(true);
         try {
             const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+            const mobileCallbackUrl = `${apiUrl.replace(/\/$/, "")}/mobile-auth/callback`;
+
             await signIn("google", {
-                redirectTo: isApk ? "/mobile-auth/callback" : "/dashboard",
+                redirectTo: isApk ? mobileCallbackUrl : "/dashboard",
+                callbackUrl: isApk ? mobileCallbackUrl : "/dashboard",
             });
         } catch (error) {
             console.error("Google login error:", error);
