@@ -21,6 +21,18 @@ import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 import { OfflineBadge } from "@/frontend/components/OfflineBadge";
 import { InstallPrompt } from "@/frontend/components/InstallPrompt";
 
+const getNativeChromeColor = (pathname: string) => {
+    if (pathname.startsWith("/profile")) return "#0ea5e9";
+    if (pathname.startsWith("/saldo") || pathname.startsWith("/analytics") || pathname.startsWith("/chat")) return "#020617";
+    if (pathname.startsWith("/login") || pathname.startsWith("/register")) return "#f0f9ff";
+    return "#f0f9ff";
+};
+
+const getNativeBottomChromeColor = (pathname: string) => {
+    if (pathname.startsWith("/saldo") || pathname.startsWith("/analytics") || pathname.startsWith("/chat")) return "#020617";
+    return "#ffffff";
+};
+
 export default function ClientLayout({
     children,
 }: {
@@ -93,9 +105,8 @@ export default function ClientLayout({
         const isNative = platform === 'ios' || platform === 'android';
 
         if (isNative) {
-            // Keep the APK DOM/CSS identical to the PWA; native plugins still run below.
-            document.documentElement.classList.remove("is-native");
-            document.body.classList.remove("is-native");
+            document.documentElement.classList.add("is-native");
+            document.body.classList.add("is-native");
 
             // Init Capacitor plugins
             (async () => {
@@ -145,9 +156,14 @@ export default function ClientLayout({
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
 
+        const topColor = getNativeChromeColor(pathname);
+        const bottomColor = getNativeBottomChromeColor(pathname);
+        document.documentElement.style.setProperty("--native-system-bar-top", topColor);
+        document.documentElement.style.setProperty("--native-system-bar-bottom", bottomColor);
+
         import("@capacitor/status-bar").then(async ({ StatusBar, Style }) => {
-            await StatusBar.setStyle({ style: Style.Light });
-            await StatusBar.setBackgroundColor({ color: "#020617" });
+            await StatusBar.setStyle({ style: topColor === "#f0f9ff" || topColor === "#ffffff" ? Style.Dark : Style.Light });
+            await StatusBar.setBackgroundColor({ color: topColor });
         }).catch((error) => console.warn("[StatusBar]", error));
     }, [pathname]);
 
