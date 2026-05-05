@@ -224,7 +224,7 @@ export default function SaldoPage() {
     };
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-sky-50 pb-32 font-sans dark:bg-slate-950">
+        <div className="min-h-screen overflow-x-clip bg-sky-50 pb-32 font-sans dark:bg-slate-950">
             <header className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

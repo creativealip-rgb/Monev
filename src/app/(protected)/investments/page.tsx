@@ -321,9 +321,9 @@ export default function InvestmentsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -332,8 +332,8 @@ export default function InvestmentsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Investasi</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Pantau Portfolio Anda</p>
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Investasi</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">Pantau Portfolio Anda</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -411,7 +411,7 @@ export default function InvestmentsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-4 sm:mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="mx-4 sm:mx-6 mt-6 p-6 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-lg shadow-sky-500/10 shadow-sky-500/20"
             >
                 <p className="text-cyan-200 text-xs font-medium mb-1">Total Nilai Aset</p>
                 <h2 className="text-2xl font-bold mb-6 tabular-nums">
@@ -531,7 +531,7 @@ export default function InvestmentsPage() {
                 )}
             </AnimatePresence>
 
-            <div className="px-4 sm:px-6 mt-8">
+            <div className="px-4 sm:px-6 mt-4 sm:mt-6">
                 <h3 className="text-sm font-bold text-foreground mb-4">Daftar Aset</h3>
 
                 {loading ? (

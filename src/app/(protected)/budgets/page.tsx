@@ -384,9 +384,9 @@ export default function BudgetsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -395,8 +395,8 @@ export default function BudgetsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">{t("budgets.title")}</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">{t("budgets.subtitle")}</p>
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">{t("budgets.title")}</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t("budgets.subtitle")}</p>
                         </div>
                     </div>
                     <button
@@ -422,7 +422,7 @@ export default function BudgetsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card-clean relative mx-4 mt-3 overflow-hidden p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900 shadow-xl sm:mx-6 sm:mt-5"
+                className="card-clean relative mx-4 mt-3 overflow-hidden p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white dark:from-slate-800 dark:to-slate-900 shadow-lg shadow-sky-500/10 sm:mx-6 sm:mt-5"
             >
                 <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">{t("budgets.monthlyBudget")}</span>
@@ -452,7 +452,7 @@ export default function BudgetsPage() {
 
                 <div className="flex flex-col mb-6">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Terpakai</p>
-                    <h2 className="text-3xl font-black tracking-tight tabular-nums">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight tabular-nums">
                         {isStealthMode ? "******" : formatCurrency(totalSpent)}
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
