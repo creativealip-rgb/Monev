@@ -291,9 +291,9 @@ export default function SavingsPage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -303,8 +303,8 @@ export default function SavingsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Tabungan & Goals</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Wujudkan Impianmu</p>
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Tabungan & Goals</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">Wujudkan Impianmu</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export default function SavingsPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-4 sm:mx-6 mt-4 sm:mt-6 p-4 sm:p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-xl shadow-sky-500/20"
+                className="mx-4 sm:mx-6 mt-4 sm:mt-6 p-4 sm:p-5 bg-gradient-to-br from-sky-500 to-cyan-600 backdrop-blur-xl border border-white/10 rounded-2xl text-white shadow-lg shadow-sky-500/10 shadow-sky-500/20"
             >
                 <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Total Tabungan</p>
                 <div className="flex items-end justify-between mb-4">
@@ -677,7 +677,7 @@ export default function SavingsPage() {
                 animate={{ opacity: 1 }}
                 className="px-6 mb-8"
             >
-                <div className="bg-slate-900/80 dark:bg-slate-800 backdrop-blur-md border border-white/10 dark:border-slate-700 rounded-2xl p-6 text-white relative overflow-hidden shadow-xl">
+                <div className="bg-slate-900/80 dark:bg-slate-800 backdrop-blur-md border border-white/10 dark:border-slate-700 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-sky-500/10">
                     <div className="absolute -right-4 -top-4 w-24 h-24 bg-sky-500/20 rounded-full blur-2xl"></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-3">

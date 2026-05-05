@@ -241,9 +241,9 @@ export default function RecurringPage() {
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -253,8 +253,8 @@ export default function RecurringPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Transaksi Berulang</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Otomatis catat setiap periode</p>
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Transaksi Berulang</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">Otomatis catat setiap periode</p>
                         </div>
                     </div>
                     <button
