@@ -1,10 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+const apkWebUrl = process.env.CAPACITOR_SERVER_URL;
+
 const config: CapacitorConfig = {
   appId: 'com.creativealip.monev',
   appName: 'Monev',
   webDir: 'out',
   server: {
+    ...(apkWebUrl ? { url: apkWebUrl } : {}),
     androidScheme: "https",
     cleartext: true,
   },
