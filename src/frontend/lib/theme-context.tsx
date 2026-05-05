@@ -22,10 +22,8 @@ function getInitialTheme(): Theme {
         return stored;
     }
     
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        return "dark";
-    }
-    
+    // Default to light so a fresh APK/WebView matches the PWA's default look.
+    // Users can still switch to dark mode and it will be stored above.
     return "light";
 }
 
