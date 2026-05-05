@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     const payload = {
         name: user.name || user.firstName || user.email.split("@")[0],
         email: user.email,
+        mobile: "081234567890",
         redirectUrl: `${appUrl}/fitur/upgrade?payment=return&tier=${tier}`,
         description: tierConfig.description,
         expiredAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
