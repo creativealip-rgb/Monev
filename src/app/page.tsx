@@ -261,7 +261,7 @@ export default function LandingPage() {
 
     useEffect(() => {
         if (isApk) {
-            router.replace("/onboarding/");
+            router.replace("/login");
         }
     }, [isApk, router]);
 

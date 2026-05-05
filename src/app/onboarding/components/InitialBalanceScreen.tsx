@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Wallet, Info, Check } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
-import { formatCurrency } from "@/frontend/lib/utils";
+import { OnboardingFormData } from "../types";
 
 interface InitialBalanceScreenProps {
     currency: string;
     initialBalance: number;
     onUpdate: (field: string, value: number) => void;
-    onFinish: () => void;
+    onFinish: (formData: OnboardingFormData) => Promise<{ success: boolean; message?: string } | void>;
     onPrev: () => void;
 }
 
@@ -21,6 +22,7 @@ export function InitialBalanceScreen({
     onFinish,
     onPrev,
 }: InitialBalanceScreenProps) {
+    const router = useRouter();
     const [inputValue, setInputValue] = useState(initialBalance === 0 ? "" : initialBalance.toString());
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,11 +47,30 @@ export function InitialBalanceScreen({
     };
 
     const handleFinish = async () => {
+        if (error) return;
+
         setIsSubmitting(true);
         const balance = parseInt(inputValue, 10) || 0;
         onUpdate("initialBalance", balance);
-        await onFinish();
-        setIsSubmitting(false);
+
+        const result = await onFinish({
+            currency,
+            language: "id",
+            notifications: true,
+            pin: "",
+            initialBalance: balance,
+        });
+
+        if (result?.success === false) {
+            setError(result.message || "Gagal menyimpan saldo awal");
+            if (result.message?.toLowerCase().includes("login") || result.message?.toLowerCase().includes("sesi")) {
+                router.replace("/login");
+            }
+            setIsSubmitting(false);
+            return;
+        }
+
+        router.replace("/dashboard");
     };
 
     const presetAmounts = [

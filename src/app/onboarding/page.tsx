@@ -10,6 +10,7 @@ import { FeatureCarousel } from "./components/FeatureCarousel";
 import { QuickSetup } from "./components/QuickSetup";
 import { InitialBalanceScreen } from "./components/InitialBalanceScreen";
 import { ProgressDots } from "./components/ProgressDots";
+import { apiFetch } from "@/frontend/lib/api-client";
 
 import { Suspense } from "react";
 
@@ -32,14 +33,34 @@ function OnboardingContent() {
     // Check if we should reset onboarding (via ?reset=true)
     const shouldReset = searchParams.get("reset") === "true";
 
-    // Redirect if already completed onboarding (unless reset is requested)
+    // Onboarding is account-bound, so APK users must login before setup.
     useEffect(() => {
-        if (isHydrated && !shouldReset) {
-            const hasCompleted = localStorage.getItem("monev_onboarding_complete");
-            if (hasCompleted === "true") {
-                router.push("/dashboard");
+        if (!isHydrated) return;
+
+        const checkAccess = async () => {
+            try {
+                const response = await apiFetch("/api/profile", { silent: true });
+                if (response.status === 401) {
+                    router.replace("/login");
+                    return;
+                }
+
+                const result = await response.json();
+                const hasCompleted = result.success
+                    ? result.data.settings?.hasCompletedOnboarding
+                    : localStorage.getItem("monev_onboarding_complete") === "true";
+
+                if (hasCompleted && !shouldReset) {
+                    localStorage.setItem("monev_onboarding_complete", "true");
+                    localStorage.setItem("monev_onboarding_completed", "true");
+                    router.replace("/dashboard");
+                }
+            } catch {
+                router.replace("/login");
             }
-        }
+        };
+
+        checkAccess();
     }, [isHydrated, router, shouldReset]);
 
     // Handle completion
@@ -136,7 +157,7 @@ function OnboardingContent() {
                         currency={formData.currency}
                         initialBalance={formData.initialBalance}
                         onUpdate={(field: string, value: number) => updateFormData(field as keyof typeof formData, value)}
-                        onFinish={completeOnboarding}
+                        onFinish={(data) => completeOnboarding(data)}
                         onPrev={handlePrev}
                     />
                 )}
