@@ -2,7 +2,8 @@
 
 import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
 import { BottomNav } from "@/frontend/components/BottomNav";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
 import { NativeNotificationService } from "@/components/NativeNotificationService";
@@ -28,6 +29,7 @@ export default function ClientLayout({
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const [isBottomNavSuppressed, setIsBottomNavSuppressed] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         const openAddTransaction = () => setIsAddSheetOpen(true);
@@ -43,6 +45,48 @@ export default function ClientLayout({
             window.removeEventListener("monev:suppress-bottom-nav", suppressBottomNav);
         };
     }, []);
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return;
+
+        let removeListener: (() => void) | undefined;
+        const handleDeepLink = async (url: string) => {
+            try {
+                const parsed = new URL(url);
+                if (parsed.protocol !== "monev:" || parsed.host !== "auth" || parsed.pathname !== "/callback") return;
+
+                const token = parsed.searchParams.get("token");
+                if (!token) return;
+
+                const result = await signIn("mobile-handoff", {
+                    token,
+                    redirect: false,
+                });
+
+                if (!result?.error) {
+                    router.push("/dashboard");
+                    router.refresh();
+                } else {
+                    router.push("/login?error=mobile-handoff");
+                }
+            } catch (error) {
+                console.warn("[MobileAuth] Failed to handle deep link", error);
+                router.push("/login?error=mobile-handoff");
+            }
+        };
+
+        import("@capacitor/app").then(async ({ App: CapApp }) => {
+            const launchUrl = await CapApp.getLaunchUrl();
+            if (launchUrl?.url) handleDeepLink(launchUrl.url);
+
+            const listener = await CapApp.addListener("appUrlOpen", ({ url }) => {
+                handleDeepLink(url);
+            });
+            removeListener = () => listener.remove();
+        }).catch((error) => console.warn("[MobileAuth]", error));
+
+        return () => removeListener?.();
+    }, [router]);
 
     useEffect(() => {
         const platform = Capacitor.getPlatform();

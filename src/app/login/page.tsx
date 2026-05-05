@@ -73,17 +73,10 @@ function GoogleLoginButton() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            // Check if running in APK mode (static export)
             const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-            
-            if (isApk && apiUrl) {
-                // Redirect to production server for OAuth
-                window.location.href = `${apiUrl}/login`;
-            } else {
-                // Normal OAuth flow for web
-                await signIn("google", { redirectTo: "/dashboard" });
-            }
+            await signIn("google", {
+                redirectTo: isApk ? "/mobile-auth/callback" : "/dashboard",
+            });
         } catch (error) {
             console.error("Google login error:", error);
         } finally {

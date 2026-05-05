@@ -213,7 +213,11 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             }
             return session;
         },
-        async jwt({ token, user, account }) {
+        async jwt({ token, user, account, trigger, session }) {
+            if (trigger === "update" && session?.mobileHandoffUserId) {
+                token.sub = session.mobileHandoffUserId;
+            }
+
             if (user) {
                 if (account?.provider === "google") {
                     // For Google, we need to map the Google sub ID to our internal database ID
@@ -234,6 +238,25 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         },
     },
     providers: [
+        Credentials({
+            id: "mobile-handoff",
+            name: "Mobile Handoff",
+            credentials: {
+                token: { label: "Token", type: "text" },
+            },
+            async authorize(credentials) {
+                const token = typeof credentials?.token === "string" ? credentials.token : "";
+                if (!token) return null;
+
+                const { verifyMobileHandoffToken } = await import("@/lib/mobile-auth");
+                const userId = await verifyMobileHandoffToken(token);
+                const db = getDb();
+                const user = await db.select().from(users).where(eq(users.id, Number(userId))).get();
+                if (!user) return null;
+
+                return { ...user, id: user.id.toString() };
+            },
+        }),
         Credentials({
             credentials: {
                 email: { label: "Email", type: "email" },
