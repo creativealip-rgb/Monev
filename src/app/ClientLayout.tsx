@@ -93,8 +93,9 @@ export default function ClientLayout({
         const isNative = platform === 'ios' || platform === 'android';
 
         if (isNative) {
-            document.documentElement.classList.add("is-native");
-            document.body.classList.add("is-native");
+            // Keep the APK DOM/CSS identical to the PWA; native plugins still run below.
+            document.documentElement.classList.remove("is-native");
+            document.body.classList.remove("is-native");
 
             // Init Capacitor plugins
             (async () => {
