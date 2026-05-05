@@ -154,7 +154,7 @@ export default function SaldoPage() {
             });
             const json = await res.json();
             if (json.success) {
-                toastSuccess(t("common.success"), t("saldo.addAccountSuccess"));
+                toastSuccess("Akun saldo berhasil ditambahkan", `${accountName} siap dipakai untuk mencatat transaksi.`);
                 resetForm();
                 refresh();
             } else {
@@ -224,7 +224,7 @@ export default function SaldoPage() {
     };
 
     return (
-        <div className="overflow-x-hidden pb-56 font-sans">
+        <div className="overflow-x-hidden pb-8 font-sans">
             <header className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50">
                 <div className="flex items-center justify-between pt-1">
                     <div className="flex items-center gap-3">
@@ -274,7 +274,7 @@ export default function SaldoPage() {
                         {t("saldo.quickAdd")}
                     </p>
                     <div className="relative -mx-1">
-                        <div className="flex gap-3 overflow-x-auto px-1 pb-2 pr-10">
+                        <div className="flex gap-3 overflow-x-auto px-1 pb-2 pr-10 scrollbar-hide">
                         {QUICK_ADD_PRESETS.map((preset) => {
                             const Icon = iconMap[preset.icon] || Wallet;
                             return (
@@ -734,7 +734,7 @@ export default function SaldoPage() {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: groupIdx * 0.08 }}
-                                            className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+                                            className="rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 overflow-visible"
                                         >
                                             {/* Group Header */}
                                             <motion.button
@@ -785,7 +785,7 @@ export default function SaldoPage() {
                                                             height: { duration: 0.3, ease: "easeInOut" },
                                                             opacity: { duration: 0.2 },
                                                         }}
-                                                        className="overflow-hidden"
+                                                        className="overflow-visible"
                                                     >
                                                         <div className="px-4 pb-3 grid gap-2">
                                                             {groupAccounts.map((acc, idx) => {
@@ -796,7 +796,7 @@ export default function SaldoPage() {
                                                                         initial={{ opacity: 0, x: -10 }}
                                                                         animate={{ opacity: 1, x: 0 }}
                                                                         transition={{ delay: idx * 0.04 }}
-                                                                        className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                        className="relative overflow-visible p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                                                     >
                                                                         <div
                                                                             className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-sm"
@@ -839,7 +839,7 @@ export default function SaldoPage() {
                                                                                         exit={{ opacity: 0, scale: 0.95 }}
                                                                                         role="menu"
                                                                                         aria-label={`Aksi akun ${acc.name}`}
-                                                                                        className="absolute right-0 top-6 w-28 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50"
+                                                                                        className="absolute right-0 bottom-9 w-28 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-[80]"
                                                                                     >
                                                                                         <button
                                                                                             type="button"

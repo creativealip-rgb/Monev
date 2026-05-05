@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen overflow-x-hidden pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen overflow-x-hidden pb-6 bg-sky-50 dark:bg-slate-950">
             {/* Standardized Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}

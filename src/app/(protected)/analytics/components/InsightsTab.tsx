@@ -127,6 +127,25 @@ function buildActionDrilldown(
     return null;
 }
 
+function normalizeInsightText(value: unknown) {
+    if (!value) return "";
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            if (parsed && typeof parsed === "object" && "insight" in parsed) {
+                return String((parsed as { insight?: unknown }).insight || "");
+            }
+        } catch {
+            return value;
+        }
+        return value;
+    }
+    if (typeof value === "object" && "insight" in value) {
+        return String((value as { insight?: unknown }).insight || "");
+    }
+    return String(value);
+}
+
 export function InsightsTab({
     data,
     itemVariants,
@@ -141,7 +160,7 @@ export function InsightsTab({
     baseFilter: Partial<AnalyticsDrilldownFilter>;
 }) {
     const { isStealthMode } = useSecurity();
-    const [insightText, setInsightText] = useState(data.insights);
+    const [insightText, setInsightText] = useState(() => normalizeInsightText(data.insights));
     const [isLoadingInsight, setIsLoadingInsight] = useState(false);
     const actionItems = buildActionItems(data);
 
@@ -153,7 +172,7 @@ export function InsightsTab({
             const payload = await response.json();
 
             if (response.ok && payload?.success && payload?.insight) {
-                setInsightText(payload.insight);
+                setInsightText(normalizeInsightText(payload.insight));
             } else {
                 setInsightText("Belum ada insight yang cukup untuk dianalisis.");
             }
@@ -166,7 +185,7 @@ export function InsightsTab({
     }
 
     useEffect(() => {
-        setInsightText(data.insights);
+        setInsightText(normalizeInsightText(data.insights));
     }, [data.insights]);
 
     useEffect(() => {

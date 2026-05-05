@@ -110,9 +110,10 @@ interface TransactionItemProps {
     showCheckbox?: boolean;
     isSelected?: boolean;
     onSelect?: (id: number) => void;
+    hideAmount?: boolean;
 }
 
-export const TransactionItem = React.memo(function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect }: TransactionItemProps) {
+export const TransactionItem = React.memo(function TransactionItem({ transaction, onClick, onEdit, onDelete, showCheckbox, isSelected, onSelect, hideAmount = false }: TransactionItemProps) {
     const { encryptionKey } = useSecurity();
     const [displayDescription, setDisplayDescription] = useState(transaction.description || "Tanpa Deskripsi");
     const isDraggingRef = useRef(false);
@@ -143,7 +144,8 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
     const isExpense = transaction.type === "expense";
     const isIncome = transaction.type === "income";
     const Icon = style.icon;
-    const transactionLabel = `${displayDescription}, ${transaction.categoryName || "Lainnya"}, ${formatCurrency(transaction.amount)}`;
+    const displayAmount = hideAmount ? "••••••" : formatCurrency(transaction.amount);
+    const transactionLabel = `${displayDescription}, ${transaction.categoryName || "Lainnya"}, ${hideAmount ? "nominal disembunyikan" : formatCurrency(transaction.amount)}`;
 
     // Swipe mechanism
     const x = useMotionValue(0);
@@ -290,7 +292,7 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                         "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
                         isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
                     )}>
-                        {isIncome ? "+" : isExpense ? "−" : ""} {formatCurrency(transaction.amount)}
+                        {isIncome ? "+" : isExpense ? "−" : ""} {displayAmount}
                     </p>
                     {transaction.isVerified && (
                         <div className="flex items-center justify-end gap-1 mt-1">

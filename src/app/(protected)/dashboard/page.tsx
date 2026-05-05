@@ -162,6 +162,7 @@ export default function DashboardPage() {
                     transactions={allTransactions}
                     loading={loading}
                     mounted={mounted}
+                    isStealthMode={isStealthMode}
                     onAddNew={() => setIsAddSheetOpen(true)}
                 />
 
