@@ -12,11 +12,7 @@ const config: CapacitorConfig = {
     cleartext: true,
     allowNavigation: [
       'monev.app',
-      '*.monev.app',
-      'accounts.google.com',
-      '*.google.com',
-      '*.googleusercontent.com',
-      'oauth2.googleapis.com'
+      '*.monev.app'
     ],
   },
   plugins: {
