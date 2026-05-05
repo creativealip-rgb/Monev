@@ -464,7 +464,7 @@ export default function ChatPage() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                    "sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-6 pt-safe transition-all duration-200",
+                    "sticky top-0 z-50 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 px-4 sm:px-6 pt-safe transition-all duration-200",
                     isKeyboardOpen ? "pt-2 pb-2" : "pt-3 pb-4"
                 )}
             >

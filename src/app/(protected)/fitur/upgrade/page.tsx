@@ -176,7 +176,7 @@ export default function UpgradePage() {
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
+                className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50"
             >
                 <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-3">
@@ -369,7 +369,7 @@ export default function UpgradePage() {
                             { feature: "Target Tabungan", starter: "1", pro: "10", sultan: "Tanpa batas" },
                             { feature: "Tagihan", starter: "3", pro: "20", sultan: "Tanpa batas" },
                             { feature: "Lacak Investasi", starter: false, pro: "Manual", sultan: "Sinkron real-time" },
-                            { feature: "Chat AI Web", starter: "5/hari", pro: "100/hari", sultan: "Tanpa batas" },
+                            { feature: "Chat AI Web", starter: "10/hari", pro: "100/hari", sultan: "Tanpa batas" },
                             { feature: "Scan OCR", starter: "5/bln", pro: "100/bln", sultan: "Tanpa batas" },
                             { feature: "Format Ekspor", starter: "CSV", pro: "CSV + Excel", sultan: "CSV + Excel + PDF" },
                             { feature: "Analitik Lanjutan", starter: false, pro: true, sultan: "Prediksi AI" },
