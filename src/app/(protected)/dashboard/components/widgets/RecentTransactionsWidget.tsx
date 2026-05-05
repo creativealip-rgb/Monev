@@ -27,6 +27,7 @@ const itemVariants = {
 export function RecentTransactionsWidget({
     transactions,
     loading,
+    isStealthMode,
     onAddNew,
 }: RecentTransactionsWidgetProps) {
     const { t } = useI18n();
@@ -80,17 +81,17 @@ export function RecentTransactionsWidget({
                             <div className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
                                 <ArrowDownLeft size={12} /> Masuk
                             </div>
-                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{formatCurrency(periodSummary.income)}</p>
+                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{isStealthMode ? "••••••" : formatCurrency(periodSummary.income)}</p>
                         </div>
                         <div className="rounded-2xl bg-rose-50 p-3 dark:bg-rose-900/20">
                             <div className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase text-rose-600 dark:text-rose-400">
                                 <ArrowUpRight size={12} /> Keluar
                             </div>
-                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{formatCurrency(periodSummary.expense)}</p>
+                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{isStealthMode ? "••••••" : formatCurrency(periodSummary.expense)}</p>
                         </div>
                         <div className="rounded-2xl bg-sky-50 p-3 dark:bg-sky-900/20">
                             <div className="mb-1 text-[10px] font-bold uppercase text-sky-600 dark:text-sky-400">Net</div>
-                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{formatCurrency(cashflow)}</p>
+                            <p className="truncate text-xs font-black text-slate-900 dark:text-white">{isStealthMode ? "••••••" : formatCurrency(cashflow)}</p>
                         </div>
                     </div>
                 )}
@@ -104,7 +105,7 @@ export function RecentTransactionsWidget({
                 ) : (
                     <>
                         {filteredTransactions.slice(0, 5).map((t) => (
-                            <TransactionItem key={t.id} transaction={t as any} />
+                            <TransactionItem key={t.id} transaction={t as any} hideAmount={isStealthMode} />
                         ))}
                         {filteredTransactions.length <= 5 && (
                             <div className="rounded-3xl border border-slate-100 bg-white/70 px-4 py-3 text-center text-[11px] font-semibold text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">

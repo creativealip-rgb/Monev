@@ -28,6 +28,8 @@ export const id: Record<string, string> = {
     "common.sourceAccount": "Sumber Saldo",
     "common.targetAccount": "Tujuan Saldo",
     "common.confirm": "Konfirmasi",
+    "common.success": "Berhasil",
+    "common.failed": "Gagal",
 
     // Dashboard
     "dashboard.balance": "Total Kekayaan",

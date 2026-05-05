@@ -115,6 +115,7 @@ export interface RecentTransactionsWidgetProps {
     transactions: Transaction[];
     loading: boolean;
     mounted: boolean;
+    isStealthMode: boolean;
     onAddNew: () => void;
 }
 
