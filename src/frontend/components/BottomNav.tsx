@@ -113,7 +113,7 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
 
     const navContent = (
         <div
-            className="fixed inset-x-3 bottom-3 z-[99999] pb-safe pointer-events-none"
+            className="fixed inset-x-3 z-[99999] pointer-events-none bottom-[calc(0.75rem+env(safe-area-inset-bottom))]"
         >
             <div className="relative w-full max-w-[460px] mx-auto">
                 <div
