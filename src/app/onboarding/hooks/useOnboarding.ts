@@ -102,22 +102,39 @@ export function useOnboarding() {
         }));
     }, []);
 
-    const completeOnboarding = useCallback(async () => {
+    const completeOnboarding = useCallback(async (formDataOverride?: OnboardingFormData) => {
         setIsSubmitting(true);
         try {
+            const payload = formDataOverride ?? state.formData;
             const response = await apiFetch("/api/onboarding", {
                 method: "POST",
-                body: JSON.stringify(state.formData)
+                body: JSON.stringify(payload)
             });
-            const result = await response.json();
-            if (result.success) {
-                localStorage.setItem(STORAGE_KEY, "true");
-                setState((prev) => ({ ...prev, isComplete: true }));
-            } else {
-                console.error("Failed to complete onboarding:", result.message);
+
+            if (response.status === 401) {
+                throw new Error("UNAUTHORIZED");
             }
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                localStorage.setItem(STORAGE_KEY, "true");
+                localStorage.setItem("monev_onboarding_completed", "true");
+                localStorage.removeItem(ONBOARDING_DATA_KEY);
+                setState((prev) => ({ ...prev, formData: payload, isComplete: true }));
+                return { success: true };
+            }
+
+            const message = result.message || result.error || "Gagal menyelesaikan onboarding";
+            console.error("Failed to complete onboarding:", message);
+            return { success: false, message };
         } catch (error) {
             console.error("Onboarding Error:", error);
+            return {
+                success: false,
+                message: error instanceof Error && error.message === "UNAUTHORIZED"
+                    ? "Sesi habis. Silakan login lagi."
+                    : "Gagal menyimpan setup. Coba lagi.",
+            };
         } finally {
             setIsSubmitting(false);
         }
