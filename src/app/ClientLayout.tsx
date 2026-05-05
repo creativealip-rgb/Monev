@@ -162,7 +162,7 @@ export default function ClientLayout({
         document.documentElement.style.setProperty("--native-system-bar-bottom", bottomColor);
 
         import("@capacitor/status-bar").then(async ({ StatusBar, Style }) => {
-            await StatusBar.setStyle({ style: topColor === "#f0f9ff" || topColor === "#ffffff" ? Style.Dark : Style.Light });
+            await StatusBar.setStyle({ style: topColor === "#f0f9ff" ? Style.Dark : Style.Light });
             await StatusBar.setBackgroundColor({ color: topColor });
         }).catch((error) => console.warn("[StatusBar]", error));
     }, [pathname]);
