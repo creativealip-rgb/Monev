@@ -224,9 +224,9 @@ export default function SaldoPage() {
     };
 
     return (
-        <div className="overflow-x-hidden pb-8 font-sans">
-            <header className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50">
-                <div className="flex items-center justify-between pt-1">
+        <div className="min-h-screen overflow-x-hidden bg-sky-50 pb-32 font-sans dark:bg-slate-950">
+            <header className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -236,8 +236,8 @@ export default function SaldoPage() {
                             <ChevronLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-widest mt-0.5">{t("saldo.subtitle")}</p>
+                            <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
+                            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{t("saldo.subtitle")}</p>
                         </div>
                     </div>
                     <motion.button 
@@ -257,11 +257,11 @@ export default function SaldoPage() {
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="mt-5 p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden glass-card"
+                    className="mt-4 p-4 sm:p-6 rounded-[28px] sm:rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-lg shadow-sky-500/10 relative overflow-hidden card-clean"
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full -mr-16 -mt-16 blur-3xl" />
-                    <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mb-1 relative z-10">{t("saldo.netWorth")}</p>
-                    <h2 className="text-3xl font-black relative z-10">{isStealthMode ? "••••••••" : formatCurrency(netWorth)}</h2>
+                    <p className="text-sky-300/90 text-xs font-bold uppercase tracking-wider mb-1 relative z-10">{t("saldo.netWorth")}</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight tabular-nums relative z-10">{isStealthMode ? "••••••••" : formatCurrency(netWorth)}</h2>
                     <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 relative z-10">
                         <span>{accounts.length} {t("saldo.accountsCount")}</span>
                         {isFetching && !isLoading && <span>Memperbarui...</span>}
@@ -269,8 +269,8 @@ export default function SaldoPage() {
                 </motion.div>
 
                 {/* Quick Add Section */}
-                <div className="mt-6">
-                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+                <div className="mt-5">
+                    <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.18em] mb-3">
                         {t("saldo.quickAdd")}
                     </p>
                     <div className="relative -mx-1">
@@ -284,10 +284,10 @@ export default function SaldoPage() {
                                     type="button"
                                     aria-label={`Tambah akun ${preset.name}`}
                                     onClick={() => openQuickAdd(preset)}
-                                    className="flex-shrink-0 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 transition-all flex items-center gap-2 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md"
+                                    className="flex-shrink-0 px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-sky-500 transition-all flex items-center gap-2 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md"
                                 >
                                     <Icon size={18} style={{ color: preset.color }} />
-                                    <span className="font-bold text-sm whitespace-nowrap dark:text-white">{preset.name}</span>
+                                    <span className="font-bold text-xs sm:text-sm whitespace-nowrap dark:text-white">{preset.name}</span>
                                 </motion.button>
                             );
                         })}
@@ -307,7 +307,7 @@ export default function SaldoPage() {
 
                 {/* View Toggle */}
                 {accounts.length > 0 && (
-                    <div className="mt-6 flex items-center gap-2">
+                    <div className="mt-5 flex items-center gap-2">
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             type="button"
@@ -318,7 +318,7 @@ export default function SaldoPage() {
                                 setViewMode("list");
                             }}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                                "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all",
                                 viewMode === "list"
                                     ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
                                     : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
@@ -337,7 +337,7 @@ export default function SaldoPage() {
                                 setViewMode("group");
                             }}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                                "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all",
                                 viewMode === "group"
                                     ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
                                     : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
@@ -350,7 +350,7 @@ export default function SaldoPage() {
                 )}
             </header>
 
-            <main className="px-6 mt-8">
+            <main className="px-4 sm:px-6 mt-4 sm:mt-6">
                 {isAddOpen ? (
                     <motion.div
                         role="dialog"
@@ -583,7 +583,7 @@ export default function SaldoPage() {
                     </motion.div>
                 ) : (
                     <LayoutGroup>
-                        <div className="grid gap-4">
+                        <div className="grid gap-3 sm:gap-4">
                             {isLoading ? (
                                 [1, 2, 3].map(i => (
                                     <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
@@ -637,7 +637,7 @@ export default function SaldoPage() {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.05 }}
-                                            className="p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group"
+                                            className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-3.5 sm:gap-4 hover:shadow-md transition-shadow group"
                                         >
                                             <div
                                                 className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
@@ -651,7 +651,7 @@ export default function SaldoPage() {
                                             </div>
                                             <div className="min-w-0 max-w-[120px] text-right sm:max-w-none">
                                                 <p className={cn(
-                                                    "truncate font-black text-sm",
+                                                    "truncate font-bold text-sm sm:text-base tabular-nums",
                                                     acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                 )}>
                                                     {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
@@ -760,7 +760,7 @@ export default function SaldoPage() {
                                                         {t("saldo.groupTotal")}
                                                     </p>
                                                     <p className={cn(
-                                                        "truncate font-black text-sm",
+                                                        "truncate font-bold text-sm sm:text-base tabular-nums",
                                                         typeId === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                     )}>
                                                         {isStealthMode ? "••••••••" : formatCurrency(Math.abs(groupTotal))}
@@ -809,7 +809,7 @@ export default function SaldoPage() {
                                                                         </div>
                                                                         <div className="min-w-0 max-w-[112px] text-right sm:max-w-none">
                                                                             <p className={cn(
-                                                                                "truncate font-black text-sm",
+                                                                                "truncate font-bold text-sm sm:text-base tabular-nums",
                                                                                 acc.type === 'credit_card' ? 'text-rose-500' : 'text-slate-900 dark:text-white'
                                                                             )}>
                                                                                 {isStealthMode ? "••••••••" : formatCurrency(acc.balance)}
