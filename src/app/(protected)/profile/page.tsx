@@ -252,7 +252,7 @@ export default function ProfilePage() {
 
     return (
         <div className="relative min-h-screen">
-            <div className="relative bg-gradient-to-br w-full rounded-b-[2.5rem] sm:rounded-b-[3rem] from-sky-500 via-sky-600 to-cyan-700 pb-8 sm:pb-10 pt-safe pt-3 px-6 shadow-2xl overflow-hidden z-[100]">
+            <div className="sticky top-0 bg-gradient-to-br w-full rounded-b-[2.5rem] sm:rounded-b-[3rem] from-sky-500 via-sky-600 to-cyan-700 pb-8 sm:pb-10 pt-safe pt-3 px-4 sm:px-6 shadow-lg shadow-sky-500/10 overflow-hidden z-[100]">
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                     <div className="absolute -top-24 -left-24 w-64 h-64 bg-sky-400/30 rounded-full blur-3xl mix-blend-overlay" />
                     <div className="absolute top-1/2 -right-24 w-64 h-64 bg-cyan-400/30 rounded-full blur-3xl mix-blend-overlay" />
@@ -264,8 +264,8 @@ export default function ProfilePage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-white tracking-tight">{t("profile.title")}</h1>
-                            <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">{t("profile.settings")}</p>
+                            <h1 className="text-sm sm:text-base font-bold text-white tracking-tight">{t("profile.title")}</h1>
+                            <p className="text-[10px] sm:text-[11px] text-white/80 font-semibold uppercase tracking-wider mt-0.5">{t("profile.settings")}</p>
                         </div>
                     </div>
                 </div>
