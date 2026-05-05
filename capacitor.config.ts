@@ -10,6 +10,14 @@ const config: CapacitorConfig = {
     ...(apkWebUrl ? { url: apkWebUrl } : {}),
     androidScheme: "https",
     cleartext: true,
+    allowNavigation: [
+      'monev.app',
+      '*.monev.app',
+      'accounts.google.com',
+      '*.google.com',
+      '*.googleusercontent.com',
+      'oauth2.googleapis.com'
+    ],
   },
   plugins: {
     StatusBar: {
