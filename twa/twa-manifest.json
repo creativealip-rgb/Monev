@@ -1,0 +1,50 @@
+{
+  "packageId": "app.monev.twa",
+  "host": "monev.app",
+  "name": "Monev - Agentic Finance",
+  "launcherName": "Monev",
+  "display": "standalone",
+  "themeColor": "#131313",
+  "themeColorDark": "#131313",
+  "navigationColor": "#131313",
+  "navigationColorDark": "#131313",
+  "navigationDividerColor": "#131313",
+  "navigationDividerColorDark": "#131313",
+  "backgroundColor": "#F8FAFC",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://monev.app/icon.svg",
+  "maskableIconUrl": "https://monev.app/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "/home/ubuntu/.hermes/workspace/projects/monev-github/Monev/twa/android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://monev.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://monev.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "window-controls-overlay",
+    "minimal-ui"
+  ],
+  "appVersion": "1"
+}
