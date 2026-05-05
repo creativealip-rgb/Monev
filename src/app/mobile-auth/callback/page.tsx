@@ -10,7 +10,9 @@ export default async function MobileAuthCallbackPage() {
     if (!session?.user?.id) redirect("/login");
 
     const token = await createMobileHandoffToken(session.user.id);
-    const deepLink = `monev://auth/callback?token=${encodeURIComponent(token)}`;
+    const encodedToken = encodeURIComponent(token);
+    const deepLink = `monev://auth/callback?token=${encodedToken}`;
+    const intentLink = `intent://auth/callback?token=${encodedToken}#Intent;scheme=monev;package=com.creativealip.monev;end`;
 
-    return <MobileAuthRedirect deepLink={deepLink} />;
+    return <MobileAuthRedirect deepLink={deepLink} intentLink={intentLink} />;
 }

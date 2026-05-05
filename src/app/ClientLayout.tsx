@@ -25,7 +25,7 @@ function getNativeBarTheme(pathname: string) {
     if (["/login", "/register"].includes(pathname)) {
         return { top: "#ffffff", bottom: "#ffffff", style: "light" as const };
     }
-    if (pathname === "/chat") {
+    if (["/chat", "/analytics"].includes(pathname)) {
         return { top: "#020617", bottom: "#020617", style: "dark" as const };
     }
     return { top: "#f0f9ff", bottom: "#ffffff", style: "light" as const };
