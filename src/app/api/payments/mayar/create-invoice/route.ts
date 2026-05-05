@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const paymentUrl = data?.data?.linkUrl || data?.data?.linkPayment || data?.data?.paymentUrl || data?.data?.url;
+    const paymentUrl = data?.data?.link || data?.data?.linkUrl || data?.data?.linkPayment || data?.data?.paymentUrl || data?.data?.url;
     if (!paymentUrl) {
         return NextResponse.json({ success: false, error: "Mayar tidak mengembalikan URL pembayaran" }, { status: 502 });
     }
