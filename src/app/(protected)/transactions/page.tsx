@@ -279,10 +279,10 @@ export default function TransactionsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-foreground tracking-tight">
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
                                 {t("transactions.title")}
                             </h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
                                 {searchQuery ? t("transactions.searchResults") : t("transactions.allTransactions")}
                             </p>
                         </div>

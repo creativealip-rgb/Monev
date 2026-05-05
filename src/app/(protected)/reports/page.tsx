@@ -259,8 +259,8 @@ export default function ReportsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Laporan Keuangan</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Laporan Keuangan</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
                                 Buat dan ekspor laporan
                             </p>
                         </div>
