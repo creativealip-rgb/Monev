@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.monev.twa",
+      "sha256_cert_fingerprints": [
+        "56:30:EC:A2:41:58:CB:53:42:5B:F2:A9:54:B0:E9:A8:FE:1B:B4:85:F1:F4:98:06:19:CE:B0:A1:9F:A3:B2:88"
+      ]
+    }
+  }
+]
