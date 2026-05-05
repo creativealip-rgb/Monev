@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Plus, Wallet, CreditCard, Banknote, Landmark, Smartphone, MoreVertical, ChevronLeft, Check, List, LayoutGrid, ChevronDown, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -224,11 +225,20 @@ export default function SaldoPage() {
 
     return (
         <div className="overflow-x-hidden pb-56 font-sans">
-            <header className="px-4 sm:px-6 pt-4 sm:pt-6 pb-6 sm:pb-8">
-                <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t("saldo.subtitle")}</p>
+            <header className="sticky top-0 z-[100] w-full pt-safe pt-2 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 pb-3 border-b border-sky-100/50 dark:border-slate-800/50">
+                <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            aria-label="Kembali ke dashboard"
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                        >
+                            <ChevronLeft size={20} strokeWidth={2.5} />
+                        </Link>
+                        <div className="flex flex-col">
+                            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">{t("saldo.title")}</h1>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-widest mt-0.5">{t("saldo.subtitle")}</p>
+                        </div>
                     </div>
                     <motion.button 
                         whileHover={{ scale: 1.05 }}
@@ -247,7 +257,7 @@ export default function SaldoPage() {
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden glass-card"
+                    className="mt-5 p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl relative overflow-hidden glass-card"
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full -mr-16 -mt-16 blur-3xl" />
                     <p className="text-sky-400 text-xs font-bold uppercase tracking-widest mb-1 relative z-10">{t("saldo.netWorth")}</p>

@@ -17,11 +17,14 @@ function getLocalIP() {
 }
 
 const localIP = getLocalIP();
-const defaultApiUrl = `http://${localIP}:3000`;
+const defaultApiUrl = 'https://monev.app';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
 console.log(`🚀 [Monev Build] Menyiapkan build statis untuk APK...`);
 console.log(`🔗 [Monev Build] API Target: ${apiUrl}`);
+if (apiUrl.startsWith('http://') && !apiUrl.includes('localhost') && !apiUrl.includes(localIP)) {
+    console.warn('⚠️ API Target masih HTTP. Pakai HTTPS production supaya WebView bisa fetch API dengan aman.');
+}
 
 // Define paths
 const apiPath = 'src/app/api';
