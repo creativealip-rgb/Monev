@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Monev',
   webDir: 'out',
   server: {
-    androidScheme: 'https',
-    allowMixedContent: true
+    androidScheme: "https",
+    cleartext: true,
   },
   plugins: {
     StatusBar: {
