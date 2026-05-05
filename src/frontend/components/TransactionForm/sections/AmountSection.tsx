@@ -57,9 +57,11 @@ export function AmountSection({
                 <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-400">Rp</div>
                     <input
-                        type="number"
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={amount}
-                        onChange={(e) => onAmountChange(e.target.value)}
+                        onChange={(e) => onAmountChange(e.target.value.replace(/\D/g, ""))}
                         placeholder="0"
                         className="w-full pl-12 pr-4 py-4 text-2xl font-bold bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl border-none outline-none focus:ring-2 focus:ring-sky-500 transition-all"
                         autoFocus
