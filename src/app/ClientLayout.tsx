@@ -21,16 +21,6 @@ import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 import { OfflineBadge } from "@/frontend/components/OfflineBadge";
 import { InstallPrompt } from "@/frontend/components/InstallPrompt";
 
-function getNativeBarTheme(pathname: string) {
-    if (["/login", "/register"].includes(pathname)) {
-        return { top: "#ffffff", bottom: "#ffffff", style: "light" as const };
-    }
-    if (["/chat", "/analytics"].includes(pathname)) {
-        return { top: "#020617", bottom: "#020617", style: "dark" as const };
-    }
-    return { top: "#f0f9ff", bottom: "#ffffff", style: "light" as const };
-}
-
 export default function ClientLayout({
     children,
 }: {
@@ -154,13 +144,9 @@ export default function ClientLayout({
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
 
-        const nativeTheme = getNativeBarTheme(pathname);
-        document.documentElement.style.setProperty("--native-system-bar-top", nativeTheme.top);
-        document.documentElement.style.setProperty("--native-system-bar-bottom", nativeTheme.bottom);
-
         import("@capacitor/status-bar").then(async ({ StatusBar, Style }) => {
-            await StatusBar.setStyle({ style: nativeTheme.style === "dark" ? Style.Light : Style.Dark });
-            await StatusBar.setBackgroundColor({ color: nativeTheme.top });
+            await StatusBar.setStyle({ style: Style.Light });
+            await StatusBar.setBackgroundColor({ color: "#020617" });
         }).catch((error) => console.warn("[StatusBar]", error));
     }, [pathname]);
 
