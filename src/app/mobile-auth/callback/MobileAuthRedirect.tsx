@@ -2,14 +2,20 @@
 
 import { useEffect } from "react";
 
-export function MobileAuthRedirect({ deepLink }: { deepLink: string }) {
+export function MobileAuthRedirect({ deepLink, intentLink }: { deepLink: string; intentLink: string }) {
     useEffect(() => {
-        const timer = window.setTimeout(() => {
+        const intentTimer = window.setTimeout(() => {
+            window.location.href = intentLink;
+        }, 250);
+        const deepLinkTimer = window.setTimeout(() => {
             window.location.href = deepLink;
-        }, 300);
+        }, 950);
 
-        return () => window.clearTimeout(timer);
-    }, [deepLink]);
+        return () => {
+            window.clearTimeout(intentTimer);
+            window.clearTimeout(deepLinkTimer);
+        };
+    }, [deepLink, intentLink]);
 
     return (
         <main className="min-h-screen flex items-center justify-center bg-slate-950 px-6 text-white">
@@ -18,7 +24,7 @@ export function MobileAuthRedirect({ deepLink }: { deepLink: string }) {
                 <h1 className="text-xl font-semibold">Login berhasil</h1>
                 <p className="mt-2 text-sm text-slate-300">Membuka aplikasi Monev...</p>
                 <a
-                    href={deepLink}
+                    href={intentLink}
                     className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-sky-500 px-4 py-3 font-semibold text-white"
                 >
                     Buka Aplikasi Monev
