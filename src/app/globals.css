@@ -372,7 +372,7 @@
   .is-native {
     --safe-area-top: max(env(safe-area-inset-top, 0px), 16px);
     --safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
-    --safe-mask-bg: transparent;
+    --safe-mask-bg: var(--native-system-bar-top, #f0f9ff);
   }
 }
 
@@ -429,20 +429,24 @@
 }
 
 .is-native .native-system-bar {
-  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 99998;
+  pointer-events: none;
+  display: block;
 }
 
 .is-native .native-system-bar-top {
   top: 0;
   height: var(--safe-area-top);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  background: var(--native-system-bar-top, #f0f9ff);
 }
 
 .is-native .native-system-bar-bottom {
   bottom: 0;
   height: var(--safe-area-bottom);
   background: var(--native-system-bar-bottom, #ffffff);
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .is-native .native-status-bar-spacer {
