@@ -164,7 +164,11 @@ try {
     console.log('📱 [Monev Build] Sync ke Capacitor Android...');
     execSync('npx cap sync android', {
         stdio: 'inherit',
-        shell: true
+        shell: true,
+        env: {
+            ...process.env,
+            CAPACITOR_SERVER_URL: apiUrl
+        }
     });
     
     // Build APK
