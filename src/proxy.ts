@@ -34,6 +34,7 @@ export function proxy(request: Request) {
         pathname === "/api/telegram-webhook" ||
         pathname === "/api/notification-webhook" ||
         pathname === "/manifest.json" ||
+        pathname === "/.well-known/assetlinks.json" ||
         pathname === "/icon.svg" ||
         pathname === "/sw.js" ||
         pathname.endsWith(".apk") ||
