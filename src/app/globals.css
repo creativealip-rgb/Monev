@@ -372,7 +372,7 @@
   .is-native {
     --safe-area-top: max(env(safe-area-inset-top, 0px), 16px);
     --safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
-    --safe-mask-bg: var(--native-system-bar-top, #f0f9ff);
+    --safe-mask-bg: var(--native-system-bar-top, #131313);
   }
 }
 
@@ -440,13 +440,13 @@
 .is-native .native-system-bar-top {
   top: 0;
   height: var(--safe-area-top);
-  background: var(--native-system-bar-top, #f0f9ff);
+  background: var(--native-system-bar-top, #131313);
 }
 
 .is-native .native-system-bar-bottom {
   bottom: 0;
   height: var(--safe-area-bottom);
-  background: var(--native-system-bar-bottom, #ffffff);
+  background: var(--native-system-bar-bottom, #131313);
 }
 
 .is-native .native-status-bar-spacer {
