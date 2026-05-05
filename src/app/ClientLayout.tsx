@@ -55,11 +55,11 @@ export default function ClientLayout({
             // Init Capacitor plugins
             (async () => {
                 try {
-                    // StatusBar: transparent overlay
+                    // Keep Android system bars readable and prevent content from bleeding underneath.
                     const { StatusBar, Style } = await import("@capacitor/status-bar");
-                    await StatusBar.setOverlaysWebView({ overlay: true });
-                    await StatusBar.setStyle({ style: Style.Light });
-                    await StatusBar.setBackgroundColor({ color: '#00000000' });
+                    await StatusBar.setOverlaysWebView({ overlay: false });
+                    await StatusBar.setStyle({ style: Style.Dark });
+                    await StatusBar.setBackgroundColor({ color: '#020617' });
                 } catch (e) { console.warn("[StatusBar]", e); }
 
                 try {
@@ -125,6 +125,9 @@ export default function ClientLayout({
                                         !["/login", "/register"].includes(pathname) && "dark:from-indigo-900/30"
                                     )} />
                                 </div>
+
+                                <div className="native-system-bar native-system-bar-top" />
+                                <div className="native-system-bar native-system-bar-bottom" />
 
                                 <main className={cn(
                                     "min-h-screen max-w-[500px] mx-auto bg-background/80 backdrop-blur-xl relative shadow-2xl shadow-sky-900/10",

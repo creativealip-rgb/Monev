@@ -426,12 +426,38 @@
   }
 }
 
-/* Native status bar spacer — only visible on native */
+/* Native system chrome masks — only visible inside Capacitor. */
+.native-system-bar,
 .native-status-bar-spacer {
-  height: 0px;
+  display: none;
+}
+
+.is-native .native-system-bar {
+  display: block;
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 100000;
+  pointer-events: none;
+  background: rgba(2, 6, 23, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.is-native .native-system-bar-top {
+  top: 0;
+  height: var(--safe-area-top);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.is-native .native-system-bar-bottom {
+  bottom: 0;
+  height: var(--safe-area-bottom);
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .is-native .native-status-bar-spacer {
+  display: block;
   height: var(--safe-area-top);
   background: var(--safe-mask-bg);
   position: sticky;
