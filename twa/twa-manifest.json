@@ -12,7 +12,7 @@
   "navigationDividerColorDark": "#131313",
   "backgroundColor": "#F8FAFC",
   "enableNotifications": true,
-  "startUrl": "/",
+  "startUrl": "/dashboard",
   "iconUrl": "https://monev.app/icon.svg",
   "maskableIconUrl": "https://monev.app/icon-512.png",
   "splashScreenFadeOutDuration": 300,
@@ -20,8 +20,8 @@
     "path": "/home/ubuntu/.hermes/workspace/projects/monev-github/Monev/twa/android.keystore",
     "alias": "android"
   },
-  "appVersionName": "1",
-  "appVersionCode": 1,
+  "appVersionName": "2",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://monev.app/manifest.json",
@@ -46,5 +46,5 @@
     "window-controls-overlay",
     "minimal-ui"
   ],
-  "appVersion": "1"
+  "appVersion": "2"
 }
