@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2, X, ChevronDown, BarChart3 } from "lucide-react";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -9,7 +9,7 @@ import { cn } from "@/frontend/lib/utils";
 import { TIER_CONFIGS, UserTier } from "@/lib/tier-gate";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/frontend/components/UI";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -62,11 +62,53 @@ export default function UpgradePage() {
     const currentTier: UserTier = session?.user?.tier || "starter";
     const toast = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const [couponCode, setCouponCode] = useState("");
     const [isApplying, setIsApplying] = useState(false);
     const [loadingTier, setLoadingTier] = useState<UserTier | null>(null);
+    const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
     const [showFullMatrix, setShowFullMatrix] = useState(false);
+
+    useEffect(() => {
+        const paymentStatus = searchParams.get("payment");
+        const returnedTier = searchParams.get("tier");
+        if (paymentStatus !== "return" || !returnedTier || (returnedTier !== "pro" && returnedTier !== "sultan")) return;
+
+        let isMounted = true;
+        const verifyPayment = async () => {
+            setIsVerifyingPayment(true);
+            try {
+                const res = await apiFetch("/api/payments/mayar/verify-paid", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tier: returnedTier }),
+                });
+                const data = await res.json();
+
+                if (!isMounted) return;
+                if (res.ok && data.success && data.paid) {
+                    toast.success("Pembayaran Berhasil", `Paket ${returnedTier} sudah aktif.`);
+                    await updateSession();
+                    router.replace("/fitur/upgrade");
+                    router.refresh();
+                } else if (res.ok && data.success && !data.paid) {
+                    toast.info("Pembayaran Diproses", "Kalau sudah bayar, sistem akan cek otomatis lewat webhook Mayar.");
+                } else {
+                    toast.error("Gagal Mengecek Pembayaran", data.error || "Coba refresh beberapa saat lagi");
+                }
+            } catch {
+                if (isMounted) toast.error("Error", "Tidak bisa mengecek status pembayaran");
+            } finally {
+                if (isMounted) setIsVerifyingPayment(false);
+            }
+        };
+
+        verifyPayment();
+        return () => {
+            isMounted = false;
+        };
+    }, [router, searchParams, toast, updateSession]);
 
     const handleUpgradeClick = async (tier: UserTier) => {
         if (tier !== "pro" && tier !== "sultan") {
@@ -153,6 +195,12 @@ export default function UpgradePage() {
             </motion.header>
 
             <div className="p-6">
+                {isVerifyingPayment && (
+                    <div className="mb-5 rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 p-4 text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                        <Loader2 size={18} className="animate-spin text-sky-500" />
+                        Mengecek status pembayaran Mayar...
+                    </div>
+                )}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
