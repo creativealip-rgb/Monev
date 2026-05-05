@@ -25,16 +25,17 @@ public class MainActivity extends BridgeActivity {
 
     private void applySystemBars() {
         Window window = getWindow();
-        int chromeColor = Color.parseColor("#020617");
+        int statusColor = Color.parseColor("#f0f9ff");
+        int navigationColor = Color.WHITE;
 
         WindowCompat.setDecorFitsSystemWindows(window, true);
-        window.setStatusBarColor(chromeColor);
-        window.setNavigationBarColor(chromeColor);
-        window.getDecorView().setSystemUiVisibility(0);
+        window.setStatusBarColor(statusColor);
+        window.setNavigationBarColor(navigationColor);
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             window.getDecorView().setSystemUiVisibility(
-                window.getDecorView().getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+                window.getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
             );
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

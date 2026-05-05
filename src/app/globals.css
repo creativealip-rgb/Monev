@@ -439,7 +439,8 @@
   right: 0;
   z-index: 100000;
   pointer-events: none;
-  background: rgba(2, 6, 23, 0.96);
+  background: var(--native-system-bar-top, #f0f9ff);
+  transition: background-color 180ms ease;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
@@ -453,6 +454,7 @@
 .is-native .native-system-bar-bottom {
   bottom: 0;
   height: var(--safe-area-bottom);
+  background: var(--native-system-bar-bottom, #ffffff);
   border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
