@@ -21,16 +21,12 @@ import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 import { OfflineBadge } from "@/frontend/components/OfflineBadge";
 import { InstallPrompt } from "@/frontend/components/InstallPrompt";
 
-const getNativeChromeColor = (pathname: string) => {
-    if (pathname.startsWith("/profile")) return "#0ea5e9";
-    if (pathname.startsWith("/saldo") || pathname.startsWith("/analytics") || pathname.startsWith("/chat")) return "#020617";
-    if (pathname.startsWith("/login") || pathname.startsWith("/register")) return "#f0f9ff";
-    return "#f0f9ff";
+const getNativeChromeColor = () => {
+    return "#131313";
 };
 
-const getNativeBottomChromeColor = (pathname: string) => {
-    if (pathname.startsWith("/saldo") || pathname.startsWith("/analytics") || pathname.startsWith("/chat")) return "#020617";
-    return "#ffffff";
+const getNativeBottomChromeColor = () => {
+    return "#131313";
 };
 
 export default function ClientLayout({
@@ -156,13 +152,13 @@ export default function ClientLayout({
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
 
-        const topColor = getNativeChromeColor(pathname);
-        const bottomColor = getNativeBottomChromeColor(pathname);
+        const topColor = getNativeChromeColor();
+        const bottomColor = getNativeBottomChromeColor();
         document.documentElement.style.setProperty("--native-system-bar-top", topColor);
         document.documentElement.style.setProperty("--native-system-bar-bottom", bottomColor);
 
         import("@capacitor/status-bar").then(async ({ StatusBar, Style }) => {
-            await StatusBar.setStyle({ style: topColor === "#f0f9ff" ? Style.Dark : Style.Light });
+            await StatusBar.setStyle({ style: Style.Light });
             await StatusBar.setBackgroundColor({ color: topColor });
         }).catch((error) => console.warn("[StatusBar]", error));
     }, [pathname]);

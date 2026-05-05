@@ -28,7 +28,7 @@ public class MainActivity extends BridgeActivity {
 
     private void applySystemBars() {
         Window window = getWindow();
-        int chromeColor = Color.parseColor("#020617");
+        int chromeColor = Color.parseColor("#131313");
 
         WindowCompat.setDecorFitsSystemWindows(window, true);
         window.setStatusBarColor(chromeColor);
