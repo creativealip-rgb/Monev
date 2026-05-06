@@ -254,6 +254,9 @@ export default function SaldoPage() {
                     </motion.button>
                 </div>
 
+            </header>
+
+            <main className="px-4 sm:px-6 mt-4 sm:mt-6">
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -348,9 +351,6 @@ export default function SaldoPage() {
                         </motion.button>
                     </div>
                 )}
-            </header>
-
-            <main className="px-4 sm:px-6 mt-4 sm:mt-6">
                 {isAddOpen ? (
                     <motion.div
                         role="dialog"
