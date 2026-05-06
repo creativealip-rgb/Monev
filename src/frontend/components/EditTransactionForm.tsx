@@ -236,7 +236,9 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                                 <input
                                     id="edit-transaction-amount"
                                     aria-label="Nominal transaksi"
-                                    type="number"
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0"

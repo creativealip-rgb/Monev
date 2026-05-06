@@ -204,7 +204,9 @@ export function PayBillModal({ isOpen, onClose, bill, paidAmount = 0, onSuccess 
                             </label>
                             <div className="relative">
                                 <input
-                                    type="number"
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="Masukkan jumlah"

@@ -381,7 +381,9 @@ export function TransferModal({ isOpen, onClose, onSuccess }: TransferModalProps
                                                 Jumlah {mode === "transfer" ? "Transfer" : "Withdraw"}
                                             </label>
                                             <input
-                                                type="number"
+                                                type="tel"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
                                                 value={amount}
                                                 onChange={(e) => setAmount(e.target.value)}
                                                 placeholder="0"
