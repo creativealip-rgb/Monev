@@ -5,6 +5,12 @@ import { eq, and, desc, sql, gte, lte, like, or } from "drizzle-orm";
 import { updateAccountBalance } from "../account-operations";
 import { updateUserStreak, unlockAchievement } from "./gamification-operations";
 
+const BALANCE_AUDIT_PREFIXES = ["[OPENING_BALANCE]", "[BALANCE_ADJUSTMENT]"];
+
+function isBalanceAuditTransaction(tx: Pick<Transaction, "description">): boolean {
+    return BALANCE_AUDIT_PREFIXES.some((prefix) => tx.description?.startsWith(prefix));
+}
+
 export interface GetTransactionsOptions {
     limit?: number;
     offset?: number;
@@ -226,6 +232,10 @@ export async function updateTransaction(userId: number, id: number, data: Partia
 
     if (!oldTx) return undefined;
 
+    if (isBalanceAuditTransaction(oldTx)) {
+        return oldTx;
+    }
+
     // 2. Perform update
     const result = db.update(transactions)
         .set(data)
@@ -233,7 +243,7 @@ export async function updateTransaction(userId: number, id: number, data: Partia
         .returning()
         .get();
 
-    if (result) {
+    if (result && !isBalanceAuditTransaction(oldTx) && !isBalanceAuditTransaction(result)) {
         // 3. Revert old balance effect
         if (oldTx.accountId) {
             const oldReversal = oldTx.type === 'income' ? -oldTx.amount : oldTx.amount;
@@ -266,7 +276,7 @@ export async function deleteTransaction(userId: number, id: number): Promise<voi
 
     if (tx) {
         // 2. Revert balance
-        if (tx.accountId) {
+        if (tx.accountId && !isBalanceAuditTransaction(tx)) {
             const reversal = tx.type === 'income' ? -tx.amount : tx.amount;
             await updateAccountBalance(userId, tx.accountId, reversal);
 

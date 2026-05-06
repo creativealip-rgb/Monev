@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Edit2, Trash2, Calendar, Tag, Wallet } from "lucide-react";
+import { X, Edit2, Trash2, Calendar, Tag, Wallet, SlidersHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn, getPaymentMethod } from "@/frontend/lib/utils";
@@ -27,10 +27,36 @@ interface TransactionDetailModalProps {
     accounts?: { id: number; name: string; type: string }[];
 }
 
+const OPENING_BALANCE_PREFIX = "[OPENING_BALANCE]";
+const BALANCE_ADJUSTMENT_PREFIX = "[BALANCE_ADJUSTMENT]";
+
+function getBalanceAuditInfo(description?: string | null) {
+    if (description?.startsWith(OPENING_BALANCE_PREFIX)) {
+        return {
+            label: "Saldo Awal",
+            typeLabel: "Penyesuaian Saldo",
+            displayDescription: description.replace(OPENING_BALANCE_PREFIX, "").trim() || "Saldo awal akun",
+        };
+    }
+
+    if (description?.startsWith(BALANCE_ADJUSTMENT_PREFIX)) {
+        return {
+            label: "Penyesuaian Manual",
+            typeLabel: "Penyesuaian Saldo",
+            displayDescription: description.replace(BALANCE_ADJUSTMENT_PREFIX, "").trim() || "Penyesuaian saldo akun",
+        };
+    }
+
+    return null;
+}
+
 export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, onDelete, accounts = [] }: TransactionDetailModalProps) {
     if (!isOpen || !transaction) return null;
 
     const sourceAccount = accounts.find(a => a.id === transaction.accountId);
+    const balanceAudit = getBalanceAuditInfo(transaction.description);
+    const displayDescription = balanceAudit?.displayDescription || transaction.description;
+    const categoryLabel = balanceAudit?.typeLabel || transaction.categoryName || "Tanpa Kategori";
 
     return (
         <Portal>
@@ -62,26 +88,31 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Total Nominal</span>
                                 <h3 className={cn(
                                     "text-2xl font-bold tabular-nums tracking-tight",
-                                    transaction.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
+                                    balanceAudit ? "text-amber-600 dark:text-amber-300" : transaction.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
                                 )}>
                                     {formatCurrency(transaction.amount)}
                                 </h3>
                                 <div className={cn(
                                     "text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full mt-2",
-                                    transaction.type === 'income' ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                    balanceAudit ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : transaction.type === 'income' ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                                 )}>
-                                    {transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
+                                    {balanceAudit?.label || (transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}
                                 </div>
+                                {balanceAudit && (
+                                    <p className="mt-2 px-4 text-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                        Audit saldo ini tidak dihitung sebagai pemasukan atau pengeluaran di laporan.
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl">
                                     <div className="w-9 h-9 rounded-lg bg-sky-50 dark:bg-sky-900/50 flex items-center justify-center text-sky-600 dark:text-sky-400 flex-shrink-0">
-                                        <Tag size={16} />
+                                        {balanceAudit ? <SlidersHorizontal size={16} /> : <Tag size={16} />}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="font-bold text-slate-900 dark:text-white text-[13px] truncate">{transaction.description}</p>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{transaction.categoryName || "Tanpa Kategori"}</p>
+                                        <p className="font-bold text-slate-900 dark:text-white text-[13px] truncate">{displayDescription}</p>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{categoryLabel}</p>
                                     </div>
                                 </div>
 

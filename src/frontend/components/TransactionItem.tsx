@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, type LucideIcon } from "lucide-react";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, type LucideIcon } from "lucide-react";
 import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { normalizeDateValue } from "@/frontend/lib/normalize-date";
@@ -13,6 +13,28 @@ import { decryptData } from "@/lib/encryption";
 
 const SWIPE_ACTION_WIDTH = 88;
 const SWIPE_TRIGGER_OFFSET = 72;
+const OPENING_BALANCE_PREFIX = "[OPENING_BALANCE]";
+const BALANCE_ADJUSTMENT_PREFIX = "[BALANCE_ADJUSTMENT]";
+
+function getBalanceAuditInfo(description?: string | null) {
+    if (description?.startsWith(OPENING_BALANCE_PREFIX)) {
+        return {
+            label: "Saldo Awal",
+            category: "Penyesuaian Saldo",
+            displayDescription: description.replace(OPENING_BALANCE_PREFIX, "").trim() || "Saldo awal akun",
+        };
+    }
+
+    if (description?.startsWith(BALANCE_ADJUSTMENT_PREFIX)) {
+        return {
+            label: "Penyesuaian",
+            category: "Penyesuaian Saldo",
+            displayDescription: description.replace(BALANCE_ADJUSTMENT_PREFIX, "").trim() || "Penyesuaian saldo akun",
+        };
+    }
+
+    return null;
+}
 
 const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradient: string }> = {
     "Makan & Minuman": {
@@ -140,12 +162,21 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
         decrypt();
     }, [transaction.description, encryptionKey]);
 
-    const style = CATEGORY_STYLES[transaction.categoryName] || CATEGORY_STYLES.Default;
+    const balanceAudit = getBalanceAuditInfo(displayDescription);
+    const style = balanceAudit
+        ? {
+            icon: SlidersHorizontal,
+            color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+            gradient: "from-amber-500 to-orange-400",
+        }
+        : CATEGORY_STYLES[transaction.categoryName] || CATEGORY_STYLES.Default;
     const isExpense = transaction.type === "expense";
     const isIncome = transaction.type === "income";
     const Icon = style.icon;
     const displayAmount = hideAmount ? "••••••" : formatCurrency(transaction.amount);
-    const transactionLabel = `${displayDescription}, ${transaction.categoryName || "Lainnya"}, ${hideAmount ? "nominal disembunyikan" : formatCurrency(transaction.amount)}`;
+    const visibleDescription = balanceAudit?.displayDescription || displayDescription;
+    const visibleCategory = balanceAudit?.category || transaction.categoryName || "Lainnya";
+    const transactionLabel = `${visibleDescription}, ${visibleCategory}, ${hideAmount ? "nominal disembunyikan" : formatCurrency(transaction.amount)}`;
 
     // Swipe mechanism
     const x = useMotionValue(0);
@@ -239,7 +270,7 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                     <button
                         type="button"
                         aria-pressed={isSelected}
-                        aria-label={`${isSelected ? "Batalkan pilihan" : "Pilih"} transaksi ${displayDescription}`}
+                        aria-label={`${isSelected ? "Batalkan pilihan" : "Pilih"} transaksi ${visibleDescription}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onSelect?.(transaction.id);
@@ -266,12 +297,20 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
 
                 <div className="flex-1 min-w-0 overflow-hidden mr-4">
                     <h4 className="font-bold text-foreground text-[13px] leading-tight line-clamp-1 break-all">
-                        {displayDescription}
+                        {visibleDescription}
                     </h4>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] font-medium text-muted-foreground truncate">
-                            {transaction.categoryName || "Lainnya"}
+                        <span className={cn(
+                            "text-[11px] font-medium truncate",
+                            balanceAudit ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"
+                        )}>
+                            {visibleCategory}
                         </span>
+                        {balanceAudit && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                {balanceAudit.label}
+                            </span>
+                        )}
                         <span className="w-1 h-1 rounded-full bg-muted-foreground/30 flex-shrink-0" />
                         <span className="text-[11px] font-medium text-muted-foreground flex-shrink-0">
                             {(() => {
@@ -290,9 +329,9 @@ export const TransactionItem = React.memo(function TransactionItem({ transaction
                 <div className="text-right flex-shrink-0">
                     <p className={cn(
                         "font-bold text-[13px] tracking-tight whitespace-nowrap tabular-nums",
-                        isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
+                        balanceAudit ? "text-amber-600 dark:text-amber-300" : isIncome ? "text-emerald-500" : isExpense ? "text-foreground" : "text-muted-foreground"
                     )}>
-                        {isIncome ? "+" : isExpense ? "−" : ""} {displayAmount}
+                        {balanceAudit ? (isIncome ? "+" : isExpense ? "−" : "") : isIncome ? "+" : isExpense ? "−" : ""} {displayAmount}
                     </p>
                     {transaction.isVerified && (
                         <div className="flex items-center justify-end gap-1 mt-1">
