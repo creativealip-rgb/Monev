@@ -335,9 +335,11 @@ export default function SimulationsPage() {
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase ml-1">Nominal (IDR)</label>
                                         <input
-                                            type="number"
+                                            type="tel"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
                                             value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
                                             placeholder="0"
                                             className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-900 border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all text-sm font-bold"
                                         />
