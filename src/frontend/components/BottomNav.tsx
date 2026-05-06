@@ -112,10 +112,12 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
     if (!mounted || isKeyboardOpen) return null;
 
     const navContent = (
-        <div
-            className="fixed inset-x-3 z-[99999] pointer-events-none bottom-[calc(0.75rem+env(safe-area-inset-bottom))]"
-        >
-            <div className="relative w-full max-w-[460px] mx-auto">
+        <>
+            <div className="fixed inset-x-0 bottom-0 z-[99998] h-[calc(7rem+env(safe-area-inset-bottom))] pointer-events-none bg-gradient-to-t from-sky-50 via-sky-50/92 to-sky-50/0 dark:from-slate-950 dark:via-slate-950/92 dark:to-slate-950/0" />
+            <div
+                className="fixed inset-x-3 z-[99999] pointer-events-none bottom-[calc(0.75rem+env(safe-area-inset-bottom))]"
+            >
+                <div className="relative w-full max-w-[460px] mx-auto">
                 <div
                     className="border border-slate-200 bg-white px-2.5 py-1.5 shadow-[0_16px_45px_rgba(15,23,42,0.18)] dark:border-slate-700 dark:bg-slate-900 rounded-[28px] pointer-events-auto"
                 >
@@ -243,7 +245,8 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </>
     );
 
     return portal ? createPortal(navContent, document.body) : navContent;

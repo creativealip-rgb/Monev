@@ -313,7 +313,9 @@ export function SmartInput({ mode, onClose, onSuccess }: SmartInputProps) {
                                             <div className="relative">
                                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">Rp</span>
                                                 <input
-                                                    type="number"
+                                                    type="tel"
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
                                                     value={result.amount || ""}
                                                     onChange={(e) => setResult({ ...result, amount: Number(e.target.value) })}
                                                     className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/20"

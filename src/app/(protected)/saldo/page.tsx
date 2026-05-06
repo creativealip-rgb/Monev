@@ -536,8 +536,9 @@ export default function SaldoPage() {
                                     <label htmlFor="new-account-balance" className="sr-only">Saldo awal</label>
                                     <input
                                         id="new-account-balance"
-                                        type="text"
+                                        type="tel"
                                         inputMode="numeric"
+                                        pattern="[0-9]*"
                                         value={balance === "0" ? "" : balance}
                                         onChange={(e) => {
                                             const rawValue = e.target.value.replace(/[^0-9]/g, '');
@@ -943,8 +944,9 @@ export default function SaldoPage() {
                                     <label htmlFor="edit-account-balance" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Saldo</label>
                                     <input
                                         id="edit-account-balance"
-                                        type="text"
+                                        type="tel"
                                         inputMode="numeric"
+                                        pattern="[0-9]*"
                                         value={editForm.balance}
                                         onChange={(e) => {
                                             const rawValue = e.target.value.replace(/[^0-9]/g, '');
