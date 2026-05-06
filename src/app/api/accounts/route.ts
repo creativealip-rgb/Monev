@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/backend/db/account-operations";
+import { getAccounts, createAccount, updateAccount, deleteAccount, createBalanceAuditEntry } from "@/backend/db/account-operations";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("API:Accounts");
@@ -58,7 +58,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: validated.error }, { status: 400 });
         }
 
-        const account = await createAccount(Number(session.user.id), validated.data!);
+        const userId = Number(session.user.id);
+        const account = await createAccount(userId, validated.data!);
+        if (validated.data!.balance > 0) {
+            await createBalanceAuditEntry(userId, {
+                accountId: account.id,
+                accountName: account.name,
+                amount: validated.data!.balance,
+                kind: "opening_balance",
+            });
+        }
         return NextResponse.json({ success: true, data: account });
     } catch (error) {
         return NextResponse.json({ success: false, error: "Failed to create account" }, { status: 500 });

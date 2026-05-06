@@ -37,6 +37,38 @@ export async function createAccount(userId: number, data: Omit<InsertAccount, "u
         .get();
 }
 
+export async function createBalanceAuditEntry(userId: number, data: {
+    accountId: number;
+    accountName: string;
+    amount: number;
+    kind: "opening_balance" | "balance_adjustment";
+    previousBalance?: number;
+    nextBalance?: number;
+}) {
+    if (!Number.isFinite(data.amount) || data.amount === 0) return;
+
+    const db = getDb();
+    const prefix = data.kind === "opening_balance" ? "[OPENING_BALANCE]" : "[BALANCE_ADJUSTMENT]";
+    const description = data.kind === "opening_balance"
+        ? `${prefix} Saldo awal ${data.accountName}`
+        : `${prefix} Penyesuaian saldo ${data.accountName}: Rp ${Number(data.previousBalance || 0).toLocaleString("id-ID")} -> Rp ${Number(data.nextBalance || 0).toLocaleString("id-ID")}`;
+
+    return db.insert(transactions)
+        .values({
+            userId,
+            accountId: data.accountId,
+            amount: Math.abs(data.amount),
+            description,
+            merchantName: "Penyesuaian Saldo",
+            type: data.amount >= 0 ? "income" : "expense",
+            paymentMethod: "adjustment",
+            date: new Date(),
+            isVerified: true,
+        })
+        .returning()
+        .get();
+}
+
 /**
  * Update an existing account.
  */

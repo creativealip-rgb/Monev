@@ -1,6 +1,6 @@
 import { getDb } from "../index";
 import { categories, transactions } from "../schema";
-import { eq, and, sql, gte, lte, or, inArray, desc } from "drizzle-orm";
+import { eq, and, sql, gte, lte, or, inArray, desc, notLike } from "drizzle-orm";
 import { getGoals } from "./goal-operations";
 import { calculateRunway } from "@/lib/financial-advising";
 import { detectSubscriptions } from "@/lib/subscription-detector";
@@ -25,6 +25,8 @@ function buildTransactionFilters(
             : undefined,
         filters?.accountId ? eq(transactions.accountId, filters.accountId) : undefined,
         filters?.categoryId ? eq(transactions.categoryId, filters.categoryId) : undefined,
+        notLike(transactions.description, "[OPENING_BALANCE]%"),
+        notLike(transactions.description, "[BALANCE_ADJUSTMENT]%"),
         gte(transactions.date, startDate),
         lte(transactions.date, endDate)
     );
@@ -626,6 +628,8 @@ export async function getPassiveIncome(
             filters?.accountId ? eq(transactions.accountId, filters.accountId) : undefined,
             inArray(transactions.categoryId, targetCatIds),
             filters?.categoryId ? eq(transactions.categoryId, filters.categoryId) : undefined,
+            notLike(transactions.description, "[OPENING_BALANCE]%"),
+            notLike(transactions.description, "[BALANCE_ADJUSTMENT]%"),
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
         ))
