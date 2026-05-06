@@ -339,9 +339,11 @@ export default function AnalyticsPage() {
             )}>
                 <div className="p-6 space-y-6">
                     <NetWorthCard
-                    balance={data.balance}
+                    balance={data.totalAccounts ?? 0}
                     investments={data.totalInvestments || 0}
                     goals={data.goalsProgress?.reduce((acc: number, g: GoalProgress) => acc + g.currentAmount, 0) || 0}
+                    cashflow={data.balance}
+                    periodLabel={selectedPeriodLabel}
                     hideBalance={isStealthMode}
                     headerAction={
                         <div className="flex shrink-0 items-center bg-white/10 border border-white/10 rounded-full shadow-sm text-white relative z-20">

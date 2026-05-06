@@ -135,6 +135,8 @@ export interface AnalyticsData {
     budgetAlerts: BudgetAlert[];
     financialHealth: unknown;
     dailyStats: DailyStat[];
+    totalAccounts?: number;
+    accountCount?: number;
     totalInvestments: number;
     insights: string | null;
     canAccessAIInsights: boolean;
