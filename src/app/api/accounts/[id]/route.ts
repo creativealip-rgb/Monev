@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { updateAccount, deleteAccount, getAccountById } from "@/backend/db/account-operations";
+import { updateAccount, deleteAccount, getAccountById, createBalanceAuditEntry } from "@/backend/db/account-operations";
+import type { Account } from "@/backend/db/schema";
 
 const ACCOUNT_TYPES = new Set(["bank", "emoney", "cash", "credit_card", "investment_wallet"]);
 
@@ -22,7 +23,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             return NextResponse.json({ error: "Account not found" }, { status: 404 });
         }
 
-        const updates: Record<string, unknown> = { updatedAt: new Date() };
+        const updates: Partial<Account> = { updatedAt: new Date() };
         if (typeof body.name === "string") {
             const name = body.name.trim();
             if (!name) return NextResponse.json({ success: false, error: "Nama akun wajib diisi" }, { status: 400 });
@@ -44,7 +45,23 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             updates.type = body.type;
         }
 
+        const previousBalance = Number(existing.balance || 0);
         const updated = await updateAccount(userId, accountId, updates);
+
+        if (updates.balance !== undefined && updated) {
+            const nextBalance = Number(updated.balance || 0);
+            const delta = nextBalance - previousBalance;
+            if (delta !== 0) {
+                await createBalanceAuditEntry(userId, {
+                    accountId,
+                    accountName: updated.name,
+                    amount: delta,
+                    kind: "balance_adjustment",
+                    previousBalance,
+                    nextBalance,
+                });
+            }
+        }
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
