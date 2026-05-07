@@ -194,20 +194,21 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-cyan-200/30 via-transparent to-transparent dark:from-cyan-900/20" />
                 </div>
 
-                {/* Content */}
+                {/* Centered content */}
+                <div className="relative h-full flex items-center justify-center p-4">
                 <motion.div
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    exit={{ y: "100%" }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    initial={{ y: 40, opacity: 0, scale: 0.97 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{ y: 40, opacity: 0, scale: 0.97 }}
+                    transition={{ type: "spring", damping: 28, stiffness: 350 }}
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="edit-transaction-title"
-                    className="relative h-full overflow-x-hidden overflow-y-auto"
+                    className="relative w-full max-w-[500px] max-h-[90vh] overflow-y-auto rounded-3xl bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-slate-950/30"
                 >
 
-                <div className="min-h-screen max-w-[500px] mx-auto bg-sky-50/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-2xl shadow-sky-900/10 dark:shadow-slate-950/30">
-                    <div className="flex items-center justify-between px-6 pt-12 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
+                <div>
+                    <div className="flex items-center justify-between px-6 pt-6 pb-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10 rounded-t-3xl">
                         <button
                             onClick={step === "amount" ? handleClose : () => setStep(step === "category" ? "amount" : "category")}
                             aria-label={step === "amount" ? "Tutup edit transaksi" : "Kembali ke langkah sebelumnya"}
@@ -238,7 +239,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
 
                         {step === "amount" && (
                             <div className="space-y-6">
-                                <div className="text-center py-8">
+                                <div className="text-center py-4">
                                     <p className="text-slate-400 dark:text-slate-500 text-sm mb-2">Nominal</p>
                                     <div className="text-5xl font-bold text-slate-900 dark:text-white">
                                         {amount ? formatCurrency(parseFloat(amount)) : "Rp 0"}
@@ -405,6 +406,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
                     </div>
                 </div>
                 </motion.div>
+                </div>
             </motion.div>
         </AnimatePresence>
     );
