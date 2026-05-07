@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 
 const DEFAULT_AI_BASE_URL = "https://9router-168-144-37-19.sslip.io/v1";
-const PRIMARY_AI_MODEL = "cx/gpt-5.2";
-const FALLBACK_AI_MODEL = "cx/gpt-5.5";
+const PRIMARY_AI_MODEL = "kr/claude-sonnet-4.5";
+const FALLBACK_AI_MODEL = "kr/deepseek-3.2";
 
 export function getAIBaseURL() {
     return process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL || DEFAULT_AI_BASE_URL;
