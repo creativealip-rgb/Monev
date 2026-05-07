@@ -18,9 +18,13 @@ export function useSavingsData() {
         };
 
         window.addEventListener("transactionAdded", refreshGoals);
+        window.addEventListener("transactionUpdated", refreshGoals);
+        window.addEventListener("transactionDeleted", refreshGoals);
         window.addEventListener("goalsChanged", refreshGoals);
         return () => {
             window.removeEventListener("transactionAdded", refreshGoals);
+            window.removeEventListener("transactionUpdated", refreshGoals);
+            window.removeEventListener("transactionDeleted", refreshGoals);
             window.removeEventListener("goalsChanged", refreshGoals);
         };
     }, [queryClient]);
