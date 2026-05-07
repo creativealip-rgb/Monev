@@ -36,8 +36,8 @@ export function useDashboardStats() {
         };
         loadOffline();
 
-        const handleTransactionAdded = async () => {
-            logger.info("[useDashboardStats] Event received: transactionAdded");
+        const handleTransactionChange = async () => {
+            logger.info("[useDashboardStats] Event received: transaction change");
             await loadOffline();
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
             queryClient.invalidateQueries({ queryKey: ["accounts"] });
@@ -45,8 +45,14 @@ export function useDashboardStats() {
             await queryClient.refetchQueries({ queryKey: ["accounts"] });
         };
 
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
+        window.addEventListener("transactionAdded", handleTransactionChange);
+        window.addEventListener("transactionUpdated", handleTransactionChange);
+        window.addEventListener("transactionDeleted", handleTransactionChange);
+        return () => {
+            window.removeEventListener("transactionAdded", handleTransactionChange);
+            window.removeEventListener("transactionUpdated", handleTransactionChange);
+            window.removeEventListener("transactionDeleted", handleTransactionChange);
+        };
     }, [queryClient]);
 
     // Profile Query

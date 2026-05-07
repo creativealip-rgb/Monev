@@ -39,11 +39,17 @@ export function useAccountsData() {
 
     // Invalidate accounts cache when transactions change (balances update server-side)
     useEffect(() => {
-        const handleTransactionAdded = () => {
+        const handleTransactionChange = () => {
             queryClient.invalidateQueries({ queryKey: ["accounts"] });
         };
-        window.addEventListener("transactionAdded", handleTransactionAdded);
-        return () => window.removeEventListener("transactionAdded", handleTransactionAdded);
+        window.addEventListener("transactionAdded", handleTransactionChange);
+        window.addEventListener("transactionUpdated", handleTransactionChange);
+        window.addEventListener("transactionDeleted", handleTransactionChange);
+        return () => {
+            window.removeEventListener("transactionAdded", handleTransactionChange);
+            window.removeEventListener("transactionUpdated", handleTransactionChange);
+            window.removeEventListener("transactionDeleted", handleTransactionChange);
+        };
     }, [queryClient]);
 
     const refresh = () => {

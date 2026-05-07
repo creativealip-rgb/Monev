@@ -74,6 +74,7 @@ export function useTransactionActions({
 
                 if (response.ok) {
                     await refresh();
+                    window.dispatchEvent(new CustomEvent("transactionDeleted"));
 
                     if (deletedTxn) {
                         onUndo(deletedTxn);
@@ -113,6 +114,7 @@ export function useTransactionActions({
                 throw new Error("Some transactions failed to delete");
             }
             await refresh();
+            window.dispatchEvent(new CustomEvent("transactionDeleted"));
 
             // Create a bulk undo transaction
             const bulkUndoTransaction = {

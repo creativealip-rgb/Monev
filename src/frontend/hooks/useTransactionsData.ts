@@ -56,7 +56,7 @@ export function useTransactionsData(searchQuery: string = "") {
             queryKey: ["transactions", "list"],
             exact: false
         });
-    }, ["transactionAdded"]);
+    }, ["transactionAdded", "transactionUpdated", "transactionDeleted"]);
 
     // Categories Query
     const { data: categories = [] } = useQuery({

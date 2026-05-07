@@ -95,7 +95,7 @@ export function useDashboardData() {
         queryClient.refetchQueries({ queryKey: ["dashboard"] });
         queryClient.refetchQueries({ queryKey: ["accounts"] });
         logger.info("[useDashboardData] Dashboard refetched, offline trans count:", offlineTrans.length);
-    }, ["transactionAdded"]);
+    }, ["transactionAdded", "transactionUpdated", "transactionDeleted"]);
 
     // Profile Query
     const { data: profile, isLoading: profileLoading } = useQuery({

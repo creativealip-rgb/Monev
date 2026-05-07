@@ -153,6 +153,7 @@ export function EditTransactionForm({ isOpen, onClose, onSuccess, transaction }:
             const result = await response.json();
 
             if (result.success) {
+                window.dispatchEvent(new CustomEvent("transactionUpdated"));
                 onSuccess?.();
                 onClose();
             } else {
