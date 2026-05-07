@@ -75,11 +75,10 @@ export function useTransactionActions({
                 if (response.ok) {
                     await refresh();
                     window.dispatchEvent(new CustomEvent("transactionDeleted"));
+                    toast.success("Transaksi dihapus");
 
                     if (deletedTxn) {
                         onUndo(deletedTxn);
-                    } else {
-                        toast.success("Transaksi dihapus");
                     }
                 } else {
                     toast.error("Gagal menghapus", "Coba lagi nanti");

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useAccountsData } from "@/frontend/hooks/useAccountsData";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";
+import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
 import { useI18n } from "@/lib/i18n";
@@ -48,6 +49,8 @@ export default function SaldoPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editForm, setEditForm] = useState({ name: "", balance: "", color: "", icon: "" });
     const [deletingAccountId, setDeletingAccountId] = useState<number | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+    const [deleteHasTransactions, setDeleteHasTransactions] = useState(true);
 
     const haptics = useHaptics();
     const { success: toastSuccess, error: toastError } = useToast();
@@ -189,10 +192,14 @@ export default function SaldoPage() {
 
     const handleDeleteAccount = async (accountId: number, withTransactionWarning = true) => {
         if (deletingAccountId) return;
-        const message = withTransactionWarning
-            ? "Yakin hapus akun ini? Transaksi terkait juga akan dihapus agar laporan tetap konsisten."
-            : "Yakin hapus akun ini?";
-        if (!confirm(message)) return;
+        setDeleteHasTransactions(withTransactionWarning);
+        setDeleteConfirmId(accountId);
+    };
+
+    const executeDeleteAccount = async () => {
+        const accountId = deleteConfirmId;
+        if (!accountId || deletingAccountId) return;
+        setDeleteConfirmId(null);
 
         setDeletingAccountId(accountId);
         try {
@@ -1019,6 +1026,20 @@ export default function SaldoPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Delete Account Confirmation */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirmId}
+                onClose={() => setDeleteConfirmId(null)}
+                onConfirm={executeDeleteAccount}
+                title="Hapus Akun"
+                description={deleteHasTransactions
+                    ? "Yakin hapus akun ini? Transaksi terkait juga akan dihapus agar laporan tetap konsisten."
+                    : "Yakin hapus akun ini?"
+                }
+                confirmText="Hapus"
+                loading={!!deletingAccountId}
+            />
         </div>
     );
 }
