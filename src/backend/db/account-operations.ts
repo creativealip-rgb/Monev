@@ -83,14 +83,26 @@ export async function updateAccount(userId: number, id: number, data: Partial<Ac
 
 /**
  * Delete an account.
- * Note: Should handle transactions associated with this account or block deletion if transactions exist.
- * For now, just delete.
+ * Removes all transactions where this account is source OR target,
+ * then deletes the account itself.
  */
 export async function deleteAccount(userId: number, id: number): Promise<void> {
     const db = getDb();
     db.transaction((tx) => {
+        // Delete transactions where this account is the source
         tx.delete(transactions)
             .where(and(eq(transactions.accountId, id), eq(transactions.userId, userId)))
+            .run();
+
+        // Delete transactions where this account is the transfer target
+        tx.delete(transactions)
+            .where(and(eq(transactions.targetAccountId, id), eq(transactions.userId, userId)))
+            .run();
+
+        // Nullify any remaining targetAccountId references (edge case: other user's transfers)
+        tx.update(transactions)
+            .set({ targetAccountId: null })
+            .where(eq(transactions.targetAccountId, id))
             .run();
 
         tx.delete(accounts)
