@@ -310,7 +310,7 @@ export default function SaldoPage() {
 
                 {/* View Toggle */}
                 {accounts.length > 0 && (
-                    <div className="mt-5 flex items-center gap-2">
+                    <div className="mt-5 mb-4 flex items-center gap-2">
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             type="button"
@@ -359,7 +359,7 @@ export default function SaldoPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="mb-40 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
+                        className="mt-4 mb-40 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden"
                     >
                         {/* Progress Bar */}
                         <div className="px-6 pt-6">
@@ -584,7 +584,7 @@ export default function SaldoPage() {
                     </motion.div>
                 ) : (
                     <LayoutGroup>
-                        <div className="grid gap-3 sm:gap-4">
+                        <div className="grid gap-4 sm:gap-5">
                             {isLoading ? (
                                 [1, 2, 3].map(i => (
                                     <div key={i} className="h-24 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 animate-pulse" />
@@ -638,7 +638,7 @@ export default function SaldoPage() {
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.05 }}
-                                            className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-3.5 sm:gap-4 hover:shadow-md transition-shadow group"
+                                            className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-3.5 sm:gap-4 hover:shadow-md transition-shadow group"
                                         >
                                             <div
                                                 className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
@@ -788,7 +788,7 @@ export default function SaldoPage() {
                                                         }}
                                                         className="overflow-visible"
                                                     >
-                                                        <div className="px-4 pb-3 grid gap-2">
+                                                        <div className="px-4 pb-4 grid gap-3">
                                                             {groupAccounts.map((acc, idx) => {
                                                                 const Icon = accountTypeIcons[acc.type as keyof typeof accountTypeIcons] || Wallet;
                                                                 return (
