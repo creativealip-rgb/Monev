@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { WifiOff, Loader2 } from "lucide-react";
+import { WifiOff, Loader2, RefreshCw, X } from "lucide-react";
 import { OfflineManager } from "@/frontend/lib/offline-manager";
 import { cn } from "@/frontend/lib/utils";
 
@@ -16,10 +16,57 @@ export function OfflineBadge() {
         setPendingCount(queue.length);
     };
 
+    const handleSync = useCallback(async () => {
+        if (isSyncing || !navigator.onLine) return;
+        setIsSyncing(true);
+        try {
+            const result = await OfflineManager.syncQueue();
+            await checkPending();
+            // If sync failed (items still stuck), they remain in queue
+            if (result.failed > 0) {
+                console.warn(`Offline sync: ${result.success} ok, ${result.failed} failed`);
+            }
+        } catch (err) {
+            console.error("Sync error:", err);
+        } finally {
+            setIsSyncing(false);
+        }
+    }, [isSyncing]);
+
+    const handleClearQueue = useCallback(async () => {
+        // Clear all stuck items from IndexedDB queue
+        const queue = await OfflineManager.getQueue();
+        if (queue.length > 0 && "indexedDB" in window) {
+            try {
+                const { openDB } = await import("idb");
+                const db = await openDB("monev-offline-db", 2);
+                const tx = db.transaction("transaction-queue", "readwrite");
+                await tx.store.clear();
+                await tx.done;
+                setPendingCount(0);
+                window.dispatchEvent(new Event("offline-queue-changed"));
+            } catch (err) {
+                console.error("Failed to clear offline queue:", err);
+            }
+        }
+    }, []);
+
     useEffect(() => {
         // Initial check
         checkPending();
         setIsOnline(navigator.onLine);
+
+        // Auto-retry sync on mount if online and has pending items
+        const autoSync = async () => {
+            const queue = await OfflineManager.getQueue();
+            if (queue.length > 0 && navigator.onLine) {
+                setIsSyncing(true);
+                await OfflineManager.syncQueue();
+                await checkPending();
+                setIsSyncing(false);
+            }
+        };
+        autoSync();
 
         const handleOnline = async () => {
             setIsOnline(true);
@@ -66,8 +113,21 @@ export function OfflineBadge() {
                         </>
                     ) : (
                         <>
-                            <WifiOff size={16} />
+                            <button
+                                onClick={handleSync}
+                                className="p-0.5 rounded-full hover:bg-white/20 transition-colors"
+                                aria-label="Coba sinkronisasi ulang"
+                            >
+                                <RefreshCw size={14} />
+                            </button>
                             <span className="text-xs font-bold">{pendingCount} Menunggu Sinkronisasi</span>
+                            <button
+                                onClick={handleClearQueue}
+                                className="p-0.5 rounded-full hover:bg-white/20 transition-colors"
+                                aria-label="Hapus antrian sinkronisasi"
+                            >
+                                <X size={14} />
+                            </button>
                         </>
                     )
                 ) : (
