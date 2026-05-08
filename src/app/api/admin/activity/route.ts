@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { users, adminActivityLog } from "@/backend/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
     try {
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
             email: users.email,
         })
             .from(users)
-            .where(sql`${users.id} IN (${adminIds.join(',')})`)
+            .where(inArray(users.id, adminIds))
             .all();
 
         const adminMap = Object.fromEntries(admins.map(a => [a.id, a]));

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { users, coupons, adminActivityLog, couponClaims } from "@/backend/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
     try {
@@ -260,7 +260,7 @@ export async function PATCH(req: NextRequest) {
                 email: users.email,
             })
                 .from(users)
-                .where(sql`${users.id} IN (${userIds.join(',')})`)
+                .where(inArray(users.id, userIds))
                 .all();
 
             const userMap = Object.fromEntries(usersData.map(u => [u.id, u]));

@@ -47,13 +47,27 @@ next-env.d.ts
 *.db.backup*
 sqlite.db*
 
+# backups directory
+/backups/
+*.backup
+
+# APK files - Store in GitHub Releases or CDN instead
+*.apk
+*.aab
+/public/*.apk
+/public/*.aab
+/android/app/build/outputs/
+
 # local reports / artifacts
 playwright-report/
 test-results/
 build-output.txt
 build_log.txt
 *.bak
-*.apk
+
+# Sentry
+.sentryclirc
+sentry.properties
 
 # scratch scripts
 *.cjs
@@ -63,3 +77,19 @@ build_log.txt
 
 # local agent / nested workspace artifacts
 my-agent-finance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+tunnels.json

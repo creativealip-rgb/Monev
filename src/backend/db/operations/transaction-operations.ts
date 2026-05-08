@@ -27,9 +27,14 @@ export async function getTransactions(userId: number, limit = 50, offset = 0, se
     const conditions = [eq(transactions.userId, userId)];
 
     if (search) {
-        conditions.push(
-            sql`(${transactions.description} LIKE ${'%' + search + '%'} OR ${transactions.merchantName} LIKE ${'%' + search + '%'})`
+        const searchPattern = `%${search}%`;
+        const searchCondition = or(
+            like(transactions.description, searchPattern),
+            like(transactions.merchantName, searchPattern)
         );
+        if (searchCondition) {
+            conditions.push(searchCondition);
+        }
     }
 
     return db.select()

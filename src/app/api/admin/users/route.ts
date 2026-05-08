@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { users, adminActivityLog } from "@/backend/db/schema";
-import { eq, desc, like, sql, and } from "drizzle-orm";
+import { eq, desc, like, sql, and, or } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
     try {
@@ -35,9 +35,15 @@ export async function GET(req: NextRequest) {
         const conditions = [];
         
         if (search) {
-            conditions.push(
-                sql`(${users.name} LIKE ${'%' + search + '%'} OR ${users.email} LIKE ${'%' + search + '%'} OR ${users.username} LIKE ${'%' + search + '%'})`
+            const searchPattern = `%${search}%`;
+            const searchCondition = or(
+                like(users.name, searchPattern),
+                like(users.email, searchPattern),
+                like(users.username, searchPattern)
             );
+            if (searchCondition) {
+                conditions.push(searchCondition);
+            }
         }
         
         if (tier) {

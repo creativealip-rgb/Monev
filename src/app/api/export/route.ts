@@ -32,8 +32,31 @@ const DELETE_ORDER = [
     "categories",
 ] as const;
 
-function safeIdentifier(identifier: string) {
-    if (!/^[a-zA-Z0-9_]+$/.test(identifier)) throw new Error("Invalid table name");
+// Whitelist of allowed tables for security
+const ALLOWED_TABLES = [
+    ...BACKUP_TABLES,
+    ...DELETE_ORDER,
+    "users",
+    "sessions",
+    "admin_activity_log",
+    "coupon_claims",
+    "coupons",
+    "password_reset_tokens",
+    "split_bill_members",
+    "bill_payments",
+] as const;
+
+type AllowedTable = typeof ALLOWED_TABLES[number];
+
+function safeIdentifier(identifier: string): string {
+    // First check if it's in our whitelist
+    if (!ALLOWED_TABLES.includes(identifier as AllowedTable)) {
+        throw new Error(`Table '${identifier}' is not allowed`);
+    }
+    // Additional validation for SQL identifier format
+    if (!/^[a-zA-Z0-9_]+$/.test(identifier)) {
+        throw new Error("Invalid table name format");
+    }
     return identifier;
 }
 
