@@ -260,12 +260,16 @@ export default function LandingPage() {
     const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
 
     useEffect(() => {
-        if (isApk) {
-            router.replace("/login");
+        // TWA/PWA standalone mode → skip landing, go to dashboard
+        const isStandalone =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+        if (isApk || isStandalone) {
+            router.replace("/dashboard");
         }
     }, [isApk, router]);
 
-    // Don't render anything while redirecting in APK mode to avoid flicker
+    // Don't render anything while redirecting in APK/TWA mode to avoid flicker
     if (isApk) return <div className="min-h-screen bg-slate-950" />;
 
     return (
