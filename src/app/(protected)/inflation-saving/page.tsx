@@ -38,7 +38,8 @@ export default function InflationSavingPage() {
 
     async function loadData() {
         try {
-            const res = await apiFetch("/api/goals");
+            const response = await apiFetch("/api/goals");
+            const res = await response.json();
             if (res.success) setGoals(res.data || []);
         } catch (e) {
             console.error(e);
