@@ -40,10 +40,12 @@ export default function IdleCashPage() {
 
     async function loadData() {
         try {
-            const [accountsRes, goalsRes] = await Promise.all([
+            const [accountsResponse, goalsResponse] = await Promise.all([
                 apiFetch("/api/accounts"),
                 apiFetch("/api/goals"),
             ]);
+            const accountsRes = await accountsResponse.json();
+            const goalsRes = await goalsResponse.json();
             if (accountsRes.success) setAccounts(accountsRes.data || []);
             if (goalsRes.success) setGoals(goalsRes.data || []);
         } catch (e) {

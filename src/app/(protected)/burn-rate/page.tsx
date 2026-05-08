@@ -29,7 +29,8 @@ export default function BurnRatePage() {
 
     async function loadData() {
         try {
-            const res = await apiFetch("/api/analytics?period=monthly");
+            const response = await apiFetch("/api/analytics?period=monthly");
+            const res = await response.json();
             if (res.success) setAnalytics(res.data);
         } catch (e) {
             console.error(e);
