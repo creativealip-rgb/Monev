@@ -90,9 +90,9 @@ const features = [
                 icon: TrendingUp,
                 title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
-                status: "coming",
+                status: "ready",
                 color: "amber",
-                href: "#"
+                href: "/investments"
             },
             {
                 id: 107,
@@ -220,9 +220,9 @@ const features = [
                 icon: Zap,
                 title: "Subscription Hunter",
                 desc: "Deteksi & tracking langganan",
-                status: "coming",
+                status: "ready",
                 color: "violet",
-                href: "#"
+                href: "/recurring"
             },
             {
                 id: 11,
