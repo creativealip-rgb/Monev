@@ -229,18 +229,18 @@ const features = [
                 icon: TrendingUp,
                 title: "Idle Cash Optimizer",
                 desc: "Saran investasi untuk uang nganggur",
-                status: "coming",
+                status: "ready",
                 color: "green",
-                href: "#"
+                href: "/idle-cash"
             },
             {
                 id: 12,
                 icon: Sparkles,
                 title: "Inflation-Adjusted Saving",
                 desc: "Sesuaikan target dengan inflasi",
-                status: "coming",
+                status: "ready",
                 color: "pink",
-                href: "#"
+                href: "/inflation-saving"
             },
         ]
     },
@@ -284,9 +284,9 @@ const features = [
                 icon: TrendingUp,
                 title: "Burn Rate Check",
                 desc: "Interogasi saldo tunai fisik",
-                status: "coming",
+                status: "ready",
                 color: "neutral",
-                href: "#"
+                href: "/burn-rate"
             },
         ]
     },
