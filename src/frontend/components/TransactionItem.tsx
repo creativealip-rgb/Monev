@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, PiggyBank, ArrowLeftRight, MoreHorizontal, Repeat, Gift, Home, Wifi, Smartphone, CircleDollarSign, type LucideIcon } from "lucide-react";
 import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { normalizeDateValue } from "@/frontend/lib/normalize-date";
@@ -88,9 +88,49 @@ const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradien
         gradient: "from-violet-500 to-purple-500"
     },
     "Lainnya": {
-        icon: CreditCard,
-        color: "bg-muted text-muted-foreground",
+        icon: MoreHorizontal,
+        color: "bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-400",
         gradient: "from-slate-500 to-slate-400"
+    },
+    "Tabungan": {
+        icon: PiggyBank,
+        color: "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400",
+        gradient: "from-sky-500 to-blue-500"
+    },
+    "Transfer": {
+        icon: ArrowLeftRight,
+        color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+        gradient: "from-indigo-500 to-violet-500"
+    },
+    "Top Up": {
+        icon: Smartphone,
+        color: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
+        gradient: "from-cyan-500 to-sky-500"
+    },
+    "Donasi": {
+        icon: Gift,
+        color: "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+        gradient: "from-rose-500 to-pink-500"
+    },
+    "Rumah Tangga": {
+        icon: Home,
+        color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+        gradient: "from-amber-500 to-yellow-500"
+    },
+    "Langganan": {
+        icon: Repeat,
+        color: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
+        gradient: "from-violet-500 to-purple-500"
+    },
+    "Internet & Telepon": {
+        icon: Wifi,
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+        gradient: "from-blue-500 to-cyan-500"
+    },
+    "Pemasukan Lainnya": {
+        icon: CircleDollarSign,
+        color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
+        gradient: "from-emerald-500 to-green-500"
     },
     Food: {
         icon: Coffee,
