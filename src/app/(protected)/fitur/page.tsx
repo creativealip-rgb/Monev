@@ -90,9 +90,9 @@ const features = [
                 icon: TrendingUp,
                 title: "Investasi",
                 desc: "Tracking portfolio dan rekomendasi investasi",
-                status: "ready",
+                status: "coming",
                 color: "amber",
-                href: "/investments"
+                href: "#"
             },
             {
                 id: 107,
