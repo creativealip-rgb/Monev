@@ -28,6 +28,11 @@ export const users = sqliteTable("users", {
     isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
     deletionRequestedAt: integer("deletion_requested_at", { mode: "timestamp" }),
+    // Onboarding V2 fields
+    onboardingVersion: text("onboarding_version").default("v1"),
+    onboardingPath: text("onboarding_path", { enum: ["quick", "complete"] }),
+    demoDataLoaded: integer("demo_data_loaded", { mode: "boolean" }).notNull().default(false),
+    demoDataScope: text("demo_data_scope", { enum: ["quick", "standard", "complete"] }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
@@ -381,15 +386,41 @@ export const streaks = sqliteTable("streaks", {
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+// Onboarding V2: Demo data templates
+export const demoDataTemplates = sqliteTable("demo_data_templates", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    scope: text("scope", { enum: ["quick", "standard", "complete"] }).notNull(),
+    durationDays: integer("duration_days").notNull(),
+    transactionCount: integer("transaction_count").notNull(),
+    templateData: text("template_data", { mode: "json" }).notNull(), // {accounts, transactions, budgets, bills, goals, recurring}
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+// Onboarding V2: Achievement definitions (global)
 export const achievements = sqliteTable("achievements", {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: integer("user_id").references(() => users.id).notNull(),
-    type: text("type").notNull(), // e.g., 'streak_7', 'budget_hero', 'wealth_master'
+    code: text("code").notNull().unique(), // 'onboarding_complete', 'demo_data_loaded', etc.
     name: text("name").notNull(),
-    description: text("description"),
-    icon: text("icon"),
-    unlockedAt: integer("unlocked_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    description: text("description").notNull(),
+    icon: text("icon").notNull(), // emoji or icon name
+    tier: text("tier", { enum: ["bronze", "silver", "gold", "platinum"] }).notNull(),
+    points: integer("points").notNull(),
+    category: text("category", { enum: ["onboarding", "transaction", "budget", "goal", "streak"] }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
+// Onboarding V2: User achievements (unlocked)
+export const userAchievements = sqliteTable("user_achievements", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    achievementId: integer("achievement_id").references(() => achievements.id).notNull(),
+    unlockedAt: integer("unlocked_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    progress: integer("progress").notNull().default(0), // for progressive achievements
+}, (table) => ({
+    userIdIdx: index("idx_user_achievements_user_id").on(table.userId),
+    achievementIdIdx: index("idx_user_achievements_achievement_id").on(table.achievementId),
+}));
 
 // Push subscriptions table (VAPID Web Push)
 export const pushSubscriptions = sqliteTable("push_subscriptions", {
@@ -505,7 +536,9 @@ export type InsertAdminActivityLog = typeof adminActivityLog.$inferInsert;
 export type InsertAiInsightsCache = typeof aiInsightsCache.$inferInsert;
 export type InsertAiAnomaliesCache = typeof aiAnomaliesCache.$inferInsert;
 export type InsertStreak = typeof streaks.$inferInsert;
+export type InsertDemoDataTemplate = typeof demoDataTemplates.$inferInsert;
 export type InsertAchievement = typeof achievements.$inferInsert;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
 export type InsertBillPayment = typeof billPayments.$inferInsert;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type InsertNotificationLog = typeof notificationLogs.$inferInsert;
@@ -533,8 +566,12 @@ export const insertCouponSchema = createInsertSchema(coupons);
 export const selectCouponSchema = createSelectSchema(coupons);
 export const insertStreakSchema = createInsertSchema(streaks);
 export const selectStreakSchema = createSelectSchema(streaks);
+export const insertDemoDataTemplateSchema = createInsertSchema(demoDataTemplates);
+export const selectDemoDataTemplateSchema = createSelectSchema(demoDataTemplates);
 export const insertAchievementSchema = createInsertSchema(achievements);
 export const selectAchievementSchema = createSelectSchema(achievements);
+export const insertUserAchievementSchema = createInsertSchema(userAchievements);
+export const selectUserAchievementSchema = createSelectSchema(userAchievements);
 export const insertBillPaymentSchema = createInsertSchema(billPayments);
 export const selectBillPaymentSchema = createSelectSchema(billPayments);
 export const insertSplitBillMemberSchema = createInsertSchema(splitBillMembers);
