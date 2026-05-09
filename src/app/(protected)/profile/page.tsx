@@ -148,7 +148,7 @@ export default function ProfilePage() {
     };
 
     const handleMenuClick = (id: string) => {
-        if (["account", "financial", "integrations", "security", "notifications", "categories", "export", "reports", "app_settings", "about"].includes(id)) {
+        if (["account", "financial", "integrations", "security", "notifications", "categories", "export", "reports", "app_settings", "about", "vocabulary"].includes(id)) {
             setActiveModal(id as any);
         }
     };
