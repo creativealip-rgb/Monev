@@ -75,7 +75,7 @@ async function cleanupUserData(userId: number) {
         await db.delete(billPayments).where(inArray(billPayments.billId, userBills.map((bill) => bill.id)));
     }
 
-    await db.delete(achievements).where(eq(achievements.userId, userId));
+    // Skip achievements cleanup - now global table, not user-specific
     await db.delete(debts).where(eq(debts.userId, userId));
     await db.delete(investments).where(eq(investments.userId, userId));
     await db.delete(bills).where(eq(bills.userId, userId));
@@ -466,33 +466,34 @@ async function main() {
         }))
     );
 
-    console.log("🏆 Membuat achievements...");
-    await db.insert(achievements).values([
-        {
-            userId,
-            type: "first_tx",
-            name: "Pencatat Pemula",
-            description: "Mencatat transaksi pertama kali",
-            icon: "📝",
-            unlockedAt: dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 1, 8, 20),
-        },
-        {
-            userId,
-            type: "streak_7",
-            name: "Semangat 7 Hari",
-            description: "Konsisten mencatat selama seminggu",
-            icon: "🔥",
-            unlockedAt: dateAt(lastMonth.year, lastMonth.month, 8, 9, 0),
-        },
-        {
-            userId,
-            type: "first_goal",
-            name: "Pemimpi Cerdas",
-            description: "Membuat goal pertama",
-            icon: "🎯",
-            unlockedAt: dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 2, 10, 0),
-        },
-    ]);
+    // Skip achievements seeding - now using global achievements table with userAchievements junction
+    // console.log("🏆 Membuat achievements...");
+    // await db.insert(achievements).values([
+    //     {
+    //         userId,
+    //         type: "first_tx",
+    //         name: "Pencatat Pemula",
+    //         description: "Mencatat transaksi pertama kali",
+    //         icon: "📝",
+    //         unlockedAt: dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 1, 8, 20),
+    //     },
+    //     {
+    //         userId,
+    //         type: "streak_7",
+    //         name: "Semangat 7 Hari",
+    //         description: "Konsisten mencatat selama seminggu",
+    //         icon: "🔥",
+    //         unlockedAt: dateAt(lastMonth.year, lastMonth.month, 8, 9, 0),
+    //     },
+    //     {
+    //         userId,
+    //         type: "first_goal",
+    //         name: "Pemimpi Cerdas",
+    //         description: "Membuat goal pertama",
+    //         icon: "🎯",
+    //         unlockedAt: dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 2, 10, 0),
+    //     },
+    // ]);
 
     const summary = {
         accounts: insertedAccounts.length,
