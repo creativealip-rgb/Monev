@@ -90,54 +90,54 @@ export function VocabularyManager() {
     const expenseWords = vocabulary.filter((v) => v.type === "expense");
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 pb-6">
             {/* Header */}
-            <div>
-                <h2 className="text-xl font-semibold">Kosakata Kustom</h2>
-                <p className="text-sm text-muted-foreground mt-1">
+            <div className="space-y-1">
+                <h2 className="text-lg font-semibold">Kosakata Kustom</h2>
+                <p className="text-xs text-muted-foreground leading-relaxed">
                     Tambahkan kata-kata yang sering kamu pakai supaya Monev AI lebih paham
                 </p>
             </div>
 
             {/* Add Form */}
-            <div className="glass-card p-4 space-y-3">
+            <div className="glass-card p-3 space-y-2.5">
                 <input
                     type="text"
                     placeholder="Contoh: makan, gajian, freelance"
                     value={newWord}
                     onChange={(e) => setNewWord(e.target.value)}
-                    className="input-modern w-full"
+                    className="input-modern w-full text-sm"
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                     <button
                         onClick={() => setNewType("expense")}
                         className={cn(
-                            "flex-1 py-2 rounded-lg border transition-colors",
+                            "flex-1 py-1.5 rounded-lg border transition-colors text-xs font-medium",
                             newType === "expense"
                                 ? "bg-red-500/20 border-red-500 text-red-500"
-                                : "border-border"
+                                : "border-border text-muted-foreground"
                         )}
                     >
-                        <TrendingDown className="w-4 h-4 inline mr-1" />
+                        <TrendingDown className="w-3.5 h-3.5 inline mr-1" />
                         Pengeluaran
                     </button>
                     <button
                         onClick={() => setNewType("income")}
                         className={cn(
-                            "flex-1 py-2 rounded-lg border transition-colors",
+                            "flex-1 py-1.5 rounded-lg border transition-colors text-xs font-medium",
                             newType === "income"
                                 ? "bg-green-500/20 border-green-500 text-green-500"
-                                : "border-border"
+                                : "border-border text-muted-foreground"
                         )}
                     >
-                        <TrendingUp className="w-4 h-4 inline mr-1" />
+                        <TrendingUp className="w-3.5 h-3.5 inline mr-1" />
                         Pemasukan
                     </button>
                 </div>
                 <select
                     value={newCategoryId || ""}
                     onChange={(e) => setNewCategoryId(e.target.value ? parseInt(e.target.value) : null)}
-                    className="input-modern w-full"
+                    className="input-modern w-full text-sm"
                 >
                     <option value="">Pilih Kategori (Opsional)</option>
                     {categories
@@ -151,46 +151,48 @@ export function VocabularyManager() {
                 <button
                     onClick={handleAdd}
                     disabled={loading || !newWord.trim()}
-                    className="btn-primary w-full"
+                    className="btn-primary w-full py-2 text-sm"
                 >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-1.5" />
                     Tambah Kosakata
                 </button>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
             </div>
 
             {/* Lists */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
                 {/* Expense Words */}
-                <div className="glass-card p-4">
-                    <h3 className="font-medium flex items-center gap-2 mb-3">
-                        <TrendingDown className="w-4 h-4 text-red-500" />
+                <div className="glass-card p-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-2">
+                        <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                         Pengeluaran ({expenseWords.length})
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {expenseWords.map((item) => (
                             <div
                                 key={item.id}
-                                className="flex items-center justify-between p-2 rounded-lg bg-background/50"
+                                className="flex items-center justify-between p-2 rounded-lg bg-background/50 hover:bg-background/70 transition-colors"
                             >
-                                <div className="flex-1">
-                                    <span className="text-sm font-medium">{item.word}</span>
-                                    {item.categoryName && (
-                                        <span className="text-xs text-muted-foreground ml-2">
-                                            → {item.categoryName}
-                                        </span>
-                                    )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-sm font-medium truncate">{item.word}</span>
+                                        {item.categoryName && (
+                                            <span className="text-xs text-muted-foreground truncate">
+                                                · {item.categoryName}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => handleDelete(item.id)}
-                                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                                    className="ml-2 text-muted-foreground hover:text-red-500 transition-colors flex-shrink-0"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                         ))}
                         {expenseWords.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">
+                            <p className="text-xs text-muted-foreground text-center py-3">
                                 Belum ada kosakata
                             </p>
                         )}
@@ -198,35 +200,37 @@ export function VocabularyManager() {
                 </div>
 
                 {/* Income Words */}
-                <div className="glass-card p-4">
-                    <h3 className="font-medium flex items-center gap-2 mb-3">
-                        <TrendingUp className="w-4 h-4 text-green-500" />
+                <div className="glass-card p-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-2">
+                        <TrendingUp className="w-3.5 h-3.5 text-green-500" />
                         Pemasukan ({incomeWords.length})
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {incomeWords.map((item) => (
                             <div
                                 key={item.id}
-                                className="flex items-center justify-between p-2 rounded-lg bg-background/50"
+                                className="flex items-center justify-between p-2 rounded-lg bg-background/50 hover:bg-background/70 transition-colors"
                             >
-                                <div className="flex-1">
-                                    <span className="text-sm font-medium">{item.word}</span>
-                                    {item.categoryName && (
-                                        <span className="text-xs text-muted-foreground ml-2">
-                                            → {item.categoryName}
-                                        </span>
-                                    )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-sm font-medium truncate">{item.word}</span>
+                                        {item.categoryName && (
+                                            <span className="text-xs text-muted-foreground truncate">
+                                                · {item.categoryName}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => handleDelete(item.id)}
-                                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                                    className="ml-2 text-muted-foreground hover:text-red-500 transition-colors flex-shrink-0"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                         ))}
                         {incomeWords.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">
+                            <p className="text-xs text-muted-foreground text-center py-3">
                                 Belum ada kosakata
                             </p>
                         )}
