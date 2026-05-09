@@ -262,7 +262,7 @@ function OnboardingContent() {
                             updateFormData(field as keyof typeof formData, value);
                             setMonthlyIncome(value);
                         }}
-                        onFinish={() => handleNext()}
+                        onFinish={async () => handleNext()}
                         onPrev={handlePrev}
                     />
                 )}

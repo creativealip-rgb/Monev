@@ -1,5 +1,5 @@
 import { getDb } from "../index";
-import { streaks, achievements } from "../schema";
+import { streaks, achievements, userAchievements } from "../schema";
 import type { Streak, Achievement } from "../schema";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -80,21 +80,23 @@ export async function updateUserStreak(userId: number): Promise<Streak> {
 
 export async function getUserAchievements(userId: number): Promise<Achievement[]> {
     const db = getDb();
-    return db.select().from(achievements).where(eq(achievements.userId, userId)).orderBy(desc(achievements.unlockedAt)).all();
+    return db.select().from(userAchievements).where(eq(userAchievements.userId, userId)).orderBy(desc(userAchievements.unlockedAt)).all();
 }
 
-export async function unlockAchievement(userId: number, type: string, name: string, description: string) {
+export async function unlockAchievement(userId: number, achievementCode: string) {
     const db = getDb();
 
+    // Find achievement by code
+    const achievement = db.select().from(achievements).where(eq(achievements.code, achievementCode)).get();
+    if (!achievement) return;
+
     // Check if already unlocked
-    const existing = db.select().from(achievements).where(and(eq(achievements.userId, userId), eq(achievements.type, type))).get();
+    const existing = db.select().from(userAchievements).where(and(eq(userAchievements.userId, userId), eq(userAchievements.achievementId, achievement.id))).get();
     if (existing) return;
 
-    return db.insert(achievements).values({
+    return db.insert(userAchievements).values({
         userId,
-        type,
-        name,
-        description,
+        achievementId: achievement.id,
         unlockedAt: new Date()
     }).run();
 }
