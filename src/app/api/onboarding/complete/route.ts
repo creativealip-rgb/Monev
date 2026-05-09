@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       .set({
         onboardingVersion: "v2",
         onboardingPath: onboardingPath || "quick",
-        demoDataLoaded: demoDataScope ? 1 : 0,
+        demoDataLoaded: demoDataScope ? true : false,
         demoDataScope: demoDataScope || null,
       })
       .where(eq(users.id, parseInt(session.user.id)));
