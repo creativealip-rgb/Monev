@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/backend/db";
-import { users, transactions, budgets, goals, categories, accounts, bills, userSettings, chatHistory, investments, recurringTransactions, streaks, achievements, sessions } from "@/backend/db/schema";
+import { users, transactions, budgets, goals, categories, accounts, bills, userSettings, chatHistory, investments, recurringTransactions, streaks, userAchievements, sessions } from "@/backend/db/schema";
 import { eq, and, lt, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
             await db.delete(investments).where(eq(investments.userId, userId));
             await db.delete(recurringTransactions).where(eq(recurringTransactions.userId, userId));
             await db.delete(streaks).where(eq(streaks.userId, userId));
-            await db.delete(achievements).where(eq(achievements.userId, userId));
+            await db.delete(userAchievements).where(eq(userAchievements.userId, userId));
             await db.delete(sessions).where(eq(sessions.userId, userId));
 
             // Finally delete the user
