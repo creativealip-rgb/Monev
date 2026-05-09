@@ -60,9 +60,9 @@ export async function updateUserStreak(userId: number): Promise<Streak> {
             .returning().get();
 
         // Check for streak milestones
-        if (newStreak === 3) await unlockAchievement(userId, "streak_3", "Semangat 3 Hari", "Catat transaksi 3 hari berturut-turut! 🔥");
-        if (newStreak === 7) await unlockAchievement(userId, "streak_7", "Petarung Mingguan", "7 hari tanpa putus! Hebat Bos! 🛡️");
-        if (newStreak === 30) await unlockAchievement(userId, "streak_30", "Legenda Finansial", "Sebulan penuh konsistensi! Sultan bangga. 👑");
+        if (newStreak === 3) await unlockAchievement(userId, "streak_3");
+        if (newStreak === 7) await unlockAchievement(userId, "streak_7");
+        if (newStreak === 30) await unlockAchievement(userId, "streak_30");
 
         return updated;
     } else {
@@ -78,9 +78,28 @@ export async function updateUserStreak(userId: number): Promise<Streak> {
     }
 }
 
-export async function getUserAchievements(userId: number): Promise<Achievement[]> {
+export async function getUserAchievements(userId: number) {
     const db = getDb();
-    return db.select().from(userAchievements).where(eq(userAchievements.userId, userId)).orderBy(desc(userAchievements.unlockedAt)).all();
+    // Return userAchievements with joined achievement data
+    const results = db
+        .select({
+            id: achievements.id,
+            code: achievements.code,
+            name: achievements.name,
+            description: achievements.description,
+            icon: achievements.icon,
+            tier: achievements.tier,
+            points: achievements.points,
+            category: achievements.category,
+            unlockedAt: userAchievements.unlockedAt,
+        })
+        .from(userAchievements)
+        .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+        .where(eq(userAchievements.userId, userId))
+        .orderBy(desc(userAchievements.unlockedAt))
+        .all();
+    
+    return results;
 }
 
 export async function unlockAchievement(userId: number, achievementCode: string) {

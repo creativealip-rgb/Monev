@@ -60,7 +60,7 @@ export async function createInvestment(userId: number, data: {
     }).returning();
 
     if (result && result[0]) {
-        await unlockAchievement(userId, "first_invest", "Investor Muda", "Melakukan investasi pertama kali. 📈");
+        await unlockAchievement(userId, "first_invest");
     }
 
     return result[0];

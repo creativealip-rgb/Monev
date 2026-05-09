@@ -223,7 +223,7 @@ export async function createTransaction(userId: number, data: {
     // Trigger Gamification: Update Streak & First Transaction
     if (result) {
         await updateUserStreak(userId);
-        await unlockAchievement(userId, "first_tx", "Pencatat Pemula", "Mencatat transaksi pertama kali! 📝");
+        await unlockAchievement(userId, "first_tx");
     }
 
     return result;

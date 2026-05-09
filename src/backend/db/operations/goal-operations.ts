@@ -36,7 +36,7 @@ export async function createGoal(userId: number, data: {
     }).returning().get();
 
     if (result) {
-        await unlockAchievement(userId, "first_goal", "Pemimpi Cerdas", "Membuat target tabungan pertama. 🎯");
+        await unlockAchievement(userId, "first_goal");
     }
 
     return result;
@@ -65,7 +65,7 @@ export async function updateGoalProgress(userId: number, id: number, amount: num
         .get();
 
     if (updated && updated.currentAmount >= updated.targetAmount) {
-        await unlockAchievement(userId, "goal_reached", "Sang Pemenang", `Berhasil mencapai target: ${updated.name}! 🏆`);
+        await unlockAchievement(userId, "goal_reached");
     }
 
     return updated;
