@@ -22,6 +22,20 @@
       "when": 1773300714471,
       "tag": "0002_pink_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778324847308,
+      "tag": "0003_narrow_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1778326667337,
+      "tag": "0004_minor_anita_blake",
+      "breakpoints": true
     }
   ]
 }

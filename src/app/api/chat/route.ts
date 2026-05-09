@@ -11,11 +11,13 @@ import {
     getBills, getBillById, createBill, updateBill, deleteBill, toggleBillPaid,
     getDailyAICount, logAIChat, getUserSettings
 } from "@/backend/db/operations";
+import { getUserVocabulary } from "@/backend/db/operations/vocabulary";
 import { getAccounts } from "@/backend/db/account-operations";
 import { logger } from "@/lib/logger";
 import { askFinanceAgent, getPsychologicalImpact } from "@/lib/ai";
 import { canUseAI, UserTier } from "@/lib/tier-gate";
 import { parseLocalChatIntent } from "@/lib/chat/local-intent";
+import { getDb } from "@/backend/db";
 
 const CATEGORY_META: Record<string, { icon: string; color: string }> = {
     Pemasukan: { icon: "TrendingUp", color: "#10b981" },
@@ -384,7 +386,12 @@ export async function POST(req: NextRequest) {
         const allAccounts = needsFullContext ? await getAccounts(userId) : [];
         const totalAccounts = allAccounts.reduce((sum, account) => account.type === "credit_card" ? sum - account.balance : sum + account.balance, 0);
         const totalInvestments = allInvestments.reduce((sum, investment) => sum + (investment.quantity * investment.currentPrice), 0);
-        logger.info(`[ChatAPI] Context mode: ${needsFullContext ? "full" : "lite"}`);
+        
+        // Fetch user vocabulary
+        const db = getDb();
+        const vocabulary = await getUserVocabulary(db, userId);
+        
+        logger.info(`[ChatAPI] Context mode: ${needsFullContext ? "full" : "lite"}, vocabulary: ${vocabulary.length} words`);
 
         const goalsContext = allGoals.map(g => ({
             id: g.id,
@@ -456,6 +463,10 @@ export async function POST(req: NextRequest) {
                 dueDate: b.dueDate,
                 isPaid: b.isPaid,
                 frequency: b.frequency
+            })),
+            vocabulary: vocabulary.map(v => ({
+                word: v.word,
+                type: v.type
             }))
         }, history, imageBase64);
 

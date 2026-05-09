@@ -15,8 +15,9 @@ import { FinancialModal } from "./FinancialModal";
 import { ReportsModal } from "./ReportsModal";
 import { AppSettingsModal } from "./AppSettingsModal";
 import { AboutModal } from "./AboutModal";
+import { VocabularyModal } from "./VocabularyModal";
 
-type ModalType = "account" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "financial" | "reports" | "app_settings" | "about";
+type ModalType = "account" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "financial" | "reports" | "app_settings" | "about" | "vocabulary";
 
 interface ProfileModalsProps {
     activeModal: ModalType | null;
@@ -83,6 +84,7 @@ export function ProfileModals({
             case "categories": return "Kategori Custom";
             case "app_settings": return "Pengaturan Aplikasi";
             case "about": return "Tentang Monev";
+            case "vocabulary": return "Kosakata AI";
             default: return "";
         }
     };
@@ -165,6 +167,10 @@ export function ProfileModals({
             case "about":
                 return (
                     <AboutModal />
+                );
+            case "vocabulary":
+                return (
+                    <VocabularyModal />
                 );
             default:
                 return null;

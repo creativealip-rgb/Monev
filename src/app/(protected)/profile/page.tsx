@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare, FileText, Info } from "lucide-react";
+import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare, FileText, Info, BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -44,6 +44,7 @@ const menuGroups = [
             { id: "financial", icon: Wallet, label: "profile.financialConfig", color: "emerald", hasArrow: true },
             { id: "reports", icon: FileText, label: "Laporan Keuangan", color: "sky", hasArrow: true, rawLabel: true },
             { id: "categories", icon: Tag, label: "profile.customCategories", color: "pink", hasArrow: true },
+            { id: "vocabulary", icon: BookOpen, label: "Kosakata AI", color: "violet", hasArrow: true, rawLabel: true },
         ]
     },
     {
@@ -80,7 +81,7 @@ export default function ProfilePage() {
     const { isStealthMode, toggleStealth, reauthenticate, deleteLocalData } = useSecurity();
     const toast = useToast();
 
-    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "reports" | "app_settings" | "about" | null>(null);
+    const [activeModal, setActiveModal] = useState<"account" | "financial" | "integrations" | "security" | "notifications" | "collection" | "categories" | "export" | "reports" | "app_settings" | "about" | "vocabulary" | null>(null);
 
     const [formData, setFormData] = useState({
         firstName: "",

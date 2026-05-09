@@ -113,6 +113,10 @@ export interface FinancialContext {
         isPaid: boolean;
         frequency: string;
     }>;
+    vocabulary?: Array<{
+        word: string;
+        type: "income" | "expense";
+    }>;
     userName?: string;
 }
 

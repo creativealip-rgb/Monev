@@ -1,0 +1,1 @@
+ALTER TABLE `user_vocabulary` ADD `category_id` integer REFERENCES categories(id);

@@ -427,6 +427,18 @@ export const notificationLogs = sqliteTable("notification_logs", {
     statusIdx: index("idx_notification_logs_status").on(table.status),
 }));
 
+// User vocabulary table (custom keywords for AI chat)
+export const userVocabulary = sqliteTable("user_vocabulary", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    word: text("word").notNull(),
+    type: text("type", { enum: ["income", "expense"] }).notNull(),
+    categoryId: integer("category_id").references(() => categories.id),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_user_vocabulary_user_id").on(table.userId),
+}));
+
 // Usage tracking table
 export const usageTracking = sqliteTable("usage_tracking", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -533,3 +545,5 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 export const selectPushSubscriptionSchema = createSelectSchema(pushSubscriptions);
 export const insertNotificationLogSchema = createInsertSchema(notificationLogs);
 export const selectNotificationLogSchema = createSelectSchema(notificationLogs);
+export const insertUserVocabularySchema = createInsertSchema(userVocabulary);
+export const selectUserVocabularySchema = createSelectSchema(userVocabulary);
