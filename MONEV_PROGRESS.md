@@ -166,4 +166,12 @@ Branch: `twa-playstore`
    - `npm run db:migrate` pass dan apply migration `0011_split_bill_2.sql`; targeted ESLint split bill/debts files + onboarding spec pass dengan warning existing `no-explicit-any` di debts page.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (2.0m).
 
-10. Next: lanjut Phase 3.3 Social/Community Goals atau hardening Split Bill 2.0 detail authenticated + reminder status.
+10. **Phase 3.3 Advanced Analytics - Spending Heatmap foundation**
+   - Tambah API `GET /api/analytics/heatmap` untuk agregasi pengeluaran harian per bulan berdasarkan transaksi user.
+   - Tambah komponen `SpendingHeatmapPanel` di `src/app/(protected)/analytics/components/SpendingHeatmap.tsx` dengan ringkasan total, hari aktif, tertinggi, dan grid intensitas harian.
+   - Tab Analytics sekarang punya tab `Heatmap` yang membuka visualisasi baru tanpa mengganggu chart trends existing.
+   - E2E smoke menavigasi ke `/analytics?tab=heatmap` dan memvalidasi panel `Pola pengeluaran harian` tampil.
+   - Targeted ESLint pass untuk heatmap API/UI/spec dengan warning existing di analytics page.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.1m).
+
+11. Next: lanjut Phase 3.3 lanjutan untuk cashflow forecast/category anomaly atau Phase 3.4 Personalization Engine.

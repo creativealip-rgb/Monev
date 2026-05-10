@@ -26,6 +26,7 @@ import {
     preloadFinancialMapChart
 } from "./components/FinancialMap";
 import { AnalyticsTransactionsModal } from "./components/AnalyticsTransactionsModal";
+import { SpendingHeatmapPanel } from "./components/SpendingHeatmap";
 
 // Types
 import type {
@@ -81,6 +82,7 @@ export default function AnalyticsPage() {
 
     const tabs = useMemo(() => [
         { id: "overview", label: t("analytics.overview") },
+        { id: "heatmap", label: "Heatmap", locked: false },
         { id: "map", label: t("analytics.map"), locked: false },
         { id: "trends", label: t("analytics.trends"), locked: !canSeeFullAnalytics },
         { id: "insights", label: t("analytics.insights"), locked: !canSeeFullAnalytics }
@@ -473,6 +475,9 @@ export default function AnalyticsPage() {
                         onOpenDrilldown={setDrilldownFilter}
                         baseFilter={sharedDrilldownFilter}
                     />
+                )}
+                {activeTab === "heatmap" && (
+                    <SpendingHeatmapPanel month={currentDate.getMonth() + 1} year={currentDate.getFullYear()} />
                 )}
                 {activeTab === "map" && (
                     <motion.div variants={itemVariants}>
