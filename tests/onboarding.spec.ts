@@ -229,6 +229,53 @@ test("login then complete account onboarding persists opening balance to account
     const statsAfterQuickAdd = await afterQuickAdd.jsonValue() as { expense: number };
     expect(statsAfterQuickAdd.expense).toBeGreaterThanOrEqual(beforeExpense + 33000);
 
+    const beforeSync = statsAfterQuickAdd.expense;
+    const syncTransactionResponse = await page.evaluate(async ({ accountId, categoryId }) => {
+        const response = await fetch("/api/sync/process", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                mutations: [{
+                    clientMutationId: `offline-tx-${Date.now()}`,
+                    entityType: "transaction",
+                    operation: "create",
+                    payload: {
+                        amount: 41000,
+                        description: "Offline Sync Test",
+                        merchantName: "Offline Sync Test",
+                        categoryId,
+                        accountId,
+                        type: "expense",
+                        paymentMethod: "cash",
+                        date: new Date().toISOString(),
+                    },
+                }],
+            }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    }, { accountId: createShortcutResponse.account.id, categoryId: createShortcutResponse.category.id });
+    expect(syncTransactionResponse.success, JSON.stringify(syncTransactionResponse)).toBeTruthy();
+    expect(syncTransactionResponse.data.processed).toBeGreaterThanOrEqual(1);
+
+    const afterSync = await page.waitForFunction(async (expenseBefore) => {
+        const now = new Date();
+        const response = await fetch(`/api/stats?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+        const json = await response.json();
+        if (!json.success) return null;
+        return json.data.expense >= expenseBefore + 41000 ? json.data : null;
+    }, beforeSync, { timeout: 30000 });
+    const statsAfterSync = await afterSync.jsonValue() as { expense: number };
+    expect(statsAfterSync.expense).toBeGreaterThanOrEqual(beforeSync + 41000);
+
+    const syncStatusResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/sync/status");
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(syncStatusResponse.success, JSON.stringify(syncStatusResponse)).toBeTruthy();
+    expect(syncStatusResponse.data.synced).toBeGreaterThanOrEqual(1);
+
     const recurringSuggestionsResponse = await page.evaluate(async () => {
         const response = await fetch("/api/recurring/suggestions");
         const json = await response.json();

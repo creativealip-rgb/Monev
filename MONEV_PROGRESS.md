@@ -140,6 +140,9 @@ Branch: `twa-playstore`
    - Tambah operasi sync queue/status/process/resolve conflict di `src/backend/db/operations/sync-operations.ts`.
    - Tambah API `GET /api/sync/status`, `POST /api/sync/process`, dan `POST /api/sync/resolve-conflict`.
    - Tambah UI `SyncStatusBadge` dan placeholder `ConflictResolutionModal`, dipasang di `ClientLayout`.
-   - Targeted ESLint pass untuk migration runner, sync API/operations, dan UI sync components.
+   - `POST /api/sync/process` sekarang memproses mutation `transaction` untuk operasi `create`, `update`, dan `delete` lewat transaction operations existing.
+   - E2E sync transaction pass: enqueue offline expense via `/api/sync/process`, expense stats naik, dan `/api/sync/status` mencatat synced mutation.
+   - Targeted ESLint pass untuk migration runner, sync API/operations, UI sync components, dan onboarding E2E spec.
+   - Full regression pass: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
 
-8. Next: full onboarding E2E regression lalu commit/push Phase 2.3 slice.
+8. Next: Phase 3 sesuai improvement plan atau deepen conflict resolution real UI.
