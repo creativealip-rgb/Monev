@@ -347,6 +347,10 @@ test("login then complete account onboarding persists opening balance to account
     await expect(page.getByText("Monev Split Bill")).toBeVisible({ timeout: 30000 });
     await expect(page.getByText("Dinner Split E2E")).toBeVisible();
     await expect(page.getByText("Rp 35.000").first()).toBeVisible();
+
+    await page.goto("/debts", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("split-bill-v2-list")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText("Dinner Split E2E").first()).toBeVisible();
     await page.goto("/dashboard", { waitUntil: "networkidle" });
 
     const recurringSuggestionsResponse = await page.evaluate(async () => {

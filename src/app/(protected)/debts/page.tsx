@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-    ArrowLeft, Plus, Users, TrendingDown, TrendingUp, Wallet
+    ArrowLeft, Plus, Users, TrendingDown, TrendingUp, Wallet, ExternalLink, Copy
 } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -15,6 +15,15 @@ import { Debt } from "./types";
 import { DebtCard, AddDebtSheet, PartialPaymentSheet } from "./components";
 import { SplitBillGroupCard } from "./components/SplitBillGroupCard";
 
+type SplitBillV2 = {
+    id: number;
+    publicId: string;
+    title: string;
+    totalAmount: number;
+    status: "pending" | "partial" | "completed" | string;
+    createdAt: string | Date;
+};
+
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.07 } }
@@ -22,6 +31,7 @@ const containerVariants = {
 
 export default function DebtsPage() {
     const [debts, setDebts] = useState<Debt[]>([]);
+    const [splitBillsV2, setSplitBillsV2] = useState<SplitBillV2[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [showAddSheet, setShowAddSheet] = useState(false);
@@ -41,12 +51,17 @@ export default function DebtsPage() {
         setLoading(true);
         setLoadError(null);
         try {
-            const res = await apiFetch("/api/debts");
+            const [res, splitRes] = await Promise.all([
+                apiFetch("/api/debts"),
+                apiFetch("/api/split-bills"),
+            ]);
             const data = await res.json();
+            const splitData = await splitRes.json();
             if (!data.success) {
                 throw new Error(data.error || "Gagal memuat hutang");
             }
             setDebts(data.data || []);
+            setSplitBillsV2(splitData.success ? splitData.data || [] : []);
         } catch (error) {
             console.error("Error loading debts:", error);
             setLoadError(error instanceof Error ? error.message : "Gagal memuat hutang");
@@ -139,6 +154,12 @@ export default function DebtsPage() {
         await loadDebts();
     };
 
+    const handleCopySplitBillLink = async (publicId: string) => {
+        const origin = window.location.origin;
+        await navigator.clipboard.writeText(`${origin}/split-bills/${publicId}`);
+        toast.success("Link disalin", "Bagikan ke peserta split bill");
+    };
+
     const handleDelete = (id: number) => {
         if (deletingId) return;
         setConfirmDeleteId(id);
@@ -171,6 +192,8 @@ export default function DebtsPage() {
     const totalOwe = oweUnpaid.reduce((s, d) => s + d.amount, 0);
     const totalOwed = owedUnpaid.reduce((s, d) => s + d.amount, 0);
     const netBalance = totalOwed - totalOwe;
+    const openSplitBillsV2 = splitBillsV2.filter(item => item.status !== "completed");
+    const openSplitBillTotalV2 = openSplitBillsV2.reduce((sum, item) => sum + item.totalAmount, 0);
 
     // Group split bills
     const splitBillsMap = new Map<string, Debt[]>();
@@ -285,6 +308,59 @@ export default function DebtsPage() {
                         </p>
                     </div>
                 </motion.div>
+
+                {openSplitBillsV2.length > 0 && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-[1.75rem] border border-cyan-100 bg-gradient-to-br from-white to-cyan-50/80 p-4 shadow-sm dark:border-cyan-900/40 dark:from-slate-900 dark:to-cyan-950/20"
+                    >
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-600 dark:text-cyan-300">Split Bill 2.0</p>
+                                <h2 className="text-lg font-black text-foreground">Tagihan aktif</h2>
+                                <p className="text-xs font-semibold text-muted-foreground">
+                                    {openSplitBillsV2.length} split bill · {formatCurrency(openSplitBillTotalV2)} total
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500 text-white shadow-lg shadow-cyan-500/25">
+                                <Users size={20} />
+                            </div>
+                        </div>
+                        <div className="space-y-2" data-testid="split-bill-v2-list">
+                            {openSplitBillsV2.slice(0, 3).map(item => (
+                                <div key={item.id} className="rounded-2xl bg-white/90 p-3 shadow-sm ring-1 ring-cyan-100 dark:bg-slate-900/80 dark:ring-cyan-900/40">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-black text-foreground">{item.title}</p>
+                                            <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
+                                                Status: {item.status === "partial" ? "Sebagian bayar" : item.status === "pending" ? "Menunggu bayar" : item.status}
+                                            </p>
+                                        </div>
+                                        <p className="shrink-0 text-sm font-black text-cyan-700 tabular-nums dark:text-cyan-300">
+                                            {formatCurrency(item.totalAmount)}
+                                        </p>
+                                    </div>
+                                    <div className="mt-3 flex gap-2">
+                                        <Link
+                                            href={`/split-bills/${item.publicId}`}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-black text-white dark:bg-white dark:text-slate-900"
+                                        >
+                                            <ExternalLink size={14} /> Buka
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => { void handleCopySplitBillLink(item.publicId); }}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-3 py-2 text-xs font-black text-white shadow-sm shadow-cyan-500/20"
+                                        >
+                                            <Copy size={14} /> Salin Link
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.section>
+                )}
 
                 {/* Tabs */}
                 <div className="space-y-2">
