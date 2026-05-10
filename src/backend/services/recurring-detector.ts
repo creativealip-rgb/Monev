@@ -1,4 +1,4 @@
-import { getTransactions } from "@/backend/db/operations";
+import { getRecurringSuggestionStateMap, getTransactions } from "@/backend/db/operations";
 import type { Transaction } from "@/backend/db/schema";
 
 export type RecurringPattern = {
@@ -89,5 +89,10 @@ export async function detectRecurringPatterns(userId: number): Promise<Recurring
         });
     }
 
-    return patterns.sort((a, b) => b.confidence - a.confidence).slice(0, 5);
+    const stateMap = await getRecurringSuggestionStateMap(userId, patterns.map(pattern => pattern.key));
+
+    return patterns
+        .filter(pattern => !stateMap.has(pattern.key))
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, 5);
 }

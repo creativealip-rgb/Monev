@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, CheckCircle2, RefreshCw, Sparkles } from "lucide-react";
+import { CalendarClock, CheckCircle2, RefreshCw, Sparkles, X } from "lucide-react";
 import { formatCurrency } from "@/frontend/lib/utils";
 
 type RecurringPattern = {
@@ -58,6 +58,7 @@ export function RecurringSuggestionsCard() {
                     categoryId: pattern.categoryId,
                     frequency: pattern.frequency,
                     nextRunAt: pattern.nextRunAt,
+                    patternKey: pattern.key,
                 }),
             });
             const json = await response.json();
@@ -66,6 +67,26 @@ export function RecurringSuggestionsCard() {
             setMessage("Automasi rutin berhasil dibuat.");
         } catch (error) {
             setMessage(error instanceof Error ? error.message : "Gagal membuat automasi rutin.");
+        } finally {
+            setAcceptingKey(null);
+        }
+    };
+
+    const dismissPattern = async (pattern: RecurringPattern) => {
+        setAcceptingKey(pattern.key);
+        setMessage(null);
+        try {
+            const response = await fetch("/api/recurring/dismiss-suggestion", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ patternKey: pattern.key }),
+            });
+            const json = await response.json();
+            if (!json.success) throw new Error(json.error || "Gagal menyembunyikan rekomendasi");
+            setPatterns((current) => current.filter((item) => item.key !== pattern.key));
+            setMessage("Rekomendasi disembunyikan.");
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : "Gagal menyembunyikan rekomendasi.");
         } finally {
             setAcceptingKey(null);
         }
@@ -127,14 +148,26 @@ export function RecurringSuggestionsCard() {
                                         {Math.round(pattern.confidence * 100)}%
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => acceptPattern(pattern)}
-                                    disabled={acceptingKey === pattern.key}
-                                    className="mt-3 w-full rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
-                                >
-                                    {acceptingKey === pattern.key ? "Menyimpan..." : "Jadikan transaksi rutin"}
-                                </button>
+                                <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => acceptPattern(pattern)}
+                                        disabled={acceptingKey === pattern.key}
+                                        className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                                    >
+                                        {acceptingKey === pattern.key ? "Menyimpan..." : "Jadikan transaksi rutin"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => dismissPattern(pattern)}
+                                        disabled={acceptingKey === pattern.key}
+                                        className="rounded-xl border border-slate-200 px-3 py-2 text-slate-500 transition hover:bg-white disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
+                                        aria-label="Sembunyikan rekomendasi"
+                                        title="Sembunyikan"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { createRecurringTransaction } from "@/backend/db/operations";
+import { createRecurringTransaction, upsertRecurringSuggestionState } from "@/backend/db/operations";
 
 export async function POST(request: NextRequest) {
     try {
@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Valid description, amount, and nextRunAt are required" }, { status: 400 });
         }
 
-        const data = await createRecurringTransaction(parseInt(session.user.id, 10), {
+        const userId = parseInt(session.user.id, 10);
+        const data = await createRecurringTransaction(userId, {
             amount,
             description: body.description,
             categoryId,
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
             frequency,
             nextRunAt,
         });
+
+        if (body.patternKey) {
+            await upsertRecurringSuggestionState(userId, String(body.patternKey), "accepted");
+        }
 
         return NextResponse.json({ success: true, data });
     } catch (error) {

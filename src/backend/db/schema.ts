@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const categories = sqliteTable("categories", {
@@ -377,6 +377,17 @@ export const recurringTransactions = sqliteTable("recurring_transactions", {
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
+export const recurringSuggestionStates = sqliteTable("recurring_suggestion_states", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    patternKey: text("pattern_key").notNull(),
+    status: text("status", { enum: ["dismissed", "accepted"] }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userPatternIdx: uniqueIndex("idx_recurring_suggestion_states_user_pattern").on(table.userId, table.patternKey),
+}));
 
 export const streaks = sqliteTable("streaks", {
     id: integer("id").primaryKey({ autoIncrement: true }),

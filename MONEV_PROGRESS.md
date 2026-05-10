@@ -125,7 +125,11 @@ Branch: `twa-playstore`
    - Tambah detector pola transaksi rutin 180 hari terakhir di `src/backend/services/recurring-detector.ts`.
    - Tambah operasi recurring basic di `src/backend/db/operations/recurring-operations.ts`.
    - Tambah API `/api/recurring/suggestions` dan `/api/recurring/from-pattern`.
-   - Tambah dashboard card `RecurringSuggestionsCard` untuk menampilkan rekomendasi dan accept menjadi transaksi rutin.
+   - Dashboard card `RecurringSuggestionsCard` menampilkan saran dan bisa membuat recurring dari pattern.
+   - Tambah `recurring_suggestion_states` + migration `drizzle/0008_recurring_suggestion_states.sql` untuk status `accepted`/`dismissed`.
+   - `GET /api/recurring/suggestions` otomatis dedupe suggestion yang sudah accepted/dismissed.
+   - `POST /api/recurring/from-pattern` sekarang menandai pattern sebagai `accepted`.
+   - Tambah `POST /api/recurring/dismiss-suggestion` dan tombol sembunyikan di widget.
    - Targeted ESLint pass untuk file recurring API/service/widget.
    - E2E smoke pass: onboarding regression + Quick Add + `/api/recurring/suggestions` success array.
 
