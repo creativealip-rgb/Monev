@@ -179,16 +179,30 @@ export default function LoginPage() {
                 redirect: false,
             });
 
-            if (result?.error) {
+            if (!result || result.error) {
                 setErrors({ general: "Email atau password salah" });
                 setShake(true);
                 setTimeout(() => setShake(false), 500);
             } else {
-                router.push("/dashboard");
+                try {
+                    const profileRes = await fetch("/api/profile", { cache: "no-store" });
+                    const profileJson = await profileRes.json();
+                    const hasCompletedOnboarding = Boolean(profileJson?.data?.onboarding_version);
+
+                    router.push(hasCompletedOnboarding ? "/dashboard" : "/onboarding");
+                } catch {
+                    // Fallback to dashboard if profile check fails.
+                    router.push("/dashboard");
+                }
                 router.refresh();
             }
-        } catch {
-            setErrors({ general: "Login gagal. Coba lagi sebentar lagi." });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "";
+            if (message.includes("Unexpected end of JSON input") || message.includes("AuthError")) {
+                setErrors({ general: "Login gagal karena sesi tidak valid. Refresh halaman lalu coba lagi." });
+            } else {
+                setErrors({ general: "Login gagal. Coba lagi sebentar lagi." });
+            }
             setShake(true);
             setTimeout(() => setShake(false), 500);
         } finally {
@@ -316,6 +330,8 @@ export default function LoginPage() {
                                 <input
                                     type="checkbox"
                                     name="remember"
+                                    defaultChecked={false}
+                                    suppressHydrationWarning
                                     className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/20 cursor-pointer"
                                 />
                             </span>

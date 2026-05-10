@@ -12,6 +12,21 @@ export interface OnboardingFormData {
     pin: string;
     notifications: boolean;
     initialBalance: number;
+    monthlyIncome: number;
+    budgetRecommendations?: BudgetRecommendation[];
+    accounts?: OnboardingAccount[];
+}
+
+export interface BudgetRecommendation {
+    category: string;
+    amount: number;
+    percentage: number;
+}
+
+export interface OnboardingAccount {
+    name: string;
+    type: "bank" | "ewallet" | "cash";
+    balance: number;
 }
 
 export interface OnboardingState {

@@ -74,6 +74,7 @@ export async function GET() {
                     id: settings.id,
                     userId: settings.userId,
                     hourlyRate: settings.hourlyRate,
+                    monthlyIncome: settings.monthlyIncome,
                     primaryGoalId: settings.primaryGoalId,
                     isAppLockEnabled: settings.isAppLockEnabled,
                     isBiometricEnabled: settings.isBiometricEnabled,

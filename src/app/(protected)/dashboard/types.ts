@@ -19,6 +19,7 @@ export interface DashboardStats {
     streak?: { current: number; longest: number };
     weeklyBudgetRemaining?: number;
     weeklyBudgetTotal?: number;
+    monthlyIncome?: number;
     totalAccounts?: number;
     accountCount?: number;
 }

@@ -15,6 +15,8 @@ function getInitialFormData(): OnboardingFormData {
             pin: "",
             notifications: true,
             initialBalance: 0,
+            monthlyIncome: 0,
+            accounts: [],
         };
     }
 
@@ -28,6 +30,8 @@ function getInitialFormData(): OnboardingFormData {
                 pin: "",
                 notifications: true,
                 initialBalance: 0,
+                monthlyIncome: 0,
+                accounts: [],
                 ...parsed.formData,
             };
         } catch (e) {
@@ -41,6 +45,8 @@ function getInitialFormData(): OnboardingFormData {
         pin: "",
         notifications: true,
         initialBalance: 0,
+        monthlyIncome: 0,
+        accounts: [],
     };
 }
 
@@ -58,7 +64,7 @@ export function useOnboarding() {
 
     const [state, setState] = useState<OnboardingState>({
         currentScreen: 0,
-        totalScreens: 4, // welcome, features, setup, initialBalance
+        totalScreens: 9, // welcome, feature-carousel, quick-setup, balance, choice, account/demo, income, budget, achievement
         formData: getInitialFormData(),
         isComplete: false,
     });

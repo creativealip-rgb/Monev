@@ -1,14 +1,18 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
+  // Check if user has session token
+  const sessionToken = req.cookies.get("next-auth.session-token") || req.cookies.get("__Secure-next-auth.session-token");
+  const isLoggedIn = !!sessionToken;
 
   // Protected routes that require authentication
   const isProtectedRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/fitur") ||
+    pathname.startsWith("/onboarding") ||
     pathname.startsWith("/api/transactions") ||
     pathname.startsWith("/api/analytics") ||
     pathname.startsWith("/api/goals") ||
@@ -30,7 +34,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
@@ -40,7 +44,8 @@ export const config = {
      * - _next/image (image optimization)
      * - favicon.ico, icon.svg, etc (static assets)
      * - public files (manifest.json, robots.txt, etc)
+     * - /api/auth/* (NextAuth routes)
      */
-    "/((?!_next/static|_next/image|favicon|icon|manifest|robots|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon|icon|manifest|robots|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

@@ -22,7 +22,7 @@ export default defineConfig({
     },
     {
       name: "login",
-      testMatch: /login\.spec\.ts/,
+      testMatch: /(login|onboarding)\.spec\.ts/,
       testIgnore: /auth\.setup\.ts/,
     },
     {

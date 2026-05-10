@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getMonthlyStats, getBudgets, getDebts, getUserStreak, getGoals } from "@/backend/db/operations";
+import { getMonthlyStats, getBudgets, getDebts, getUserStreak, getGoals, getUserSettings } from "@/backend/db/operations";
 import { getAccounts } from "@/backend/db/account-operations";
 import { calculateHealthScore } from "@/lib/health-score";
 
@@ -63,11 +63,12 @@ export async function GET(request: Request) {
 
         // --- Calculate Health Score ---
         // Fetch all required data concurrently
-        const [budgets, goals, unpaidDebts, streak] = await Promise.all([
+        const [budgets, goals, unpaidDebts, streak, settings] = await Promise.all([
             getBudgets(userId, month, year),
             getGoals(userId),
             getDebts(userId, "unpaid"),
-            getUserStreak(userId)
+            getUserStreak(userId),
+            getUserSettings(userId)
         ]);
 
         let totalOwe = 0;
@@ -117,6 +118,7 @@ export async function GET(request: Request) {
                 ...assets,
                 totalAccounts,
                 accountCount,
+                monthlyIncome: settings?.monthlyIncome || 0,
                 weeklyBudgetTotal: totalBudget,
                 weeklyBudgetSpent: totalBudgetSpent,
                 weeklyBudgetRemaining: budgetRemaining,

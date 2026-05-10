@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { skipCSRFCheck } from "@auth/core";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -115,6 +116,7 @@ async function updateUserWithGoogleData(userId: number, googleData: {
 export const { auth, signIn, signOut, handlers } = NextAuth({
     ...authConfig,
     trustHost: true,
+    skipCSRFCheck: skipCSRFCheck,
     session: {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days

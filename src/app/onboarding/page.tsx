@@ -9,6 +9,7 @@ import { WelcomeScreen } from "./components/WelcomeScreen";
 import { FeatureCarousel } from "./components/FeatureCarousel";
 import { QuickSetup } from "./components/QuickSetup";
 import { InitialBalanceScreen } from "./components/InitialBalanceScreen";
+import { MonthlyIncomeScreen } from "./components/MonthlyIncomeScreen";
 import ChoicePoint from "./components/ChoicePoint";
 import AccountSetup from "./components/AccountSetup";
 import DemoDataMatrix from "./components/DemoDataMatrix";
@@ -16,6 +17,7 @@ import BudgetSetup from "./components/BudgetSetup";
 import AchievementCelebration from "./components/AchievementCelebration";
 import { ProgressDots } from "./components/ProgressDots";
 import { apiFetch } from "@/frontend/lib/api-client";
+import type { BudgetRecommendation, OnboardingAccount } from "./types";
 
 import { Suspense } from "react";
 
@@ -39,9 +41,8 @@ function OnboardingContent() {
 
     const [onboardingPath, setOnboardingPath] = useState<OnboardingPath>(null);
     const [demoDataScope, setDemoDataScope] = useState<"quick" | "standard" | "complete" | null>(null);
-    const [monthlyIncome, setMonthlyIncome] = useState(0);
-    const [selectedAccounts, setSelectedAccounts] = useState<any[]>([]);
-    const [selectedBudgets, setSelectedBudgets] = useState<any[]>([]);
+    const [selectedBudgets, setSelectedBudgets] = useState<BudgetRecommendation[]>([]);
+
 
     // Check if we should reset onboarding (via ?reset=true)
     const shouldReset = searchParams.get("reset") === "true";
@@ -60,7 +61,7 @@ function OnboardingContent() {
 
                 const result = await response.json();
                 const hasCompleted = result.success
-                    ? result.data.settings?.hasCompletedOnboarding
+                    ? Boolean(result.data?.onboarding_version)
                     : localStorage.getItem("monev_onboarding_complete") === "true";
 
                 if (hasCompleted && !shouldReset) {
@@ -110,23 +111,20 @@ function OnboardingContent() {
             }
         }
 
-        // Quick path: go to BudgetSetup (screen 6)
-        // Complete path: go to BudgetSetup (screen 6) after AccountSetup
+        // Continue to monthly income before AI budget suggestion.
         goToScreen(6);
     };
 
-    const handleAccountSetup = (accounts: any[]) => {
-        setSelectedAccounts(accounts);
-        // Complete path: go to DemoDataMatrix (screen 5)
-        goToScreen(5);
+    const handleAccountSetup = (accounts: OnboardingAccount[]) => {
+        updateFormData("accounts", accounts);
+        // Complete path: continue to monthly income before AI budget suggestion.
+        goToScreen(6);
     };
 
-    const handleBudgetSetup = async (budgets: any[]) => {
+    const handleBudgetSetup = async (budgets: BudgetRecommendation[]) => {
         setSelectedBudgets(budgets);
-        
-        // Apply budgets via API (TODO: implement endpoint)
-        // For now, just proceed to achievement
-        
+        updateFormData("budgetRecommendations", budgets);
+
         // Unlock onboarding_complete achievement
         try {
             await apiFetch("/api/onboarding/achievements/unlock", {
@@ -137,7 +135,7 @@ function OnboardingContent() {
             console.error("Failed to unlock achievement:", error);
         }
 
-        goToScreen(7); // Achievement screen
+        goToScreen(8); // Achievement screen
     };
 
     const handleAchievementContinue = async () => {
@@ -154,7 +152,10 @@ function OnboardingContent() {
             console.error("Failed to complete onboarding:", error);
         }
 
-        completeOnboarding(formData);
+        completeOnboarding({
+            ...formData,
+            budgetRecommendations: selectedBudgets,
+        });
     };
 
     const handleNext = () => {
@@ -188,7 +189,6 @@ function OnboardingContent() {
         );
     }
 
-    const TOTAL_SCREENS = 8;
     const screenLabels = [
         "Selamat Datang",
         "Fitur",
@@ -196,6 +196,7 @@ function OnboardingContent() {
         "Saldo Awal",
         "Pilih Jalur",
         "Data Demo",
+        "Penghasilan",
         "Budget",
         "Achievement"
     ];
@@ -260,20 +261,11 @@ function OnboardingContent() {
                         initialBalance={formData.initialBalance}
                         onUpdate={(field: string, value: number) => {
                             updateFormData(field as keyof typeof formData, value);
-                            setMonthlyIncome(value);
                         }}
                         onFinish={async (data) => {
-                            // Complete onboarding with provided form data
-                            const result = await completeOnboarding(data);
-                            if (result.success) {
-                                router.push("/dashboard");
-                            } else {
-                                console.error("Onboarding failed:", result.message);
-                                // Still allow user to proceed even if API fails
-                                skipOnboarding();
-                                router.push("/dashboard");
-                            }
-                            return result;
+                            updateFormData("initialBalance", data.initialBalance);
+                            goToScreen(4);
+                            return { success: true };
                         }}
                         onPrev={handlePrev}
                     />
@@ -290,7 +282,7 @@ function OnboardingContent() {
                     <AccountSetup
                         key="accounts"
                         onComplete={handleAccountSetup}
-                        onSkip={() => goToScreen(5)}
+                        onSkip={() => goToScreen(6)}
                     />
                 )}
                 {currentScreen === 5 && onboardingPath === "quick" && (
@@ -300,14 +292,26 @@ function OnboardingContent() {
                     />
                 )}
                 {currentScreen === 6 && (
-                    <BudgetSetup
-                        key="budget"
-                        monthlyIncome={monthlyIncome || formData.initialBalance}
-                        onComplete={handleBudgetSetup}
-                        onSkip={() => goToScreen(7)}
+                    <MonthlyIncomeScreen
+                        key="income"
+                        currency={formData.currency}
+                        monthlyIncome={formData.monthlyIncome}
+                        onUpdate={(field: string, value: number) => {
+                            updateFormData(field as keyof typeof formData, value);
+                        }}
+                        onNext={() => goToScreen(7)}
+                        onPrev={() => goToScreen(5)}
                     />
                 )}
                 {currentScreen === 7 && (
+                    <BudgetSetup
+                        key="budget"
+                        monthlyIncome={formData.monthlyIncome}
+                        onComplete={handleBudgetSetup}
+                        onSkip={() => goToScreen(8)}
+                    />
+                )}
+                {currentScreen === 8 && (
                     <AchievementCelebration
                         key="achievement"
                         achievement={{

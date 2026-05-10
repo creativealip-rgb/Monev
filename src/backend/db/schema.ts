@@ -117,6 +117,7 @@ export const userSettings = sqliteTable("user_settings", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id").references(() => users.id).unique().notNull(), // New: Link to User
     hourlyRate: real("hourly_rate").notNull().default(50000),
+    monthlyIncome: real("monthly_income").notNull().default(0),
     primaryGoalId: integer("primary_goal_id").references(() => goals.id),
     securityPin: text("security_pin"),
     decoyPin: text("decoy_pin"),

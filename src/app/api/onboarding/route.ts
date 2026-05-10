@@ -12,16 +12,21 @@ export async function POST(request: Request) {
         const body = await request.json();
         
         // Validate required fields
-        const formData = {
+        const onboardingData = {
             currency: body.currency || "IDR",
             language: body.language || "id",
             pin: body.pin || "",
             notifications: body.notifications ?? true,
             initialBalance: Number(body.initialBalance) || 0,
+            monthlyIncome: Number(body.monthlyIncome) || 0,
+            accounts: Array.isArray(body.accounts) ? body.accounts : [],
+            budgetRecommendations: Array.isArray(body.budgetRecommendations)
+                ? body.budgetRecommendations
+                : [],
         };
 
         // Call server action
-        const result = await completeOnboardingAction(formData);
+        const result = await completeOnboardingAction(onboardingData);
 
         if (result.success) {
             return NextResponse.json({ success: true });
