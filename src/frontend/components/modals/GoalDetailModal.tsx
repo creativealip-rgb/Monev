@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Edit2, Trash2, Calendar, Trophy, TrendingUp, AlertTriangle, Check } from "lucide-react";
@@ -70,19 +70,49 @@ interface GoalDetailModalProps {
 }
 
 export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: GoalDetailModalProps) {
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const editButtonRef = useRef<HTMLButtonElement>(null);
+    const deleteButtonRef = useRef<HTMLButtonElement>(null);
+
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || !goal) return;
+
+        const previousActiveElement = document.activeElement as HTMLElement | null;
         const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") onClose();
+            if (event.key === "Escape") {
+                onClose();
+                return;
+            }
+
+            if (event.key !== "Tab") return;
+
+            const focusableElements = [closeButtonRef.current, editButtonRef.current, deleteButtonRef.current].filter(
+                (element): element is HTMLButtonElement => Boolean(element),
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (!firstElement || !lastElement) return;
+
+            if (event.shiftKey && document.activeElement === firstElement) {
+                event.preventDefault();
+                lastElement.focus();
+            } else if (!event.shiftKey && document.activeElement === lastElement) {
+                event.preventDefault();
+                firstElement.focus();
+            }
         };
-        document.addEventListener("keydown", handleKeyDown);
+
+        document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", handleKeyDown, true);
+        window.setTimeout(() => closeButtonRef.current?.focus(), 0);
         return () => {
             document.body.style.overflow = originalOverflow;
-            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown, true);
+            previousActiveElement?.focus?.();
         };
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, goal]);
 
     if (!isOpen || !goal) return null;
 
@@ -116,8 +146,8 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                     >
                         <div className="flex items-center justify-between mb-4">
                             <h2 id="goal-detail-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Detail Target</h2>
-                            <button type="button" aria-label="Tutup detail target" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
-                                <X size={16} />
+                            <button ref={closeButtonRef} type="button" aria-label="Tutup detail target" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900">
+                                <X size={16} aria-hidden="true" />
                             </button>
                         </div>
 
@@ -129,7 +159,7 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                         animate={{ opacity: 1, scale: 1 }}
                                         className="absolute -top-2 -right-2 px-2.5 py-1 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg shadow-emerald-500/30 flex items-center gap-1"
                                     >
-                                        <Trophy size={10} />
+                                        <Trophy size={10} aria-hidden="true" />
                                         Tercapai!
                                     </motion.div>
                                 )}
@@ -345,21 +375,23 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
 
                             <div className="grid grid-cols-2 gap-2 pt-1">
                                 <button
+                                    ref={editButtonRef}
                                     type="button"
                                     onClick={() => onEdit(goal)}
                                     aria-label={`Edit ${goal.name}`}
-                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-sky-500 text-white font-bold text-sm hover:bg-sky-600 transition-all active:scale-95 shadow-lg shadow-sky-500/20"
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-sky-500 text-white font-bold text-sm hover:bg-sky-600 transition-all active:scale-95 shadow-lg shadow-sky-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                 >
-                                    <Edit2 size={16} />
+                                    <Edit2 size={16} aria-hidden="true" />
                                     Edit
                                 </button>
                                 <button
+                                    ref={deleteButtonRef}
                                     type="button"
                                     onClick={() => onDelete(goal.id)}
                                     aria-label={`Hapus ${goal.name}`}
-                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all active:scale-95"
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                 >
-                                    <Trash2 size={16} />
+                                    <Trash2 size={16} aria-hidden="true" />
                                     Hapus
                                 </button>
                             </div>

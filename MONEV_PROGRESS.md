@@ -250,4 +250,11 @@ Branch: `twa-playstore`
    - Icon dekoratif di detail transaksi/budget diberi `aria-hidden` supaya screen reader tidak membaca ikon berulang.
    - Targeted ESLint pass untuk detail modal terkait dengan warning existing `react-hooks/set-state-in-effect` di helper Portal; full regression pass `2 passed (1.8m)`.
 
-21. Next: lanjut Phase 4.2 detail modal Goal/Bill/PayBill atau Phase 4.3 security hardening.
+21. **Phase 4.2 Accessibility Improvements - Goal/Bill/PayBill modal consistency**
+   - `GoalDetailModal` sekarang punya fokus awal ke close, restore fokus, trap Tab antar tombol close/edit/hapus, focus-visible ring, dan decorative icon `aria-hidden`.
+   - `BillHistoryModal` sekarang restore fokus, fokus awal ke close, Escape close, dan menjaga Tab tetap di modal riwayat pembayaran.
+   - `PayBillModal` sekarang punya `role="dialog"`, `aria-modal`, `aria-labelledby`, `aria-describedby`, fokus awal ke input nominal, restore fokus, Escape close saat tidak submitting, dan trap Tab di kontrol utama.
+   - Tombol close/account/Bayar Lunas/Batal/submit di Pay Bill ditambah focus-visible ring; icon dekoratif diberi `aria-hidden` dan input nominal punya `aria-label`.
+   - Targeted ESLint pass untuk modal terkait dengan warning existing di helper Portal/loadHistory; full regression pass `2 passed (1.1m)`.
+
+22. Next: lanjut Phase 4.2 admin modal accessibility atau Phase 4.3 security hardening.

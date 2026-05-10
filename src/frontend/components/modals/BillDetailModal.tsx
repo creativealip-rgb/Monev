@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check } from "lucide-react";
@@ -30,6 +30,7 @@ interface BillHistoryModalProps {
 export function BillHistoryModal({ isOpen, onClose, bill }: BillHistoryModalProps) {
     const [history, setHistory] = useState<BillPayment[]>([]);
     const [loading, setLoading] = useState(true);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         if (isOpen && bill) {
@@ -38,23 +39,31 @@ export function BillHistoryModal({ isOpen, onClose, bill }: BillHistoryModalProp
     }, [isOpen, bill]);
 
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || !bill) return;
 
+        const previousActiveElement = document.activeElement as HTMLElement | null;
         const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 onClose();
+                return;
+            }
+
+            if (event.key === "Tab") {
+                event.preventDefault();
+                closeButtonRef.current?.focus();
             }
         };
 
-        document.addEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", handleKeyDown, true);
+        window.setTimeout(() => closeButtonRef.current?.focus(), 0);
         return () => {
             document.body.style.overflow = originalOverflow;
-            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown, true);
+            previousActiveElement?.focus?.();
         };
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, bill]);
 
     async function loadHistory() {
         if (!bill) return;
@@ -97,8 +106,8 @@ export function BillHistoryModal({ isOpen, onClose, bill }: BillHistoryModalProp
                     >
                         <div className="flex items-center justify-between mb-4">
                             <h2 id="bill-history-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Riwayat Pembayaran</h2>
-                            <button type="button" aria-label="Tutup riwayat pembayaran" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
-                                <X size={16} />
+                            <button ref={closeButtonRef} type="button" aria-label="Tutup riwayat pembayaran" onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900">
+                                <X size={16} aria-hidden="true" />
                             </button>
                         </div>
 
@@ -134,7 +143,7 @@ export function BillHistoryModal({ isOpen, onClose, bill }: BillHistoryModalProp
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                                        <Check size={14} />
+                                                        <Check size={14} aria-hidden="true" />
                                                     </div>
                                                     <div>
                                                         <p className="text-[12px] font-bold text-foreground">
