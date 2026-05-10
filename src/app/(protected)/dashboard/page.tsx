@@ -25,6 +25,8 @@ import { AIInsightSection } from "./components/AIInsightSection";
 import { OnboardingCard } from "./components/OnboardingCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
 import { NotificationsModal } from "@/frontend/components/modals/NotificationsModal";
+import { SmartNotificationCard } from "./components/SmartNotificationCard";
+import { QuickAddShortcutsWidget } from "./components/QuickAddShortcutsWidget";
 
 import { useDashboardStats } from "./hooks/useDashboardStats";
 import { useOnboarding } from "./hooks/useOnboarding";
@@ -126,6 +128,10 @@ export default function DashboardPage() {
                 {mounted && bills && bills.length > 0 && (
                     <BillReminderWidget bills={bills} />
                 )}
+
+                <SmartNotificationCard />
+
+                <QuickAddShortcutsWidget onSuccess={handleAddTransactionSuccess} />
 
                 {stats.healthScore && (
                     <motion.section

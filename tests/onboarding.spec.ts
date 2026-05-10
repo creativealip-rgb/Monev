@@ -136,5 +136,96 @@ test("login then complete account onboarding persists opening balance to account
 
     const stats = await persistedStats.jsonValue() as { totalAccounts: number; accountCount: number };
     expect(stats.totalAccounts).toBe(1250000);
-    expect(stats.accountCount).toBeGreaterThanOrEqual(1);
+    expect(stats.accountCount).toBe(1);
+
+    const rerunResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/onboarding", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                currency: "IDR",
+                language: "id",
+                pin: "",
+                notifications: true,
+                initialBalance: 0,
+                monthlyIncome: 4000000,
+                accounts: [{ name: "BCA Test", type: "bank", balance: 1250000 }],
+                budgetRecommendations: [],
+            }),
+        });
+        return response.json();
+    });
+    expect(rerunResponse.success).toBeTruthy();
+
+    const rerunStats = await page.waitForFunction(async () => {
+        const now = new Date();
+        const response = await fetch(`/api/stats?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+        const json = await response.json();
+        if (!json.success) return null;
+
+        return json.data.totalAccounts === 1250000 && json.data.accountCount === 1
+            ? json.data
+            : null;
+    }, null, { timeout: 30000 });
+
+    const statsAfterRerun = await rerunStats.jsonValue() as { totalAccounts: number; accountCount: number };
+    expect(statsAfterRerun.totalAccounts).toBe(1250000);
+    expect(statsAfterRerun.accountCount).toBe(1);
+
+    await expect(page.getByText("Transaksi sekali tap")).toBeVisible({ timeout: 30000 });
+
+    const beforeQuickAdd = await page.evaluate(async () => {
+        const now = new Date();
+        const response = await fetch(`/api/stats?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+        return response.json();
+    });
+    const beforeExpense = beforeQuickAdd.data.expense || 0;
+
+    const createShortcutResponse = await page.evaluate(async () => {
+        const [accountsResponse, categoriesResponse] = await Promise.all([
+            fetch("/api/accounts"),
+            fetch("/api/categories"),
+        ]);
+        const [accountsJson, categoriesJson] = await Promise.all([
+            accountsResponse.json(),
+            categoriesResponse.json(),
+        ]);
+        const account = accountsJson.data.find((item: { name: string }) => item.name === "BCA Test");
+        const category = categoriesJson.data.find((item: { name: string; type: string }) => item.name === "Makan & Minuman" && item.type === "expense");
+        const response = await fetch("/api/quick-add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                label: "Parkir Test",
+                amount: 33000,
+                type: "expense",
+                accountId: account?.id,
+                categoryId: category?.id,
+                merchantName: "Parkir Test",
+            }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status, account, category };
+    });
+    expect(createShortcutResponse.success, JSON.stringify(createShortcutResponse)).toBeTruthy();
+    await page.reload({ waitUntil: "networkidle" });
+
+    await expect(page.getByText("Parkir Test")).toBeVisible({ timeout: 10000 });
+    const runShortcutResponse = await page.evaluate(async (shortcutId) => {
+        const response = await fetch(`/api/quick-add/${shortcutId}/run`, { method: "POST" });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    }, createShortcutResponse.data.id);
+    expect(runShortcutResponse.success, JSON.stringify(runShortcutResponse)).toBeTruthy();
+
+    const afterQuickAdd = await page.waitForFunction(async (expenseBefore) => {
+        const now = new Date();
+        const response = await fetch(`/api/stats?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+        const json = await response.json();
+        if (!json.success) return null;
+        return json.data.expense >= expenseBefore + 33000 ? json.data : null;
+    }, beforeExpense, { timeout: 30000 });
+
+    const statsAfterQuickAdd = await afterQuickAdd.jsonValue() as { expense: number };
+    expect(statsAfterQuickAdd.expense).toBeGreaterThanOrEqual(beforeExpense + 33000);
 });

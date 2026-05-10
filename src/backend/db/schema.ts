@@ -459,6 +459,50 @@ export const notificationLogs = sqliteTable("notification_logs", {
     statusIdx: index("idx_notification_logs_status").on(table.status),
 }));
 
+
+
+// Smart notification rules generated from user activity and preferences.
+export const smartNotificationRules = sqliteTable("smart_notification_rules", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    type: text("type", { enum: ["anomaly_spending", "budget_warning", "positive_reinforcement", "weekly_recap"] }).notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    severity: text("severity", { enum: ["info", "warning", "critical"] }).notNull().default("info"),
+    status: text("status", { enum: ["pending", "sent", "dismissed"] }).notNull().default("pending"),
+    metadata: text("metadata", { mode: "json" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_smart_notification_rules_user_id").on(table.userId),
+    statusIdx: index("idx_smart_notification_rules_status").on(table.status),
+    typeIdx: index("idx_smart_notification_rules_type").on(table.type),
+}));
+
+// One-tap transaction templates shown on the dashboard and add-transaction sheet.
+export const quickAddShortcuts = sqliteTable("quick_add_shortcuts", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    label: text("label").notNull(),
+    amount: real("amount").notNull(),
+    type: text("type", { enum: ["expense", "income"] }).notNull().default("expense"),
+    categoryId: integer("category_id").references(() => categories.id),
+    accountId: integer("account_id").references(() => accounts.id),
+    merchantName: text("merchant_name"),
+    paymentMethod: text("payment_method").default("cash"),
+    icon: text("icon").notNull().default("Zap"),
+    color: text("color").notNull().default("#0ea5e9"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    usageCount: integer("usage_count").notNull().default(0),
+    lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    userIdIdx: index("idx_quick_add_shortcuts_user_id").on(table.userId),
+    activeIdx: index("idx_quick_add_shortcuts_active").on(table.isActive),
+}));
+
 // User vocabulary table (custom keywords for AI chat)
 export const userVocabulary = sqliteTable("user_vocabulary", {
     id: integer("id").primaryKey({ autoIncrement: true }),
@@ -516,6 +560,8 @@ export type Session = typeof sessions.$inferSelect;
 export type BillPayment = typeof billPayments.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NotificationLog = typeof notificationLogs.$inferSelect;
+export type SmartNotificationRule = typeof smartNotificationRules.$inferSelect;
+export type QuickAddShortcut = typeof quickAddShortcuts.$inferSelect;
 
 // Insert types
 export type InsertCategory = typeof categories.$inferInsert;
@@ -543,6 +589,8 @@ export type InsertUserAchievement = typeof userAchievements.$inferInsert;
 export type InsertBillPayment = typeof billPayments.$inferInsert;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type InsertNotificationLog = typeof notificationLogs.$inferInsert;
+export type InsertSmartNotificationRule = typeof smartNotificationRules.$inferInsert;
+export type InsertQuickAddShortcut = typeof quickAddShortcuts.$inferInsert;
 
 // Zod schemas
 export const insertCategorySchema = createInsertSchema(categories);
@@ -583,5 +631,9 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 export const selectPushSubscriptionSchema = createSelectSchema(pushSubscriptions);
 export const insertNotificationLogSchema = createInsertSchema(notificationLogs);
 export const selectNotificationLogSchema = createSelectSchema(notificationLogs);
+export const insertSmartNotificationRuleSchema = createInsertSchema(smartNotificationRules);
+export const selectSmartNotificationRuleSchema = createSelectSchema(smartNotificationRules);
+export const insertQuickAddShortcutSchema = createInsertSchema(quickAddShortcuts);
+export const selectQuickAddShortcutSchema = createSelectSchema(quickAddShortcuts);
 export const insertUserVocabularySchema = createInsertSchema(userVocabulary);
 export const selectUserVocabularySchema = createSelectSchema(userVocabulary);

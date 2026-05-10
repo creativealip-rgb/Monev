@@ -12,3 +12,5 @@ export * from "./message-operations";
 export * from "./chat-operations";
 export * from "./coupon-operations";
 export * from "./push-operations";
+export * from "./smart-notification-operations";
+export * from "./quick-add-operations";

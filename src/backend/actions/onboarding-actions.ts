@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { userSettings, transactions, categories, budgets, accounts } from "@/backend/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { hashPin } from "@/lib/security";
 
 type BudgetRecommendationInput = {
@@ -29,6 +29,84 @@ const BUDGET_CATEGORY_META: Record<string, { name: string; color: string; icon: 
     Langganan: { name: "Langganan", color: "#6366f1", icon: "Repeat" },
     Tabungan: { name: "Tabungan", color: "#14b8a6", icon: "PiggyBank" },
 };
+
+async function upsertOpeningBalanceAccount(userId: number, data: {
+    name: string;
+    type: "bank" | "emoney" | "cash";
+    balance: number;
+    color: string;
+    icon: string;
+    categoryId?: number;
+}) {
+    const db = getDb();
+    const description = data.name === "Saldo Awal" ? "Saldo Awal" : `Saldo Awal ${data.name}`;
+    const existingAccount = await db.select()
+        .from(accounts)
+        .where(and(
+            eq(accounts.userId, userId),
+            eq(accounts.name, data.name),
+            eq(accounts.type, data.type)
+        ))
+        .get();
+
+    const account = existingAccount || await db.insert(accounts).values({
+        userId,
+        name: data.name,
+        type: data.type,
+        balance: data.balance,
+        color: data.color,
+        icon: data.icon,
+    }).returning().get();
+
+    const existingOpeningTransaction = await db.select()
+        .from(transactions)
+        .where(and(
+            eq(transactions.userId, userId),
+            eq(transactions.accountId, account.id),
+            eq(transactions.description, description),
+            eq(transactions.merchantName, "Saldo Awal"),
+            eq(transactions.paymentMethod, "adjustment")
+        ))
+        .get();
+
+    const previousOpeningBalance = existingOpeningTransaction
+        ? (existingOpeningTransaction.type === "expense" ? -existingOpeningTransaction.amount : existingOpeningTransaction.amount)
+        : 0;
+    const delta = data.balance - previousOpeningBalance;
+
+    if (existingAccount && delta !== 0) {
+        await db.update(accounts)
+            .set({ balance: sql`${accounts.balance} + ${delta}`, updatedAt: new Date() })
+            .where(eq(accounts.id, account.id));
+    }
+
+    if (data.balance <= 0) {
+        return account;
+    }
+
+    const transactionValues = {
+        userId,
+        accountId: account.id,
+        amount: Math.abs(data.balance),
+        description,
+        merchantName: "Saldo Awal",
+        type: data.balance >= 0 ? "income" as const : "expense" as const,
+        paymentMethod: "adjustment",
+        date: new Date(),
+        isVerified: true,
+        ...(data.categoryId ? { categoryId: data.categoryId } : {}),
+    };
+
+    if (existingOpeningTransaction) {
+        await db.update(transactions)
+            .set(transactionValues)
+            .where(eq(transactions.id, existingOpeningTransaction.id));
+        return account;
+    }
+
+    await db.insert(transactions).values(transactionValues);
+    return account;
+}
 
 export async function completeOnboardingAction(formData: {
     currency: string;
@@ -86,45 +164,23 @@ export async function completeOnboardingAction(formData: {
 
         const accountInputs = Array.isArray(formData.accounts) ? formData.accounts : [];
 
+        // Idempotent opening balance setup: rerunning onboarding updates previous
+        // opening entries instead of creating duplicate accounts/transactions.
         for (const accountInput of accountInputs) {
             const balance = Number(accountInput.balance) || 0;
             if (!accountInput.name || balance < 0) continue;
 
-            const account = await db.insert(accounts).values({
-                userId,
+            await upsertOpeningBalanceAccount(userId, {
                 name: accountInput.name,
                 type: accountInput.type === "ewallet" ? "emoney" : accountInput.type,
                 balance,
                 color: "#3b82f6",
                 icon: accountInput.type === "cash" ? "Wallet" : "CreditCard",
-            }).returning().get();
-
-            if (balance > 0) {
-                await db.insert(transactions).values({
-                    userId,
-                    accountId: account.id,
-                    amount: balance,
-                    description: `Saldo Awal ${account.name}`,
-                    merchantName: "Saldo Awal",
-                    type: "income",
-                    paymentMethod: "adjustment",
-                    date: new Date(),
-                    isVerified: true,
-                });
-            }
+            });
         }
 
-        // 3. Create default cash account and initial balance transaction if balance > 0
+        // 3. Create or update default cash account and initial balance transaction if balance > 0
         if (formData.initialBalance > 0 && accountInputs.length === 0) {
-            const account = await db.insert(accounts).values({
-                userId,
-                name: "Saldo Awal",
-                type: "cash",
-                balance: formData.initialBalance,
-                color: "#10b981",
-                icon: "Wallet",
-            }).returning().get();
-
             // Find or create an income category
             let incomeCategory = await db.select()
                 .from(categories)
@@ -140,15 +196,13 @@ export async function completeOnboardingAction(formData: {
                 }).returning().get();
             }
 
-            await db.insert(transactions).values({
-                userId,
-                accountId: account.id,
-                amount: formData.initialBalance,
-                description: "Saldo Awal",
-                type: "income",
+            await upsertOpeningBalanceAccount(userId, {
+                name: "Saldo Awal",
+                type: "cash",
+                balance: formData.initialBalance,
+                color: "#10b981",
+                icon: "Wallet",
                 categoryId: incomeCategory.id,
-                date: new Date(),
-                isVerified: true,
             });
         }
 

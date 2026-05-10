@@ -69,6 +69,7 @@ Branch: `twa-playstore`
    - Root cause: dashboard saldo membaca tabel `accounts`, sedangkan onboarding lama hanya membuat transaksi `Saldo Awal`.
    - Fix: onboarding sekarang meneruskan data account setup ke API, membuat row `accounts`, dan mengikat transaksi saldo awal ke `accountId`.
    - Jika user hanya isi `initialBalance` tanpa account setup, dibuat akun cash default `Saldo Awal` supaya total saldo dashboard ikut terisi.
+   - Hardening: onboarding rerun sekarang idempotent untuk saldo awal; account/transaction opening balance lama di-update, bukan dibuat dobel.
 
 ## Perubahan File yang Sudah Tercatat
 
@@ -95,4 +96,22 @@ Branch: `twa-playstore`
 
 1. Jalankan regression lebih luas bila perlu: full lint/build dan test dashboard/budget page.
 
-2. Review/hardening duplikasi data jika user menjalankan onboarding ulang dengan akun yang sama.
+2. **Phase 1.2 Smart Notifications System**
+   - Tambah schema/migration `smart_notification_rules`.
+   - Tambah generator alert untuk anomaly spending, budget warning, positive reinforcement, dan weekly recap.
+   - Tambah API `/api/smart-notifications` untuk generate/list/dismiss/sendToInbox.
+   - Tambah dashboard card `SmartNotificationCard`.
+
+3. **Phase 1.3 Quick Add Shortcuts**
+   - Tambah schema/migration `quick_add_shortcuts`.
+   - Tambah operasi CRUD basic + run shortcut yang membuat transaksi.
+   - Tambah API `/api/quick-add` dan `/api/quick-add/[id]/run`.
+   - Tambah dashboard widget `QuickAddShortcutsWidget`.
+   - Quick Add sekarang punya modal create shortcut langsung dari dashboard: label, nominal, type, account, category, merchant optional.
+   - Tambah auto-suggest shortcut dari transaksi 45 hari terakhir yang muncul minimal 2x, lalu bisa di-accept sekali tap.
+
+4. E2E regression pass:
+   - `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
+   - Coverage: quick onboarding monthly income/budget, complete onboarding anti-duplikasi saldo, Quick Add shortcut render + run API + stats expense refresh.
+
+5. Next: commit dan push perubahan Phase 1.2/1.3.
