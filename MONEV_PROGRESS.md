@@ -244,4 +244,10 @@ Branch: `twa-playstore`
    - E2E smoke menvalidasi sheet `Tambah Transaksi` bisa dibuka lewat FAB dan ditutup dengan Escape.
    - Targeted ESLint pass untuk sheet/dialog/spec; full regression pass `2 passed (2.2m)`.
 
-20. Next: lanjut Phase 4.2 detail modal keyboard/focus consistency atau Phase 4.3 security hardening.
+20. **Phase 4.2 Accessibility Improvements - Detail modal keyboard/focus consistency**
+   - `TransactionDetailModal` sekarang punya `role="dialog"`, `aria-modal`, `aria-labelledby`, Escape close, fokus awal ke tombol tutup, restore fokus ke pemicu, dan trap Tab antar tombol tutup/edit/hapus.
+   - `BudgetDetailModal` ditingkatkan dengan pola fokus yang sama: fokus awal ke close, restore fokus, trap Tab, serta focus-visible ring untuk tombol close/edit/hapus.
+   - Icon dekoratif di detail transaksi/budget diberi `aria-hidden` supaya screen reader tidak membaca ikon berulang.
+   - Targeted ESLint pass untuk detail modal terkait dengan warning existing `react-hooks/set-state-in-effect` di helper Portal; full regression pass `2 passed (1.8m)`.
+
+21. Next: lanjut Phase 4.2 detail modal Goal/Bill/PayBill atau Phase 4.3 security hardening.
