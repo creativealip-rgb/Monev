@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { Portal } from "./Portal";
@@ -31,22 +31,46 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
     const titleId = "confirm-dialog-title";
     const descriptionId = "confirm-dialog-description";
+    const cancelButtonRef = useRef<HTMLButtonElement>(null);
+    const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         if (!isOpen) return;
 
+        const previousActiveElement = document.activeElement as HTMLElement | null;
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape" && !loading) {
                 onClose();
+                return;
+            }
+
+            if (event.key !== "Tab") return;
+
+            const focusableElements = [confirmButtonRef.current, cancelButtonRef.current].filter(
+                (element): element is HTMLButtonElement => Boolean(element && !element.disabled),
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (!firstElement || !lastElement) return;
+
+            if (event.shiftKey && document.activeElement === firstElement) {
+                event.preventDefault();
+                lastElement.focus();
+            } else if (!event.shiftKey && document.activeElement === lastElement) {
+                event.preventDefault();
+                firstElement.focus();
             }
         };
 
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         document.addEventListener("keydown", handleKeyDown, true);
+        window.setTimeout(() => cancelButtonRef.current?.focus(), 0);
         return () => {
             document.body.style.overflow = previousOverflow;
             document.removeEventListener("keydown", handleKeyDown, true);
+            previousActiveElement?.focus?.();
         };
     }, [isOpen, loading, onClose]);
 
@@ -84,7 +108,7 @@ export function ConfirmDialog({
                                             ? "bg-rose-50 dark:bg-rose-900/30 text-rose-500"
                                             : "bg-amber-50 dark:bg-amber-900/30 text-amber-500"
                                     )}>
-                                        <AlertTriangle size={32} />
+                                        <AlertTriangle size={32} aria-hidden="true" />
                                     </div>
 
                                     <h3 id={titleId} className="text-xl font-bold text-foreground mb-2">{title}</h3>
@@ -94,24 +118,26 @@ export function ConfirmDialog({
 
                                     <div className="w-full space-y-3">
                                         <button
+                                            ref={confirmButtonRef}
                                             type="button"
                                             onClick={onConfirm}
                                             disabled={loading}
                                             className={cn(
-                                                "w-full py-3.5 rounded-2xl font-bold text-white transition-all active:scale-[0.98]",
+                                                "w-full py-3.5 rounded-2xl font-bold text-white transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900",
                                                 type === "danger"
-                                                    ? "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/25"
-                                                    : "bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/25",
+                                                    ? "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/25 focus-visible:ring-rose-500"
+                                                    : "bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/25 focus-visible:ring-amber-500",
                                                 loading && "opacity-70 cursor-not-allowed"
                                             )}
                                         >
                                             {loading ? "Memproses..." : confirmText}
                                         </button>
                                         <button
+                                            ref={cancelButtonRef}
                                             type="button"
                                             onClick={onClose}
                                             disabled={loading}
-                                            className="w-full py-3.5 rounded-2xl font-bold text-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                            className="w-full py-3.5 rounded-2xl font-bold text-foreground bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                         >
                                             {cancelText}
                                         </button>

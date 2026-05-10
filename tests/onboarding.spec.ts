@@ -57,6 +57,11 @@ test("login then complete quick onboarding with monthly income budget", async ({
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog", { name: "Notifikasi" })).toBeHidden();
 
+    await page.getByRole("button", { name: /tambah transaksi|tambah/i }).click();
+    await expect(page.getByRole("dialog", { name: "Tambah Transaksi" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Tambah Transaksi" })).toBeHidden();
+
     const persistedStats = await page.waitForFunction(async () => {
         const now = new Date();
         const response = await fetch(`/api/stats?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);

@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, FileText, Camera, Mic, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TransactionForm } from "./TransactionForm/index";
 import { SmartInput } from "./SmartInput";
 import { useSession } from "next-auth/react";
@@ -49,19 +49,48 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
     const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
     const userTier: UserTier = session?.user?.tier || "starter";
     const hasSmartAccess = canAccessSmartInput(userTier);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const firstActionRef = useRef<HTMLButtonElement>(null);
 
-    // Close on escape key
+    // Keep the bottom sheet keyboard-friendly on mobile and desktop.
     useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
+        if (!isOpen) return;
+
+        const previousActiveElement = document.activeElement as HTMLElement | null;
+        const previousOverflow = document.body.style.overflow;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                onClose();
+                return;
+            }
+
+            if (event.key !== "Tab") return;
+
+            const focusableElements = [firstActionRef.current, closeButtonRef.current].filter(
+                (element): element is HTMLButtonElement => Boolean(element),
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (!firstElement || !lastElement) return;
+
+            if (event.shiftKey && document.activeElement === firstElement) {
+                event.preventDefault();
+                lastElement.focus();
+            } else if (!event.shiftKey && document.activeElement === lastElement) {
+                event.preventDefault();
+                firstElement.focus();
+            }
         };
-        if (isOpen) {
-            document.addEventListener("keydown", handleEscape);
-            document.body.style.overflow = "hidden";
-        }
+
+        document.addEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "hidden";
+        window.setTimeout(() => firstActionRef.current?.focus(), 0);
+
         return () => {
-            document.removeEventListener("keydown", handleEscape);
-            document.body.style.overflow = "unset";
+            document.removeEventListener("keydown", handleKeyDown);
+            document.body.style.overflow = previousOverflow;
+            previousActiveElement?.focus?.();
         };
     }, [isOpen, onClose]);
 
@@ -164,6 +193,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="add-transaction-sheet-title"
+                        aria-describedby="add-transaction-sheet-description"
                     >
                         <div className="bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto pb-safe">
                             <div className="flex justify-center pt-3 pb-2 touch-none">
@@ -173,19 +203,20 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                             <div className="flex items-center justify-between px-6 pb-4">
                                 <div>
                                     <h2 id="add-transaction-sheet-title" className="text-lg font-bold text-slate-900 dark:text-white">Tambah Transaksi</h2>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Pilih cara input</p>
+                                    <p id="add-transaction-sheet-description" className="text-xs text-slate-500 dark:text-slate-400">Pilih cara input</p>
                                 </div>
                                 <button
+                                    ref={closeButtonRef}
                                     onClick={onClose}
                                     aria-label="Tutup form tambah transaksi"
-                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus-visible:ring-offset-slate-900"
                                 >
-                                    <X size={18} />
+                                    <X size={18} aria-hidden="true" />
                                 </button>
                             </div>
 
                             <div className="px-6 pb-8 space-y-3">
-                                {actions.map((action) => {
+                                {actions.map((action, index) => {
                                     const Icon = action.icon;
                                     const colors = colorClasses[action.color];
                                     const isSmartInput = action.id !== "manual";
@@ -193,6 +224,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                     return (
                                         <motion.button
                                             key={action.id}
+                                            ref={index === 0 ? firstActionRef : undefined}
                                             whileHover={{ scale: isLocked ? 1 : 1.02 }}
                                             whileTap={{ scale: isLocked ? 1 : 0.98 }}
                                             onClick={() => {
@@ -203,10 +235,10 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                     handleAction(action.id);
                                                 }
                                             }}
-                                            aria-label={`${action.label}${isLocked ? ' (Upgrade required)' : ''}`}
+                                            aria-label={`${action.label}${isLocked ? " (perlu upgrade)" : ""}`}
                                             aria-disabled={isLocked}
                                             className={cn(
-                                                "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all",
+                                                "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900",
                                                 isLocked
                                                     ? "border-slate-100 dark:border-slate-700 opacity-60"
                                                     : "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 hover:shadow-md",
@@ -217,7 +249,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                 "w-12 h-12 rounded-xl flex items-center justify-center",
                                                 colors.bg
                                             )}>
-                                                <Icon className={colors.text} size={24} strokeWidth={2} />
+                                                <Icon className={colors.text} size={24} strokeWidth={2} aria-hidden="true" />
                                             </div>
                                             <div className="flex-1 text-left">
                                                 <h3 className="font-semibold text-slate-900 dark:text-white">{action.label}</h3>
@@ -228,9 +260,9 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                 "bg-slate-50 dark:bg-slate-700"
                                             )}>
                                                 {isLocked ? (
-                                                    <Lock size={14} className="text-amber-500" />
+                                                    <Lock size={14} className="text-amber-500" aria-hidden="true" />
                                                 ) : (
-                                                    <Sparkles size={14} className="text-slate-400 dark:text-slate-500" />
+                                                    <Sparkles size={14} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
                                                 )}
                                             </div>
                                         </motion.button>

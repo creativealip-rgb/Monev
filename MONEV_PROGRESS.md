@@ -237,4 +237,11 @@ Branch: `twa-playstore`
    - E2E onboarding smoke menvalidasi modal Notifikasi bisa dibuka via accessible name dan ditutup dengan Escape.
    - Targeted ESLint pass untuk modal/spec; full regression pass `2 passed (1.8m)`.
 
-19. Next: lanjut Phase 4.2 audit modal/sheet keyboard Esc/focus trap lain atau Phase 4.3 security hardening.
+19. **Phase 4.2 Accessibility Improvements - Add transaction sheet and confirm dialog focus trap**
+   - `AddTransactionSheet` sekarang menyimpan fokus pemicu, fokus awal ke pilihan input pertama, restore fokus saat tutup, trap Tab di area sheet, dan punya `aria-describedby` untuk instruksi sheet.
+   - Tombol close/action di sheet ditambah focus-visible ring dan icon decorative diberi `aria-hidden`; label locked action dilokalkan ke Indonesia.
+   - `ConfirmDialog` sekarang fokus awal ke tombol batal, restore fokus saat tutup, trap Tab antar tombol aksi, serta menambah focus-visible ring untuk tombol konfirmasi/batal.
+   - E2E smoke menvalidasi sheet `Tambah Transaksi` bisa dibuka lewat FAB dan ditutup dengan Escape.
+   - Targeted ESLint pass untuk sheet/dialog/spec; full regression pass `2 passed (2.2m)`.
+
+20. Next: lanjut Phase 4.2 detail modal keyboard/focus consistency atau Phase 4.3 security hardening.
