@@ -19,6 +19,7 @@ import {
     CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import Markdown from "react-markdown";
 import { BottomNav } from "@/frontend/components/BottomNav";
 import { useToast } from "@/frontend/components/UI";
@@ -607,11 +608,14 @@ export default function ChatPage() {
                                 message.role === "user" ? "items-end flex flex-col" : "items-start flex flex-col"
                             )}>
                                 {message.image && (
-                                    <div className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 max-w-[200px]">
-                                        <img
+                                    <div className="relative group h-36 w-48 max-w-[200px] rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+                                        <Image
                                             src={message.image}
                                             alt="Chat Image"
-                                            className="w-full h-auto object-cover"
+                                            fill
+                                            sizes="200px"
+                                            className="object-cover"
+                                            unoptimized
                                         />
                                     </div>
                                 )}
@@ -786,7 +790,14 @@ export default function ChatPage() {
                         className="mb-3 flex items-center gap-3"
                     >
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
+                            <Image
+                                src={selectedImage}
+                                alt="Preview"
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                                unoptimized
+                            />
                             <button
                                 onClick={() => setSelectedImage(null)}
                                 className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/50 text-white flex items-center justify-center hover:bg-slate-900 transition-colors"

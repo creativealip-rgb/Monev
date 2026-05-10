@@ -208,4 +208,11 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk `TransactionList.tsx`.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.4m).
 
-15. Next: lanjut Phase 4.1 optimize images/code splitting route lain atau Phase 4.2 accessibility improvements.
+15. **Phase 4.1 Performance Optimization - Chat image rendering**
+   - Audit image usage: landing/pricing/onboarding/profile/dashboard sudah memakai `next/image`; area chat masih memakai `<img>` untuk preview dan bubble gambar.
+   - Konversi gambar chat selected preview dan message bubble ke `next/image` dengan ukuran eksplisit (`sizes`) dan container fixed agar layout shift lebih kecil.
+   - Tambah `unoptimized` untuk data URL/upload preview supaya Next tidak mencoba optimasi source lokal/base64 yang dinamis.
+   - Targeted ESLint pass untuk `src/app/(protected)/chat/page.tsx` dengan warning existing lama saja.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.3m).
+
+16. Next: lanjut Phase 4.1 code splitting route lain/service worker caching atau Phase 4.2 accessibility improvements.
