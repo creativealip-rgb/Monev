@@ -305,7 +305,7 @@ export async function POST(req: NextRequest) {
             const categoryName = allCategories.find(c => c.id === transactionToUndo.categoryId)?.name || "Lainnya";
             const reply = `↩️ Beres, transaksi terakhir sudah saya undo.\n\n📝 ${transactionToUndo.description || "Tanpa Deskripsi"}\n💰 Rp ${transactionToUndo.amount.toLocaleString('id-ID')}\n🏷️ ${categoryName}`;
             await logAIChat(userId, "assistant", reply);
-            return NextResponse.json({ reply, undoneTransactionId: transactionToUndo.id });
+            return NextResponse.json({ type: "action_result", action: { name: "undo_transaction" }, reply, undoneTransactionId: transactionToUndo.id });
         }
 
         if (localIntent.intent === "budget_goal" || localIntent.intent === "budget_plan" || localIntent.intent === "ambiguous_transaction") {
@@ -339,6 +339,8 @@ export async function POST(req: NextRequest) {
                 const reply = `✅ Sip! Sudah saya catat ya.\n\n📝 ${description}\n💰 Rp ${amount.toLocaleString('id-ID')}\n🏷️ ${category.name}\n\nAda lagi yang mau dicatat?`;
                 await logAIChat(userId, "assistant", reply);
                 return NextResponse.json({
+                    type: "action_result",
+                    action: { name: "record_transaction" },
                     reply,
                     transaction: {
                         id: transaction.id,

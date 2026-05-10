@@ -116,7 +116,10 @@ Branch: `twa-playstore`
 
 5. **Phase 2.1 AI Chat Quick Actions**
    - Audit: chat API sudah punya local intent/action basic untuk transaksi, undo, budget/goal planning.
-   - Next Phase 2.1: rapikan response format action/confirmation agar UI bisa tampil sebagai card, bukan teks saja.
+   - Response `record_transaction` dan `undo_transaction` sekarang membawa `type: "action_result"` + `action.name`.
+   - UI chat menampilkan action result card untuk transaksi tercatat/undo, lengkap nominal dan kategori.
+   - Targeted ESLint chat pass dengan warning existing saja.
+   - E2E chat quick action pass: kirim `makan 20rb` -> action card muncul -> undo -> undo result card muncul.
 
 6. **Phase 2.2 Recurring Transaction Intelligence**
    - Tambah detector pola transaksi rutin 180 hari terakhir di `src/backend/services/recurring-detector.ts`.

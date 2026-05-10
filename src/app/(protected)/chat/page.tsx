@@ -15,7 +15,8 @@ import {
     TrendingUp,
     X,
     Zap,
-    RotateCcw
+    RotateCcw,
+    CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
@@ -37,7 +38,17 @@ interface Message {
     image?: string;
     actions?: Action[];
     transaction?: ChatTransaction;
+    actionResult?: ChatActionResult;
     undoneTransactionId?: number | null;
+}
+
+interface ChatActionResult {
+    type: "transaction_created" | "transaction_undone" | "general";
+    title: string;
+    description?: string;
+    amount?: number;
+    category?: string;
+    transactionType?: "expense" | "income" | "transfer";
 }
 
 interface ChatTransaction {
@@ -88,6 +99,29 @@ function parseMessageTimestamp(value: unknown): Date {
 function formatMessageTime(timestamp: Date): string {
     const date = parseMessageTimestamp(timestamp);
     return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+}
+
+function buildActionResult(data: { transaction?: ChatTransaction; undoneTransactionId?: number | null }): ChatActionResult | undefined {
+    if (data.transaction) {
+        return {
+            type: "transaction_created",
+            title: data.transaction.type === "income" ? "Pemasukan tercatat" : "Pengeluaran tercatat",
+            description: data.transaction.description,
+            amount: data.transaction.amount,
+            category: data.transaction.category,
+            transactionType: data.transaction.type,
+        };
+    }
+
+    if (data.undoneTransactionId) {
+        return {
+            type: "transaction_undone",
+            title: "Transaksi berhasil di-undo",
+            description: "Saldo dan statistik akan ikut disesuaikan.",
+        };
+    }
+
+    return undefined;
 }
 
 export default function ChatPage() {
@@ -332,6 +366,7 @@ export default function ChatPage() {
                     content: data.reply,
                     timestamp: new Date(),
                     transaction: data.transaction,
+                    actionResult: buildActionResult(data),
                     undoneTransactionId: data.undoneTransactionId,
                 };
                 setMessages((prev) => [...prev, aiMessage]);
@@ -375,6 +410,7 @@ export default function ChatPage() {
                 role: "assistant",
                 content: data.reply,
                 timestamp: new Date(),
+                actionResult: buildActionResult(data),
                 undoneTransactionId: data.undoneTransactionId,
             };
 
@@ -637,6 +673,33 @@ export default function ChatPage() {
                                         {formatMessageTime(message.timestamp)}
                                     </p>
                                 </div>
+                                {message.role === "assistant" && message.actionResult && (
+                                    <div className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/90 p-3 text-emerald-900 shadow-sm dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
+                                        <div className="flex items-start gap-2">
+                                            <div className="mt-0.5 rounded-full bg-emerald-500 p-1 text-white">
+                                                <CheckCircle2 size={13} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold">{message.actionResult.title}</p>
+                                                {message.actionResult.description && (
+                                                    <p className="mt-0.5 truncate text-xs text-emerald-700 dark:text-emerald-300">{message.actionResult.description}</p>
+                                                )}
+                                                {typeof message.actionResult.amount === "number" && (
+                                                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                                        <span className="rounded-full bg-white/80 px-2 py-1 font-semibold text-emerald-700 dark:bg-slate-900/60 dark:text-emerald-300">
+                                                            {formatCurrency(message.actionResult.amount)}
+                                                        </span>
+                                                        {message.actionResult.category && (
+                                                            <span className="rounded-full bg-white/80 px-2 py-1 text-emerald-700 dark:bg-slate-900/60 dark:text-emerald-300">
+                                                                {message.actionResult.category}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 {message.role === "assistant" && message.transaction && (
                                     <button
                                         type="button"

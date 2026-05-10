@@ -236,4 +236,12 @@ test("login then complete account onboarding persists opening balance to account
     });
     expect(recurringSuggestionsResponse.success, JSON.stringify(recurringSuggestionsResponse)).toBeTruthy();
     expect(Array.isArray(recurringSuggestionsResponse.data)).toBeTruthy();
+
+    await page.goto("/chat", { waitUntil: "networkidle" });
+    await page.getByTestId("chat-input").fill("makan 20rb");
+    await page.getByTestId("chat-send").click();
+    await expect(page.getByText("Pengeluaran tercatat")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator("span", { hasText: "Rp 20.000" }).first()).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("chat-undo-transaction").last().click();
+    await expect(page.getByText("Transaksi berhasil di-undo")).toBeVisible({ timeout: 30000 });
 });
