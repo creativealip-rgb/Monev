@@ -468,6 +468,51 @@ export const userAchievements = sqliteTable("user_achievements", {
     userAchievementUnique: uniqueIndex("idx_user_achievements_user_achievement_unique").on(table.userId, table.achievementId),
 }));
 
+// Split Bill 2.0 tables.
+export const splitBills = sqliteTable("split_bills", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    creatorId: integer("creator_id").notNull().references(() => users.id),
+    publicId: text("public_id").notNull().unique(),
+    title: text("title").notNull(),
+    totalAmount: real("total_amount").notNull(),
+    receiptImageUrl: text("receipt_image_url"),
+    status: text("status", { enum: ["pending", "partial", "completed"] }).notNull().default("pending"),
+    paymentInstructions: text("payment_instructions"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    creatorIdIdx: index("idx_split_bills_creator_id").on(table.creatorId),
+    publicIdIdx: uniqueIndex("idx_split_bills_public_id_unique").on(table.publicId),
+    statusIdx: index("idx_split_bills_status").on(table.status),
+}));
+
+export const splitBillItems = sqliteTable("split_bill_items", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    splitBillId: integer("split_bill_id").notNull().references(() => splitBills.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    price: real("price").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    assignedParticipantId: integer("assigned_participant_id"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    splitBillIdIdx: index("idx_split_bill_items_split_bill_id").on(table.splitBillId),
+}));
+
+export const splitBillParticipants = sqliteTable("split_bill_participants", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    splitBillId: integer("split_bill_id").notNull().references(() => splitBills.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    amountOwed: real("amount_owed").notNull(),
+    paymentToken: text("payment_token").notNull(),
+    paidAt: integer("paid_at", { mode: "timestamp" }),
+    paymentProofUrl: text("payment_proof_url"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    splitBillIdIdx: index("idx_split_bill_participants_split_bill_id").on(table.splitBillId),
+    paymentTokenUnique: uniqueIndex("idx_split_bill_participants_payment_token_unique").on(table.paymentToken),
+}));
+
 // Push subscriptions table (VAPID Web Push)
 export const pushSubscriptions = sqliteTable("push_subscriptions", {
     id: integer("id").primaryKey({ autoIncrement: true }),

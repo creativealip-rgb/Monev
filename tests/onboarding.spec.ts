@@ -294,6 +294,55 @@ test("login then complete account onboarding persists opening balance to account
     expect(streakResponse.success, JSON.stringify(streakResponse)).toBeTruthy();
     expect(streakResponse.data.currentStreak).toBeGreaterThanOrEqual(1);
 
+    const splitBillResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/split-bills", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                title: "Dinner Split E2E",
+                paymentInstructions: "Transfer ke rekening test",
+                items: [
+                    { name: "Nasi Goreng", price: 50000, quantity: 1 },
+                    { name: "Es Teh", price: 10000, quantity: 2 },
+                ],
+                participants: [
+                    { name: "Andi" },
+                    { name: "Budi" },
+                ],
+            }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(splitBillResponse.success, JSON.stringify(splitBillResponse)).toBeTruthy();
+    expect(splitBillResponse.data.totalAmount).toBe(70000);
+    expect(splitBillResponse.data.participants).toHaveLength(2);
+    expect(splitBillResponse.data.participants[0].amountOwed).toBe(35000);
+
+    const publicSplitBillResponse = await page.evaluate(async ({ publicId, paymentToken }) => {
+        const publicResponse = await fetch(`/api/public/split-bills/${publicId}`);
+        const publicJson = await publicResponse.json();
+        const payResponse = await fetch(`/api/public/split-bills/${publicId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentToken }),
+        });
+        const payJson = await payResponse.json();
+        return {
+            publicSuccess: publicJson.success,
+            publicTotal: publicJson.data?.totalAmount,
+            paySuccess: payJson.success,
+            statusAfterPay: payJson.data?.status,
+        };
+    }, {
+        publicId: splitBillResponse.data.publicId,
+        paymentToken: splitBillResponse.data.participants[0].paymentToken,
+    });
+    expect(publicSplitBillResponse.publicSuccess, JSON.stringify(publicSplitBillResponse)).toBeTruthy();
+    expect(publicSplitBillResponse.publicTotal).toBe(70000);
+    expect(publicSplitBillResponse.paySuccess, JSON.stringify(publicSplitBillResponse)).toBeTruthy();
+    expect(publicSplitBillResponse.statusAfterPay).toBe("partial");
+
     const recurringSuggestionsResponse = await page.evaluate(async () => {
         const response = await fetch("/api/recurring/suggestions");
         const json = await response.json();

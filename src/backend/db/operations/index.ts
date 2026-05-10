@@ -16,3 +16,4 @@ export * from "./smart-notification-operations";
 export * from "./quick-add-operations";
 export * from "./recurring-operations";
 export * from "./sync-operations";
+export * from "./split-bill-operations";

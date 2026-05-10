@@ -154,4 +154,13 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk gamification operations, schema, progress API, dan onboarding spec.
    - Full regression pass: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
 
-9. Next: Phase 3.2 Split Bill 2.0 foundation atau lanjut polish UI achievement gallery/streak widget.
+9. **Phase 3.2 Split Bill 2.0 foundation**
+   - Tambah schema/migration `split_bills`, `split_bill_items`, dan `split_bill_participants` di `drizzle/0011_split_bill_2.sql`.
+   - Tambah operasi DB `src/backend/db/operations/split-bill-operations.ts` untuk create/list/detail public bill dan mark participant paid.
+   - Tambah API authenticated `GET/POST /api/split-bills` dan `GET /api/split-bills/[id]`.
+   - Tambah API public `GET/POST /api/public/split-bills/[publicId]` untuk shareable bill dan konfirmasi bayar per participant token.
+   - E2E smoke pass: create split bill Rp 70.000, validasi 2 participant masing-masing Rp 35.000, public detail accessible, dan mark paid mengubah status ke `partial`.
+   - `npm run db:migrate` pass dan apply migration `0011_split_bill_2.sql`; targeted ESLint split bill files + onboarding spec pass.
+   - Full regression pass: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
+
+10. Next: polish UI Split Bill 2.0 page/widget atau lanjut Phase 3.3 Social/Community Goals.
