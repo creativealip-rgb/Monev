@@ -70,7 +70,9 @@ export function InitialBalanceScreen({
             return;
         }
 
-        router.replace("/dashboard");
+        // onFinish handler in page.tsx already handles redirect to dashboard
+        // No need to redirect here
+        setIsSubmitting(false);
     };
 
     const presetAmounts = [
