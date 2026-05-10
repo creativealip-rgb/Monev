@@ -51,7 +51,11 @@ export function DashboardHeader({
     return (
         <header className="sticky top-0 z-[100] w-full pt-safe bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 py-2.5 border-b border-sky-100/50 dark:border-slate-800/50">
             <div className="flex items-center justify-between gap-3">
-                <Link href="/profile" className="min-w-0 flex flex-1 items-center gap-2.5 group active:scale-95 transition-transform">
+                <Link
+                    href="/profile"
+                    aria-label="Buka profil pengguna"
+                    className="min-w-0 flex flex-1 items-center gap-2.5 group rounded-2xl active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-sky-50 dark:focus-visible:ring-offset-slate-950"
+                >
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-md shadow-sky-500/20 sm:h-10 sm:w-10"
@@ -112,14 +116,14 @@ export function DashboardHeader({
 
                     <motion.button
                         type="button"
-                        aria-label="Buka notifikasi"
+                        aria-label={unreadCount > 0 ? `Buka notifikasi, ${unreadCount} belum dibaca` : "Buka notifikasi"}
                         onClick={() => {
                             onNotificationsClick?.();
                             setUnreadCount(0); // Optimistic clear
                         }}
                         whileHover={{ scale: 1.08, rotate: 8 }}
                         whileTap={{ scale: 0.92 }}
-                        className="relative h-9 w-9 rounded-full glass-card flex items-center justify-center text-muted-foreground dark:text-sky-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 transition-all"
+                        className="relative h-9 w-9 rounded-full glass-card flex items-center justify-center text-muted-foreground dark:text-sky-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-700 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-sky-50 dark:focus-visible:ring-offset-slate-950"
                     >
                         <Bell size={17} strokeWidth={2.5} />
                         {unreadCount > 0 && (

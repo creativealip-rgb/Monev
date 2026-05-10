@@ -130,12 +130,13 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
                                     key={link.href}
                                     href={link.href}
                                     onClick={(e) => handleNavClick(link.href, e)}
-                                    onMouseDown={(e) => {
+                                    onMouseDown={() => {
                                         logger.debug("MouseDown on:", link.href);
                                         haptics.tap();
                                     }}
                                     aria-label={link.label}
-                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full select-none relative z-50 pointer-events-auto"
+                                    aria-current={isActive ? "page" : undefined}
+                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full select-none relative z-50 pointer-events-auto rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                 >
                                     <AnimatePresence>
                                         {isActive && (
@@ -186,7 +187,7 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
                                     "w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-shadow",
                                     "bg-gradient-to-br from-sky-500 to-sky-600 text-white",
                                     "shadow-sky-500/40 hover:shadow-sky-500/60",
-                                    "pointer-events-auto"
+                                    "pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                 )}
                             >
                                 <Plus size={22} strokeWidth={2.5} />
@@ -201,12 +202,13 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
                                     key={link.href}
                                     href={link.href}
                                     onClick={(e) => handleNavClick(link.href, e)}
-                                    onMouseDown={(e) => {
+                                    onMouseDown={() => {
                                         logger.debug("MouseDown on:", link.href);
                                         haptics.tap();
                                     }}
                                     aria-label={link.label}
-                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full select-none relative z-50 pointer-events-auto"
+                                    aria-current={isActive ? "page" : undefined}
+                                    className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full select-none relative z-50 pointer-events-auto rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                 >
                                     <AnimatePresence>
                                         {isActive && (

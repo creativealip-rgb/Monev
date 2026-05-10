@@ -223,4 +223,11 @@ Branch: `twa-playstore`
    - Tambah route offline fallback `src/app/offline/page.tsx` untuk pengalaman offline yang jelas.
    - Validasi: `node --check public/push-sw.js`, ESLint offline page pass, full regression sempat gagal karena dev server stale lalu restart; rerun pass `2 passed (1.4m)`.
 
-17. Next: lanjut Phase 4.2 accessibility improvements atau Phase 4.3 security hardening.
+17. **Phase 4.2 Accessibility Improvements - Navigation/action focus baseline**
+   - Audit aksesibilitas high-traffic: bottom nav sudah punya label dasar, tapi belum punya `aria-current` dan focus ring eksplisit; beberapa icon-only action masih kurang descriptive label/focus state.
+   - Tambah `aria-current="page"` dan focus-visible ring untuk link bottom navigation aktif serta FAB tambah transaksi.
+   - Tambah accessible label dan focus-visible ring untuk link profil/header notifikasi dashboard, termasuk label dinamis jumlah notifikasi belum dibaca.
+   - Tambah `aria-label` dan focus ring untuk tombol regenerasi profil psikologi keuangan di profile page.
+   - Targeted ESLint pass untuk file terkait dengan warning existing lama saja; full regression pass `2 passed (1.2m)`.
+
+18. Next: lanjut Phase 4.2 audit modal/sheet keyboard Esc/focus trap atau Phase 4.3 security hardening.

@@ -374,7 +374,14 @@ export default function ProfilePage() {
                                 <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md"><Sparkles size={20} className="text-yellow-300" /></div>
                                 <h3 className="font-black text-xs uppercase tracking-widest opacity-80">Profil Psikologi Keuangan</h3>
                             </div>
-                            <button type="button" onClick={handleGeneratePersona} className="p-2 hover:bg-white/10 rounded-full transition-colors"><Zap size={16} /></button>
+                            <button
+                                type="button"
+                                onClick={handleGeneratePersona}
+                                aria-label="Regenerasi profil psikologi keuangan"
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                            >
+                                <Zap size={16} aria-hidden="true" />
+                            </button>
                         </div>
                         <div className="mt-4 relative z-10">
                             <h2 className="text-2xl font-black tracking-tight leading-tight">{formData.financialPersona.title || formData.financialPersona.persona}</h2>
