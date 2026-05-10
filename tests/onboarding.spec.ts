@@ -203,6 +203,28 @@ test("login then complete account onboarding persists opening balance to account
     });
     const beforeExpense = beforeQuickAdd.data.expense || 0;
 
+    const invalidQuickAddResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/quick-add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ label: "", amount: -1, type: "other" }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(invalidQuickAddResponse.status).toBe(400);
+
+    const invalidNotificationResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "deleteAll" }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(invalidNotificationResponse.status).toBe(400);
+
     const createShortcutResponse = await page.evaluate(async () => {
         const [accountsResponse, categoriesResponse] = await Promise.all([
             fetch("/api/accounts"),
@@ -338,6 +360,17 @@ test("login then complete account onboarding persists opening balance to account
     });
     expect(streakResponse.success, JSON.stringify(streakResponse)).toBeTruthy();
     expect(streakResponse.data.currentStreak).toBeGreaterThanOrEqual(1);
+
+    const invalidSplitBillResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/split-bills", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: "", items: [], participants: [] }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(invalidSplitBillResponse.status).toBe(400);
 
     const splitBillResponse = await page.evaluate(async () => {
         const response = await fetch("/api/split-bills", {

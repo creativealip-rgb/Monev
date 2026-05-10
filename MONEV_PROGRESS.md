@@ -279,4 +279,11 @@ Branch: `twa-playstore`
    - E2E ditambah assertion invalid sync payload dan invalid conflict resolution mengembalikan `400` sebelum path sync valid tetap diproses.
    - Targeted ESLint pass untuk sync routes dan onboarding spec; full regression pass `3 passed (1.6m)`.
 
-25. Next: lanjut Phase 4.3 input validation/rate-limit coverage untuk endpoint write lain seperti quick-add, notifications, dan split-bills authenticated; atau CSP audit bertahap.
+25. **Phase 4.3 Security Hardening - Write endpoint validation and rate limits**
+   - `/api/quick-add` sekarang memakai Zod untuk label, nominal, tipe, category/account id, method, icon, color, dan sort order; payload invalid return `400` tanpa masuk operasi DB.
+   - `/api/notifications` sekarang membatasi action ke literal `markAllAsRead`, menolak JSON/action invalid dengan `400`, dan diberi rate limit `bulk`.
+   - Authenticated `/api/split-bills` sekarang memvalidasi title, receipt URL, payment instructions, items, participants, nilai nominal/quantity, dan batas jumlah item/peserta sebelum create bill.
+   - Ketiga endpoint write di atas ditambah `applyRateLimit(request, "bulk")` untuk mengurangi abuse pada operasi create/update massal.
+   - E2E ditambah assertion invalid quick-add, notification action, dan split bill payload mengembalikan `400`; full regression pass `3 passed (2.3m)`.
+
+26. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening endpoint transaksi/budget dengan schema validation konsisten.
