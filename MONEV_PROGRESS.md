@@ -257,4 +257,12 @@ Branch: `twa-playstore`
    - Tombol close/account/Bayar Lunas/Batal/submit di Pay Bill ditambah focus-visible ring; icon dekoratif diberi `aria-hidden` dan input nominal punya `aria-label`.
    - Targeted ESLint pass untuk modal terkait dengan warning existing di helper Portal/loadHistory; full regression pass `2 passed (1.1m)`.
 
-22. Next: lanjut Phase 4.2 admin modal accessibility atau Phase 4.3 security hardening.
+22. **Phase 4.3 Security Hardening - Middleware auth coverage and security headers**
+   - `middleware.ts` di-hardening dengan daftar protected page/API prefix yang lebih lengkap: bills, budgets, chat, dashboard, debts, export, notifications, onboarding, profile, push, recurring, split bills, stats, streaks, sync, transactions, user, dll.
+   - Protected API tanpa sesi sekarang mengembalikan JSON `401 { success: false, error: "Unauthorized" }`, bukan redirect HTML ke login, sehingga client/API consumer lebih aman dan konsisten.
+   - Middleware sekarang mendukung cookie session NextAuth lama dan Auth.js (`next-auth.*` dan `authjs.*`).
+   - Response middleware diberi security headers baseline: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, dan `Cross-Origin-Opener-Policy`.
+   - E2E ditambah smoke unauthorized `/api/stats` untuk memastikan status JSON 401 dan security headers ada.
+   - Targeted ESLint pass untuk `middleware.ts` dan `tests/onboarding.spec.ts`; full regression pass `3 passed (1.3m)` setelah restart dev server stale.
+
+23. Next: lanjut Phase 4.3 input validation/rate-limit coverage atau audit API public token exposure.

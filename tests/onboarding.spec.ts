@@ -2,6 +2,18 @@ import { expect, test } from "@playwright/test";
 
 const password = "QaTest12345!";
 
+
+test("protected APIs return JSON unauthorized with security headers", async ({ request }) => {
+    const response = await request.get("/api/stats");
+    expect(response.status()).toBe(401);
+
+    const body = await response.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe("Unauthorized");
+    expect(response.headers()["x-frame-options"]).toBe("DENY");
+    expect(response.headers()["x-content-type-options"]).toBe("nosniff");
+});
+
 test("login then complete quick onboarding with monthly income budget", async ({ page, request }) => {
     const email = `onboarding_${Date.now()}_${Math.random().toString(36).slice(2)}@example.com`;
 
