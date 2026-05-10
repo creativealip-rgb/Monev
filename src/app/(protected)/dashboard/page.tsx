@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 import { TransferModal } from "@/frontend/components/TransferModal";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
-import { HealthScoreWidget } from "@/frontend/components/HealthScoreWidget";
-import { BillReminderWidget } from "@/frontend/components/BillReminderWidget";
 import { useToast } from "@/frontend/components/UI";
 
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -19,20 +18,54 @@ import { useAIInsight } from "@/frontend/hooks/useAIInsight";
 import { DashboardHeader } from "./components/widgets/DashboardHeader";
 import { HeroBalanceWidget } from "./components/widgets/HeroBalanceWidget";
 import { QuickStatsWidget } from "./components/widgets/QuickStatsWidget";
-import { RecentTransactionsWidget } from "./components/widgets/RecentTransactionsWidget";
-import { FeaturesWidget } from "./components/widgets/FeaturesWidget";
-import { AIInsightSection } from "./components/AIInsightSection";
 import { OnboardingCard } from "./components/OnboardingCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
 import { NotificationsModal } from "@/frontend/components/modals/NotificationsModal";
-import { SmartNotificationCard } from "./components/SmartNotificationCard";
-import { QuickAddShortcutsWidget } from "./components/QuickAddShortcutsWidget";
-import { RecurringSuggestionsCard } from "./components/RecurringSuggestionsCard";
 
 import { useDashboardStats } from "./hooks/useDashboardStats";
 import { useOnboarding } from "./hooks/useOnboarding";
 
 import { motion } from "framer-motion";
+
+const WidgetSkeleton = ({ className = "h-28" }: { className?: string }) => (
+    <div className={`mx-4 mb-4 rounded-[1.75rem] bg-white/80 p-4 shadow-sm dark:bg-slate-900 ${className}`}>
+        <div className="h-4 w-28 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+        <div className="mt-4 h-12 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+    </div>
+);
+
+const HealthScoreWidget = dynamic(
+    () => import("@/frontend/components/HealthScoreWidget").then(mod => mod.HealthScoreWidget),
+    { loading: () => <WidgetSkeleton /> }
+);
+const BillReminderWidget = dynamic(
+    () => import("@/frontend/components/BillReminderWidget").then(mod => mod.BillReminderWidget),
+    { loading: () => <WidgetSkeleton /> }
+);
+const SmartNotificationCard = dynamic(
+    () => import("./components/SmartNotificationCard").then(mod => mod.SmartNotificationCard),
+    { loading: () => <WidgetSkeleton /> }
+);
+const QuickAddShortcutsWidget = dynamic(
+    () => import("./components/QuickAddShortcutsWidget").then(mod => mod.QuickAddShortcutsWidget),
+    { loading: () => <WidgetSkeleton /> }
+);
+const RecurringSuggestionsCard = dynamic(
+    () => import("./components/RecurringSuggestionsCard").then(mod => mod.RecurringSuggestionsCard),
+    { loading: () => <WidgetSkeleton /> }
+);
+const AIInsightSection = dynamic(
+    () => import("./components/AIInsightSection").then(mod => mod.AIInsightSection),
+    { loading: () => <WidgetSkeleton /> }
+);
+const FeaturesWidget = dynamic(
+    () => import("./components/widgets/FeaturesWidget").then(mod => mod.FeaturesWidget),
+    { loading: () => <WidgetSkeleton className="h-36" /> }
+);
+const RecentTransactionsWidget = dynamic(
+    () => import("./components/widgets/RecentTransactionsWidget").then(mod => mod.RecentTransactionsWidget),
+    { loading: () => <WidgetSkeleton className="h-56" /> }
+);
 
 export default function DashboardPage() {
     const { t } = useI18n();

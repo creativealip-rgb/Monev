@@ -192,4 +192,12 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk category trend API/UI/spec dengan warning existing di analytics page.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.4m).
 
-13. Next: lanjut Phase 4 Performance Optimization atau hardening advanced analytics export/share insight.
+13. **Phase 4.1 Performance Optimization - Dashboard widget lazy loading**
+   - Audit Phase 4: dashboard masih import banyak widget berat secara eager; transaksi list belum virtualized dan dependency `react-window` belum tersedia.
+   - Tambah dynamic import untuk widget dashboard sekunder: Health Score, Bill Reminder, Smart Notification, Quick Add, Recurring Suggestions, AI Insight, Features, dan Recent Transactions.
+   - Tambah lightweight `WidgetSkeleton` agar first render tetap cepat dan layout tidak lompat saat chunk widget dimuat.
+   - Hero balance/header/quick stats tetap eager supaya konten utama dashboard langsung tampil.
+   - Targeted ESLint pass untuk `src/app/(protected)/dashboard/page.tsx`.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (2.0m).
+
+14. Next: lanjut Phase 4.1 virtualized transaction list atau optimize image/code-splitting route lain.
