@@ -132,20 +132,42 @@ export async function getUserSplitBill(userId: number, publicIdOrId: string) {
     return bill ? getSplitBillById(bill.id) : null;
 }
 
+function sanitizePublicSplitBill<T extends Awaited<ReturnType<typeof getSplitBillById>>>(bill: T) {
+    if (!bill) return null;
+
+    return {
+        ...bill,
+        participants: bill.participants.map((participant) => {
+            const { paymentToken, ...publicParticipant } = participant;
+            void paymentToken;
+            return publicParticipant;
+        }),
+    };
+}
+
 export async function getPublicSplitBill(publicId: string) {
+    const db = getDb();
+    const bill = await db.select().from(splitBills).where(eq(splitBills.publicId, publicId)).get();
+    const data = bill ? await getSplitBillById(bill.id) : null;
+    return sanitizePublicSplitBill(data);
+}
+
+async function getPublicSplitBillWithTokens(publicId: string) {
     const db = getDb();
     const bill = await db.select().from(splitBills).where(eq(splitBills.publicId, publicId)).get();
     return bill ? getSplitBillById(bill.id) : null;
 }
 
-export async function markSplitBillParticipantPaid(paymentTokenValue: string, proofUrl?: string) {
+export async function markSplitBillParticipantPaid(
+    publicIdValue: string,
+    paymentTokenValue: string,
+    proofUrl?: string,
+) {
     const db = getDb();
-    const participant = await db
-        .select()
-        .from(splitBillParticipants)
-        .where(eq(splitBillParticipants.paymentToken, paymentTokenValue))
-        .get();
+    const bill = await getPublicSplitBillWithTokens(publicIdValue);
+    if (!bill) return null;
 
+    const participant = bill.participants.find((item) => item.paymentToken === paymentTokenValue);
     if (!participant) return null;
 
     const now = new Date();
@@ -165,5 +187,6 @@ export async function markSplitBillParticipantPaid(paymentTokenValue: string, pr
 
     await db.update(splitBills).set({ status, updatedAt: now }).where(eq(splitBills.id, participant.splitBillId));
 
-    return getSplitBillById(participant.splitBillId);
+    const updatedBill = await getSplitBillById(participant.splitBillId);
+    return sanitizePublicSplitBill(updatedBill);
 }

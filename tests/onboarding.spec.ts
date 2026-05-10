@@ -344,6 +344,11 @@ test("login then complete account onboarding persists opening balance to account
     const publicSplitBillResponse = await page.evaluate(async ({ publicId, paymentToken }) => {
         const publicResponse = await fetch(`/api/public/split-bills/${publicId}`);
         const publicJson = await publicResponse.json();
+        const invalidPayResponse = await fetch(`/api/public/split-bills/${publicId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentToken: "bad-token" }),
+        });
         const payResponse = await fetch(`/api/public/split-bills/${publicId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -353,8 +358,11 @@ test("login then complete account onboarding persists opening balance to account
         return {
             publicSuccess: publicJson.success,
             publicTotal: publicJson.data?.totalAmount,
+            publicTokenExposed: Boolean(publicJson.data?.participants?.[0]?.paymentToken),
+            invalidStatus: invalidPayResponse.status,
             paySuccess: payJson.success,
             statusAfterPay: payJson.data?.status,
+            payTokenExposed: Boolean(payJson.data?.participants?.[0]?.paymentToken),
         };
     }, {
         publicId: splitBillResponse.data.publicId,
@@ -362,8 +370,11 @@ test("login then complete account onboarding persists opening balance to account
     });
     expect(publicSplitBillResponse.publicSuccess, JSON.stringify(publicSplitBillResponse)).toBeTruthy();
     expect(publicSplitBillResponse.publicTotal).toBe(70000);
+    expect(publicSplitBillResponse.publicTokenExposed).toBe(false);
+    expect(publicSplitBillResponse.invalidStatus).toBe(400);
     expect(publicSplitBillResponse.paySuccess, JSON.stringify(publicSplitBillResponse)).toBeTruthy();
     expect(publicSplitBillResponse.statusAfterPay).toBe("partial");
+    expect(publicSplitBillResponse.payTokenExposed).toBe(false);
 
     await page.goto(`/split-bills/${splitBillResponse.data.publicId}?token=${splitBillResponse.data.participants[1].paymentToken}`, { waitUntil: "networkidle" });
     await expect(page.getByText("Monev Split Bill")).toBeVisible({ timeout: 30000 });

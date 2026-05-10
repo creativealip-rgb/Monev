@@ -265,4 +265,11 @@ Branch: `twa-playstore`
    - E2E ditambah smoke unauthorized `/api/stats` untuk memastikan status JSON 401 dan security headers ada.
    - Targeted ESLint pass untuk `middleware.ts` dan `tests/onboarding.spec.ts`; full regression pass `3 passed (1.3m)` setelah restart dev server stale.
 
-23. Next: lanjut Phase 4.3 input validation/rate-limit coverage atau audit API public token exposure.
+23. **Phase 4.3 Security Hardening - Public split bill token exposure**
+   - Public Split Bill API sekarang memvalidasi format `publicId`, `paymentToken`, dan optional proof URL dengan Zod sebelum query/update.
+   - Public GET/POST tidak lagi mengembalikan `paymentToken` peserta; token hanya tersedia dari authenticated creator API/link share yang dibuat owner.
+   - Payment token sekarang di-scope ke `publicId`, sehingga token valid dari bill lain tidak bisa dipakai untuk menandai pembayaran di public bill yang berbeda.
+   - E2E Split Bill ditambah assertion invalid token payload `400` dan response public tidak mengekspos token.
+   - Targeted ESLint pass untuk split bill operations, public route, dan onboarding spec; full regression pass `3 passed (1.4m)`.
+
+24. Next: lanjut Phase 4.3 input validation/rate-limit coverage pada endpoint sensitif atau CSP audit bertahap.
