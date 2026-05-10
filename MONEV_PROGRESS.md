@@ -174,4 +174,13 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk heatmap API/UI/spec dengan warning existing di analytics page.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.1m).
 
-11. Next: lanjut Phase 3.3 lanjutan untuk cashflow forecast/category anomaly atau Phase 3.4 Personalization Engine.
+11. **Phase 3.3 Advanced Analytics - Cashflow Forecast foundation**
+   - Audit: category anomaly sudah ada di `getSpendingPatterns`/`TrendsTab` dan AI anomaly endpoint `POST /api/ai/analyze-anomalies`; cashflow forecast belum ada.
+   - Tambah API `GET /api/analytics/forecast` untuk forecast 3 bulan ke depan dari rata-rata income/expense 6 bulan terakhir.
+   - Tambah komponen `CashflowForecast` di `src/app/(protected)/analytics/components/CashflowForecast.tsx` dengan summary trend, rata-rata income/expense/balance, dan proyeksi 3 bulan.
+   - Tab Analytics sekarang punya tab `Forecast` dan support `/analytics?tab=forecast`.
+   - E2E smoke menavigasi ke `/analytics?tab=forecast` dan memvalidasi panel `Prediksi 3 bulan ke depan` tampil.
+   - Targeted ESLint pass untuk forecast API/UI/spec dengan warning existing di analytics page.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (2.1m).
+
+12. Next: lanjut Phase 3.4 Personalization Engine atau hardening advanced analytics drilldown forecast/anomaly.
