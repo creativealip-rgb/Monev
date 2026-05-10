@@ -160,7 +160,9 @@ Branch: `twa-playstore`
    - Tambah API authenticated `GET/POST /api/split-bills` dan `GET /api/split-bills/[id]`.
    - Tambah API public `GET/POST /api/public/split-bills/[publicId]` untuk shareable bill dan konfirmasi bayar per participant token.
    - E2E smoke pass: create split bill Rp 70.000, validasi 2 participant masing-masing Rp 35.000, public detail accessible, dan mark paid mengubah status ke `partial`.
+   - Existing `SplitBillFlow` ternyata sudah ada di form transaksi dan API legacy `/api/split-bill`; flow ini sekarang di-wire ke API baru `/api/split-bills` agar share link memakai `publicId` + `paymentToken`.
+   - Tambah public page `src/app/split-bills/[publicId]/page.tsx` untuk detail tagihan, bagian peserta, copy link, dan tombol `Saya Sudah Bayar`.
    - `npm run db:migrate` pass dan apply migration `0011_split_bill_2.sql`; targeted ESLint split bill files + onboarding spec pass.
-   - Full regression pass: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.7m).
 
-10. Next: polish UI Split Bill 2.0 page/widget atau lanjut Phase 3.3 Social/Community Goals.
+10. Next: tambah halaman/list authenticated Split Bill 2.0 di menu Hutang/Piutang atau lanjut Phase 3.3 Social/Community Goals.

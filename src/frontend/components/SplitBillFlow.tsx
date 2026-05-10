@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Users, MessageCircle, Send, Check, Divide, Sliders, Share2, Copy } from "lucide-react";
+import { X, Users, MessageCircle, Send, Check, Divide, Sliders, Copy } from "lucide-react";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
@@ -28,6 +28,7 @@ interface Participant {
     email?: string;
     whatsappNumber?: string;
     phone?: string;
+    paymentToken?: string;
 }
 
 const useSplitBillToast = () => {
@@ -53,7 +54,7 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
     const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal");
     const [isSaving, setIsSaving] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
-    const [splitGroupId, setSplitGroupId] = useState<string | null>(null);
+    const [publicSplitId, setPublicSplitId] = useState<string | null>(null);
     const haptics = useHaptics();
     const toast = useSplitBillToast();
 
@@ -121,9 +122,9 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
     };
 
     const generateShareLink = (participant: Participant) => {
-        if (!transaction.id || !splitGroupId) return null;
+        if (!publicSplitId || !participant.paymentToken) return null;
         
-        const shareUrl = `${window.location.origin}/debts?split=${splitGroupId}&member=${participant.id}`;
+        const shareUrl = `${window.location.origin}/split-bills/${publicSplitId}?token=${participant.paymentToken}`;
         const message = `Halo ${participant.name}! 👋\n\nKamu diminta untuk bayar bagianmu dalam split bill:\n\n📝 *${transaction.description}*\n💰 Bagian kamu: *${formatCurrency(participant.amount)}*\n\nYuk bayar sekarang: ${shareUrl}\n\n_Makasih!_`;
         
         const whatsappUrl = `https://wa.me/${participant.whatsappNumber || participant.phone || ''}?text=${encodeURIComponent(message)}`;
@@ -161,27 +162,36 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
             // Filter out "Saya" from participants (they don't owe themselves)
             const others = participants.filter(p => p.id !== "1");
             
-            const response = await fetch("/api/split-bill", {
+            const response = await fetch("/api/split-bills", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    transactionId: transaction.id,
-                    totalAmount: transaction.amount,
-                    description: transaction.description,
+                    title: transaction.description,
+                    paymentInstructions: "Konfirmasi pembayaran lewat link ini setelah transfer.",
+                    items: [{
+                        name: transaction.description,
+                        price: transaction.amount,
+                        quantity: 1,
+                    }],
                     participants: others.map(p => ({
                         name: p.name,
-                        amount: p.amount,
-                        phone: p.phone,
-                        whatsappNumber: p.whatsappNumber,
-                        email: p.email
-                    }))
+                        amountOwed: p.amount,
+                        phone: p.phone || p.whatsappNumber,
+                    })),
                 })
             });
             
             const result = await response.json();
             
             if (result.success) {
-                setSplitGroupId(result.data.transaction.splitGroupId);
+                setPublicSplitId(result.data.publicId);
+                const tokensByName = new Map(
+                    (result.data.participants || []).map((item: { name: string; paymentToken?: string }) => [item.name, item.paymentToken])
+                );
+                setParticipants(current => current.map(participant => ({
+                    ...participant,
+                    paymentToken: tokensByName.get(participant.name) || participant.paymentToken,
+                })));
                 setIsComplete(true);
                 haptics.success();
                 onSuccess?.();

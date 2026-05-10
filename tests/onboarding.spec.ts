@@ -343,6 +343,12 @@ test("login then complete account onboarding persists opening balance to account
     expect(publicSplitBillResponse.paySuccess, JSON.stringify(publicSplitBillResponse)).toBeTruthy();
     expect(publicSplitBillResponse.statusAfterPay).toBe("partial");
 
+    await page.goto(`/split-bills/${splitBillResponse.data.publicId}?token=${splitBillResponse.data.participants[1].paymentToken}`, { waitUntil: "networkidle" });
+    await expect(page.getByText("Monev Split Bill")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText("Dinner Split E2E")).toBeVisible();
+    await expect(page.getByText("Rp 35.000").first()).toBeVisible();
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+
     const recurringSuggestionsResponse = await page.evaluate(async () => {
         const response = await fetch("/api/recurring/suggestions");
         const json = await response.json();
