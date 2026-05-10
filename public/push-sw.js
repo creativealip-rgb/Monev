@@ -1,79 +1,147 @@
 // Monev Offline-First Service Worker
-// Handles push notifications, offline caching, and background sync
+// Handles push notifications, offline caching, and background sync.
 
-const CACHE_NAME = "monev-v1";
-const OFFLINE_URL = "/offline";
+const VERSION = "v2.0";
+const STATIC_CACHE = `monev-static-${VERSION}`;
+const PAGE_CACHE = `monev-pages-${VERSION}`;
+const IMAGE_CACHE = `monev-images-${VERSION}`;
+const RUNTIME_CACHE = `monev-runtime-${VERSION}`;
 
-// Assets to pre-cache for offline support
 const PRECACHE_ASSETS = [
     "/",
+    "/dashboard",
+    "/transactions",
+    "/offline",
     "/icon.svg",
+    "/icon-192.png",
+    "/icon-512.png",
     "/manifest.json",
 ];
 
-// Install: pre-cache essential assets
+const MAX_ENTRIES = {
+    [PAGE_CACHE]: 20,
+    [IMAGE_CACHE]: 60,
+    [RUNTIME_CACHE]: 80,
+};
+
 self.addEventListener("install", (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            console.log("[SW] Pre-caching essential assets");
-            return cache.addAll(PRECACHE_ASSETS);
+        caches.open(STATIC_CACHE).then((cache) => {
+            return cache.addAll(PRECACHE_ASSETS.map((url) => new Request(url, { cache: "reload" })));
         })
     );
     self.skipWaiting();
 });
 
-// Activate: clean up old caches
 self.addEventListener("activate", (event) => {
+    const allowedCaches = new Set([STATIC_CACHE, PAGE_CACHE, IMAGE_CACHE, RUNTIME_CACHE]);
     event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(
-                keys
-                    .filter((key) => key !== CACHE_NAME)
-                    .map((key) => caches.delete(key))
-            )
-        )
+        Promise.all([
+            caches.keys().then((keys) =>
+                Promise.all(keys.filter((key) => !allowedCaches.has(key)).map((key) => caches.delete(key)))
+            ),
+            self.registration.navigationPreload?.enable?.(),
+        ])
     );
     self.clients.claim();
 });
 
-// Fetch: network-first with cache fallback
 self.addEventListener("fetch", (event) => {
     const { request } = event;
 
-    // Skip non-GET requests
     if (request.method !== "GET") return;
+    if (!request.url.startsWith(self.location.origin)) return;
 
-    // Skip API requests (don't cache dynamic data)
-    if (request.url.includes("/api/")) return;
+    const url = new URL(request.url);
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/") || url.pathname.includes("/api/auth")) {
+        return;
+    }
 
-    // Skip Chrome extensions and other non-http requests
-    if (!request.url.startsWith("http")) return;
+    if (request.mode === "navigate") {
+        event.respondWith(networkFirstPage(event));
+        return;
+    }
 
-    event.respondWith(
-        fetch(request)
-            .then((response) => {
-                // Clone the response before caching
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(request, responseClone);
-                });
-                return response;
-            })
-            .catch(() => {
-                // Network failed, try cache
-                return caches.match(request).then((cached) => {
-                    if (cached) return cached;
-                    // If requesting a page, show offline page
-                    if (request.destination === "document") {
-                        return caches.match("/");
-                    }
-                    return new Response("Offline", { status: 503 });
-                });
-            })
-    );
+    if (url.pathname.startsWith("/_next/static/") || isStaticAsset(url.pathname)) {
+        event.respondWith(cacheFirst(request, STATIC_CACHE));
+        return;
+    }
+
+    if (request.destination === "image" || url.pathname.startsWith("/_next/image")) {
+        event.respondWith(staleWhileRevalidate(request, IMAGE_CACHE));
+        return;
+    }
+
+    event.respondWith(staleWhileRevalidate(request, RUNTIME_CACHE));
 });
 
-// Push notifications
+async function networkFirstPage(event) {
+    const { request, preloadResponse } = event;
+    const cache = await caches.open(PAGE_CACHE);
+
+    try {
+        const response = (await preloadResponse) || await fetch(request);
+        if (isCacheable(response)) {
+            await cache.put(request, response.clone());
+            await trimCache(PAGE_CACHE);
+        }
+        return response;
+    } catch (_error) {
+        return (await cache.match(request)) ||
+            (await caches.match("/offline")) ||
+            (await caches.match("/")) ||
+            new Response("Offline", { status: 503 });
+    }
+}
+
+async function cacheFirst(request, cacheName) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    const response = await fetch(request);
+    if (isCacheable(response)) {
+        const cache = await caches.open(cacheName);
+        await cache.put(request, response.clone());
+    }
+    return response;
+}
+
+async function staleWhileRevalidate(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+
+    const networkPromise = fetch(request)
+        .then(async (response) => {
+            if (isCacheable(response)) {
+                await cache.put(request, response.clone());
+                await trimCache(cacheName);
+            }
+            return response;
+        })
+        .catch(() => cached);
+
+    return cached || networkPromise;
+}
+
+function isCacheable(response) {
+    return response && response.status === 200 && (response.type === "basic" || response.type === "default");
+}
+
+function isStaticAsset(pathname) {
+    return /\.(?:css|js|mjs|png|jpg|jpeg|gif|webp|avif|svg|ico|woff2?|ttf)$/i.test(pathname);
+}
+
+async function trimCache(cacheName) {
+    const maxEntries = MAX_ENTRIES[cacheName];
+    if (!maxEntries) return;
+
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    if (keys.length <= maxEntries) return;
+
+    await Promise.all(keys.slice(0, keys.length - maxEntries).map((key) => cache.delete(key)));
+}
+
 self.addEventListener("push", (event) => {
     const data = event.data?.json() ?? {};
 
@@ -90,12 +158,9 @@ self.addEventListener("push", (event) => {
         actions: data.actions || [],
     };
 
-    event.waitUntil(
-        self.registration.showNotification(title, options)
-    );
+    event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Notification click
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
 
@@ -115,7 +180,6 @@ self.addEventListener("notificationclick", (event) => {
     );
 });
 
-// Background sync for offline transactions
 self.addEventListener("sync", (event) => {
     if (event.tag === "sync-transactions") {
         event.waitUntil(syncOfflineTransactions());
@@ -125,7 +189,7 @@ self.addEventListener("sync", (event) => {
 async function syncOfflineTransactions() {
     try {
         console.log("[SW] Syncing offline transactions...");
-        // Future: read from IndexedDB and POST to /api/transactions
+        // Future: read from IndexedDB and POST to /api/transactions.
     } catch (error) {
         console.error("[SW] Sync failed:", error);
     }

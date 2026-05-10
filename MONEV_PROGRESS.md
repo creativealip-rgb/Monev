@@ -215,4 +215,12 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk `src/app/(protected)/chat/page.tsx` dengan warning existing lama saja.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.3m).
 
-16. Next: lanjut Phase 4.1 code splitting route lain/service worker caching atau Phase 4.2 accessibility improvements.
+16. **Phase 4.1 Performance Optimization - Service worker aggressive caching**
+   - Audit PWA: `push-sw.js` sudah terdaftar global dan handle push/offline, tapi caching masih network-first tunggal; `sw.js` legacy tidak menjadi jalur utama.
+   - Harden `public/push-sw.js` dengan cache terpisah: static, page/navigation, image, dan runtime.
+   - Tambah strategy: navigation network-first dengan cache/offline fallback, static cache-first, image/runtime stale-while-revalidate, skip `/api/*` dan auth route agar data sensitif/dinamis tidak stale.
+   - Tambah cache trimming untuk membatasi ukuran cache runtime/image/page.
+   - Tambah route offline fallback `src/app/offline/page.tsx` untuk pengalaman offline yang jelas.
+   - Validasi: `node --check public/push-sw.js`, ESLint offline page pass, full regression sempat gagal karena dev server stale lalu restart; rerun pass `2 passed (1.4m)`.
+
+17. Next: lanjut Phase 4.2 accessibility improvements atau Phase 4.3 security hardening.
