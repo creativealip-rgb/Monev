@@ -230,4 +230,11 @@ Branch: `twa-playstore`
    - Tambah `aria-label` dan focus ring untuk tombol regenerasi profil psikologi keuangan di profile page.
    - Targeted ESLint pass untuk file terkait dengan warning existing lama saja; full regression pass `2 passed (1.2m)`.
 
-18. Next: lanjut Phase 4.2 audit modal/sheet keyboard Esc/focus trap atau Phase 4.3 security hardening.
+18. **Phase 4.2 Accessibility Improvements - Notification modal semantics**
+   - Audit modal/sheet: beberapa modal sudah punya role dialog/Escape handling, tapi `NotificationsModal` belum punya dialog semantics, focus restore, Escape close, dan label icon-only yang lengkap.
+   - `src/frontend/components/modals/NotificationsModal.tsx` sekarang memakai `role="dialog"`, `aria-modal`, `aria-labelledby`, `aria-describedby`, fokus awal ke tombol tutup, restore fokus ke pemicu saat modal ditutup, dan Escape close.
+   - Tombol mark-as-read dan close ditambah `aria-label`, focus-visible ring, serta icon decorative diberi `aria-hidden`; typing icon config juga di-hardening dari `any` ke `LucideIcon`.
+   - E2E onboarding smoke menvalidasi modal Notifikasi bisa dibuka via accessible name dan ditutup dengan Escape.
+   - Targeted ESLint pass untuk modal/spec; full regression pass `2 passed (1.8m)`.
+
+19. Next: lanjut Phase 4.2 audit modal/sheet keyboard Esc/focus trap lain atau Phase 4.3 security hardening.

@@ -52,6 +52,11 @@ test("login then complete quick onboarding with monthly income budget", async ({
     await page.getByRole("button", { name: /Lanjut|Dashboard|Mulai/i }).click();
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 60000 });
 
+    await page.getByRole("button", { name: /notifikasi/i }).click();
+    await expect(page.getByRole("dialog", { name: "Notifikasi" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Notifikasi" })).toBeHidden();
+
     const persistedStats = await page.waitForFunction(async () => {
         const now = new Date();
         const response = await fetch(`/api/stats?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);

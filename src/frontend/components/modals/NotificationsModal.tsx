@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    Bell, X, CheckCheck, TrendingUp, AlertCircle, 
-    Calendar, Package, Sparkles, Receipt, Info
+import {
+    Bell, X, CheckCheck, TrendingUp, AlertCircle,
+    Calendar, Sparkles, Receipt, Info,
 } from "lucide-react";
-import { cn, formatCurrency } from "@/frontend/lib/utils";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { Portal } from "@/frontend/components/Portal";
 import { formatDistanceToNow } from "date-fns";
@@ -18,7 +19,7 @@ interface NotificationsModalProps {
     onClose: () => void;
 }
 
-const NOTIFICATION_ICONS: Record<string, any> = {
+const NOTIFICATION_ICONS: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
     daily_reminder: { icon: Calendar, color: "text-sky-500", bg: "bg-sky-50 dark:bg-sky-900/20" },
     budget_alert: { icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20" },
     bill_reminder: { icon: Receipt, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20" },
@@ -30,18 +31,34 @@ const NOTIFICATION_ICONS: Record<string, any> = {
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
     const [notifications, setNotifications] = useState<NotificationLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             fetchNotifications();
             document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "unset";
+            const previousActiveElement = document.activeElement as HTMLElement | null;
+            window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+
+            const handleKeyDown = (event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                    onClose();
+                }
+            };
+
+            document.addEventListener("keydown", handleKeyDown);
+            return () => {
+                document.removeEventListener("keydown", handleKeyDown);
+                document.body.style.overflow = "unset";
+                previousActiveElement?.focus?.();
+            };
         }
+
+        document.body.style.overflow = "unset";
         return () => {
             document.body.style.overflow = "unset";
         };
-    }, [isOpen]);
+    }, [isOpen, onClose]);
 
     async function fetchNotifications() {
         setLoading(true);
@@ -93,38 +110,46 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="notifications-modal-title"
+                            aria-describedby="notifications-modal-description"
                             className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800"
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-2xl bg-sky-50 dark:bg-sky-900/20 flex items-center justify-center text-sky-600 dark:text-sky-400">
-                                        <Bell size={20} />
+                                        <Bell size={20} aria-hidden="true" />
                                     </div>
                                     <div>
-                                        <h2 className="text-base font-bold text-foreground">Notifikasi</h2>
-                                        {unreadCount > 0 && (
-                                            <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest mt-0.5">
-                                                {unreadCount} Belum Dibaca
-                                            </p>
-                                        )}
+                                        <h2 id="notifications-modal-title" className="text-base font-bold text-foreground">Notifikasi</h2>
+                                        <p
+                                            id="notifications-modal-description"
+                                            className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest mt-0.5"
+                                        >
+                                            {unreadCount > 0 ? `${unreadCount} Belum Dibaca` : "Semua Sudah Dibaca"}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={markAllAsRead}
-                                            className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-sky-600 transition-colors"
+                                            className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-sky-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
                                             title="Tandai semua dibaca"
+                                            aria-label="Tandai semua notifikasi sebagai dibaca"
                                         >
-                                            <CheckCheck size={18} />
+                                            <CheckCheck size={18} aria-hidden="true" />
                                         </button>
                                     )}
                                     <button
+                                        ref={closeButtonRef}
                                         onClick={onClose}
-                                        className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-rose-500 transition-colors"
+                                        className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-rose-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
+                                        aria-label="Tutup notifikasi"
                                     >
-                                        <X size={18} />
+                                        <X size={18} aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>
