@@ -262,9 +262,9 @@ function OnboardingContent() {
                             updateFormData(field as keyof typeof formData, value);
                             setMonthlyIncome(value);
                         }}
-                        onFinish={async () => {
-                            // Complete onboarding with current form data
-                            const result = await completeOnboarding(formData);
+                        onFinish={async (data) => {
+                            // Complete onboarding with provided form data
+                            const result = await completeOnboarding(data);
                             if (result.success) {
                                 router.push("/dashboard");
                             } else {
@@ -273,6 +273,7 @@ function OnboardingContent() {
                                 skipOnboarding();
                                 router.push("/dashboard");
                             }
+                            return result;
                         }}
                         onPrev={handlePrev}
                     />
