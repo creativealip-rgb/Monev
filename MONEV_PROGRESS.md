@@ -200,4 +200,12 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk `src/app/(protected)/dashboard/page.tsx`.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (2.0m).
 
-14. Next: lanjut Phase 4.1 virtualized transaction list atau optimize image/code-splitting route lain.
+14. **Phase 4.1 Performance Optimization - Transaction list incremental rendering**
+   - Audit transaksi: list sudah infinite-scroll server/page-level, tapi tiap page/group yang sudah dimuat tetap dirender semua sekaligus di client.
+   - Tambah incremental group rendering di `src/app/(protected)/transactions/components/TransactionList.tsx`: render awal 8 group tanggal, tombol `Tampilkan transaksi lainnya` membuka 8 group berikutnya.
+   - Infinite scroll sentinel baru aktif setelah group client yang tersembunyi habis, sehingga request page berikutnya tidak dipicu sebelum DOM batch saat ini selesai ditampilkan.
+   - Tidak menambah dependency baru (`react-window`) agar aman di lingkungan tanpa install tambahan.
+   - Targeted ESLint pass untuk `TransactionList.tsx`.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.4m).
+
+15. Next: lanjut Phase 4.1 optimize images/code splitting route lain atau Phase 4.2 accessibility improvements.
