@@ -183,4 +183,13 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk forecast API/UI/spec dengan warning existing di analytics page.
    - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (2.1m).
 
-12. Next: lanjut Phase 3.4 Personalization Engine atau hardening advanced analytics drilldown forecast/anomaly.
+12. **Phase 3.3 Advanced Visualization - Category Trend foundation**
+   - Audit advanced visualization: Sankey sudah ada di `SankeyFlowChart`, pie/distribution sudah ada di `EnhancedCharts`, heatmap dan forecast sudah ditambahkan; category trend belum ada endpoint/UI dedicated.
+   - Tambah API `GET /api/analytics/category-trend` untuk top 5 kategori expense selama 6 bulan, arah tren, persentase perubahan, rata-rata, dan forecast bulan depan.
+   - Tambah komponen `CategoryTrendChart` di `src/app/(protected)/analytics/components/CategoryTrendChart.tsx` dengan multi-line chart Recharts dan ringkasan per kategori.
+   - Tab Analytics sekarang punya tab `Tren Kategori` dan support `/analytics?tab=category-trend`.
+   - E2E smoke menavigasi ke `/analytics?tab=category-trend` dan memvalidasi panel `Tren kategori 6 bulan` tampil.
+   - Targeted ESLint pass untuk category trend API/UI/spec dengan warning existing di analytics page.
+   - Full regression pass terbaru: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed (1.4m).
+
+13. Next: lanjut Phase 4 Performance Optimization atau hardening advanced analytics export/share insight.

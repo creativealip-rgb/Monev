@@ -357,6 +357,9 @@ test("login then complete account onboarding persists opening balance to account
     await page.goto("/analytics?tab=forecast", { waitUntil: "networkidle" });
     await expect(page.getByTestId("cashflow-forecast")).toBeVisible({ timeout: 30000 });
     await expect(page.getByText("Prediksi 3 bulan ke depan")).toBeVisible();
+    await page.goto("/analytics?tab=category-trend", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("category-trend-chart")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText("Tren kategori 6 bulan")).toBeVisible();
     await page.goto("/dashboard", { waitUntil: "networkidle" });
 
     const recurringSuggestionsResponse = await page.evaluate(async () => {
