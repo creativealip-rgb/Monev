@@ -262,7 +262,18 @@ function OnboardingContent() {
                             updateFormData(field as keyof typeof formData, value);
                             setMonthlyIncome(value);
                         }}
-                        onFinish={async () => handleNext()}
+                        onFinish={async () => {
+                            // Complete onboarding with current form data
+                            const result = await completeOnboarding(formData);
+                            if (result.success) {
+                                router.push("/dashboard");
+                            } else {
+                                console.error("Onboarding failed:", result.message);
+                                // Still allow user to proceed even if API fails
+                                skipOnboarding();
+                                router.push("/dashboard");
+                            }
+                        }}
                         onPrev={handlePrev}
                     />
                 )}

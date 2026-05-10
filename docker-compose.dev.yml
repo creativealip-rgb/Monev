@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  monev-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: monev-dev-local
+    command: npm run dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./sqlite.db
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.monev-dev.rule=Host(`monev-dev.local`)"
+      - "traefik.http.routers.monev-dev.entrypoints=web"
+      - "traefik.http.services.monev-dev.loadbalancer.server.port=3000"
+      - "traefik.docker.network=dokploy-network"
+
+networks:
+  dokploy-network:
+    external: true
