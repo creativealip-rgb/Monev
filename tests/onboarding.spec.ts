@@ -276,6 +276,24 @@ test("login then complete account onboarding persists opening balance to account
     expect(syncStatusResponse.success, JSON.stringify(syncStatusResponse)).toBeTruthy();
     expect(syncStatusResponse.data.synced).toBeGreaterThanOrEqual(1);
 
+    const achievementProgressResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/achievements/progress");
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(achievementProgressResponse.success, JSON.stringify(achievementProgressResponse)).toBeTruthy();
+    const firstTransactionAchievement = achievementProgressResponse.data.find((item: { code: string }) => item.code === "first_tx");
+    expect(firstTransactionAchievement?.unlocked).toBeTruthy();
+    expect(firstTransactionAchievement?.percent).toBe(100);
+
+    const streakResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/streaks");
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(streakResponse.success, JSON.stringify(streakResponse)).toBeTruthy();
+    expect(streakResponse.data.currentStreak).toBeGreaterThanOrEqual(1);
+
     const recurringSuggestionsResponse = await page.evaluate(async () => {
         const response = await fetch("/api/recurring/suggestions");
         const json = await response.json();

@@ -465,6 +465,7 @@ export const userAchievements = sqliteTable("user_achievements", {
 }, (table) => ({
     userIdIdx: index("idx_user_achievements_user_id").on(table.userId),
     achievementIdIdx: index("idx_user_achievements_achievement_id").on(table.achievementId),
+    userAchievementUnique: uniqueIndex("idx_user_achievements_user_achievement_unique").on(table.userId, table.achievementId),
 }));
 
 // Push subscriptions table (VAPID Web Push)

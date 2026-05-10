@@ -145,4 +145,13 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk migration runner, sync API/operations, UI sync components, dan onboarding E2E spec.
    - Full regression pass: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
 
-8. Next: Phase 3 sesuai improvement plan atau deepen conflict resolution real UI.
+8. **Phase 3.1 Gamification & Achievements**
+   - Harden achievement engine di `src/backend/db/operations/gamification-operations.ts` dengan default definitions, auto-seed/upsert, progress calculation, dan auto-unlock berdasarkan transaksi/streak.
+   - Tambah unique index `idx_user_achievements_user_achievement_unique` di schema dan migration `drizzle/0010_gamification_hardening.sql` untuk mencegah duplicate unlock.
+   - Tambah API `GET /api/achievements/progress` yang mengevaluasi unlock lalu mengembalikan progress semua achievement.
+   - E2E smoke pass: setelah transaksi dibuat, `/api/achievements/progress` mengembalikan `first_tx` unlocked 100% dan `/api/streaks` current streak >= 1.
+   - Migration existing DB pass dan fresh DB sanity pass sampai `0010`.
+   - Targeted ESLint pass untuk gamification operations, schema, progress API, dan onboarding spec.
+   - Full regression pass: `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
+
+9. Next: Phase 3.2 Split Bill 2.0 foundation atau lanjut polish UI achievement gallery/streak widget.
