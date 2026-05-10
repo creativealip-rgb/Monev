@@ -272,4 +272,11 @@ Branch: `twa-playstore`
    - E2E Split Bill ditambah assertion invalid token payload `400` dan response public tidak mengekspos token.
    - Targeted ESLint pass untuk split bill operations, public route, dan onboarding spec; full regression pass `3 passed (1.4m)`.
 
-24. Next: lanjut Phase 4.3 input validation/rate-limit coverage pada endpoint sensitif atau CSP audit bertahap.
+24. **Phase 4.3 Security Hardening - Sync validation and bulk rate limits**
+   - `/api/sync/process` sekarang memvalidasi mutation offline dengan Zod: `clientMutationId`, entity transaction-only, operasi create/update/delete, payload object, dan maksimal 25 mutation per request.
+   - `/api/sync/process` dan `/api/sync/resolve-conflict` ditambah `applyRateLimit(request, "bulk")` agar endpoint write-heavy sync tidak bisa dibanjiri request.
+   - `/api/sync/resolve-conflict` sekarang memakai schema Zod untuk `conflictId` positive integer dan resolution enum `use_local/use_server/merge`, termasuk handling JSON invalid tanpa throw 500.
+   - E2E ditambah assertion invalid sync payload dan invalid conflict resolution mengembalikan `400` sebelum path sync valid tetap diproses.
+   - Targeted ESLint pass untuk sync routes dan onboarding spec; full regression pass `3 passed (1.6m)`.
+
+25. Next: lanjut Phase 4.3 input validation/rate-limit coverage untuk endpoint write lain seperti quick-add, notifications, dan split-bills authenticated; atau CSP audit bertahap.

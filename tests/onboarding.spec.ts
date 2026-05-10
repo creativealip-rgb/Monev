@@ -252,6 +252,29 @@ test("login then complete account onboarding persists opening balance to account
     expect(statsAfterQuickAdd.expense).toBeGreaterThanOrEqual(beforeExpense + 33000);
 
     const beforeSync = statsAfterQuickAdd.expense;
+    const invalidSyncResponse = await page.evaluate(async () => {
+        const syncResponse = await fetch("/api/sync/process", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                mutations: [{
+                    clientMutationId: "short",
+                    entityType: "profile",
+                    operation: "replace",
+                    payload: "not-object",
+                }],
+            }),
+        });
+        const conflictResponse = await fetch("/api/sync/resolve-conflict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conflictId: 0, resolution: "invalid" }),
+        });
+        return { syncStatus: syncResponse.status, conflictStatus: conflictResponse.status };
+    });
+    expect(invalidSyncResponse.syncStatus).toBe(400);
+    expect(invalidSyncResponse.conflictStatus).toBe(400);
+
     const syncTransactionResponse = await page.evaluate(async ({ accountId, categoryId }) => {
         const response = await fetch("/api/sync/process", {
             method: "POST",
