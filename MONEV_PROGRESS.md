@@ -133,4 +133,13 @@ Branch: `twa-playstore`
    - Targeted ESLint pass untuk file recurring API/service/widget.
    - E2E smoke pass: onboarding regression + Quick Add + `/api/recurring/suggestions` success array.
 
-7. Next: commit/push Phase 2 slice.
+7. **Phase 2.3 Offline-First Sync Enhancement**
+   - `npm run db:migrate` sudah di-harden lewat `scripts/apply-sqlite-migrations.ts` agar migration SQL manual `0000`-`0009` bisa diterapkan berurutan dan tracked via `__monev_sql_migrations`.
+   - Fresh DB sanity pass: `DATABASE_URL=/tmp/... npm run db:migrate` berhasil apply `0000` sampai `0009`.
+   - Tambah schema/migration `sync_queue` dan `sync_conflicts` di `drizzle/0009_offline_sync_queue.sql`.
+   - Tambah operasi sync queue/status/process/resolve conflict di `src/backend/db/operations/sync-operations.ts`.
+   - Tambah API `GET /api/sync/status`, `POST /api/sync/process`, dan `POST /api/sync/resolve-conflict`.
+   - Tambah UI `SyncStatusBadge` dan placeholder `ConflictResolutionModal`, dipasang di `ClientLayout`.
+   - Targeted ESLint pass untuk migration runner, sync API/operations, dan UI sync components.
+
+8. Next: full onboarding E2E regression lalu commit/push Phase 2.3 slice.

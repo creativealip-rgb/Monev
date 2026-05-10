@@ -15,3 +15,4 @@ export * from "./push-operations";
 export * from "./smart-notification-operations";
 export * from "./quick-add-operations";
 export * from "./recurring-operations";
+export * from "./sync-operations";

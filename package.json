@@ -20,7 +20,7 @@
     "qa:chat": "npm run test:chat && npm run build && npm run e2e:chat",
     "qa:chat:local": "node scripts/qa-chat-local.mjs",
     "clean:test-artifacts": "rimraf playwright-report test-results",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "tsx scripts/apply-sqlite-migrations.ts",
     "db:migrate:prod": "drizzle-kit migrate --config=drizzle.config.prod.ts",
     "db:seed:coupons": "tsx scripts/seed-coupons.ts",
     "db:backup": "tsx scripts/backup-db.ts",

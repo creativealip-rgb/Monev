@@ -382,11 +382,44 @@ export const recurringSuggestionStates = sqliteTable("recurring_suggestion_state
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id").references(() => users.id).notNull(),
     patternKey: text("pattern_key").notNull(),
-    status: text("status", { enum: ["dismissed", "accepted"] }).notNull(),
+    status: text("status").notNull(), // accepted, dismissed
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 }, (table) => ({
     userPatternIdx: uniqueIndex("idx_recurring_suggestion_states_user_pattern").on(table.userId, table.patternKey),
+}));
+
+export const syncQueue = sqliteTable("sync_queue", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    clientMutationId: text("client_mutation_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    operation: text("operation").notNull(),
+    payload: text("payload", { mode: "json" }).notNull(),
+    status: text("status").notNull().default("pending"),
+    error: text("error"),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    processedAt: integer("processed_at", { mode: "timestamp" }),
+}, (table) => ({
+    userStatusIdx: index("idx_sync_queue_user_status").on(table.userId, table.status),
+    userMutationIdx: uniqueIndex("idx_sync_queue_user_mutation").on(table.userId, table.clientMutationId),
+}));
+
+export const syncConflicts = sqliteTable("sync_conflicts", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    queueId: integer("queue_id").references(() => syncQueue.id),
+    entityType: text("entity_type").notNull(),
+    localPayload: text("local_payload", { mode: "json" }).notNull(),
+    serverPayload: text("server_payload", { mode: "json" }).notNull(),
+    status: text("status").notNull().default("open"),
+    resolution: text("resolution"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    resolvedAt: integer("resolved_at", { mode: "timestamp" }),
+}, (table) => ({
+    userStatusIdx: index("idx_sync_conflicts_user_status").on(table.userId, table.status),
 }));
 
 export const streaks = sqliteTable("streaks", {

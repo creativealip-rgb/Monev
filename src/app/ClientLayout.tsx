@@ -19,6 +19,8 @@ import { cn } from "@/frontend/lib/utils";
 import { motion } from "framer-motion";
 import { SecurityGuard } from "@/frontend/components/SecurityGuard";
 import { OfflineBadge } from "@/frontend/components/OfflineBadge";
+import { SyncStatusBadge } from "@/frontend/components/SyncStatusBadge";
+import { ConflictResolutionModal } from "@/frontend/components/ConflictResolutionModal";
 import { InstallPrompt } from "@/frontend/components/InstallPrompt";
 
 const getNativeChromeColor = () => {
@@ -36,6 +38,7 @@ export default function ClientLayout({
 }) {
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const [isBottomNavSuppressed, setIsBottomNavSuppressed] = useState(false);
+    const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -45,12 +48,16 @@ export default function ClientLayout({
             setIsBottomNavSuppressed(Boolean((event as CustomEvent<boolean>).detail));
         };
 
+        const openSyncConflicts = () => setIsConflictModalOpen(true);
+
         window.addEventListener("monev:open-add-transaction", openAddTransaction);
         window.addEventListener("monev:suppress-bottom-nav", suppressBottomNav);
+        window.addEventListener("monev:open-sync-conflicts", openSyncConflicts);
 
         return () => {
             window.removeEventListener("monev:open-add-transaction", openAddTransaction);
             window.removeEventListener("monev:suppress-bottom-nav", suppressBottomNav);
+            window.removeEventListener("monev:open-sync-conflicts", openSyncConflicts);
         };
     }, []);
 
@@ -174,6 +181,7 @@ export default function ClientLayout({
                                 <NativeNotificationService />
                                 <NotificationListenerService />
                                 <OfflineBadge />
+                                <SyncStatusBadge />
                                 <InstallPrompt />
                                 <div className={cn(
                                     "fixed inset-0 -z-10 bg-gradient-to-br from-sky-50 via-sky-100/50 to-cyan-100",
@@ -216,6 +224,10 @@ export default function ClientLayout({
                                     onSuccess={() => {
                                         window.dispatchEvent(new CustomEvent("transactionAdded"));
                                     }}
+                                />
+                                <ConflictResolutionModal
+                                    isOpen={isConflictModalOpen}
+                                    onClose={() => setIsConflictModalOpen(false)}
                                 />
                             </ErrorBoundary>
                         </ToastProvider>
