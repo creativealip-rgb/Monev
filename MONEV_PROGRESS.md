@@ -114,4 +114,16 @@ Branch: `twa-playstore`
    - `BASE_URL=http://localhost:3001 npx playwright test tests/onboarding.spec.ts --project=login --workers=1` -> 2 passed.
    - Coverage: quick onboarding monthly income/budget, complete onboarding anti-duplikasi saldo, Quick Add shortcut render + run API + stats expense refresh.
 
-5. Next: commit dan push perubahan Phase 1.2/1.3.
+5. **Phase 2.1 AI Chat Quick Actions**
+   - Audit: chat API sudah punya local intent/action basic untuk transaksi, undo, budget/goal planning.
+   - Next Phase 2.1: rapikan response format action/confirmation agar UI bisa tampil sebagai card, bukan teks saja.
+
+6. **Phase 2.2 Recurring Transaction Intelligence**
+   - Tambah detector pola transaksi rutin 180 hari terakhir di `src/backend/services/recurring-detector.ts`.
+   - Tambah operasi recurring basic di `src/backend/db/operations/recurring-operations.ts`.
+   - Tambah API `/api/recurring/suggestions` dan `/api/recurring/from-pattern`.
+   - Tambah dashboard card `RecurringSuggestionsCard` untuk menampilkan rekomendasi dan accept menjadi transaksi rutin.
+   - Targeted ESLint pass untuk file recurring API/service/widget.
+   - E2E smoke pass: onboarding regression + Quick Add + `/api/recurring/suggestions` success array.
+
+7. Next: commit/push Phase 2 slice.

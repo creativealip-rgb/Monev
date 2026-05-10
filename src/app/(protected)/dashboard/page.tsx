@@ -27,6 +27,7 @@ import { BalanceDetailModal } from "./components/BalanceDetailModal";
 import { NotificationsModal } from "@/frontend/components/modals/NotificationsModal";
 import { SmartNotificationCard } from "./components/SmartNotificationCard";
 import { QuickAddShortcutsWidget } from "./components/QuickAddShortcutsWidget";
+import { RecurringSuggestionsCard } from "./components/RecurringSuggestionsCard";
 
 import { useDashboardStats } from "./hooks/useDashboardStats";
 import { useOnboarding } from "./hooks/useOnboarding";
@@ -132,6 +133,8 @@ export default function DashboardPage() {
                 <SmartNotificationCard />
 
                 <QuickAddShortcutsWidget onSuccess={handleAddTransactionSuccess} />
+
+                <RecurringSuggestionsCard />
 
                 {stats.healthScore && (
                     <motion.section

@@ -228,4 +228,12 @@ test("login then complete account onboarding persists opening balance to account
 
     const statsAfterQuickAdd = await afterQuickAdd.jsonValue() as { expense: number };
     expect(statsAfterQuickAdd.expense).toBeGreaterThanOrEqual(beforeExpense + 33000);
+
+    const recurringSuggestionsResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/recurring/suggestions");
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(recurringSuggestionsResponse.success, JSON.stringify(recurringSuggestionsResponse)).toBeTruthy();
+    expect(Array.isArray(recurringSuggestionsResponse.data)).toBeTruthy();
 });
