@@ -112,25 +112,35 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                 }
             `}</style>
             <AnimatePresence>
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md dark:bg-slate-950/80"
-                    style={{ height: "100dvh" }}
-                    onClick={onClose}
-                >
+                <>
                     <motion.div
-                        initial={{ opacity: 0, y: 80, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 80, scale: 0.98 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="transaction-detail-title"
-                        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[85vh] sm:rounded-[2.5rem]"
-                        onClick={(e) => e.stopPropagation()}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[2147483646] bg-slate-900/60 backdrop-blur-md dark:bg-slate-950/80"
+                        style={{ height: "100dvh" }}
+                        onClick={onClose}
+                    />
+                    <div
+                        className="fixed z-[2147483647] w-[calc(100vw-2rem)] max-w-md overflow-y-auto rounded-[2rem] shadow-2xl sm:rounded-[2.5rem]"
+                        style={{
+                            left: "50%",
+                            top: "50dvh",
+                            maxHeight: "calc(100dvh - 2rem)",
+                            transform: "translate(-50%, -50%)",
+                        }}
                     >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="transaction-detail-title"
+                            className="relative flex w-full flex-col border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                         <div className="flex items-center justify-between mb-4">
                             <h2 id="transaction-detail-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Detail Transaksi</h2>
                             <button
@@ -238,8 +248,9 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                                 </button>
                             </div>
                         </div>
-                    </motion.div>
-                </motion.div>
+                        </motion.div>
+                    </div>
+                </>
             </AnimatePresence>
         </Portal>
     );
