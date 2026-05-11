@@ -310,6 +310,30 @@ test("login then complete account onboarding persists opening balance to account
     expect(invalidDetailWriteResponse.transactionStatus).toBe(400);
     expect(invalidDetailWriteResponse.budgetStatus).toBe(400);
 
+    const invalidBillWriteResponse = await page.evaluate(async () => {
+        const [createResponse, updateResponse, payResponse] = await Promise.all([
+            fetch("/api/bills", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: "", amount: -1, dueDate: 40 }),
+            }),
+            fetch("/api/bills/not-a-number", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: -1 }),
+            }),
+            fetch("/api/bills/not-a-number/pay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accountId: 0, amount: -1 }),
+            }),
+        ]);
+        return { createStatus: createResponse.status, updateStatus: updateResponse.status, payStatus: payResponse.status };
+    });
+    expect(invalidBillWriteResponse.createStatus).toBe(400);
+    expect(invalidBillWriteResponse.updateStatus).toBe(400);
+    expect(invalidBillWriteResponse.payStatus).toBe(400);
+
     const invalidQuickAddResponse = await page.evaluate(async () => {
         const response = await fetch("/api/quick-add", {
             method: "POST",

@@ -2,8 +2,21 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getBills, createBill } from "@/backend/db/operations";
 import { createLogger } from "@/lib/logger";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+import { z } from "zod";
 
 const logger = createLogger("API:Bills");
+
+const billCreateSchema = z.object({
+    name: z.string().trim().min(1).max(120),
+    amount: z.coerce.number().positive().max(1_000_000_000),
+    categoryId: z.coerce.number().int().positive().optional().nullable(),
+    dueDate: z.coerce.number().int().min(1).max(31).optional(),
+    frequency: z.enum(["monthly", "weekly", "yearly"]).optional(),
+    icon: z.string().trim().max(40).optional(),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    notes: z.string().trim().max(500).optional(),
+});
 
 export async function GET() {
     try {
@@ -56,8 +69,19 @@ export async function POST(request: Request) {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        const body = await request.json();
-        const bill = await createBill(userId, body);
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
+
+        const body = await request.json().catch(() => null);
+        const parsedBody = billCreateSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Payload tagihan tidak valid" }, { status: 400 });
+        }
+
+        const bill = await createBill(userId, {
+            ...parsedBody.data,
+            categoryId: parsedBody.data.categoryId || undefined,
+        });
 
         return NextResponse.json({ success: true, data: bill });
     } catch (error) {

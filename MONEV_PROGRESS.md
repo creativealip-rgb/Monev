@@ -320,4 +320,10 @@ Branch: `twa-playstore`
    - E2E ditambah assertion invalid import body dan invalid cloud backup action mengembalikan `400`.
    - Targeted ESLint pass untuk export route dan onboarding spec; full regression pass `3 passed (1.3m)`.
 
-31. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.
+31. **Phase 4.3 Security Hardening - Bills API validation**
+   - `/api/bills` create sekarang memakai Zod untuk nama, nominal, due date, frequency, color, icon, notes, dan diberi rate limit `bulk`.
+   - `/api/bills/[id]` PUT/DELETE sekarang memvalidasi id positive integer, update payload partial/toggle action, invalid JSON/payload return `400`, dan diberi rate limit `bulk`.
+   - `/api/bills/[id]/pay` sekarang memvalidasi id, account id, amount positif, notes, invalid payload return `400`, dan diberi rate limit `bulk` sebelum memproses pembayaran.
+   - E2E ditambah assertion invalid create/update/pay tagihan mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.5m)`.
+
+32. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.
