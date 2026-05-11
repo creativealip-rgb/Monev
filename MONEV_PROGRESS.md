@@ -314,4 +314,10 @@ Branch: `twa-playstore`
    - Existing AI tier daily limit dan rate limit AI tetap dipakai; validasi payload dilakukan sebelum request ke provider AI.
    - E2E ditambah assertion invalid AI simulate/categorize mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.9m)`.
 
-30. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening export/import payload/file limits.
+30. **Phase 4.3 Security Hardening - Export/import payload and cloud backup actions**
+   - `/api/export` import JSON sekarang diberi `applyRateLimit(req, "bulk")`, batas payload/file 2MB, validasi ekstensi `.json` untuk multipart, dan invalid JSON return `400` bukan jatuh ke error generik.
+   - Cloud backup `PUT /api/export` sekarang memakai Zod enum untuk action `backup|restore|status`, invalid action/JSON return `400`, dan diberi rate limit `bulk` sebelum operasi storage R2/local.
+   - E2E ditambah assertion invalid import body dan invalid cloud backup action mengembalikan `400`.
+   - Targeted ESLint pass untuk export route dan onboarding spec; full regression pass `3 passed (1.3m)`.
+
+31. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.

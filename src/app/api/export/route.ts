@@ -6,6 +6,11 @@ import { eq, desc } from "drizzle-orm";
 import { HeadObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
 import path from "path";
+import { z } from "zod";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
+const cloudBackupActionSchema = z.object({ action: z.enum(["backup", "restore", "status"]) });
 
 const BACKUP_TABLES = [
     "categories",
@@ -353,7 +358,10 @@ export async function POST(req: NextRequest) {
     const userId = parseInt(session.user.id);
 
     try {
-        let payload: any;
+        const rateLimitResponse = await applyRateLimit(req, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
+
+        let payload: unknown;
         const contentType = req.headers.get("content-type") || "";
         if (contentType.includes("multipart/form-data")) {
             const formData = await req.formData();
@@ -361,9 +369,16 @@ export async function POST(req: NextRequest) {
             if (!(file instanceof File)) {
                 return NextResponse.json({ success: false, error: "File import tidak ditemukan" }, { status: 400 });
             }
+            if (file.size > MAX_IMPORT_BYTES || !file.name.toLowerCase().endsWith(".json")) {
+                return NextResponse.json({ success: false, error: "File backup harus JSON dan maksimal 2MB" }, { status: 400 });
+            }
             payload = JSON.parse(await file.text());
         } else {
-            payload = await req.json();
+            const contentLength = Number(req.headers.get("content-length") || 0);
+            if (contentLength > MAX_IMPORT_BYTES) {
+                return NextResponse.json({ success: false, error: "Payload import terlalu besar" }, { status: 413 });
+            }
+            payload = await req.json().catch(() => null);
         }
 
         const data = normalizeBackupPayload(payload);
@@ -388,8 +403,15 @@ export async function PUT(req: NextRequest) {
     const userId = parseInt(session.user.id);
 
     try {
-        const body = await req.json();
-        const action = body?.action;
+        const rateLimitResponse = await applyRateLimit(req, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
+
+        const body = await req.json().catch(() => null);
+        const parsedBody = cloudBackupActionSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Action cloud backup tidak valid" }, { status: 400 });
+        }
+        const { action } = parsedBody.data;
 
         if (action === "backup") {
             const payload = createBackupPayload(userId, session.user.email);

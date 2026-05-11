@@ -243,6 +243,24 @@ test("login then complete account onboarding persists opening balance to account
     expect(invalidAiResponse.simulateStatus).toBe(400);
     expect(invalidAiResponse.categorizeStatus).toBe(400);
 
+    const invalidExportResponse = await page.evaluate(async () => {
+        const [importResponse, cloudResponse] = await Promise.all([
+            fetch("/api/export", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: "not-json",
+            }),
+            fetch("/api/export", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "wipe" }),
+            }),
+        ]);
+        return { importStatus: importResponse.status, cloudStatus: cloudResponse.status };
+    });
+    expect(invalidExportResponse.importStatus).toBe(400);
+    expect(invalidExportResponse.cloudStatus).toBe(400);
+
     const invalidAccountCategoryResponse = await page.evaluate(async () => {
         const [accountCreate, accountUpdate, categoryCreate, categoryDelete] = await Promise.all([
             fetch("/api/accounts", {
