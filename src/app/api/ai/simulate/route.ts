@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { getAnalysisData, getInvestments, getGoals } from "@/backend/db/operations";
 import { createChatCompletionWithFallback } from "@/lib/ai-provider";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+
+const simulationSchema = z.object({
+    scenario: z.string().trim().min(3).max(500),
+    amount: z.coerce.number().positive().max(1_000_000_000),
+    type: z.enum(["one_time_expense", "recurring_expense", "one_time_income", "recurring_income"]),
+});
 
 export async function POST(req: NextRequest) {
     try {
+        const rateLimitResponse = await applyRateLimit(req, "ai");
+        if (rateLimitResponse) return rateLimitResponse;
+
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
         const userId = parseInt(session.user.id);
 
-        const { scenario, amount, type } = await req.json();
-
-        if (!scenario || !amount || !type) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        const body = await req.json().catch(() => null);
+        const parsedBody = simulationSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Valid simulation payload is required" }, { status: 400 });
         }
+        const { scenario, amount, type } = parsedBody.data;
 
         const now = new Date();
         const year = now.getFullYear();

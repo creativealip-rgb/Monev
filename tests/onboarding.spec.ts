@@ -225,6 +225,24 @@ test("login then complete account onboarding persists opening balance to account
     });
     expect(invalidBudgetResponse.status).toBe(400);
 
+    const invalidAiResponse = await page.evaluate(async () => {
+        const [simulateResponse, categorizeResponse] = await Promise.all([
+            fetch("/api/ai/simulate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ scenario: "x", amount: -1, type: "bad" }),
+            }),
+            fetch("/api/ai/categorize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ merchantName: "", description: "" }),
+            }),
+        ]);
+        return { simulateStatus: simulateResponse.status, categorizeStatus: categorizeResponse.status };
+    });
+    expect(invalidAiResponse.simulateStatus).toBe(400);
+    expect(invalidAiResponse.categorizeStatus).toBe(400);
+
     const invalidAccountCategoryResponse = await page.evaluate(async () => {
         const [accountCreate, accountUpdate, categoryCreate, categoryDelete] = await Promise.all([
             fetch("/api/accounts", {

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 import { checkAIRateLimit, incrementAIUsage, getRateLimitHeaders } from "@/lib/rate-limiter";
@@ -20,6 +21,11 @@ const CATEGORIES = [
     "Freelance",
     "Lainnya"
 ];
+
+const categorizeSchema = z.object({
+    merchantName: z.string().trim().max(120).optional(),
+    description: z.string().trim().max(300).optional(),
+}).refine((payload) => Boolean(payload.merchantName || payload.description), "Merchant or description is required");
 
 export async function POST(req: NextRequest) {
     // Rate limiting - AI endpoint
@@ -52,15 +58,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const body = await req.json();
-        const { merchantName, description } = body;
-
-        if (!merchantName && !description) {
+        const body = await req.json().catch(() => null);
+        const parsedBody = categorizeSchema.safeParse(body);
+        if (!parsedBody.success) {
             return NextResponse.json(
-                { success: false, error: "No merchant or description provided" },
+                { success: false, error: "Valid merchant or description is required" },
                 { status: 400 }
             );
         }
+        const { merchantName, description } = parsedBody.data;
 
         const completion = await createChatCompletionWithFallback({
             messages: [

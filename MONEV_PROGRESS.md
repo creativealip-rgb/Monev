@@ -307,4 +307,11 @@ Branch: `twa-playstore`
    - Existing ownership checks account/category tetap via operasi DB user-scoped; balance audit tetap dibuat untuk opening balance dan adjustment.
    - E2E ditambah assertion invalid account/category create-update-delete mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.7m)`.
 
-29. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening endpoint AI/upload/export.
+29. **Phase 4.3 Security Hardening - AI endpoint validation**
+   - `/api/ai/simulate` sekarang memakai Zod untuk scenario, amount positif, dan tipe simulasi enum sebelum prompt AI dibuat.
+   - Simulasi AI diberi `applyRateLimit(req, "ai")`, invalid JSON/payload return `400`, dan fallback lokal tetap tersedia untuk error provider AI.
+   - `/api/ai/categorize` sekarang memvalidasi merchant/description dengan Zod, trim/max length, dan minimal salah satu field wajib terisi.
+   - Existing AI tier daily limit dan rate limit AI tetap dipakai; validasi payload dilakukan sebelum request ke provider AI.
+   - E2E ditambah assertion invalid AI simulate/categorize mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.9m)`.
+
+30. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening export/import payload/file limits.
