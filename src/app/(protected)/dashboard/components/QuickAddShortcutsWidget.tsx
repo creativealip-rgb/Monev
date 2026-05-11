@@ -280,42 +280,45 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
                             transform: "translate(-50%, -50%)",
                         }}
                     >
-                        <form onSubmit={createShortcut} className="w-full border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">Shortcut Baru</p>
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Buat Quick Add</h3>
+                        <form onSubmit={createShortcut} className="w-full border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-500">Shortcut Baru</p>
+                                    <h3 className="text-lg font-black leading-tight text-slate-900 dark:text-white">Buat Quick Add</h3>
                                 </div>
-                                <button type="button" onClick={() => setShowCreate(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                <button type="button" onClick={() => setShowCreate(false)} className="shrink-0 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
 
-                            <div className="space-y-3">
-                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Nama shortcut" required />
-                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Nominal" inputMode="numeric" required />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as "expense" | "income", categoryId: "" })}>
+                            <div className="space-y-2.5">
+                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none transition focus:border-orange-300 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-900" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Nama shortcut" required />
+                                <div className="grid grid-cols-[1.2fr_0.8fr] gap-2">
+                                    <input className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none transition focus:border-orange-300 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-900" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Nominal" inputMode="numeric" required />
+                                    <select className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold outline-none transition focus:border-orange-300 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-900" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as "expense" | "income", categoryId: "" })}>
                                         <option value="expense">Expense</option>
                                         <option value="income">Income</option>
                                     </select>
-                                    <select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} required>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold outline-none transition focus:border-orange-300 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-900" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required>
+                                        <option value="">Kategori</option>
+                                        {filteredCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                                    </select>
+                                    <select className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold outline-none transition focus:border-orange-300 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-900" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} required>
+                                        <option value="">Akun</option>
                                         {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
                                     </select>
                                 </div>
-                                <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required>
-                                    <option value="">Pilih kategori</option>
-                                    {filteredCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                                </select>
-                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.merchantName} onChange={(e) => setForm({ ...form, merchantName: e.target.value })} placeholder="Merchant optional" />
+                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none transition focus:border-orange-300 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:bg-slate-900" value={form.merchantName} onChange={(e) => setForm({ ...form, merchantName: e.target.value })} placeholder="Merchant optional" />
                                 {missingSetupMessage && (
-                                    <p className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                                    <p className="rounded-2xl bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
                                         {missingSetupMessage}
                                     </p>
                                 )}
                             </div>
 
-                            <button type="submit" disabled={saving || !canSaveShortcut} className="mt-4 w-full rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 disabled:opacity-60">
+                            <button type="submit" disabled={saving || !canSaveShortcut} className="mt-3 w-full rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:opacity-60">
                                 {saving ? "Menyimpan..." : "Simpan Shortcut"}
                             </button>
                         </form>
