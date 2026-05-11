@@ -1,22 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
+import { Portal } from "@/frontend/components/Portal";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Edit2, Trash2, Calendar, Tag, Wallet, SlidersHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn, getPaymentMethod } from "@/frontend/lib/utils";
 import { TransactionWithCategory } from "@/types";
-
-function Portal({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
-    return mounted ? createPortal(children, document.body) : null;
-}
 
 interface TransactionDetailModalProps {
     isOpen: boolean;
@@ -86,12 +77,18 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
         };
 
         document.body.style.overflow = "hidden";
+        document.body.classList.add("monev-transaction-modal-open");
+        window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: true }));
         document.addEventListener("keydown", handleKeyDown, true);
+        window.addEventListener("keydown", handleKeyDown, true);
         window.setTimeout(() => closeButtonRef.current?.focus(), 0);
 
         return () => {
             document.body.style.overflow = previousOverflow;
+            document.body.classList.remove("monev-transaction-modal-open");
             document.removeEventListener("keydown", handleKeyDown, true);
+            window.removeEventListener("keydown", handleKeyDown, true);
+            window.dispatchEvent(new CustomEvent("monev:suppress-bottom-nav", { detail: false }));
             previousActiveElement?.focus?.();
         };
     }, [isOpen, onClose, transaction]);
@@ -105,24 +102,32 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
 
     return (
         <Portal>
+            <style jsx global>{`
+                body.monev-transaction-modal-open [data-bottom-nav],
+                body.monev-transaction-modal-open nav[aria-label="Navigasi utama"],
+                body.monev-transaction-modal-open [id*="chat-widget" i],
+                body.monev-transaction-modal-open [class*="chat-widget" i] {
+                    pointer-events: none !important;
+                    visibility: hidden !important;
+                }
+            `}</style>
             <AnimatePresence>
-                <div className="fixed left-0 top-0 z-[999999] flex h-[100dvh] w-screen items-center justify-center overflow-y-auto p-4">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-slate-900/60 p-3 pt-[calc(1rem+env(safe-area-inset-top))] backdrop-blur-md dark:bg-slate-950/80 sm:items-center sm:p-4"
+                    onClick={onClose}
+                >
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-md dark:bg-slate-950/80"
-                        onClick={onClose}
-                    />
-                    <motion.div
-                        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                        initial={{ opacity: 0, y: 80, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 24, scale: 0.96 }}
+                        exit={{ opacity: 0, y: 80, scale: 0.98 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="transaction-detail-title"
-                        className="relative z-10 max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+                        className="relative flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-md flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-5 pb-safe shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[85vh] sm:rounded-[2.5rem]"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
@@ -233,7 +238,7 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                             </div>
                         </div>
                     </motion.div>
-                </div>
+                </motion.div>
             </AnimatePresence>
         </Portal>
     );
