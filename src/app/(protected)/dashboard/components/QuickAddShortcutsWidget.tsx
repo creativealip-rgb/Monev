@@ -185,18 +185,18 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.14 }}
-            className="px-4 mb-4 sm:px-6 sm:mb-6"
+            className="px-4 mb-3 sm:px-6 sm:mb-4"
         >
-            <div className="rounded-[28px] border border-sky-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="mb-3 flex items-center justify-between">
-                    <div>
-                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">Quick Add</p>
-                        <h2 className="text-base font-black text-slate-900 dark:text-white">Transaksi sekali tap</h2>
+            <div className="rounded-[22px] border border-sky-100 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-500">Quick Add</p>
+                        <h2 className="truncate text-sm font-black text-slate-900 dark:text-white">Transaksi sekali tap</h2>
                     </div>
                     <button
                         type="button"
                         onClick={() => setShowCreate(true)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-950 dark:text-orange-300"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 dark:bg-orange-950 dark:text-orange-300"
                         aria-label="Buat shortcut transaksi"
                     >
                         <Plus className="h-4 w-4" />
@@ -207,53 +207,52 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
                     <button
                         type="button"
                         onClick={() => setShowCreate(true)}
-                        className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-orange-200 bg-orange-50/70 p-4 text-left transition hover:bg-orange-50 dark:border-orange-900/50 dark:bg-orange-950/20"
+                        className="flex w-full items-center gap-2 rounded-2xl border border-dashed border-orange-200 bg-orange-50/70 px-3 py-2.5 text-left transition hover:bg-orange-50 dark:border-orange-900/50 dark:bg-orange-950/20"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm dark:bg-slate-900">
-                            <Coffee className="h-5 w-5" />
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-orange-500 shadow-sm dark:bg-slate-900">
+                            <Coffee className="h-4 w-4" />
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">Belum ada shortcut</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Buat template seperti Makan Siang, Parkir, atau Bensin.</p>
+                            <p className="text-xs font-black text-slate-900 dark:text-white">Belum ada shortcut</p>
+                            <p className="line-clamp-1 text-[11px] text-slate-500 dark:text-slate-400">Buat template seperti Makan Siang, Parkir, atau Bensin.</p>
                         </div>
                     </button>
                 ) : (
-                    <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {shortcuts.map((shortcut) => (
                             <button
                                 key={shortcut.id}
                                 type="button"
                                 onClick={() => runShortcut(shortcut)}
                                 disabled={runningId === shortcut.id}
-                                className="min-w-[132px] rounded-2xl border border-slate-100 bg-slate-50 p-3 text-left transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900"
+                                className="flex min-w-[150px] items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-left transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900"
                             >
-                                <div className="mb-3 flex items-center justify-between">
-                                    <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white" style={{ backgroundColor: shortcut.color || "#0ea5e9" }}>
-                                        <Zap className="h-4 w-4" />
-                                    </span>
-                                    <span className="text-[10px] font-bold uppercase text-slate-400">{shortcut.type}</span>
-                                </div>
-                                <p className="line-clamp-1 text-sm font-black text-slate-900 dark:text-white">{shortcut.label}</p>
-                                <p className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">{formatCurrency(shortcut.amount)}</p>
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: shortcut.color || "#0ea5e9" }}>
+                                    <Zap className="h-4 w-4" />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-xs font-black text-slate-900 dark:text-white">{shortcut.label}</span>
+                                    <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">{formatCurrency(shortcut.amount)}</span>
+                                </span>
                             </button>
                         ))}
                     </div>
                 )}
 
                 {suggestions.length > 0 && (
-                    <div className="mt-3 rounded-2xl bg-sky-50 p-3 dark:bg-sky-950/30">
-                        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-sky-600 dark:text-sky-300">Saran otomatis</p>
-                        <div className="space-y-2">
+                    <div className="mt-2 rounded-2xl bg-sky-50 px-3 py-2 dark:bg-sky-950/30">
+                        <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-600 dark:text-sky-300">Saran otomatis</p>
+                        <div className="space-y-1.5">
                             {suggestions.map((suggestion) => (
                                 <button
                                     key={`${suggestion.label}-${suggestion.categoryId}-${suggestion.accountId}`}
                                     type="button"
                                     onClick={() => acceptSuggestion(suggestion)}
-                                    className="flex w-full items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900"
+                                    className="flex w-full items-center justify-between gap-2 rounded-xl bg-white px-2.5 py-1.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900"
                                 >
                                     <div className="min-w-0">
-                                        <p className="truncate text-sm font-black text-slate-900 dark:text-white">{suggestion.label}</p>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        <p className="truncate text-xs font-black text-slate-900 dark:text-white">{suggestion.label}</p>
+                                        <p className="line-clamp-1 text-[10px] text-slate-500 dark:text-slate-400">
                                             {suggestion.count}x dipakai - {suggestion.categoryName || "Kategori"} - {suggestion.accountName || "Akun"}
                                         </p>
                                     </div>
