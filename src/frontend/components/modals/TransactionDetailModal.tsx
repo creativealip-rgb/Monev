@@ -106,22 +106,23 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
     return (
         <Portal>
             <AnimatePresence>
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
-                    onClick={onClose}
-                >
+                <div className="fixed left-0 top-0 z-[999999] flex h-[100dvh] w-screen items-center justify-center overflow-y-auto p-4">
                     <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-md dark:bg-slate-950/80"
+                        onClick={onClose}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, y: 24, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 50, scale: 0.95 }}
+                        exit={{ opacity: 0, y: 24, scale: 0.96 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="transaction-detail-title"
-                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl p-5 overflow-y-auto max-h-[85vh] relative shadow-2xl"
+                        className="relative z-10 max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
@@ -232,7 +233,7 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                             </div>
                         </div>
                     </motion.div>
-                </motion.div>
+                </div>
             </AnimatePresence>
         </Portal>
     );

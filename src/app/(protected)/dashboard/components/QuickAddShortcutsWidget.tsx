@@ -117,7 +117,6 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
             const response = await fetch(`/api/quick-add/${shortcut.id}/run`, { method: "POST" });
             const json = await response.json();
             if (json.success) {
-                onSuccess();
                 if (json.data) showTransactionDetail(shortcut, json.data as TransactionWithCategory);
                 setShortcuts((current) => current.map((item) => item.id === shortcut.id ? { ...item, usageCount: item.usageCount + 1 } : item));
             }
@@ -303,7 +302,10 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
 
             <TransactionDetailModal
                 isOpen={selectedTransaction !== null}
-                onClose={() => setSelectedTransaction(null)}
+                onClose={() => {
+                    setSelectedTransaction(null);
+                    onSuccess();
+                }}
                 transaction={selectedTransaction}
                 accounts={accounts.map((account) => ({ id: account.id, name: account.name, type: account.type || "cash" }))}
                 onEdit={() => setSelectedTransaction(null)}
