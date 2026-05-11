@@ -4,14 +4,28 @@ import { getDb } from "@/backend/db";
 import { debts } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
 import { updateDebtStatus, createTransaction, getCategories } from "@/backend/db/operations";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+import { z } from "zod";
+
+const settleDebtSchema = z.object({
+    debtId: z.coerce.number().int().positive(),
+    createTx: z.boolean().optional(),
+    payFromBalance: z.boolean().optional(),
+    partialAmount: z.coerce.number().positive().max(1_000_000_000).optional(),
+});
 
 export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const userId = parseInt(session.user.id);
 
-    const { debtId, createTx, payFromBalance, partialAmount } = await req.json();
-    if (!debtId) return NextResponse.json({ error: "debtId required" }, { status: 400 });
+    const rateLimitResponse = await applyRateLimit(req, "bulk");
+    if (rateLimitResponse) return rateLimitResponse;
+
+    const body = await req.json().catch(() => null);
+    const parsedBody = settleDebtSchema.safeParse(body);
+    if (!parsedBody.success) return NextResponse.json({ error: "debtId required" }, { status: 400 });
+    const { debtId, createTx, payFromBalance, partialAmount } = parsedBody.data;
 
     const db = getDb();
 

@@ -326,4 +326,10 @@ Branch: `twa-playstore`
    - `/api/bills/[id]/pay` sekarang memvalidasi id, account id, amount positif, notes, invalid payload return `400`, dan diberi rate limit `bulk` sebelum memproses pembayaran.
    - E2E ditambah assertion invalid create/update/pay tagihan mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.5m)`.
 
-32. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.
+32. **Phase 4.3 Security Hardening - Debts API validation**
+   - `/api/debts` create sekarang memakai Zod untuk debtor name, amount, description, due date, direction, invalid JSON/payload return `400`, dan diberi rate limit `bulk`.
+   - `/api/debts/[id]` PUT/DELETE sekarang memvalidasi path id positive integer, payload update/status, invalid payload return `400`, dan diberi rate limit `bulk`.
+   - `/api/debts/settle` sekarang memvalidasi debtId, createTx/payFromBalance, partialAmount positif, invalid payload return `400`, dan diberi rate limit `bulk`.
+   - E2E ditambah assertion invalid create/update/settle hutang mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.3m)`.
+
+33. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.

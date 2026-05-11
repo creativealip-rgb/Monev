@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createDebt, getDebts } from "@/backend/db/operations";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+import { z } from "zod";
 
-export async function GET(req: NextRequest) {
+const debtCreateSchema = z.object({
+    debtorName: z.string().trim().min(1).max(120),
+    amount: z.coerce.number().positive().max(1_000_000_000),
+    description: z.string().trim().max(500).optional(),
+    dueDate: z.string().datetime().optional().or(z.literal("")),
+    direction: z.enum(["owe", "owed"]).optional(),
+});
+
+export async function GET() {
     try {
         const session = await auth();
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
-
-        const status = req.nextUrl.searchParams.get("status") as "paid" | "unpaid" || "unpaid";
 
         // Get both directions
         const [unpaid, paid] = await Promise.all([
@@ -38,12 +46,15 @@ export async function POST(req: NextRequest) {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        const body = await req.json();
-        const { debtorName, amount, description, dueDate, direction } = body;
+        const rateLimitResponse = await applyRateLimit(req, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
 
-        if (!debtorName || !amount) {
+        const body = await req.json().catch(() => null);
+        const parsedBody = debtCreateSchema.safeParse(body);
+        if (!parsedBody.success) {
             return NextResponse.json({ error: "debtorName dan amount wajib diisi" }, { status: 400 });
         }
+        const { debtorName, amount, description, dueDate, direction } = parsedBody.data;
 
         // Encode direction in description prefix
         const prefix = direction === "owed" ? "[OWED] " : "[OWE] ";
