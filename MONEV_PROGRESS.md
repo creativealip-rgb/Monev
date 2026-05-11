@@ -300,4 +300,11 @@ Branch: `twa-playstore`
    - PUT/DELETE budget detail diberi `applyRateLimit(request, "bulk")`; existing ownership check lewat operasi DB user-scoped tetap dipakai.
    - E2E ditambah assertion invalid detail PUT transaksi dan budget mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.0m)`.
 
-28. Next: lanjut Phase 4.3 hardening account/category detail mutation atau CSP audit bertahap.
+28. **Phase 4.3 Security Hardening - Account and category mutation validation**
+   - `/api/accounts` create sekarang memakai Zod untuk name/type/balance/color/icon, invalid JSON/payload return `400`, dan create diberi rate limit `bulk`.
+   - `/api/accounts/[id]` PUT/DELETE sekarang memvalidasi path id positive integer, update payload partial, hex color, tipe akun enum, serta rate limit `bulk` sebelum mutasi.
+   - `/api/categories` POST/DELETE sekarang memakai safeParse Zod, color hex, id positive integer dari query, error generik tanpa `any`, dan rate limit `bulk`.
+   - Existing ownership checks account/category tetap via operasi DB user-scoped; balance audit tetap dibuat untuk opening balance dan adjustment.
+   - E2E ditambah assertion invalid account/category create-update-delete mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.7m)`.
+
+29. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening endpoint AI/upload/export.

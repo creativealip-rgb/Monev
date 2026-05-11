@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { updateAccount, deleteAccount, getAccountById, createBalanceAuditEntry } from "@/backend/db/account-operations";
 import type { Account } from "@/backend/db/schema";
+import { applyRateLimit } from "@/lib/api-rate-limit";
 
-const ACCOUNT_TYPES = new Set(["bank", "emoney", "cash", "credit_card", "investment_wallet"]);
+const accountIdSchema = z.coerce.number().int().positive();
+const updateAccountSchema = z.object({
+    name: z.string().trim().min(1).max(80).optional(),
+    balance: z.coerce.number().nonnegative().max(1_000_000_000).optional(),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    icon: z.string().trim().min(1).max(40).optional(),
+    type: z.enum(["bank", "emoney", "cash", "credit_card", "investment_wallet"]).optional(),
+}).refine((payload) => Object.keys(payload).length > 0, "At least one field is required");
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -13,9 +22,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
         const userId = parseInt(session.user.id);
         const { id } = await params;
-        const accountId = parseInt(id);
+        const parsedId = accountIdSchema.safeParse(id);
+        if (!parsedId.success) {
+            return NextResponse.json({ success: false, error: "Invalid account ID" }, { status: 400 });
+        }
+        const accountId = parsedId.data;
 
-        const body = await request.json();
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
+
+        const body = await request.json().catch(() => null);
+        const parsedBody = updateAccountSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Valid account update payload is required" }, { status: 400 });
+        }
         
         // Verify account belongs to user
         const existing = await getAccountById(userId, accountId);
@@ -23,28 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             return NextResponse.json({ error: "Account not found" }, { status: 404 });
         }
 
-        const updates: Partial<Account> = { updatedAt: new Date() };
-        if (typeof body.name === "string") {
-            const name = body.name.trim();
-            if (!name) return NextResponse.json({ success: false, error: "Nama akun wajib diisi" }, { status: 400 });
-            updates.name = name;
-        }
-        if (body.balance !== undefined) {
-            const balance = Number(body.balance);
-            if (!Number.isFinite(balance) || balance < 0) {
-                return NextResponse.json({ success: false, error: "Saldo akun tidak valid" }, { status: 400 });
-            }
-            updates.balance = balance;
-        }
-        if (typeof body.color === "string" && body.color.trim()) updates.color = body.color;
-        if (typeof body.icon === "string" && body.icon.trim()) updates.icon = body.icon;
-        if (typeof body.type === "string") {
-            if (!ACCOUNT_TYPES.has(body.type)) {
-                return NextResponse.json({ success: false, error: "Tipe akun tidak valid" }, { status: 400 });
-            }
-            updates.type = body.type;
-        }
-
+        const updates: Partial<Account> = { ...parsedBody.data, updatedAt: new Date() };
         const previousBalance = Number(existing.balance || 0);
         const updated = await updateAccount(userId, accountId, updates);
 
@@ -78,7 +77,14 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         }
         const userId = parseInt(session.user.id);
         const { id } = await params;
-        const accountId = parseInt(id);
+        const parsedId = accountIdSchema.safeParse(id);
+        if (!parsedId.success) {
+            return NextResponse.json({ success: false, error: "Invalid account ID" }, { status: 400 });
+        }
+        const accountId = parsedId.data;
+
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
 
         // Verify account belongs to user
         const existing = await getAccountById(userId, accountId);

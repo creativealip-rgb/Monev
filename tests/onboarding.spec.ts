@@ -225,6 +225,37 @@ test("login then complete account onboarding persists opening balance to account
     });
     expect(invalidBudgetResponse.status).toBe(400);
 
+    const invalidAccountCategoryResponse = await page.evaluate(async () => {
+        const [accountCreate, accountUpdate, categoryCreate, categoryDelete] = await Promise.all([
+            fetch("/api/accounts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: "", type: "invalid", balance: -1 }),
+            }),
+            fetch("/api/accounts/not-a-number", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ balance: -1 }),
+            }),
+            fetch("/api/categories", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: "", icon: "", color: "red", type: "other" }),
+            }),
+            fetch("/api/categories?id=not-a-number", { method: "DELETE" }),
+        ]);
+        return {
+            accountCreateStatus: accountCreate.status,
+            accountUpdateStatus: accountUpdate.status,
+            categoryCreateStatus: categoryCreate.status,
+            categoryDeleteStatus: categoryDelete.status,
+        };
+    });
+    expect(invalidAccountCategoryResponse.accountCreateStatus).toBe(400);
+    expect(invalidAccountCategoryResponse.accountUpdateStatus).toBe(400);
+    expect(invalidAccountCategoryResponse.categoryCreateStatus).toBe(400);
+    expect(invalidAccountCategoryResponse.categoryDeleteStatus).toBe(400);
+
     const invalidDetailWriteResponse = await page.evaluate(async () => {
         const [transactionResponse, budgetResponse] = await Promise.all([
             fetch("/api/transactions/not-a-number", {
