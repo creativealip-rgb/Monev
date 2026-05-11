@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Coffee, Plus, X, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatCurrency } from "@/frontend/lib/utils";
+import { Portal } from "@/frontend/components/Portal";
 import { TransactionDetailModal } from "@/frontend/components/modals/TransactionDetailModal";
 import type { TransactionWithCategory } from "@/types";
 
@@ -262,42 +263,53 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
             </div>
 
             {showCreate && (
-                <div className="fixed inset-0 z-50 flex items-end bg-slate-950/40 px-3 pb-3 sm:items-center sm:justify-center">
-                    <form onSubmit={createShortcut} className="w-full rounded-[28px] bg-white p-5 shadow-2xl dark:bg-slate-900 sm:max-w-md">
-                        <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">Shortcut Baru</p>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white">Buat Quick Add</h3>
+                <Portal>
+                    <div className="fixed inset-0 z-[2147483646] bg-slate-900/60 backdrop-blur-md dark:bg-slate-950/80" onClick={() => setShowCreate(false)} />
+                    <div
+                        className="fixed z-[2147483647] w-[calc(100vw-2rem)] max-w-md overflow-y-auto rounded-[2rem] shadow-2xl sm:rounded-[2.5rem]"
+                        style={{
+                            left: "50%",
+                            top: "50%",
+                            maxHeight: "calc(100vh - 2rem)",
+                            transform: "translate(-50%, -50%)",
+                        }}
+                    >
+                        <form onSubmit={createShortcut} className="w-full border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">Shortcut Baru</p>
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-white">Buat Quick Add</h3>
+                                </div>
+                                <button type="button" onClick={() => setShowCreate(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <X className="h-5 w-5" />
+                                </button>
                             </div>
-                            <button type="button" onClick={() => setShowCreate(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                                <X className="h-5 w-5" />
+
+                            <div className="space-y-3">
+                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Nama shortcut" required />
+                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Nominal" inputMode="numeric" required />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as "expense" | "income", categoryId: "" })}>
+                                        <option value="expense">Expense</option>
+                                        <option value="income">Income</option>
+                                    </select>
+                                    <select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} required>
+                                        {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
+                                    </select>
+                                </div>
+                                <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required>
+                                    <option value="">Pilih kategori</option>
+                                    {filteredCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                                </select>
+                                <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.merchantName} onChange={(e) => setForm({ ...form, merchantName: e.target.value })} placeholder="Merchant optional" />
+                            </div>
+
+                            <button type="submit" disabled={saving || !form.categoryId || !form.accountId} className="mt-4 w-full rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 disabled:opacity-60">
+                                {saving ? "Menyimpan..." : "Simpan Shortcut"}
                             </button>
-                        </div>
-
-                        <div className="space-y-3">
-                            <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Nama shortcut" required />
-                            <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Nominal" inputMode="numeric" required />
-                            <div className="grid grid-cols-2 gap-2">
-                                <select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as "expense" | "income", categoryId: "" })}>
-                                    <option value="expense">Expense</option>
-                                    <option value="income">Income</option>
-                                </select>
-                                <select className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })} required>
-                                    {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
-                                </select>
-                            </div>
-                            <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required>
-                                <option value="">Pilih kategori</option>
-                                {filteredCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                            </select>
-                            <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.merchantName} onChange={(e) => setForm({ ...form, merchantName: e.target.value })} placeholder="Merchant optional" />
-                        </div>
-
-                        <button type="submit" disabled={saving || !form.categoryId || !form.accountId} className="mt-4 w-full rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 disabled:opacity-60">
-                            {saving ? "Menyimpan..." : "Simpan Shortcut"}
-                        </button>
-                    </form>
-                </div>
+                        </form>
+                    </div>
+                </Portal>
             )}
 
             <TransactionDetailModal
