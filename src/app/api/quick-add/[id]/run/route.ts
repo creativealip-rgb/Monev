@@ -13,7 +13,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
             return NextResponse.json({ success: false, error: "Invalid shortcut id" }, { status: 400 });
         }
 
-        const data = await runQuickAddShortcut(parseInt(session.user.id, 10), shortcutId);
+        const data = await runQuickAddShortcut(parseInt(String(session.user.id), 10), shortcutId);
         if (!data) {
             return NextResponse.json({ success: false, error: "Shortcut not found" }, { status: 404 });
         }

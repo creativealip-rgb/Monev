@@ -185,7 +185,7 @@ export function SplitBillFlow({ isOpen, onClose, transaction, onSuccess }: Split
             
             if (result.success) {
                 setPublicSplitId(result.data.publicId);
-                const tokensByName = new Map(
+                const tokensByName = new Map<string, string | undefined>(
                     (result.data.participants || []).map((item: { name: string; paymentToken?: string }) => [item.name, item.paymentToken])
                 );
                 setParticipants(current => current.map(participant => ({

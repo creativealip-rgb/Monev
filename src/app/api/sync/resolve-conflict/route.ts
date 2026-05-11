@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         }
 
         const data = await resolveSyncConflict(
-            parseInt(session.user.id, 10),
+            parseInt(String(session.user.id), 10),
             parsedBody.data.conflictId,
             parsedBody.data.resolution,
         );

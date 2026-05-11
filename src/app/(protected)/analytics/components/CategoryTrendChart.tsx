@@ -81,7 +81,7 @@ export function CategoryTrendChart() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                                 <YAxis tickFormatter={formatAxis} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={42} />
-                                <Tooltip formatter={(value: number | string) => formatCurrency(Number(value || 0))} />
+                                <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
                                 {data.categories.map((category) => (
                                     <Line
                                         key={category.categoryId}

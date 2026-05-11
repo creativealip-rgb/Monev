@@ -9,7 +9,7 @@ export async function GET() {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const data = await getSyncStatus(parseInt(session.user.id, 10));
+        const data = await getSyncStatus(parseInt(String(session.user.id), 10));
         return NextResponse.json({ success: true, data });
     } catch (error) {
         console.error("Sync status error:", error);

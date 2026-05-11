@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "patternKey is required" }, { status: 400 });
         }
 
-        const data = await upsertRecurringSuggestionState(parseInt(session.user.id, 10), patternKey, "dismissed");
+        const data = await upsertRecurringSuggestionState(parseInt(String(session.user.id), 10), patternKey, "dismissed");
         return NextResponse.json({ success: true, data });
     } catch (error) {
         console.error("Dismiss recurring suggestion error:", error);

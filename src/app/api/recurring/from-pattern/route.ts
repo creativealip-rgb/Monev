@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: "Valid description, amount, and nextRunAt are required" }, { status: 400 });
         }
 
-        const userId = parseInt(session.user.id, 10);
+        const userId = parseInt(String(session.user.id), 10);
         const data = await createRecurringTransaction(userId, {
             amount,
             description: body.description,

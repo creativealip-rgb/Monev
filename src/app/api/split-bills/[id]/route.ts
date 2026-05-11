@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUserSplitBill } from "@/backend/db/operations";
 
-function getUserId(session: Awaited<ReturnType<typeof auth>>) {
-    return session?.user?.id ? parseInt(session.user.id, 10) : null;
+type AuthSession = { user?: { id?: string | number | null } } | null;
+
+function getUserId(session: AuthSession) {
+    return session?.user?.id ? parseInt(String(session.user.id), 10) : null;
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {

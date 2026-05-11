@@ -9,7 +9,7 @@ export async function GET() {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const data = await detectRecurringPatterns(parseInt(session.user.id, 10));
+        const data = await detectRecurringPatterns(parseInt(String(session.user.id), 10));
         return NextResponse.json({ success: true, data });
     } catch (error) {
         console.error("Recurring suggestions error:", error);

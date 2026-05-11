@@ -332,4 +332,9 @@ Branch: `twa-playstore`
    - `/api/debts/settle` sekarang memvalidasi debtId, createTx/payFromBalance, partialAmount positif, invalid payload return `400`, dan diberi rate limit `bulk`.
    - E2E ditambah assertion invalid create/update/settle hutang mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.3m)`.
 
-33. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.
+33. **Deploy build failure hotfix**
+   - Dokploy log dicek dan root cause awal build gagal ada di `scripts/apply-sqlite-migrations.ts`: import `better-sqlite3` namespace membuat expression not constructable di production build.
+   - Build production lokal juga menemukan beberapa TypeScript strict issue yang sebelumnya tidak tertangkap lint/E2E: formatter Recharts, tipe session helper, optional debt/transaction fields, focus trap PayBill, dan token map Split Bill.
+   - Semua diperbaiki tanpa mengubah behavior utama; `npm run build` sekarang pass dengan warning existing dari Sentry/Prisma instrumentation.
+
+34. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.

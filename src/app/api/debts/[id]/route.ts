@@ -66,7 +66,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         if (!updated) return NextResponse.json({ error: "Debt not found" }, { status: 404 });
 
         // Handle paying from balance for hutang (direction=owe)
-        if (payFromBalance && paymentAmount > 0 && (direction || "owe") === "owe") {
+        const balancePaymentAmount = paymentAmount ?? 0;
+        if (payFromBalance && balancePaymentAmount > 0 && (direction || "owe") === "owe") {
             try {
                 // Create expense transaction - createTransaction handles balance automatically
                 const categories = await getCategories();
@@ -75,7 +76,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
                     categories[0];
 
                 await createTransaction(userId, {
-                    amount: paymentAmount,
+                    amount: balancePaymentAmount,
                     description: `💸 Pembayaran hutang ke ${debtorName || updated.debtorName}${description ? ": " + description : ""}`,
                     categoryId: hutangCategory?.id || 1,
                     type: "expense",

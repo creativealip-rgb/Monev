@@ -4,7 +4,9 @@ import { getDb } from "@/backend/db";
 import { transactions } from "@/backend/db/schema";
 import { and, eq, gte, lte, notLike } from "drizzle-orm";
 
-function getUserId(session: Awaited<ReturnType<typeof auth>>) {
+type AuthSession = { user?: { id?: string | number | null } } | null;
+
+function getUserId(session: AuthSession) {
     const id = session?.user?.id;
     return id ? Number(id) : null;
 }

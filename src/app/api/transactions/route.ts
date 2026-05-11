@@ -138,11 +138,16 @@ export async function POST(request: Request) {
             }
         }
 
+        const categoryId = payload.categoryId ?? (await getCategories())[0]?.id;
+        if (!categoryId) {
+            return NextResponse.json({ success: false, error: "Category is required" }, { status: 400 });
+        }
+
         const transaction = await createTransaction(userId, {
             amount: payload.amount,
-            description: payload.description,
+            description: payload.description || "Transaksi",
             merchantName: payload.merchantName,
-            categoryId: payload.categoryId,
+            categoryId,
             type: payload.type,
             paymentMethod: payload.paymentMethod,
             accountId: payload.accountId,

@@ -25,8 +25,10 @@ const createSplitBillSchema = z.object({
     participants: z.array(splitBillParticipantSchema).min(1).max(50),
 });
 
-function getUserId(session: Awaited<ReturnType<typeof auth>>) {
-    return session?.user?.id ? parseInt(session.user.id, 10) : null;
+type AuthSession = { user?: { id?: string | number | null } } | null;
+
+function getUserId(session: AuthSession) {
+    return session?.user?.id ? parseInt(String(session.user.id), 10) : null;
 }
 
 export async function GET() {

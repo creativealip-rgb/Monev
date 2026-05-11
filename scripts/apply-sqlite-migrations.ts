@@ -1,9 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import * as BetterSqlite3 from "better-sqlite3";
-
-const Database = (BetterSqlite3 as unknown as { default?: typeof BetterSqlite3 }).default || BetterSqlite3;
+import Database from "better-sqlite3";
 
 const dbPath = process.env.DATABASE_URL || "./sqlite.db";
 const migrationsDir = join(process.cwd(), "drizzle");

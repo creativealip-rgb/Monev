@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         const rateLimitResponse = await applyRateLimit(request, "bulk");
         if (rateLimitResponse) return rateLimitResponse;
 
-        const userId = parseInt(session.user.id, 10);
+        const userId = parseInt(String(session.user.id), 10);
         const body = await request.json().catch(() => null);
         const parsedBody = syncProcessSchema.safeParse(body ?? {});
         if (!parsedBody.success) {

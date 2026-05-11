@@ -60,12 +60,12 @@ export function PayBillModal({ isOpen, onClose, bill, paidAmount = 0, onSuccess 
 
             if (event.key !== "Tab") return;
 
-            const focusableElements = [
+            const focusableElements: HTMLElement[] = [
                 closeButtonRef.current,
                 amountInputRef.current,
                 cancelButtonRef.current,
                 submitButtonRef.current,
-            ].filter((element): element is HTMLElement => Boolean(element));
+            ].filter(Boolean) as HTMLElement[];
             const firstElement = focusableElements[0];
             const lastElement = focusableElements[focusableElements.length - 1];
 
