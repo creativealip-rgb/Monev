@@ -125,8 +125,8 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                         className="fixed z-[2147483647] w-[calc(100vw-2rem)] max-w-md overflow-y-auto rounded-[2rem] shadow-2xl sm:rounded-[2.5rem]"
                         style={{
                             left: "50%",
-                            top: "50dvh",
-                            maxHeight: "calc(100dvh - 2rem)",
+                            top: "50%",
+                            maxHeight: "calc(100vh - 2rem)",
                             transform: "translate(-50%, -50%)",
                         }}
                     >
