@@ -173,6 +173,12 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
     };
 
     const filteredCategories = categories.filter((category) => category.type === form.type);
+    const missingSetupMessage = !accounts.length
+        ? "Tambahkan akun dulu supaya shortcut tahu uangnya keluar/masuk dari mana."
+        : !filteredCategories.length
+            ? `Tambahkan kategori ${form.type === "expense" ? "pengeluaran" : "pemasukan"} dulu supaya shortcut bisa disimpan.`
+            : "";
+    const canSaveShortcut = Boolean(form.categoryId && form.accountId && !missingSetupMessage);
 
     return (
         <motion.section
@@ -302,9 +308,14 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
                                     {filteredCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
                                 </select>
                                 <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950" value={form.merchantName} onChange={(e) => setForm({ ...form, merchantName: e.target.value })} placeholder="Merchant optional" />
+                                {missingSetupMessage && (
+                                    <p className="rounded-2xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                                        {missingSetupMessage}
+                                    </p>
+                                )}
                             </div>
 
-                            <button type="submit" disabled={saving || !form.categoryId || !form.accountId} className="mt-4 w-full rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 disabled:opacity-60">
+                            <button type="submit" disabled={saving || !canSaveShortcut} className="mt-4 w-full rounded-2xl bg-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 disabled:opacity-60">
                                 {saving ? "Menyimpan..." : "Simpan Shortcut"}
                             </button>
                         </form>
