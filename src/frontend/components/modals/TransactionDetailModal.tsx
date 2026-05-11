@@ -116,7 +116,8 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-slate-900/60 p-3 pt-[calc(1rem+env(safe-area-inset-top))] backdrop-blur-md dark:bg-slate-950/80 sm:items-center sm:p-4"
+                    className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md dark:bg-slate-950/80"
+                    style={{ height: "100dvh" }}
                     onClick={onClose}
                 >
                     <motion.div
@@ -127,7 +128,7 @@ export function TransactionDetailModal({ isOpen, onClose, transaction, onEdit, o
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="transaction-detail-title"
-                        className="relative flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-md flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-5 pb-safe shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[85vh] sm:rounded-[2.5rem]"
+                        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[85vh] sm:rounded-[2.5rem]"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
