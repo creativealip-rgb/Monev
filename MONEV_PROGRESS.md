@@ -286,4 +286,11 @@ Branch: `twa-playstore`
    - Ketiga endpoint write di atas ditambah `applyRateLimit(request, "bulk")` untuk mengurangi abuse pada operasi create/update massal.
    - E2E ditambah assertion invalid quick-add, notification action, dan split bill payload mengembalikan `400`; full regression pass `3 passed (2.3m)`.
 
-26. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening endpoint transaksi/budget dengan schema validation konsisten.
+26. **Phase 4.3 Security Hardening - Transaction and budget validation**
+   - `/api/transactions` sekarang memvalidasi create payload dengan Zod: amount positif, tipe enum expense/income/transfer, account id, optional target account, category, payment method, merchant/description, dan date.
+   - Create transaction diberi `applyRateLimit(request, "bulk")`, tetap memverifikasi owner account dan target account transfer sebelum insert.
+   - `/api/budgets` sekarang memvalidasi category id, amount positif, month 1-12, year 2000-2100, dan enable rollover sebelum create budget.
+   - Create budget diberi `applyRateLimit(request, "bulk")`; invalid JSON/payload transaksi dan budget mengembalikan `400` konsisten.
+   - E2E ditambah assertion invalid transaction dan invalid budget payload `400`; targeted ESLint pass dan full regression pass `3 passed (2.0m)`.
+
+27. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening update/delete endpoint detail transaksi, budget, account, category.

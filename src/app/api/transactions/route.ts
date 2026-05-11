@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import {
     getCategories,
@@ -9,9 +10,22 @@ import {
 } from "@/backend/db/operations";
 import { getAccountById } from "@/backend/db/account-operations";
 import { createLogger } from "@/lib/logger";
+import { applyRateLimit } from "@/lib/api-rate-limit";
 import type { TransactionWithCategory } from "@/types";
 
 const logger = createLogger("API:Transactions");
+
+const transactionSchema = z.object({
+    amount: z.coerce.number().positive().max(1_000_000_000),
+    description: z.string().trim().max(300).optional(),
+    merchantName: z.string().trim().max(120).optional(),
+    categoryId: z.coerce.number().int().positive().optional(),
+    type: z.enum(["expense", "income", "transfer"]),
+    paymentMethod: z.string().trim().max(40).default("cash"),
+    accountId: z.coerce.number().int().positive(),
+    targetAccountId: z.coerce.number().int().positive().nullable().optional(),
+    date: z.coerce.date().optional(),
+});
 
 export async function GET(request: Request) {
     try {
@@ -99,43 +113,41 @@ export async function POST(request: Request) {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        const body = await request.json();
-        const amount = Number(body.amount);
-        const accountId = Number(body.accountId);
-        const targetAccountId = body.targetAccountId !== null && body.targetAccountId !== undefined
-            ? Number(body.targetAccountId)
-            : null;
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
 
-        if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(accountId)) {
-            return NextResponse.json({ success: false, error: "Valid account and amount are required" }, { status: 400 });
+        const body = await request.json().catch(() => null);
+        const parsedBody = transactionSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Valid transaction payload is required" }, { status: 400 });
         }
 
-        const account = await getAccountById(userId, accountId);
+        const payload = parsedBody.data;
+        const account = await getAccountById(userId, payload.accountId);
         if (!account) {
             return NextResponse.json({ success: false, error: "Account not found" }, { status: 400 });
         }
 
-        if (body.type === "transfer") {
-            if (!Number.isInteger(targetAccountId) || targetAccountId === accountId) {
+        if (payload.type === "transfer") {
+            if (!payload.targetAccountId || payload.targetAccountId === payload.accountId) {
                 return NextResponse.json({ success: false, error: "Valid target account is required" }, { status: 400 });
             }
-            const validTargetAccountId = targetAccountId as number;
-            const targetAccount = await getAccountById(userId, validTargetAccountId);
+            const targetAccount = await getAccountById(userId, payload.targetAccountId);
             if (!targetAccount) {
                 return NextResponse.json({ success: false, error: "Target account not found" }, { status: 400 });
             }
         }
 
         const transaction = await createTransaction(userId, {
-            amount,
-            description: body.description,
-            merchantName: body.merchantName,
-            categoryId: body.categoryId,
-            type: body.type,
-            paymentMethod: body.paymentMethod || "cash",
-            accountId,
-            targetAccountId: body.type === "transfer" ? targetAccountId! : undefined,
-            date: new Date(body.date || Date.now()),
+            amount: payload.amount,
+            description: payload.description,
+            merchantName: payload.merchantName,
+            categoryId: payload.categoryId,
+            type: payload.type,
+            paymentMethod: payload.paymentMethod,
+            accountId: payload.accountId,
+            targetAccountId: payload.type === "transfer" ? payload.targetAccountId! : undefined,
+            date: payload.date || new Date(),
         });
 
         return NextResponse.json({ success: true, data: transaction });

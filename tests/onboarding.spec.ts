@@ -203,6 +203,28 @@ test("login then complete account onboarding persists opening balance to account
     });
     const beforeExpense = beforeQuickAdd.data.expense || 0;
 
+    const invalidTransactionResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/transactions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: -1, type: "expense", accountId: 0 }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(invalidTransactionResponse.status).toBe(400);
+
+    const invalidBudgetResponse = await page.evaluate(async () => {
+        const response = await fetch("/api/budgets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ categoryId: 0, amount: -1, month: 13, year: 1999 }),
+        });
+        const json = await response.json();
+        return { ...json, status: response.status };
+    });
+    expect(invalidBudgetResponse.status).toBe(400);
+
     const invalidQuickAddResponse = await page.evaluate(async () => {
         const response = await fetch("/api/quick-add", {
             method: "POST",

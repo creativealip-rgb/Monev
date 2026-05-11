@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { getBudgets, createBudget } from "@/backend/db/operations";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+
+const budgetSchema = z.object({
+    categoryId: z.coerce.number().int().positive(),
+    amount: z.coerce.number().positive().max(1_000_000_000),
+    month: z.coerce.number().int().min(1).max(12),
+    year: z.coerce.number().int().min(2000).max(2100),
+    enableRollover: z.boolean().optional().default(false),
+});
 
 export async function GET(request: Request) {
     try {
@@ -42,15 +52,16 @@ export async function POST(request: Request) {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
 
-        const body = await request.json();
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
 
-        const budget = await createBudget(userId, {
-            categoryId: body.categoryId,
-            amount: body.amount,
-            month: body.month,
-            year: body.year,
-            enableRollover: body.enableRollover ?? false,
-        });
+        const body = await request.json().catch(() => null);
+        const parsedBody = budgetSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Valid budget payload is required" }, { status: 400 });
+        }
+
+        const budget = await createBudget(userId, parsedBody.data);
 
         return NextResponse.json({ success: true, data: budget });
     } catch (error) {
