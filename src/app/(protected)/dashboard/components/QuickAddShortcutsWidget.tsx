@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Coffee, Plus, X, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatCurrency } from "@/frontend/lib/utils";
+import { TransactionDetailModal } from "@/frontend/components/modals/TransactionDetailModal";
+import type { TransactionWithCategory } from "@/types";
 
 type Shortcut = {
     id: number;
@@ -16,7 +18,7 @@ type Shortcut = {
 };
 
 type Category = { id: number; name: string; type: "expense" | "income" };
-type Account = { id: number; name: string };
+type Account = { id: number; name: string; type?: string };
 type Suggestion = {
     label: string;
     amount: number;
@@ -52,6 +54,7 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
     const [showCreate, setShowCreate] = useState(false);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(defaultForm);
+    const [selectedTransaction, setSelectedTransaction] = useState<TransactionWithCategory | null>(null);
 
     const loadShortcuts = async () => {
         const response = await fetch("/api/quick-add");
@@ -98,6 +101,16 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
         };
     }, []);
 
+    const showTransactionDetail = (shortcut: Shortcut, transaction: TransactionWithCategory) => {
+        const category = categories.find((item) => item.id === transaction.categoryId);
+        setSelectedTransaction({
+            ...transaction,
+            categoryName: transaction.categoryName || category?.name || shortcut.label,
+            categoryColor: transaction.categoryColor || shortcut.color || "#0ea5e9",
+            categoryIcon: transaction.categoryIcon || shortcut.icon || "⚡",
+        });
+    };
+
     const runShortcut = async (shortcut: Shortcut) => {
         setRunningId(shortcut.id);
         try {
@@ -105,6 +118,7 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
             const json = await response.json();
             if (json.success) {
                 onSuccess();
+                if (json.data) showTransactionDetail(shortcut, json.data as TransactionWithCategory);
                 setShortcuts((current) => current.map((item) => item.id === shortcut.id ? { ...item, usageCount: item.usageCount + 1 } : item));
             }
         } finally {
@@ -286,6 +300,15 @@ export function QuickAddShortcutsWidget({ onSuccess }: QuickAddShortcutsWidgetPr
                     </form>
                 </div>
             )}
+
+            <TransactionDetailModal
+                isOpen={selectedTransaction !== null}
+                onClose={() => setSelectedTransaction(null)}
+                transaction={selectedTransaction}
+                accounts={accounts.map((account) => ({ id: account.id, name: account.name, type: account.type || "cash" }))}
+                onEdit={() => setSelectedTransaction(null)}
+                onDelete={() => setSelectedTransaction(null)}
+            />
         </motion.section>
     );
 }

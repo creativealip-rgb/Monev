@@ -8,6 +8,7 @@ import { motion, type Variants } from "framer-motion";
 import { useSecurity } from "@/components/SecurityProvider";
 import { MonthComparison } from "./MonthComparison";
 import { MonthlySpendingHeatmap, SpendingHeatmap } from "./SpendingHeatmap";
+import { CategoryTrendChart } from "./CategoryTrendChart";
 import type { AnalyticsData, AnalyticsDrilldownFilter } from "./types";
 
 function EmptyTrendCard({ title, description }: { title: string; description: string }) {
@@ -189,6 +190,10 @@ export function TrendsTab({
                     )}
                 </motion.div>
             </div>
+
+            <motion.div variants={itemVariants}>
+                <CategoryTrendChart />
+            </motion.div>
 
             {/* Top Categories */}
             <motion.div variants={itemVariants} className="card-clean p-6">

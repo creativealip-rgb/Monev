@@ -337,4 +337,9 @@ Branch: `twa-playstore`
    - Build production lokal juga menemukan beberapa TypeScript strict issue yang sebelumnya tidak tertangkap lint/E2E: formatter Recharts, tipe session helper, optional debt/transaction fields, focus trap PayBill, dan token map Split Bill.
    - Semua diperbaiki tanpa mengubah behavior utama; `npm run build` sekarang pass dengan warning existing dari Sentry/Prisma instrumentation.
 
-34. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.
+34. **Dashboard shortcut modal and analytics tab cleanup**
+   - Quick Add shortcut di dashboard sekarang membuka `TransactionDetailModal` setelah transaksi berhasil dibuat, memakai data transaksi hasil `/api/quick-add/[id]/run` plus fallback metadata kategori/akun.
+   - Tab analytics dirapikan dari 7 tab menjadi 5 tab utama; `Heatmap` sudah tercakup di tab `Trends`, dan `Tren Kategori` digabung ke tab `Trends` agar tidak terasa duplikat/terlalu penuh.
+   - Targeted ESLint pass untuk Quick Add widget dan analytics files; `npm run build` pass.
+
+35. Next: lanjut Phase 4.3 CSP audit bertahap atau cari sisa endpoint `request.json()`/`formData()` yang belum divalidasi.
