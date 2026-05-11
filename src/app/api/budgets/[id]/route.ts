@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { updateBudget, deleteBudget } from "@/backend/db/operations";
+import { applyRateLimit } from "@/lib/api-rate-limit";
+
+const budgetIdSchema = z.coerce.number().int().positive();
+const updateBudgetSchema = z.object({
+    amount: z.coerce.number().positive().max(1_000_000_000),
+});
 
 export async function PUT(
     request: Request,
@@ -12,20 +19,24 @@ export async function PUT(
         const userId = parseInt(session.user.id);
 
         const { id: idString } = await params;
-        const id = parseInt(idString);
-
-        if (isNaN(id)) {
+        const parsedId = budgetIdSchema.safeParse(idString);
+        if (!parsedId.success) {
             return NextResponse.json(
                 { success: false, error: "Invalid budget ID" },
                 { status: 400 }
             );
         }
 
-        const body = await request.json();
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
 
-        const updated = await updateBudget(userId, id, {
-            amount: body.amount,
-        });
+        const body = await request.json().catch(() => null);
+        const parsedBody = updateBudgetSchema.safeParse(body);
+        if (!parsedBody.success) {
+            return NextResponse.json({ success: false, error: "Valid budget amount is required" }, { status: 400 });
+        }
+
+        const updated = await updateBudget(userId, parsedId.data, parsedBody.data);
 
         if (!updated) {
             return NextResponse.json(
@@ -54,16 +65,18 @@ export async function DELETE(
         const userId = parseInt(session.user.id);
 
         const { id: idString } = await params;
-        const id = parseInt(idString);
-
-        if (isNaN(id)) {
+        const parsedId = budgetIdSchema.safeParse(idString);
+        if (!parsedId.success) {
             return NextResponse.json(
                 { success: false, error: "Invalid budget ID" },
                 { status: 400 }
             );
         }
 
-        await deleteBudget(userId, id);
+        const rateLimitResponse = await applyRateLimit(request, "bulk");
+        if (rateLimitResponse) return rateLimitResponse;
+
+        await deleteBudget(userId, parsedId.data);
 
         return NextResponse.json({ success: true });
     } catch (error) {

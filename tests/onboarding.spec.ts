@@ -225,6 +225,24 @@ test("login then complete account onboarding persists opening balance to account
     });
     expect(invalidBudgetResponse.status).toBe(400);
 
+    const invalidDetailWriteResponse = await page.evaluate(async () => {
+        const [transactionResponse, budgetResponse] = await Promise.all([
+            fetch("/api/transactions/not-a-number", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: -1 }),
+            }),
+            fetch("/api/budgets/not-a-number", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: -1 }),
+            }),
+        ]);
+        return { transactionStatus: transactionResponse.status, budgetStatus: budgetResponse.status };
+    });
+    expect(invalidDetailWriteResponse.transactionStatus).toBe(400);
+    expect(invalidDetailWriteResponse.budgetStatus).toBe(400);
+
     const invalidQuickAddResponse = await page.evaluate(async () => {
         const response = await fetch("/api/quick-add", {
             method: "POST",

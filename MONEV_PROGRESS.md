@@ -293,4 +293,11 @@ Branch: `twa-playstore`
    - Create budget diberi `applyRateLimit(request, "bulk")`; invalid JSON/payload transaksi dan budget mengembalikan `400` konsisten.
    - E2E ditambah assertion invalid transaction dan invalid budget payload `400`; targeted ESLint pass dan full regression pass `3 passed (2.0m)`.
 
-27. Next: lanjut Phase 4.3 CSP audit bertahap atau hardening update/delete endpoint detail transaksi, budget, account, category.
+27. **Phase 4.3 Security Hardening - Detail write endpoint validation**
+   - `/api/transactions/[id]` sekarang memvalidasi path id positive integer dan update payload partial dengan Zod sebelum update; empty/invalid payload return `400`.
+   - PUT/DELETE transaksi detail diberi `applyRateLimit(request, "bulk")` agar operasi mutasi per-record ikut terlindungi dari abuse.
+   - `/api/budgets/[id]` sekarang memvalidasi path id positive integer dan update amount positif dengan Zod; invalid JSON/id/payload return `400` konsisten.
+   - PUT/DELETE budget detail diberi `applyRateLimit(request, "bulk")`; existing ownership check lewat operasi DB user-scoped tetap dipakai.
+   - E2E ditambah assertion invalid detail PUT transaksi dan budget mengembalikan `400`; targeted ESLint pass dan full regression pass `3 passed (1.0m)`.
+
+28. Next: lanjut Phase 4.3 hardening account/category detail mutation atau CSP audit bertahap.
