@@ -108,7 +108,8 @@ export const config = {
          * - favicon.ico, icon.svg, etc (static assets)
          * - public files (manifest.json, robots.txt, etc)
          * - /api/auth/* (NextAuth routes)
+         * - /api/cron/* (server-to-server scheduled jobs)
          */
-        "/((?!_next/static|_next/image|favicon|icon|manifest|robots|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+        "/((?!_next/static|_next/image|favicon|icon|manifest|robots|api/auth|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
     ],
 };
