@@ -9,6 +9,7 @@ import { TransactionListSkeleton, NoTransactionsEmpty } from "@/frontend/compone
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 
 import type { TransactionWithCategory } from "@/types";
+import type { TransactionType } from "@/frontend/components/TransactionForm/types";
 import type { DashboardStats, Transaction, TodayStats } from "../types";
 
 interface DashboardSimpleProps {
@@ -18,7 +19,7 @@ interface DashboardSimpleProps {
     loading: boolean;
     mounted: boolean;
     isStealthMode: boolean;
-    onAddNew: () => void;
+    onAddNew: (type: TransactionType) => void;
 }
 
 const itemVariants = {
@@ -123,7 +124,7 @@ export function DashboardSimple({
             <motion.section variants={itemVariants} className="grid grid-cols-2 gap-3">
                 <button
                     type="button"
-                    onClick={onAddNew}
+                    onClick={() => onAddNew("expense")}
                     className="group rounded-3xl border border-rose-100 bg-rose-50 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-rose-900/60 dark:bg-rose-950/30"
                 >
                     <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 transition group-hover:scale-105">
@@ -134,7 +135,7 @@ export function DashboardSimple({
                 </button>
                 <button
                     type="button"
-                    onClick={onAddNew}
+                    onClick={() => onAddNew("income")}
                     className="group rounded-3xl border border-emerald-100 bg-emerald-50 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-emerald-900/60 dark:bg-emerald-950/30"
                 >
                     <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 transition group-hover:scale-105">
@@ -202,7 +203,7 @@ export function DashboardSimple({
                 {loading ? (
                     <TransactionListSkeleton count={3} />
                 ) : !hasTransactions ? (
-                    <NoTransactionsEmpty onAddNew={onAddNew} />
+                    <NoTransactionsEmpty onAddNew={() => onAddNew("expense")} />
                 ) : (
                     <div className="space-y-3">
                         {transactions.slice(0, 5).map((transaction) => (
@@ -215,7 +216,7 @@ export function DashboardSimple({
             <motion.button
                 variants={itemVariants}
                 type="button"
-                onClick={onAddNew}
+                onClick={() => onAddNew("expense")}
                 className="fixed bottom-24 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-2xl shadow-slate-950/25 transition hover:scale-105 dark:bg-white dark:text-slate-950"
                 aria-label="Tambah transaksi"
             >

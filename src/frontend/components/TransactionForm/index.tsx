@@ -15,7 +15,7 @@ import { CategorySection } from "./sections/CategorySection";
 import { AccountSection } from "./sections/AccountSection";
 import type { TransactionFormProps, QuickTemplate } from "./types";
 
-export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormProps) {
+export function TransactionForm({ isOpen, onClose, onSuccess, initialType }: TransactionFormProps) {
     const { success: toastSuccess } = useToast();
     const router = useRouter();
 
@@ -49,7 +49,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         handleDeleteTemplate,
         handleEditTemplate,
         handleUseQuickTemplate,
-    } = useTransactionForm({ isOpen, onClose, onSuccess });
+    } = useTransactionForm({ isOpen, onClose, onSuccess, initialType });
 
     const handleAddAccount = () => {
         handleClose();

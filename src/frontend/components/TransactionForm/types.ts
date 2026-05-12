@@ -6,10 +6,13 @@ export interface Category {
     type: "expense" | "income";
 }
 
+export type TransactionType = "expense" | "income" | "transfer";
+
 export interface TransactionFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    initialType?: TransactionType;
 }
 
 export interface QuickTemplate {
@@ -21,8 +24,6 @@ export interface QuickTemplate {
     description?: string;
     type: "expense" | "income";
 }
-
-export type TransactionType = "expense" | "income" | "transfer";
 
 export interface LastAddedTransaction {
     id?: number;

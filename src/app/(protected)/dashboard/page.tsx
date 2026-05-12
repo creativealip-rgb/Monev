@@ -6,6 +6,7 @@ import { id } from "date-fns/locale";
 
 import { TransferModal } from "@/frontend/components/TransferModal";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";
+import type { TransactionType } from "@/frontend/components/TransactionForm/types";
 import { HealthScoreWidget } from "@/frontend/components/HealthScoreWidget";
 import { BillReminderWidget } from "@/frontend/components/BillReminderWidget";
 import { useToast } from "@/frontend/components/UI";
@@ -62,6 +63,8 @@ export default function DashboardPage() {
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+    const [addSheetType, setAddSheetType] = useState<TransactionType>("expense");
+    const [startAddSheetWithForm, setStartAddSheetWithForm] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
     const today = new Date();
@@ -93,6 +96,17 @@ export default function DashboardPage() {
     const handleTransferSuccess = () => {
         window.dispatchEvent(new CustomEvent("transactionAdded"));
         toast.success(t("dashboard.transferSuccess"), t("dashboard.transferMessage"));
+    };
+
+    const openAddSheet = (type: TransactionType = "expense", startWithForm = false) => {
+        setAddSheetType(type);
+        setStartAddSheetWithForm(startWithForm);
+        setIsAddSheetOpen(true);
+    };
+
+    const closeAddSheet = () => {
+        setIsAddSheetOpen(false);
+        setStartAddSheetWithForm(false);
     };
 
     const handleAddTransactionSuccess = () => {
@@ -162,7 +176,7 @@ export default function DashboardPage() {
                         loading={loading}
                         mounted={mounted}
                         isStealthMode={isStealthMode}
-                        onAddNew={() => setIsAddSheetOpen(true)}
+                        onAddNew={(type) => openAddSheet(type, true)}
                     />
                 ) : (
                     <>
@@ -179,7 +193,7 @@ export default function DashboardPage() {
                             loading={loading}
                             mounted={mounted}
                             isStealthMode={isStealthMode}
-                            onAddNew={() => setIsAddSheetOpen(true)}
+                            onAddNew={() => openAddSheet()}
                         />
                     </>
                 )}
@@ -199,8 +213,10 @@ export default function DashboardPage() {
 
                 <AddTransactionSheet
                     isOpen={isAddSheetOpen}
-                    onClose={() => setIsAddSheetOpen(false)}
+                    onClose={closeAddSheet}
                     onSuccess={handleAddTransactionSuccess}
+                    initialType={addSheetType}
+                    startWithForm={startAddSheetWithForm}
                 />
 
                 <NotificationsModal

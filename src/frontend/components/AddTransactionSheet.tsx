@@ -5,6 +5,7 @@ import { X, FileText, Camera, Mic, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useEffect, useState } from "react";
 import { TransactionForm } from "./TransactionForm/index";
+import type { TransactionType } from "./TransactionForm/types";
 import { SmartInput } from "./SmartInput";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,8 @@ interface AddTransactionSheetProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    initialType?: TransactionType;
+    startWithForm?: boolean;
 }
 
 const actions = [
@@ -40,8 +43,14 @@ const actions = [
     },
 ];
 
-export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransactionSheetProps) {
-    const [showForm, setShowForm] = useState(false);
+export function AddTransactionSheet({
+    isOpen,
+    onClose,
+    onSuccess,
+    initialType = "expense",
+    startWithForm = false,
+}: AddTransactionSheetProps) {
+    const [showForm, setShowForm] = useState(startWithForm);
     const [smartInputMode, setSmartInputMode] = useState<"screenshot" | "voice" | null>(null);
     const [y, setY] = useState(0);
     const { data: session } = useSession();
@@ -95,13 +104,15 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
         purple: { bg: "bg-purple-50", text: "text-purple-600", ring: "ring-purple-200" },
         orange: { bg: "bg-orange-50", text: "text-orange-600", ring: "ring-orange-200" },
     };
+    const shouldShowForm = showForm || (isOpen && startWithForm);
 
-    if (showForm) {
+    if (shouldShowForm) {
         return (
             <TransactionForm
-                isOpen={showForm}
+                isOpen={shouldShowForm}
                 onClose={handleFormClose}
                 onSuccess={onSuccess}
+                initialType={initialType}
             />
         );
     }

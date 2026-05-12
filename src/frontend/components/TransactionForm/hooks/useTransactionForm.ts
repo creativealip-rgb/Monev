@@ -19,6 +19,7 @@ interface UseTransactionFormProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    initialType?: TransactionType;
 }
 
 interface UseTransactionFormReturn {
@@ -65,8 +66,9 @@ export function useTransactionForm({
     isOpen,
     onClose,
     onSuccess,
+    initialType = "expense",
 }: UseTransactionFormProps): UseTransactionFormReturn {
-    const [transactionType, setTransactionType] = useState<TransactionType>("expense");
+    const [transactionType, setTransactionType] = useState<TransactionType>(initialType);
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -271,7 +273,7 @@ export function useTransactionForm({
                 setAmount("");
                 setDescription("");
                 setSelectedCategory(null);
-                setTransactionType("expense");
+                setTransactionType(initialType);
                 return;
             }
 
@@ -324,7 +326,7 @@ export function useTransactionForm({
                     setAmount("");
                     setDescription("");
                     setSelectedCategory(null);
-                    setTransactionType("expense");
+                    setTransactionType(initialType);
                 }
             } else {
                 setError(result.error || "Gagal menyimpan transaksi");
@@ -339,17 +341,17 @@ export function useTransactionForm({
         } finally {
             setLoading(false);
         }
-    }, [selectedCategory, amount, description, encryptionKey, transactionType, selectedAccountId, targetAccountId, categories, haptics, toastSuccess, onSuccess, onClose, loading]);
+    }, [selectedCategory, amount, description, encryptionKey, transactionType, selectedAccountId, targetAccountId, categories, haptics, toastSuccess, onSuccess, onClose, loading, initialType]);
 
     const handleClose = useCallback(() => {
         setAmount("");
         setDescription("");
         setSelectedCategory(null);
-        setTransactionType("expense");
+        setTransactionType(initialType);
         setError(null);
         setShowTemplateModal(false);
         onClose();
-    }, [onClose]);
+    }, [onClose, initialType]);
 
     const handleDeleteTemplate = useCallback((id: string) => {
         const updated = quickTemplates.filter(t => t.id !== id);
