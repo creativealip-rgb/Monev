@@ -22,6 +22,9 @@ export async function POST(req: NextRequest) {
         const userId = parseInt(session.user.id);
 
         const data = await req.json();
+        if (data.viewMode && !["simple", "advanced"].includes(data.viewMode)) {
+            return NextResponse.json({ error: "Mode tampilan tidak valid" }, { status: 400 });
+        }
         const settings = await updateUserSettings(userId, data);
 
         return NextResponse.json({ success: true, settings });

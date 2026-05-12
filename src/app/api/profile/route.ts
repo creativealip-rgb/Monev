@@ -82,7 +82,8 @@ export async function GET() {
                     updatedAt: settings.updatedAt,
                     hasPin: !!settings.securityPin,
                     autoLockTimeout: settings.autoLockTimeout,
-                    hasCompletedOnboarding: settings.hasCompletedOnboarding
+                    hasCompletedOnboarding: settings.hasCompletedOnboarding,
+                    viewMode: settings.viewMode || "advanced"
                 },
                 goals,
                 streak,

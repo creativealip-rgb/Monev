@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, NotebookTabs, Wallet, Plus, User } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { getPrimaryMenu } from "@/frontend/lib/navigation-menu";
 import { useHaptics } from "@/frontend/hooks/useHaptics";
+import { useViewMode } from "@/frontend/hooks/useViewMode";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -27,6 +29,7 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
     const { t } = useI18n();
     const haptics = useHaptics();
+    const { viewMode } = useViewMode();
     const { toggleStealth } = useSecurity();
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -62,15 +65,14 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
         };
     }, [hideOnFocus]);
 
-    const links = [
-        { href: "/dashboard", label: t("nav.dashboard"), icon: Home },
-        { href: "/transactions", label: t("nav.transactions"), icon: NotebookTabs },
-        { href: "/saldo", label: t("nav.balances"), icon: Wallet },
-        { href: "/profile", label: t("nav.profile"), icon: User },
-    ];
+    const links = getPrimaryMenu(viewMode).map((item) => ({
+        href: item.href,
+        label: t(item.labelKey) || item.fallbackLabel,
+        icon: item.icon,
+    }));
 
     const leftLinks = links.slice(0, 2);
-    const rightLinks = links.slice(2, 4);
+    const rightLinks = links.slice(2);
 
     const handleFabClick = () => {
         setIsFabPressed(true);
@@ -121,14 +123,14 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
                 >
                     <div className="flex items-end justify-between h-12 relative">
                         {leftLinks.map((link) => {
-                            const isActive = pathname === link.href;
+                            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
                             const Icon = link.icon;
                             return (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     onClick={(e) => handleNavClick(link.href, e)}
-                                    onMouseDown={(e) => {
+                                    onMouseDown={() => {
                                         logger.debug("MouseDown on:", link.href);
                                         haptics.tap();
                                     }}
@@ -192,14 +194,14 @@ export function BottomNav({ onFabClick, hideOnFocus = true, portal = false }: Bo
                         </div>
 
                         {rightLinks.map((link) => {
-                            const isActive = pathname === link.href;
+                            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
                             const Icon = link.icon;
                             return (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     onClick={(e) => handleNavClick(link.href, e)}
-                                    onMouseDown={(e) => {
+                                    onMouseDown={() => {
                                         logger.debug("MouseDown on:", link.href);
                                         haptics.tap();
                                     }}

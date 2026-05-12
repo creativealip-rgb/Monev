@@ -1,13 +1,16 @@
 "use client";
 
-import { Moon, Globe, Wallet } from "lucide-react";
+import { Moon, Globe, Wallet, LayoutDashboard, Smartphone } from "lucide-react";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { LanguageSelector } from "@/frontend/components/LanguageSelector";
 import { CurrencySelector } from "@/frontend/components/CurrencySelector";
 import { useI18n } from "@/lib/i18n";
+import { useViewMode } from "@/frontend/hooks/useViewMode";
+import { cn } from "@/frontend/lib/utils";
 
 export function AppSettingsModal() {
     const { t } = useI18n();
+    const { viewMode, setViewMode } = useViewMode();
 
     return (
         <div className="space-y-6">
@@ -26,6 +29,35 @@ export function AppSettingsModal() {
             </div>
 
             <div className="space-y-4">
+                <div className="card-clean p-5 space-y-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                            <LayoutDashboard size={20} />
+                        </div>
+                        <div>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">Mode Tampilan</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Simple untuk fitur inti, Advanced untuk menu lengkap</p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
+                        {(["simple", "advanced"] as const).map((mode) => (
+                            <button
+                                key={mode}
+                                type="button"
+                                onClick={() => setViewMode(mode)}
+                                className={cn(
+                                    "rounded-xl px-3 py-2 text-xs font-black transition-all",
+                                    viewMode === mode
+                                        ? "bg-white text-sky-600 shadow-sm dark:bg-slate-950 dark:text-sky-400"
+                                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                                )}
+                            >
+                                {mode === "simple" ? "Simple" : "Advanced"}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Theme Section */}
                 <div className="card-clean p-5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -71,5 +103,3 @@ export function AppSettingsModal() {
         </div>
     );
 }
-
-import { Smartphone } from "lucide-react";

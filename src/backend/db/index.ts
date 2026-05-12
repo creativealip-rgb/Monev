@@ -8,7 +8,19 @@ const dbPath = process.env.DATABASE_URL || "./sqlite.db";
 const globalForDb = globalThis as unknown as {
     sqlite: Database.Database | undefined;
     db: ReturnType<typeof drizzle<typeof schema>> | undefined;
+    schemaChecked: boolean | undefined;
 };
+
+function ensureRuntimeSchema(sqlite: Database.Database) {
+    if (globalForDb.schemaChecked) return;
+
+    const userSettingsColumns = sqlite.pragma("table_info(user_settings)") as Array<{ name: string }>;
+    if (!userSettingsColumns.some((column) => column.name === "view_mode")) {
+        sqlite.exec("ALTER TABLE user_settings ADD COLUMN view_mode TEXT NOT NULL DEFAULT 'advanced'");
+    }
+
+    globalForDb.schemaChecked = true;
+}
 
 export function getDb() {
     // Force a one-time reset if needed after schema changes
@@ -24,12 +36,17 @@ export function getDb() {
         globalForDb.sqlite = new Database(dbPath);
         // Enable WAL mode for better concurrency and less locking
         globalForDb.sqlite.pragma('journal_mode = WAL');
+        ensureRuntimeSchema(globalForDb.sqlite);
 
         globalForDb.db = drizzle(globalForDb.sqlite, { schema });
 
         // Skip migrations - tables already exist via drizzle-kit push
         console.log("Database connected (migrations skipped - tables already exist)");
     }
+    if (globalForDb.sqlite) {
+        ensureRuntimeSchema(globalForDb.sqlite);
+    }
+
     return globalForDb.db;
 }
 

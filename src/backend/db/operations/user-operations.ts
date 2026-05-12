@@ -126,8 +126,14 @@ export async function getUserSettings(userId: number): Promise<UserSettings | un
 
 export async function updateUserSettings(userId: number, data: Partial<UserSettings>): Promise<UserSettings> {
     const db = getDb();
-    // Ensure exists
-    await getUserSettings(userId);
+    const existing = await getUserSettings(userId);
+    if (!existing) {
+        return db.insert(userSettings).values({
+            userId,
+            ...data,
+            updatedAt: new Date(),
+        }).returning().get();
+    }
 
     return db.update(userSettings)
         .set({

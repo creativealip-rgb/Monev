@@ -120,6 +120,7 @@ export const userSettings = sqliteTable("user_settings", {
     hideBalance: integer("hide_balance", { mode: "boolean" }).notNull().default(false), // New: Hide balance on dashboard
     notificationsEnabled: integer("notifications_enabled", { mode: "boolean" }).notNull().default(true), // New: Persistence for notifications
     hasCompletedOnboarding: integer("has_completed_onboarding", { mode: "boolean" }).notNull().default(false), // New: Track onboarding status
+    viewMode: text("view_mode", { enum: ["simple", "advanced"] }).notNull().default("advanced"),
     financialPersona: text("financial_persona"), // AI generated persona
     personaUpdatedAt: integer("persona_updated_at", { mode: "timestamp" }),
     // Notification preferences
