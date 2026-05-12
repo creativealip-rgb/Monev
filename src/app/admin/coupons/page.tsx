@@ -20,7 +20,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 interface Coupon {
     id: number;
     code: string;
-    tier: "kaya" | "sultan";
+    tier: "pro" | "sultan" | "benefactor";
     quota: number;
     claimedCount: number;
     expiresAt: string | null;
@@ -56,7 +56,7 @@ export default function CouponsPage() {
     const [creating, setCreating] = useState(false);
     const [createForm, setCreateForm] = useState({
         codes: "",
-        tier: "kaya" as "kaya" | "sultan",
+        tier: "pro" as "pro" | "sultan" | "benefactor",
         expiresAt: "",
         quota: 1,
     });
@@ -119,7 +119,7 @@ export default function CouponsPage() {
                     success: true,
                     message: `Created ${json.data.created.length} coupon(s)${json.data.errors.length > 0 ? `, ${json.data.errors.length} failed` : ""}`,
                 });
-                setCreateForm({ codes: "", tier: "kaya", expiresAt: "", quota: 1 });
+                setCreateForm({ codes: "", tier: "pro", expiresAt: "", quota: 1 });
                 setShowCreateModal(false);
                 loadCoupons();
             } else {
@@ -160,6 +160,13 @@ export default function CouponsPage() {
     };
 
     const getTierBadge = (tier: string) => {
+        if (tier === "benefactor") {
+            return (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-600">
+                    <Crown size={10} /> Benefactor
+                </span>
+            );
+        }
         if (tier === "sultan") {
             return (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-600">
@@ -169,7 +176,7 @@ export default function CouponsPage() {
         }
         return (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-sky-50 text-sky-600">
-                <Sparkles size={10} /> Kaya
+                <Sparkles size={10} /> Pro
             </span>
         );
     };
@@ -367,11 +374,12 @@ export default function CouponsPage() {
                                 </label>
                                 <select
                                     value={createForm.tier}
-                                    onChange={(e) => setCreateForm(f => ({ ...f, tier: e.target.value as "kaya" | "sultan" }))}
+                                    onChange={(e) => setCreateForm(f => ({ ...f, tier: e.target.value as "pro" | "sultan" | "benefactor" }))}
                                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
                                 >
-                                    <option value="kaya">Kaya (Rp 29.000)</option>
-                                    <option value="sultan">Sultan (Rp 99.000)</option>
+                                    <option value="pro">Pro (Rp 29.000)</option>
+                                    <option value="sultan">Sultan (Rp 49.000)</option>
+                                    <option value="benefactor">Benefactor (Rp 199.000/tahun)</option>
                                 </select>
                             </div>
 

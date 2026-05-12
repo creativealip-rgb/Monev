@@ -11,9 +11,10 @@ interface AnalyticsData {
     newUsersLast30Days: number;
     activeUsersLast7Days: number;
     tierDistribution: {
-        miskin: number;
-        kaya: number;
+        starter: number;
+        pro: number;
         sultan: number;
+        benefactor: number;
     };
     estimatedRevenue: number;
     userGrowth: Array<{ month: string; count: number }>;
@@ -28,9 +29,10 @@ interface AnalyticsData {
 }
 
 const tierColors = {
-    miskin: { bg: "bg-slate-100", text: "text-slate-600", fill: "#64748b", icon: Zap },
-    kaya: { bg: "bg-sky-50", text: "text-sky-600", fill: "#0ea5e9", icon: Sparkles },
-    sultan: { bg: "bg-amber-50", text: "text-amber-600", fill: "#f59e0b", icon: Crown },
+    starter: { label: "Starter", bg: "bg-slate-100", text: "text-slate-600", fill: "#64748b", icon: Zap },
+    pro: { label: "Pro", bg: "bg-sky-50", text: "text-sky-600", fill: "#0ea5e9", icon: Sparkles },
+    sultan: { label: "Sultan", bg: "bg-amber-50", text: "text-amber-600", fill: "#f59e0b", icon: Crown },
+    benefactor: { label: "Benefactor", bg: "bg-emerald-50", text: "text-emerald-600", fill: "#10b981", icon: Crown },
 };
 
 function StatCard({
@@ -97,8 +99,8 @@ export default function AnalyticsPage() {
         );
     }
 
-    const totalTierUsers = (data?.tierDistribution.miskin || 0) + (data?.tierDistribution.kaya || 0) + (data?.tierDistribution.sultan || 0);
-    const paidUsers = (data?.tierDistribution.kaya || 0) + (data?.tierDistribution.sultan || 0);
+    const totalTierUsers = (data?.tierDistribution.starter || 0) + (data?.tierDistribution.pro || 0) + (data?.tierDistribution.sultan || 0) + (data?.tierDistribution.benefactor || 0);
+    const paidUsers = (data?.tierDistribution.pro || 0) + (data?.tierDistribution.sultan || 0) + (data?.tierDistribution.benefactor || 0);
     const paidPercentage = totalTierUsers > 0 ? Math.round((paidUsers / totalTierUsers) * 100) : 0;
 
     const maxDailyCount = Math.max(...(data?.dailyStats?.map(d => d.count) || [1]));
@@ -195,7 +197,7 @@ export default function AnalyticsPage() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Icon size={18} className={colors.text} />
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">{tier}</span>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{colors.label}</span>
                                         </div>
                                         <div className="text-right">
                                             <span className="text-sm font-semibold text-slate-900 dark:text-white">{count}</span>

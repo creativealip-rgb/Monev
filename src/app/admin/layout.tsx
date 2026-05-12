@@ -4,7 +4,7 @@ import { getDb } from "@/backend/db";
 import { users } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
-import { LucideIcon, LayoutDashboard, Users, BarChart3, Bell, Ticket, Settings, LogOut, Crown } from "lucide-react";
+import { LucideIcon, LayoutDashboard, Users, BarChart3, Bell, Ticket, Settings, LogOut, Crown, AlarmClock } from "lucide-react";
 
 async function checkAdmin() {
     const session = await auth();
@@ -28,6 +28,7 @@ const navItems = [
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/admin/notifications", label: "Notifications", icon: Bell },
+    { href: "/admin/notification-schedules", label: "Schedules", icon: AlarmClock },
     { href: "/admin/coupons", label: "Coupons", icon: Ticket },
     { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

@@ -19,6 +19,28 @@ function ensureRuntimeSchema(sqlite: Database.Database) {
         sqlite.exec("ALTER TABLE user_settings ADD COLUMN monthly_income REAL NOT NULL DEFAULT 0");
     }
 
+    sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS admin_scheduled_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            name TEXT NOT NULL DEFAULT 'Reminder',
+            title TEXT NOT NULL DEFAULT 'Monev',
+            message TEXT NOT NULL,
+            target TEXT NOT NULL DEFAULT 'all',
+            tier TEXT,
+            hour INTEGER NOT NULL,
+            minute INTEGER NOT NULL DEFAULT 0,
+            timezone TEXT NOT NULL DEFAULT 'Asia/Jakarta',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            last_run_at INTEGER,
+            last_run_key TEXT,
+            created_by INTEGER REFERENCES users(id),
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_admin_scheduled_notifications_active ON admin_scheduled_notifications (is_active);
+        CREATE INDEX IF NOT EXISTS idx_admin_scheduled_notifications_run_key ON admin_scheduled_notifications (last_run_key);
+    `);
+
     globalForDb.schemaChecked = true;
 }
 

@@ -228,6 +228,27 @@ export const scheduledMessages = sqliteTable("scheduled_messages", {
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+export const adminScheduledNotifications = sqliteTable("admin_scheduled_notifications", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull().default("Reminder"),
+    title: text("title").notNull().default("Monev"),
+    message: text("message").notNull(),
+    target: text("target", { enum: ["all", "tier"] }).notNull().default("all"),
+    tier: text("tier", { enum: ["starter", "pro", "sultan", "benefactor"] }),
+    hour: integer("hour").notNull(),
+    minute: integer("minute").notNull().default(0),
+    timezone: text("timezone").notNull().default("Asia/Jakarta"),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    lastRunAt: integer("last_run_at", { mode: "timestamp" }),
+    lastRunKey: text("last_run_key"),
+    createdBy: integer("created_by").references(() => users.id),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (table) => ({
+    isActiveIdx: index("idx_admin_scheduled_notifications_active").on(table.isActive),
+    runKeyIdx: index("idx_admin_scheduled_notifications_run_key").on(table.lastRunKey),
+}));
+
 export const bills = sqliteTable("bills", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id").references(() => users.id).notNull(), // New: SaaS Isolation
@@ -633,6 +654,7 @@ export type MerchantMapping = typeof merchantMappings.$inferSelect;
 export type UserSettings = typeof userSettings.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
 export type ScheduledMessage = typeof scheduledMessages.$inferSelect;
+export type AdminScheduledNotification = typeof adminScheduledNotifications.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
 export type ScheduledReport = typeof scheduledReports.$inferSelect;
 export type ChatHistory = typeof chatHistory.$inferSelect;
@@ -663,6 +685,7 @@ export type InsertMerchantMapping = typeof merchantMappings.$inferInsert;
 export type InsertUserSettings = typeof userSettings.$inferInsert;
 export type InsertDebt = typeof debts.$inferInsert;
 export type InsertScheduledMessage = typeof scheduledMessages.$inferInsert;
+export type InsertAdminScheduledNotification = typeof adminScheduledNotifications.$inferInsert;
 export type InsertBill = typeof bills.$inferInsert;
 export type InsertScheduledReport = typeof scheduledReports.$inferInsert;
 export type InsertChatHistory = typeof chatHistory.$inferInsert;

@@ -95,18 +95,19 @@ export async function GET(req: NextRequest) {
         ]);
 
         const tierDistribution = {
-            miskin: 0,
-            kaya: 0,
+            starter: 0,
+            pro: 0,
             sultan: 0,
+            benefactor: 0,
         };
 
         tierStats.forEach((stat) => {
-            tierDistribution[stat.tier as keyof typeof tierDistribution] = stat.count;
+            if (stat.tier in tierDistribution) {
+                tierDistribution[stat.tier as keyof typeof tierDistribution] = stat.count;
+            }
         });
 
-        const kayaPrice = 29000;
-        const sultanPrice = 59000;
-        const estimatedRevenue = (tierDistribution.kaya * kayaPrice) + (tierDistribution.sultan * sultanPrice);
+        const estimatedRevenue = (tierDistribution.pro * 29000) + (tierDistribution.sultan * 49000) + (tierDistribution.benefactor * 199000);
 
         const dailyStats = [];
         for (let i = 29; i >= 0; i--) {

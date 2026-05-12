@@ -12,9 +12,10 @@ interface StatsData {
     newUsersLast30Days: number;
     activeUsersLast7Days: number;
     tierDistribution: {
-        miskin: number;
-        kaya: number;
+        starter: number;
+        pro: number;
         sultan: number;
+        benefactor: number;
     };
     estimatedRevenue: number;
     dailyStats: Array<{ date: string; count: number }>;
@@ -28,9 +29,10 @@ interface StatsData {
 }
 
 const tierColors = {
-    miskin: { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", icon: Zap },
-    kaya: { bg: "bg-sky-50", text: "text-sky-600", border: "border-sky-200", icon: Sparkles },
-    sultan: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200", icon: Crown },
+    starter: { label: "Starter", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", icon: Zap },
+    pro: { label: "Pro", bg: "bg-sky-50", text: "text-sky-600", border: "border-sky-200", icon: Sparkles },
+    sultan: { label: "Sultan", bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200", icon: Crown },
+    benefactor: { label: "Benefactor", bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200", icon: Crown },
 };
 
 function StatsCard({
@@ -145,8 +147,8 @@ export default function AdminDashboard() {
         );
     }
 
-    const totalTierUsers = (data?.tierDistribution.miskin || 0) + (data?.tierDistribution.kaya || 0) + (data?.tierDistribution.sultan || 0);
-    const paidUsers = (data?.tierDistribution.kaya || 0) + (data?.tierDistribution.sultan || 0);
+    const totalTierUsers = (data?.tierDistribution.starter || 0) + (data?.tierDistribution.pro || 0) + (data?.tierDistribution.sultan || 0) + (data?.tierDistribution.benefactor || 0);
+    const paidUsers = (data?.tierDistribution.pro || 0) + (data?.tierDistribution.sultan || 0) + (data?.tierDistribution.benefactor || 0);
     const paidPercentage = totalTierUsers > 0 ? Math.round((paidUsers / totalTierUsers) * 100) : 0;
 
     return (
@@ -224,7 +226,7 @@ export default function AdminDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Icon size={16} className={colors.text} />
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">{tier}</span>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{colors.label}</span>
                                         </div>
                                         <span className="text-sm font-semibold text-slate-900 dark:text-white">{count}</span>
                                     </div>
