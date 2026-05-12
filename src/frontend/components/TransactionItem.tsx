@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, PiggyBank, ArrowLeftRight, Shapes, Repeat, Gift, Home, Wifi, Smartphone, CircleDollarSign, type LucideIcon } from "lucide-react";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, PiggyBank, ArrowLeftRight, Shapes, Repeat, Gift, Home, Wifi, Smartphone, CircleDollarSign, Shirt, type LucideIcon } from "lucide-react";
 import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { normalizeDateValue } from "@/frontend/lib/normalize-date";
@@ -42,7 +42,17 @@ const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradien
         color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
         gradient: "from-orange-500 to-amber-500"
     },
+    "Makan": {
+        icon: Utensils,
+        color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+        gradient: "from-orange-500 to-amber-500"
+    },
     "Transportasi": {
+        icon: Car,
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+        gradient: "from-blue-500 to-indigo-500"
+    },
+    "Transport": {
         icon: Car,
         color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
         gradient: "from-blue-500 to-indigo-500"
@@ -56,6 +66,11 @@ const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradien
         icon: ShoppingBag,
         color: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
         gradient: "from-pink-500 to-rose-500"
+    },
+    "Belanja Harian": {
+        icon: ShoppingBag,
+        color: "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300",
+        gradient: "from-lime-500 to-emerald-500"
     },
     "Kesehatan": {
         icon: Heart,
@@ -117,12 +132,27 @@ const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradien
         color: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
         gradient: "from-amber-500 to-yellow-500"
     },
+    "Kos": {
+        icon: Home,
+        color: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+        gradient: "from-red-500 to-orange-500"
+    },
+    "Laundry": {
+        icon: Shirt,
+        color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
+        gradient: "from-cyan-500 to-sky-500"
+    },
     "Langganan": {
         icon: Repeat,
         color: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
         gradient: "from-violet-500 to-purple-500"
     },
     "Internet & Telepon": {
+        icon: Wifi,
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+        gradient: "from-blue-500 to-cyan-500"
+    },
+    "Internet": {
         icon: Wifi,
         color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
         gradient: "from-blue-500 to-cyan-500"
@@ -147,10 +177,10 @@ const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradien
         color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
         gradient: "from-yellow-500 to-orange-500"
     },
-    Transport: {
-        icon: ArrowRight,
-        color: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-        gradient: "from-purple-500 to-pink-500"
+    "Kopi & Nongkrong": {
+        icon: Coffee,
+        color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        gradient: "from-amber-500 to-orange-500"
     },
     Income: {
         icon: TrendingUp,
