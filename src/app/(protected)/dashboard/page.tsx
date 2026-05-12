@@ -22,8 +22,8 @@ import { HeroBalanceWidget } from "./components/widgets/HeroBalanceWidget";
 import { QuickStatsWidget } from "./components/widgets/QuickStatsWidget";
 import { RecentTransactionsWidget } from "./components/widgets/RecentTransactionsWidget";
 import { FeaturesWidget } from "./components/widgets/FeaturesWidget";
-import { SimpleModeHint } from "./components/widgets/SimpleModeHint";
 import { AIInsightSection } from "./components/AIInsightSection";
+import { DashboardSimple } from "./components/DashboardSimple";
 import { OnboardingCard } from "./components/OnboardingCard";
 import { BalanceDetailModal } from "./components/BalanceDetailModal";
 import { NotificationsModal } from "@/frontend/components/modals/NotificationsModal";
@@ -38,7 +38,7 @@ export default function DashboardPage() {
     const haptics = useHaptics();
     const toast = useToast();
     const { isStealthMode, toggleStealth } = useSecurity();
-    const { isSimpleMode, isAdvancedMode } = useViewMode();
+    const { isSimpleMode } = useViewMode();
 
     const {
         allTransactions,
@@ -126,11 +126,11 @@ export default function DashboardPage() {
                     <OnboardingCard show={true} />
                 )}
 
-                {isAdvancedMode && mounted && bills && bills.length > 0 && (
+                {!isSimpleMode && mounted && bills && bills.length > 0 && (
                     <BillReminderWidget bills={bills} />
                 )}
 
-                {isAdvancedMode && stats.healthScore && (
+                {!isSimpleMode && stats.healthScore && (
                     <motion.section
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -154,25 +154,35 @@ export default function DashboardPage() {
                     simpleMode={isSimpleMode}
                 />
 
-                {isAdvancedMode && (
-                    <AIInsightSection
-                        insight={insight}
-                        loading={insightLoading}
-                        onRefresh={handleRefreshInsight}
+                {isSimpleMode ? (
+                    <DashboardSimple
+                        stats={stats}
+                        todayStats={todayStats}
+                        transactions={allTransactions}
+                        loading={loading}
+                        mounted={mounted}
+                        isStealthMode={isStealthMode}
+                        onAddNew={() => setIsAddSheetOpen(true)}
                     />
+                ) : (
+                    <>
+                        <AIInsightSection
+                            insight={insight}
+                            loading={insightLoading}
+                            onRefresh={handleRefreshInsight}
+                        />
+
+                        <FeaturesWidget userTier={userTier} />
+
+                        <RecentTransactionsWidget
+                            transactions={allTransactions}
+                            loading={loading}
+                            mounted={mounted}
+                            isStealthMode={isStealthMode}
+                            onAddNew={() => setIsAddSheetOpen(true)}
+                        />
+                    </>
                 )}
-
-                {isAdvancedMode && <FeaturesWidget userTier={userTier} />}
-
-                {isSimpleMode && <SimpleModeHint />}
-
-                <RecentTransactionsWidget
-                    transactions={allTransactions}
-                    loading={loading}
-                    mounted={mounted}
-                    isStealthMode={isStealthMode}
-                    onAddNew={() => setIsAddSheetOpen(true)}
-                />
 
                 <BalanceDetailModal
                     show={showBalanceDetail}
