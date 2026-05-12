@@ -11,13 +11,13 @@ import { cn } from "@/frontend/lib/utils";
 
 const tiers = [
     {
-        name: "Miskin",
+        name: "Starter",
         price: "Gratis",
-        description: "Untuk kamu yang baru mau mulai rapih-rapih keuangan.",
+        description: "Simple Mode untuk mulai catat transaksi dan pantau uang tanpa distraksi.",
         features: [
             "Catat 50 transaksi / bulan",
-            "Dashboard Keuangan Dasar",
-            "Maksimal 2 Anggaran",
+            "Simple Mode Dashboard",
+            "Transaksi, saldo, dan profil inti",
             "Maksimal 3 Daftar Tagihan",
             "1 Target Tabungan",
             "AI Assistant (3 tanya / hari)",
@@ -37,14 +37,14 @@ const tiers = [
         color: "slate"
     },
     {
-        name: "Kaya",
+        name: "Pro",
         price: "Rp 29.000",
         period: "/bulan",
-        description: "Pilihan terbaik untuk mengelola gaya hidup aktif.",
+        description: "Advanced Mode untuk budgeting, analitik, AI, dan kontrol finansial lengkap.",
         features: [
             "Transaksi Unlimited",
             "Smart Input (Voice & Foto)",
-            "Dashboard Analitik Lengkap",
+            "Advanced Mode Dashboard",
             "Portfolio Investasi (5 aset)",
             "Maksimal 10 Anggaran",
             "Maksimal 20 Daftar Tagihan",
@@ -58,8 +58,8 @@ const tiers = [
             "Laporan PDF Custom",
             "Support 24/7"
         ],
-        cta: "Pilih Kaya",
-        href: "/register?tier=kaya",
+        cta: "Pilih Pro",
+        href: "/register?tier=pro",
         highlight: true,
         color: "sky"
     },
@@ -67,9 +67,9 @@ const tiers = [
         name: "Sultan",
         price: "Rp 59.000",
         period: "/bulan",
-        description: "Kendali penuh finansial dengan asisten pribadi AI.",
+        description: "Advanced Mode paling lengkap dengan automasi, Telegram, dan prioritas AI.",
         features: [
-            "Semua fitur di paket Kaya",
+            "Semua fitur di paket Pro",
             "Integrasi Telegram Bot (24/7)",
             "Investasi Portfolio Unlimited",
             "Insight AI Proaktif & Prioritas",
@@ -118,7 +118,7 @@ export default function PricingPage() {
                             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 text-[13px] font-bold border border-sky-100 dark:border-sky-800 shadow-sm"
                         >
                             <Zap size={14} />
-                            <span>Pilih Investasi Masa Depanmu</span>
+                            <span>Simple atau Advanced, kamu yang pegang kendali</span>
                         </motion.div>
                         <motion.h1
                             initial={{ opacity: 0, y: 20 }}
@@ -135,9 +135,27 @@ export default function PricingPage() {
                             transition={{ delay: 0.2 }}
                             className="text-slate-500 dark:text-slate-400 font-medium max-w-xl mx-auto"
                         >
-                            Pilih paket yang sesuai dengan kebutuhan finansialmu. Batalkan kapan saja tanpa komitmen.
+                            Mulai dari Simple Mode yang ringan, lalu buka Advanced Mode saat butuh budget, laporan, AI, dan automasi lebih lengkap.
                         </motion.p>
                     </div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.25 }}
+                        className="grid gap-4 md:grid-cols-2 mb-10"
+                    >
+                        <div className="rounded-[2rem] border border-sky-100 bg-white/80 p-5 text-left shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-500">Simple Mode</p>
+                            <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Ringan untuk harian</h2>
+                            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">Cocok untuk user baru: catat transaksi, cek saldo, lihat ringkasan hari ini, dan tetap cepat di mobile.</p>
+                        </div>
+                        <div className="rounded-[2rem] border border-amber-100 bg-white/80 p-5 text-left shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-500">Advanced Mode</p>
+                            <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Lengkap saat butuh kontrol</h2>
+                            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">Buka budgeting, tabungan, tagihan, laporan, analitik, AI Chat, simulasi, dan automasi sesuai paket.</p>
+                        </div>
+                    </motion.div>
 
                     {/* Pricing Cards */}
                     <div className="grid lg:grid-cols-3 gap-8 mb-24">
@@ -167,8 +185,8 @@ export default function PricingPage() {
                                         tier.color === "sky" && "bg-sky-500",
                                         tier.color === "indigo" && "bg-indigo-500"
                                     )}>
-                                        {tier.name === "Miskin" && <Zap size={24} />}
-                                        {tier.name === "Kaya" && <Rocket size={24} />}
+                                        {tier.name === "Starter" && <Zap size={24} />}
+                                        {tier.name === "Pro" && <Rocket size={24} />}
                                         {tier.name === "Sultan" && <Crown size={24} />}
                                     </div>
                                     <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{tier.name}</h3>
@@ -227,7 +245,7 @@ export default function PricingPage() {
                         <HelpCircle size={32} className="mx-auto text-sky-500 mb-4" />
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Punya pertanyaan khusus?</h3>
                         <p className="text-slate-500 dark:text-slate-400 font-medium mb-6 max-w-lg mx-auto">
-                            Tim kami siap membantu menjelaskan detail teknis dari setiap tier.
+                            Bingung pilih mode atau paket? Mulai gratis di Simple Mode, upgrade kapan saja saat butuh fitur Advanced.
                         </p>
                         <Link href="/register" className="text-sky-600 font-bold hover:underline inline-flex items-center gap-1">
                             Hubungi Support <ArrowRight size={16} />

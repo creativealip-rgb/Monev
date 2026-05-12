@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2, X, ChevronDown, BarChart3 } from "lucide-react";
+import { Check, ArrowLeft, Gem, Crown, Sparkles, Star, Zap, Info, Ticket, Loader2, X, ChevronDown, BarChart3, HeartHandshake } from "lucide-react";
 import { apiFetch } from "@/frontend/lib/api-client";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
@@ -61,6 +61,8 @@ const MAYAR_PAYMENT_LINKS: Partial<Record<UserTier, string>> = {
     pro: "https://alipcreative.myr.id/plink/Monev-Pro-Monthly",
     sultan: "https://alipcreative.myr.id/plink/Monev-Sultan-Monthly",
 };
+
+const BENEFECTOR_PAYMENT_LINK = "https://alipcreative.myr.id/plink/Monev-Benefector";
 
 export default function UpgradePage() {
     const { data: session, update: updateSession } = useSession();
@@ -240,6 +242,34 @@ export default function UpgradePage() {
                     })}
                 </motion.div>
 
+                <motion.div
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="mt-8 overflow-hidden rounded-[2.5rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-6 shadow-xl shadow-emerald-100/50 dark:border-emerald-900/40 dark:from-emerald-950/30 dark:via-slate-900 dark:to-sky-950/30"
+                >
+                    <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+                            <HeartHandshake size={24} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Support Monev</p>
+                            <h3 className="mt-1 text-lg font-black text-slate-900 dark:text-white">Jadi Benefector</h3>
+                            <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-400">
+                                Buat kamu yang mau bantu pengembangan Monev dulu sambil setup API upgrade otomatis dirapikan. Pembayaran diarahkan ke checkout Mayar.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => { window.location.href = BENEFECTOR_PAYMENT_LINK; }}
+                                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-600 active:scale-95"
+                            >
+                                Bayar Benefector di Mayar
+                                <HeartHandshake size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+
                 {/* Coupon Input Section */}
                 <motion.div
                     variants={itemVariants}
@@ -395,7 +425,7 @@ export default function UpgradePage() {
                     </div>
                     <div>
                         <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-widest mb-1">Catatan Penting</h4>
-                        <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">Pembayaran paket Pro dan Sultan akan diarahkan ke halaman checkout Mayar. Setelah pembayaran berhasil, lanjutkan kembali ke aplikasi untuk verifikasi status upgrade.</p>
+                        <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">Pembayaran paket Pro, Sultan, dan Benefector akan diarahkan ke halaman checkout Mayar. Setelah pembayaran berhasil, lanjutkan kembali ke aplikasi untuk verifikasi status upgrade.</p>
                     </div>
                 </motion.div>
             </div>

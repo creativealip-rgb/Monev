@@ -47,7 +47,7 @@ const features = [
                 status: "ready",
                 color: "blue",
                 href: "/analytics",
-                requiredTier: "kaya" as UserTier
+                requiredTier: "pro" as UserTier
             },
             {
                 id: 107,
@@ -125,7 +125,7 @@ const features = [
                 status: "ready",
                 color: "emerald",
                 href: "#",
-                requiredTier: "kaya" as UserTier
+                requiredTier: "pro" as UserTier
             },
             {
                 id: 2,
@@ -144,7 +144,7 @@ const features = [
                 status: "ready",
                 color: "purple",
                 href: "#",
-                requiredTier: "kaya" as UserTier
+                requiredTier: "pro" as UserTier
             },
         ]
     },
@@ -321,23 +321,38 @@ export default function FiturPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="sticky top-0 z-[100] w-full pt-safe pt-3 bg-sky-50/95 dark:bg-slate-950/95 backdrop-blur-md px-6 pb-4 border-b border-sky-100/50 dark:border-slate-800/50"
             >
-                <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href="/dashboard"
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
-                        >
-                            <ArrowLeft size={20} strokeWidth={2.5} />
-                        </Link>
-                        <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-foreground tracking-tight">{t("features.allFeatures")}</h1>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">{t("features.explore")}</p>
+                    <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/dashboard"
+                                className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all active:scale-95"
+                            >
+                                <ArrowLeft size={20} strokeWidth={2.5} />
+                            </Link>
+                            <div className="flex flex-col">
+                                <h1 className="text-xl font-bold text-foreground tracking-tight">{t("features.allFeatures")}</h1>
+                                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Simple untuk harian, Advanced untuk kendali penuh</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <LanguageSelector variant="minimal" />
-                </div>
+                        <LanguageSelector variant="minimal" />
+                    </div>
             </motion.header>
+
+            <section className="px-6 pt-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-500">Simple Mode</p>
+                        <h2 className="mt-1 text-base font-black text-slate-900 dark:text-white">Catat transaksi tanpa distraksi</h2>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">Dashboard, transaksi, saldo, dan profil tetap jadi jalur utama untuk pemakaian harian.</p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-amber-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-500">Advanced Mode</p>
+                        <h2 className="mt-1 text-base font-black text-slate-900 dark:text-white">Buka semua alat finansial</h2>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">Budget, tabungan, tagihan, laporan, AI, dan analitik tersedia saat kamu butuh kontrol lebih detail.</p>
+                    </div>
+                </div>
+            </section>
 
             {/* Features List */}
             <motion.div
