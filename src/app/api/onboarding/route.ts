@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
                     isAppLockEnabled: !!hashedPin,
                     notificationsEnabled: formData.notifications,
                     hasCompletedOnboarding: true,
+                    viewMode: "simple",
                     updatedAt: new Date(),
                 })
                 .where(eq(userSettings.userId, userId));
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
                 securityPin: hashedPin,
                 isAppLockEnabled: !!hashedPin,
                 notificationsEnabled: formData.notifications,
+                viewMode: "simple",
                 hourlyRate: 50000,
                 hideBalance: false,
                 hasCompletedOnboarding: true,
@@ -96,8 +98,9 @@ export async function POST(req: NextRequest) {
         revalidatePath("/profile");
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("API Onboarding Error:", error);
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+        const message = error instanceof Error ? error.message : "Gagal menyelesaikan onboarding";
+        return NextResponse.json({ success: false, message }, { status: 500 });
     }
 }
