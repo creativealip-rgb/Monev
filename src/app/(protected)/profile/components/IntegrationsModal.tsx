@@ -78,6 +78,7 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
     const userTier = (user?.tier || "starter") as UserTier;
     const canAccess = canUseTelegram(userTier);
     const isStarter = userTier === "starter";
+    const telegramBotUrl = "https://t.me/MonevappBot?start=connect";
 
     return (
         <div className="space-y-4">
@@ -131,7 +132,7 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                         </div>
                         <div className="flex gap-2">
                             <a
-                                href="https://t.me/MonevappBot"
+                                href={telegramBotUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex-1 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-sm font-medium text-center flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
@@ -151,31 +152,40 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                     <div className="space-y-3">
                         <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                             <ol className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
-                                <li>Buka Telegram & cari <span className="font-medium">@MonevappBot</span></li>
-                                <li>Ketik <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/start</span> lalu <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/id</span></li>
-                                <li>Masukkan User ID di bawah</li>
+                                <li>Tap tombol di bawah untuk membuka <span className="font-medium">@MonevappBot</span></li>
+                                <li>Kirim <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/start</span> atau pesan apa pun</li>
+                                <li>Salin User ID Telegram dari balasan bot, lalu tempel di sini</li>
                             </ol>
                         </div>
+                        <a
+                            href={telegramBotUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                            Hubungkan Telegram
+                            <ExternalLink size={16} />
+                        </a>
                         <input
                             type="text"
                             inputMode="numeric"
                             value={formData.telegramId || ""}
                             onChange={(e) => setFormData((prev: any) => ({ ...prev, telegramId: e.target.value }))}
-                            placeholder="Contoh: 123456789"
+                            placeholder="Tempel User ID Telegram di sini"
                             className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                         />
                         <button
                             onClick={handleConnect}
                             disabled={isConnecting}
-                            className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-slate-900 dark:bg-white disabled:opacity-50 text-white dark:text-slate-900 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
                             {isConnecting ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
-                                    Menghubungkan...
+                                    Menyimpan...
                                 </>
                             ) : (
-                                "Hubungkan Telegram"
+                                "Simpan User ID Telegram"
                             )}
                         </button>
                     </div>
