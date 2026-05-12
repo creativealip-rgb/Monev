@@ -1,45 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/backend/db";
-import { users, passwordResetTokens } from "@/backend/db/schema";
-import { eq } from "drizzle-orm";
-import { sendPasswordResetEmail } from "@/lib/mailer";
+import { NextResponse } from "next/server";
+import { requestPasswordReset } from "@/backend/actions/auth-actions";
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
     try {
-        const { email } = await req.json();
+        const body = await request.json().catch(() => ({}));
+        const formData = new FormData();
+        formData.set("email", typeof body.email === "string" ? body.email : "");
 
-        if (!email) {
-            return NextResponse.json({ success: false, error: "Email wajib diisi" }, { status: 400 });
-        }
-
-        const db = getDb();
-        const user = await db.select().from(users).where(eq(users.email, email)).get();
-
-        if (!user) {
-            // Return success anyway to avoid email enumeration
-            return NextResponse.json({ success: true });
-        }
-
-        // Generate token
-        const token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
-
-        await db.insert(passwordResetTokens).values({
-            identifier: email,
-            token,
-            expiresAt,
-        });
-
-        // Send email
-        try {
-            await sendPasswordResetEmail(email, token);
-        } catch (emailError) {
-            console.error("Failed to send password reset email:", emailError);
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (error: any) {
-        console.error("Forgot Password API Error:", error);
-        return NextResponse.json({ success: false, error: "Gagal memproses permintaan." }, { status: 500 });
+        const result = await requestPasswordReset({}, formData);
+        return NextResponse.json(result);
+    } catch (error) {
+        console.error("POST /api/auth/forgot-password error:", error);
+        return NextResponse.json(
+            { success: false, error: "Terjadi kesalahan. Silakan coba lagi." },
+            { status: 500 },
+        );
     }
 }
