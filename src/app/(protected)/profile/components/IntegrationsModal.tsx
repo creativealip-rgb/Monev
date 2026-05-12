@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle, CheckCircle2, LogOut, Crown, ExternalLink, Loader2 } from "lucide-react";
+import { MessageCircle, CheckCircle2, LogOut, Crown, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -20,38 +19,6 @@ interface IntegrationsModalProps {
 
 export function IntegrationsModal({ user, formData, setFormData, onClose, onSave, loadData }: IntegrationsModalProps) {
     const toast = useToast();
-    const [isConnecting, setIsConnecting] = useState(false);
-
-    const handleConnect = async () => {
-        if (!formData.telegramId) {
-            toast.error("Error", "Masukkan User ID Telegram Anda");
-            return;
-        }
-        
-        setIsConnecting(true);
-        try {
-            const response = await apiFetch("/api/profile", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    type: "telegram",
-                    telegramId: formData.telegramId,
-                }),
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                toast.success("Berhasil", "Telegram berhasil terhubung!");
-                loadData();
-            } else {
-                toast.error("Gagal", result.message || "Gagal menghubungkan Telegram.");
-            }
-        } catch {
-            toast.error("Gagal", "Terjadi kesalahan koneksi.");
-        } finally {
-            setIsConnecting(false);
-        }
-    };
 
     const handleDisconnect = async () => {
         if (!confirm("Putuskan koneksi Telegram?")) return;
@@ -78,7 +45,7 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
     const userTier = (user?.tier || "starter") as UserTier;
     const canAccess = canUseTelegram(userTier);
     const isStarter = userTier === "starter";
-    const telegramBotUrl = "https://t.me/MonevappBot?start=connect";
+    const telegramBotUrl = `https://t.me/MonevappBot?start=connect_${user?.id || ""}`;
 
     return (
         <div className="space-y-4">
@@ -153,8 +120,8 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                         <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                             <ol className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
                                 <li>Tap tombol di bawah untuk membuka <span className="font-medium">@MonevappBot</span></li>
-                                <li>Kirim <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/start</span> atau pesan apa pun</li>
-                                <li>Salin User ID Telegram dari balasan bot, lalu tempel di sini</li>
+                                <li>Tekan tombol <span className="font-medium">Start</span> di Telegram</li>
+                                <li>Akun langsung terhubung otomatis</li>
                             </ol>
                         </div>
                         <a
@@ -166,28 +133,9 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                             Hubungkan Telegram
                             <ExternalLink size={16} />
                         </a>
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            value={formData.telegramId || ""}
-                            onChange={(e) => setFormData((prev: any) => ({ ...prev, telegramId: e.target.value }))}
-                            placeholder="Tempel User ID Telegram di sini"
-                            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                        />
-                        <button
-                            onClick={handleConnect}
-                            disabled={isConnecting}
-                            className="w-full py-3 bg-slate-900 dark:bg-white disabled:opacity-50 text-white dark:text-slate-900 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                            {isConnecting ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                "Simpan User ID Telegram"
-                            )}
-                        </button>
+                        <p className="text-[11px] text-center text-slate-500">
+                            Kembali ke halaman ini dan refresh kalau status belum berubah.
+                        </p>
                     </div>
                 )}
             </div>

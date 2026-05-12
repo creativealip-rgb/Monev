@@ -20,7 +20,8 @@ import {
     addChatMessage,
     getChatHistory,
     getDailyTelegramCount,
-    logTelegramUsage
+    logTelegramUsage,
+    linkTelegramAccount
 } from '@/backend/db/operations';
 import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising";
 import { format } from "date-fns";
@@ -58,9 +59,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ok: true });
         }
 
+        if (typeof text === "string" && text.startsWith("/start connect_")) {
+            const targetUserId = Number(text.replace("/start connect_", "").trim());
+            if (Number.isInteger(targetUserId) && targetUserId > 0) {
+                const linkResult = await linkTelegramAccount(targetUserId, from.id);
+                await sendTelegramMessage(chatId, linkResult.success
+                    ? "Berhasil! Akun Telegram kamu sudah terhubung ke Monev. Kembali ke aplikasi lalu refresh status koneksi."
+                    : linkResult.message
+                );
+                return NextResponse.json({ ok: true });
+            }
+        }
+
         const userId = user.id;
         const userTier = (user.tier || "starter") as "starter" | "pro" | "sultan" | "benefactor";
-        const isTelegramHelpCommand = typeof text === "string" && ["/start", "/id", "/link", "test"].includes(text.toLowerCase());
+        const isTelegramHelpCommand = typeof text === "string" && (text.startsWith("/start") || ["/id", "/link", "test"].includes(text.toLowerCase()));
 
         if ((photo || voice || text) && !isTelegramHelpCommand) {
             if (userTier === "starter") {
