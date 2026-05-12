@@ -192,6 +192,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                         session.user.name = dbUser.name;
                         session.user.image = dbUser.image;
                         session.user.tier = (dbUser.tier as UserTier) || "starter";
+                        session.user.isBenefector = dbUser.isBenefector;
                         
                         // Ensure firstName is always set for profile page
                         if (!dbUser.firstName && (dbUser.name || dbUser.email)) {

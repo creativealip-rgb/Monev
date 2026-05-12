@@ -6,6 +6,7 @@ declare module "next-auth" {
         user: {
             id: string;
             tier: UserTier;
+            isBenefector?: boolean;
             sessionToken?: string;
         } & DefaultSession["user"];
     }

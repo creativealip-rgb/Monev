@@ -25,6 +25,7 @@ export const users = sqliteTable("users", {
     whatsappId: text("whatsapp_id"),
     tier: text("tier", { enum: ["starter", "pro", "sultan"] }).notNull().default("starter"),
     tierExpiresAt: integer("tier_expires_at", { mode: "timestamp" }),
+    isBenefector: integer("is_benefector", { mode: "boolean" }).notNull().default(false),
     isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
     deletionRequestedAt: integer("deletion_requested_at", { mode: "timestamp" }),
@@ -305,6 +306,22 @@ export const couponClaims = sqliteTable("coupon_claims", {
     couponId: integer("coupon_id").references(() => coupons.id).notNull(),
     userId: integer("user_id").references(() => users.id).notNull(),
     claimedAt: integer("claimed_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const mayarPayments = sqliteTable("mayar_payments", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    transactionId: text("transaction_id").unique().notNull(),
+    userId: integer("user_id").references(() => users.id),
+    customerEmail: text("customer_email"),
+    customerName: text("customer_name"),
+    productId: text("product_id"),
+    productName: text("product_name"),
+    amount: real("amount"),
+    status: text("status").notNull().default("received"),
+    tier: text("tier", { enum: ["pro", "sultan"] }),
+    isBenefector: integer("is_benefector", { mode: "boolean" }).notNull().default(false),
+    rawPayload: text("raw_payload").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
 export const adminActivityLog = sqliteTable("admin_activity_log", {

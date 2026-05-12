@@ -33,6 +33,7 @@ export function proxy(request: Request) {
         pathname.startsWith("/api/auth/") ||
         pathname === "/api/telegram-webhook" ||
         pathname === "/api/notification-webhook" ||
+        pathname === "/api/mayar/webhook" ||
         pathname === "/manifest.json" ||
         pathname === "/icon.svg" ||
         pathname === "/sw.js" ||

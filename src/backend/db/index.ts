@@ -19,6 +19,29 @@ function ensureRuntimeSchema(sqlite: Database.Database) {
         sqlite.exec("ALTER TABLE user_settings ADD COLUMN view_mode TEXT NOT NULL DEFAULT 'advanced'");
     }
 
+    const userColumns = sqlite.pragma("table_info(users)") as Array<{ name: string }>;
+    if (!userColumns.some((column) => column.name === "is_benefector")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN is_benefector INTEGER NOT NULL DEFAULT 0");
+    }
+
+    sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS mayar_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            transaction_id TEXT NOT NULL UNIQUE,
+            user_id INTEGER REFERENCES users(id),
+            customer_email TEXT,
+            customer_name TEXT,
+            product_id TEXT,
+            product_name TEXT,
+            amount REAL,
+            status TEXT NOT NULL DEFAULT 'received',
+            tier TEXT,
+            is_benefector INTEGER NOT NULL DEFAULT 0,
+            raw_payload TEXT NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+        );
+    `);
+
     globalForDb.schemaChecked = true;
 }
 
