@@ -137,7 +137,9 @@ export async function checkLimit(
             return (usage.ocrScansCount || 0) < config.ocrMonthlyLimit;
 
         case "telegram_messages":
-            return config.canUseTelegramBot;
+            if (!config.canUseTelegramBot) return false;
+            if (userTier !== "starter") return true;
+            return (usage.telegramMessagesCount || 0) < 10;
 
         default:
             return true;

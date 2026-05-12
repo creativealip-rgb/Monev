@@ -18,7 +18,9 @@ import {
 
     getUserByTelegramId,
     addChatMessage,
-    getChatHistory
+    getChatHistory,
+    getDailyTelegramCount,
+    logTelegramUsage
 } from '@/backend/db/operations';
 import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising";
 import { format } from "date-fns";
@@ -57,6 +59,19 @@ export async function POST(req: NextRequest) {
         }
 
         const userId = user.id;
+        const userTier = (user.tier || "starter") as "starter" | "pro" | "sultan" | "benefactor";
+        const isTelegramHelpCommand = typeof text === "string" && ["/start", "/id", "/link", "test"].includes(text.toLowerCase());
+
+        if ((photo || voice || text) && !isTelegramHelpCommand) {
+            if (userTier === "starter") {
+                const dailyTelegramCount = await getDailyTelegramCount(userId);
+                if (dailyTelegramCount >= 10) {
+                    await sendTelegramMessage(chatId, "Limit Telegram Free kamu sudah habis hari ini (10 chat/hari). Kamu tetap bisa menerima notifikasi. Upgrade ke Pro/Sultan untuk chat lebih banyak.");
+                    return NextResponse.json({ ok: true });
+                }
+            }
+            await logTelegramUsage(userId, text || (photo ? "[foto]" : "[voice]"));
+        }
 
         if (photo) {
             console.log("Processing Telegram Photo message...");

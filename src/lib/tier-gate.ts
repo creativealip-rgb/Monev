@@ -44,8 +44,8 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
         canAccessSmartInput: false,
         canAccessSmartAgents: false,
         canExport: true,
-        canUseTelegramBot: false,
-        telegramBotType: "none",
+        canUseTelegramBot: true,
+        telegramBotType: "command",
         features: [
             "100 Transaksi/bulan",
             "2 Akun Bank",
@@ -53,6 +53,7 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
             "1 Target Tabungan",
             "3 Tagihan",
             "10 Monev AI Chats/hari",
+            "Telegram Bot 10 chat/hari + notifikasi",
             "Export CSV",
         ],
     },

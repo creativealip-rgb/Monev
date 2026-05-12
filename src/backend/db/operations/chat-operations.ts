@@ -8,14 +8,17 @@ export async function getChatHistory(userId: number, limit = 25): Promise<ChatHi
     const db = getDb();
     const history = await db.select()
         .from(chatHistory)
-        .where(eq(chatHistory.userId, userId))
+        .where(and(
+            eq(chatHistory.userId, userId),
+            sql`${chatHistory.content} NOT LIKE '[TELEGRAM_USAGE]%'`
+        ))
         .orderBy(desc(chatHistory.createdAt))
         .limit(limit)
         .all();
 
     return history.reverse().map((message) => ({
         ...message,
-        content: message.content.replace(/^\[(AI_USAGE|FREE_USAGE)\]\s*/, ""),
+        content: message.content.replace(/^\[(AI_USAGE|FREE_USAGE|TELEGRAM_USAGE)\]\s*/, ""),
     })); // Return in chronological order without internal usage markers
 }
 
@@ -56,6 +59,28 @@ export async function getDailyAICount(userId: number): Promise<number> {
             eq(chatHistory.userId, userId),
             eq(chatHistory.role, "assistant"), // Count completed responses that reached the AI provider
             sql`${chatHistory.content} LIKE '[AI_USAGE]%'`,
+            gte(chatHistory.createdAt, today)
+        ))
+        .get();
+
+    return result?.count || 0;
+}
+
+export async function logTelegramUsage(userId: number, content: string): Promise<ChatHistory> {
+    return addChatMessage(userId, "user", `[TELEGRAM_USAGE] ${content}`);
+}
+
+export async function getDailyTelegramCount(userId: number): Promise<number> {
+    const db = getDb();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const result = db.select({ count: sql<number>`COUNT(*)` })
+        .from(chatHistory)
+        .where(and(
+            eq(chatHistory.userId, userId),
+            eq(chatHistory.role, "user"),
+            sql`${chatHistory.content} LIKE '[TELEGRAM_USAGE]%'`,
             gte(chatHistory.createdAt, today)
         ))
         .get();

@@ -75,7 +75,9 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
     };
 
     const isConnected = !!user?.telegramId;
-    const canAccess = canUseTelegram(user?.tier as UserTier);
+    const userTier = (user?.tier || "starter") as UserTier;
+    const canAccess = canUseTelegram(userTier);
+    const isStarter = userTier === "starter";
 
     return (
         <div className="space-y-4">
@@ -94,7 +96,9 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                         </div>
                         <div>
                             <h4 className="font-semibold text-slate-900 dark:text-white">Telegram Bot</h4>
-                            <p className="text-xs text-slate-500">@MonevappBot</p>
+                            <p className="text-xs text-slate-500">
+                                @MonevappBot {isStarter ? "- Free: 10 chat/hari + notifikasi" : "- chat & notifikasi"}
+                            </p>
                         </div>
                     </div>
                     {isConnected ? (
