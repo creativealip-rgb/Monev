@@ -15,7 +15,8 @@ function isAuthorizedCron(request: NextRequest) {
     if (!secret) return true;
 
     const authHeader = request.headers.get("authorization");
-    return authHeader === `Bearer ${secret}`;
+    const cronSecretHeader = request.headers.get("x-cron-secret");
+    return authHeader === `Bearer ${secret}` || cronSecretHeader === secret;
 }
 
 async function executeRecurringCron(request: NextRequest) {

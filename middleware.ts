@@ -75,7 +75,8 @@ function withSecurityHeaders(response: NextResponse) {
 export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
     const isLoggedIn = hasSessionCookie(req);
-    const isProtectedApi = matchesPrefix(pathname, PROTECTED_API_PREFIXES);
+    const isCronApi = pathname === "/api/cron" || pathname.startsWith("/api/cron/");
+    const isProtectedApi = !isCronApi && matchesPrefix(pathname, PROTECTED_API_PREFIXES);
     const isProtectedPage = matchesPrefix(pathname, PROTECTED_PAGE_PREFIXES);
 
     if (!isLoggedIn && isProtectedApi) {

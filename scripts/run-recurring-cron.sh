@@ -18,6 +18,7 @@ ENDPOINT="${BASE_URL}/api/cron/execute-recurring"
 if [[ -n "${CRON_SECRET:-}" ]]; then
     curl -fsS -X POST \
         -H "Authorization: Bearer ${CRON_SECRET}" \
+        -H "X-Cron-Secret: ${CRON_SECRET}" \
         "${ENDPOINT}"
 else
     curl -fsS -X POST "${ENDPOINT}"
