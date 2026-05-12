@@ -109,6 +109,7 @@ export interface QuickStatsWidgetProps {
     longestStreak: number;
     mounted: boolean;
     isStealthMode: boolean;
+    simpleMode?: boolean;
 }
 
 export interface RecentTransactionsWidgetProps {

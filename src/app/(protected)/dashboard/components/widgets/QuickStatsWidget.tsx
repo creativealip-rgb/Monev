@@ -13,6 +13,7 @@ export function QuickStatsWidget({
     longestStreak,
     mounted,
     isStealthMode,
+    simpleMode,
 }: QuickStatsWidgetProps) {
     return (
         <QuickStatsSummary
@@ -25,6 +26,7 @@ export function QuickStatsWidget({
             longestStreak={longestStreak}
             mounted={mounted}
             isStealthMode={isStealthMode}
+            simpleMode={simpleMode}
         />
     );
 }

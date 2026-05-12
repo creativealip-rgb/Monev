@@ -6,6 +6,7 @@ import ClientLayout from "../ClientLayout";
 import { SecurityProvider } from "@/components/SecurityProvider";
 import { OnboardingGuard } from "@/app/components/OnboardingGuard";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { AdvancedModeGuard } from "@/frontend/components/AdvancedModeGuard";
 
 export default function ProtectedLayout({
     children,
@@ -46,7 +47,9 @@ export default function ProtectedLayout({
     return (
         <SecurityProvider>
             <OnboardingGuard serverStatus={hasCompletedOnboarding}>
-                <ClientLayout>{children}</ClientLayout>
+                <ClientLayout>
+                    <AdvancedModeGuard>{children}</AdvancedModeGuard>
+                </ClientLayout>
             </OnboardingGuard>
         </SecurityProvider>
     );

@@ -14,6 +14,7 @@ interface QuickStatsSummaryProps {
     longestStreak: number;
     mounted: boolean;
     isStealthMode: boolean;
+    simpleMode?: boolean;
 }
 
 type StatTone = "sky" | "emerald" | "rose" | "orange" | "violet";
@@ -81,6 +82,7 @@ export function QuickStatsSummary({
     longestStreak,
     mounted,
     isStealthMode,
+    simpleMode = false,
 }: QuickStatsSummaryProps) {
     const todayNet = todayIncome - todayExpense;
     const budgetPercentage = weeklyBudgetTotal > 0
@@ -117,10 +119,12 @@ export function QuickStatsSummary({
                 />
                 <StatCard
                     icon={Target}
-                    label="Sisa Budget"
-                    value={mounted ? formatCurrency(weeklyBudgetRemaining).replace("Rp", "Rp ") : "..."}
-                    helper={`${budgetPercentage}% tersisa minggu ini`}
-                    tone={budgetTone}
+                    label={simpleMode ? "Keluar Hari Ini" : "Sisa Budget"}
+                    value={mounted
+                        ? formatCurrency(simpleMode ? todayExpense : weeklyBudgetRemaining).replace("Rp", "Rp ")
+                        : "..."}
+                    helper={simpleMode ? "Total pengeluaran" : `${budgetPercentage}% tersisa minggu ini`}
+                    tone={simpleMode ? (todayExpense > todayIncome ? "rose" : "orange") : budgetTone}
                     delay={0.1}
                     hideValue={isStealthMode}
                 />
