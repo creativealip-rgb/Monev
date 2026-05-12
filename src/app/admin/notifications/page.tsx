@@ -33,7 +33,7 @@ interface NotificationHistory {
 export default function NotificationsPage() {
     const [message, setMessage] = useState("");
     const [target, setTarget] = useState<"all" | "tier">("all");
-    const [tier, setTier] = useState("kaya");
+    const [tier, setTier] = useState("starter");
     const [sending, setSending] = useState(false);
     const [history, setHistory] = useState<NotificationHistory[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
@@ -194,8 +194,9 @@ export default function NotificationsPage() {
                                     onChange={(e) => setTier(e.target.value)}
                                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 >
-                                    <option value="miskin">Miskin</option>
-                                    <option value="kaya">Kaya</option>
+                                    <option value="starter">Starter</option>
+                                    <option value="pro">Pro</option>
+                                    <option value="benefactor">Benefactor</option>
                                     <option value="sultan">Sultan</option>
                                 </select>
                             </div>
