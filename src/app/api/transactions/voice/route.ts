@@ -1,10 +1,25 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { processVoice } from "@/lib/ai";
 import { applyRateLimit } from "@/lib/api-rate-limit";
+import { canAccessSmartInput, UserTier } from "@/lib/tier-gate";
 
 export async function POST(req: NextRequest) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userTier: UserTier = session.user.tier || "starter";
+    if (!canAccessSmartInput(userTier)) {
+        return NextResponse.json(
+            { success: false, error: "Fitur AI ini khusus user Pro/Sultan." },
+            { status: 403 }
+        );
+    }
+
     // Rate limiting - AI endpoint
     const rateLimitResponse = await applyRateLimit(req, "ai");
     if (rateLimitResponse) return rateLimitResponse;

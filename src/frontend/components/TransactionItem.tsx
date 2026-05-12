@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, PiggyBank, ArrowLeftRight, MoreHorizontal, Repeat, Gift, Home, Wifi, Smartphone, CircleDollarSign, type LucideIcon } from "lucide-react";
+import { Coffee, ShoppingBag, Zap, CreditCard, ArrowRight, TrendingUp, Gamepad2, Heart, BookOpen, Receipt, Car, Utensils, Briefcase, Square, CheckSquare, Trash2, Edit2, SlidersHorizontal, PiggyBank, ArrowLeftRight, Shapes, Repeat, Gift, Home, Wifi, Smartphone, CircleDollarSign, type LucideIcon } from "lucide-react";
 import { TransactionWithCategory } from "@/types";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { normalizeDateValue } from "@/frontend/lib/normalize-date";
@@ -88,9 +88,9 @@ const CATEGORY_STYLES: Record<string, { icon: LucideIcon; color: string; gradien
         gradient: "from-violet-500 to-purple-500"
     },
     "Lainnya": {
-        icon: MoreHorizontal,
-        color: "bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-400",
-        gradient: "from-slate-500 to-slate-400"
+        icon: Shapes,
+        color: "bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-900/30 dark:text-fuchsia-300",
+        gradient: "from-fuchsia-500 to-cyan-500"
     },
     "Tabungan": {
         icon: PiggyBank,

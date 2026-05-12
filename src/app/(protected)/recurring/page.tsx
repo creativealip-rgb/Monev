@@ -19,6 +19,7 @@ interface RecurringTx {
     amount: number;
     description: string;
     categoryId: number | null;
+    accountId: number | null;
     type: "expense" | "income";
     frequency: "daily" | "weekly" | "monthly";
     nextRunAt: string;
@@ -33,6 +34,12 @@ interface Category {
     type: string;
 }
 
+interface Account {
+    id: number;
+    name: string;
+    balance: number;
+}
+
 const FREQ_LABELS: Record<string, { label: string; short: string }> = {
     daily: { label: "Harian", short: "/ hari" },
     weekly: { label: "Mingguan", short: "/ minggu" },
@@ -42,6 +49,7 @@ const FREQ_LABELS: Record<string, { label: string; short: string }> = {
 export default function RecurringPage() {
     const [items, setItems] = useState<RecurringTx[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
@@ -59,10 +67,11 @@ export default function RecurringPage() {
         type: "expense" as "expense" | "income",
         frequency: "monthly" as "daily" | "weekly" | "monthly",
         categoryId: "",
+        accountId: "",
     });
 
     const resetForm = () => {
-        setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+        setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "", accountId: accounts[0]?.id.toString() || "" });
         setEditingItem(null);
     };
 
@@ -73,7 +82,7 @@ export default function RecurringPage() {
 
     const openEditForm = (item: RecurringTx) => {
         setEditingItem(item);
-        setForm({ description: item.description, amount: item.amount.toString(), type: item.type, frequency: item.frequency, categoryId: item.categoryId?.toString() || "" });
+        setForm({ description: item.description, amount: item.amount.toString(), type: item.type, frequency: item.frequency, categoryId: item.categoryId?.toString() || "", accountId: item.accountId?.toString() || accounts[0]?.id.toString() || "" });
         setShowForm(true);
     };
 
@@ -83,18 +92,25 @@ export default function RecurringPage() {
         setLoading(true);
         setLoadError(null);
         try {
-            const [res, catRes] = await Promise.all([
+            const [res, catRes, accountRes] = await Promise.all([
                 apiFetch("/api/recurring"),
                 apiFetch("/api/categories", { silent: true }),
+                apiFetch("/api/accounts", { silent: true }),
             ]);
             const data = await res.json();
             const catData = await catRes.json();
+            const accountData = await accountRes.json();
             if (!data.success) {
                 throw new Error(data.error || "Gagal memuat transaksi berulang");
             }
             setItems(data.data || []);
             if (catData.success) {
                 setCategories(catData.data || []);
+            }
+            if (accountData.success) {
+                const nextAccounts = accountData.data || [];
+                setAccounts(nextAccounts);
+                setForm(f => f.accountId ? f : ({ ...f, accountId: nextAccounts[0]?.id.toString() || "" }));
             }
         } catch (error) {
             console.error("Error loading recurring transactions:", error);
@@ -179,8 +195,8 @@ export default function RecurringPage() {
         if (isSubmitting) return;
 
         const amountValue = Number(form.amount);
-        if (!form.description.trim() || !Number.isFinite(amountValue) || amountValue <= 0) {
-            toast.error("Form tidak lengkap", "Deskripsi dan nominal valid wajib diisi");
+        if (!form.description.trim() || !Number.isFinite(amountValue) || amountValue <= 0 || !form.accountId) {
+            toast.error("Form tidak lengkap", "Deskripsi, nominal, dan akun wajib diisi");
             return;
         }
 
@@ -191,6 +207,7 @@ export default function RecurringPage() {
                 description: form.description.trim(),
                 amount: amountValue,
                 categoryId: form.categoryId ? parseInt(form.categoryId, 10) : null,
+                accountId: parseInt(form.accountId, 10),
             };
 
             let res;
@@ -211,7 +228,7 @@ export default function RecurringPage() {
             if (result.success) {
                 toast.success("Berhasil!", editingItem ? "Transaksi berulang diperbarui" : "Transaksi berulang ditambahkan");
                 setShowForm(false);
-                setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "" });
+                setForm({ description: "", amount: "", type: "expense", frequency: "monthly", categoryId: "", accountId: accounts[0]?.id.toString() || "" });
                 setEditingItem(null);
                 await load();
             } else {
@@ -475,6 +492,22 @@ export default function RecurringPage() {
                                         </div>
                                     </div>
 
+                                    {/* Account */}
+                                    <div>
+                                        <label htmlFor="recurring-account" className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Akun sumber</label>
+                                        <select
+                                            id="recurring-account"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-sm"
+                                            value={form.accountId}
+                                            onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}
+                                        >
+                                            <option value="">Pilih Akun</option>
+                                            {accounts.map(account => (
+                                                <option key={account.id} value={account.id}>{account.name} - {formatCurrency(account.balance)}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
                                     {/* Category */}
                                     <div>
                                         <label htmlFor="recurring-category" className="text-xs font-bold text-foreground uppercase tracking-wider mb-2 block">Kategori <span className="normal-case font-medium text-muted-foreground">(opsional)</span></label>
@@ -495,13 +528,13 @@ export default function RecurringPage() {
                                     <button
                                         type="button"
                                         onClick={handleCreate}
-                                        disabled={!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || isSubmitting}
+                                        disabled={!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || !form.accountId || isSubmitting}
                                         className={cn(
                                             "w-full py-4 rounded-xl font-bold text-white text-sm transition-all mt-2 disabled:cursor-not-allowed",
                                             form.type === "expense"
                                                 ? "bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20"
                                                 : "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20",
-                                            (!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || isSubmitting) && "opacity-40 cursor-not-allowed"
+                                            (!form.description.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0 || !form.accountId || isSubmitting) && "opacity-40 cursor-not-allowed"
                                         )}
                                     >
                                         {isSubmitting ? "Menyimpan..." : editingItem ? "Perbarui Transaksi" : "Simpan Transaksi"}

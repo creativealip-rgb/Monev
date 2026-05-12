@@ -42,14 +42,6 @@ const BillReminderWidget = dynamic(
     () => import("@/frontend/components/BillReminderWidget").then(mod => mod.BillReminderWidget),
     { loading: () => <WidgetSkeleton /> }
 );
-const SmartNotificationCard = dynamic(
-    () => import("./components/SmartNotificationCard").then(mod => mod.SmartNotificationCard),
-    { loading: () => <WidgetSkeleton /> }
-);
-const QuickAddShortcutsWidget = dynamic(
-    () => import("./components/QuickAddShortcutsWidget").then(mod => mod.QuickAddShortcutsWidget),
-    { loading: () => <WidgetSkeleton /> }
-);
 const RecurringSuggestionsCard = dynamic(
     () => import("./components/RecurringSuggestionsCard").then(mod => mod.RecurringSuggestionsCard),
     { loading: () => <WidgetSkeleton /> }
@@ -155,6 +147,17 @@ export default function DashboardPage() {
                     onToggleHideBalance={handleToggleHideBalance}
                 />
 
+                {stats.healthScore && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.08 }}
+                        className="px-4 mb-3 sm:px-6 sm:mb-4"
+                    >
+                        <HealthScoreWidget data={stats.healthScore} />
+                    </motion.section>
+                )}
+
                 {!hasCompletedOnboarding && stats.accountCount === 0 && (
                     <OnboardingCard show={true} />
                 )}
@@ -163,22 +166,7 @@ export default function DashboardPage() {
                     <BillReminderWidget bills={bills} />
                 )}
 
-                <SmartNotificationCard />
-
-                <QuickAddShortcutsWidget onSuccess={handleAddTransactionSuccess} />
-
                 <RecurringSuggestionsCard />
-
-                {stats.healthScore && (
-                    <motion.section
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.12 }}
-                        className="px-4 mb-4 sm:px-6 sm:mb-6"
-                    >
-                        <HealthScoreWidget data={stats.healthScore} />
-                    </motion.section>
-                )}
 
                 <QuickStatsWidget
                     todayIncome={todayStats.income}

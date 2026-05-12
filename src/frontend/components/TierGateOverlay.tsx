@@ -17,6 +17,7 @@ const TIER_ICONS: Record<UserTier, typeof Lock> = {
     starter: Lock,
     pro: Sparkles,
     sultan: Crown,
+    benefactor: Sparkles,
 };
 
 const TIER_COLORS: Record<UserTier, { bg: string; text: string; border: string; button: string }> = {
@@ -37,6 +38,12 @@ const TIER_COLORS: Record<UserTier, { bg: string; text: string; border: string; 
         text: "text-amber-700 dark:text-amber-300",
         border: "border-amber-200/50 dark:border-amber-800/50",
         button: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white",
+    },
+    benefactor: {
+        bg: "bg-emerald-50/80 dark:bg-emerald-900/20",
+        text: "text-emerald-700 dark:text-emerald-300",
+        border: "border-emerald-200/50 dark:border-emerald-800/50",
+        button: "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white",
     },
 };
 

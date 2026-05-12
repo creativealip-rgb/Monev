@@ -196,8 +196,8 @@ export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading, o
     const chartData = {
         nodes: data.nodes,
         links: data.links.map((link): SankeyChartLink => {
-            const sourceIndex = data.nodes.findIndex((node) => node.id === link.source);
-            const targetIndex = data.nodes.findIndex((node) => node.id === link.target);
+            const sourceIndex = data.nodes.findIndex((node, index) => node.id === link.source || String(index) === String(link.source));
+            const targetIndex = data.nodes.findIndex((node, index) => node.id === link.target || String(index) === String(link.target));
 
             return {
                 ...link,

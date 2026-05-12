@@ -15,19 +15,19 @@ const tiers = [
         price: "Gratis",
         description: "Untuk kamu yang baru mau mulai rapih-rapih keuangan.",
         features: [
-            "Catat 50 transaksi / bulan",
-            "Dashboard Keuangan Dasar",
-            "Maksimal 2 Anggaran",
+            "Catat 100 transaksi / bulan",
+            "Dashboard & Analitik Dasar",
+            "Maksimal 3 Anggaran",
             "Maksimal 3 Daftar Tagihan",
             "1 Target Tabungan",
-            "AI Assistant (3 tanya / hari)",
-            "Analisa Keuangan Dasar"
+            "10 Monev AI Chats / hari",
+            "Export CSV"
         ],
         notIncluded: [
-            "Smart Input (Voice & Foto)",
+            "Smart Input AI (Voice & Foto)",
             "Investasi Portfolio",
             "Telegram Bot Integration",
-            "Export Data (CSV/Excel)",
+            "Export Excel/PDF",
             "Tanpa Iklan",
             "Support Prioritas"
         ],
@@ -43,20 +43,21 @@ const tiers = [
         description: "Pilihan terbaik untuk mengelola gaya hidup aktif.",
         features: [
             "Transaksi Unlimited",
-            "Smart Input (Voice & Foto)",
+            "Smart Input AI (Voice & Foto)",
             "Dashboard Analitik Lengkap",
-            "Portfolio Investasi (5 aset)",
-            "Maksimal 10 Anggaran",
-            "Maksimal 20 Daftar Tagihan",
-            "AI Assistant Unlimited",
+            "Portfolio Investasi Basic",
+            "Maksimal 10 Target Tabungan",
+            "Maksimal 20 Anggaran & Tagihan",
+            "100 Monev AI Chats / hari",
             "Export CSV & Excel",
+            "Telegram Bot Command",
             "Bebas Iklan"
         ],
         notIncluded: [
-            "Telegram Bot Integration",
-            "Insight AI Prioritas",
+            "Telegram Bot AI Conversational",
+            "Smart Alert Prioritas",
             "Laporan PDF Custom",
-            "Support 24/7"
+            "Support WhatsApp Prioritas"
         ],
         cta: "Pilih Kaya",
         href: "/register?tier=kaya",
@@ -65,24 +66,45 @@ const tiers = [
     },
     {
         name: "Sultan",
-        price: "Rp 59.000",
+        price: "Rp 49.000",
         period: "/bulan",
         description: "Kendali penuh finansial dengan asisten pribadi AI.",
         features: [
             "Semua fitur di paket Kaya",
-            "Integrasi Telegram Bot (24/7)",
+            "Monev AI Chat Unlimited",
+            "Smart Input AI Unlimited",
+            "Telegram Bot AI Conversational",
             "Investasi Portfolio Unlimited",
-            "Insight AI Proaktif & Prioritas",
+            "Advanced Analytics & Smart Alert",
             "Laporan PDF Custom",
-            "Anggaran & Tagihan Unlimited",
-            "Target Tabungan Unlimited",
-            "Support Prioritas 24/7"
+            "Anggaran, Tagihan & Target Unlimited",
+            "Support WhatsApp Prioritas"
         ],
         notIncluded: [],
         cta: "Jadi Sultan",
         href: "/register?tier=sultan",
         highlight: false,
         color: "indigo"
+    },
+    {
+        name: "Benefactor",
+        price: "Rp 199.000",
+        period: "/tahun",
+        description: "Semua fitur Sultan plus ikut support pengembangan Monev.",
+        features: [
+            "Semua fitur di paket Sultan",
+            "Early access fitur baru",
+            "Request fitur baru",
+            "Kontak WA Developer",
+            "Prioritas voting roadmap",
+            "Badge Benefactor eksklusif",
+            "Support pengembangan Monev"
+        ],
+        notIncluded: [],
+        cta: "Jadi Benefactor",
+        href: "/register?tier=benefactor",
+        highlight: false,
+        color: "emerald"
     }
 ];
 
@@ -140,7 +162,7 @@ export default function PricingPage() {
                     </div>
 
                     {/* Pricing Cards */}
-                    <div className="grid lg:grid-cols-3 gap-8 mb-24">
+                    <div className="grid lg:grid-cols-4 gap-8 mb-24">
                         {tiers.map((tier, idx) => (
                             <motion.div
                                 key={tier.name}
@@ -165,11 +187,13 @@ export default function PricingPage() {
                                         "w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 text-white shadow-lg",
                                         tier.color === "slate" && "bg-slate-500",
                                         tier.color === "sky" && "bg-sky-500",
-                                        tier.color === "indigo" && "bg-indigo-500"
+                                        tier.color === "indigo" && "bg-indigo-500",
+                                        tier.color === "emerald" && "bg-emerald-500"
                                     )}>
                                         {tier.name === "Miskin" && <Zap size={24} />}
                                         {tier.name === "Kaya" && <Rocket size={24} />}
                                         {tier.name === "Sultan" && <Crown size={24} />}
+                                        {tier.name === "Benefactor" && <Crown size={24} />}
                                     </div>
                                     <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{tier.name}</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{tier.description}</p>

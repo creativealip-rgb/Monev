@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getDb, getRawDb } from "@/backend/db";
 import { users } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
-import { addMonths, getMayarApiKey, isMayarTier } from "@/lib/mayar";
+import { addMonths, getMayarApiKey, getTierDurationMonths, isMayarTier } from "@/lib/mayar";
 
 export const runtime = "nodejs";
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const currentExpiry = user.tierExpiresAt && user.tierExpiresAt > new Date() ? user.tierExpiresAt : new Date();
-    const tierExpiresAt = addMonths(currentExpiry, 1);
+    const tierExpiresAt = addMonths(currentExpiry, getTierDurationMonths(tier));
 
     await db.update(users)
         .set({ tier, tierExpiresAt })

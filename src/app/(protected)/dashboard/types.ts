@@ -45,7 +45,7 @@ export interface UserProfile {
     firstName?: string;
     lastName?: string;
     image: string | null;
-    tier: "starter" | "pro" | "sultan";
+    tier: "starter" | "pro" | "sultan" | "benefactor";
 }
 
 export interface DashboardData {
@@ -53,7 +53,7 @@ export interface DashboardData {
     allTransactions: Transaction[];
     stats: DashboardStats;
     userName: string;
-    userTier: "starter" | "pro" | "sultan";
+    userTier: "starter" | "pro" | "sultan" | "benefactor";
     userImage: string | null;
     bills: any[];
     loading: boolean;
@@ -121,13 +121,13 @@ export interface RecentTransactionsWidgetProps {
 }
 
 export interface FeaturesWidgetProps {
-    userTier: "starter" | "pro" | "sultan";
+    userTier: "starter" | "pro" | "sultan" | "benefactor";
 }
 
 export interface DashboardHeaderProps {
     userName: string;
     userImage: string | null;
-    userTier: "starter" | "pro" | "sultan";
+    userTier: "starter" | "pro" | "sultan" | "benefactor";
     streak: { current: number; longest: number } | undefined;
     formattedDate: string;
     mounted: boolean;

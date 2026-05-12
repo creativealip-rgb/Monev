@@ -45,6 +45,45 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 }
 
 type ChatHistoryItem = { role?: string; content?: string };
+type ChatVocabularyItem = Awaited<ReturnType<typeof getUserVocabulary>>[number];
+
+function normalizeVocabularyText(text: string): string {
+    return String(text || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function parseChatAmount(message: string): { amount: number; raw: string } | null {
+    const match = String(message || "").match(/(?:^|\s)(rp\s*)?(\d+(?:[.,]\d+)?)\s*(rb|ribu|k|jt|juta)?\b/i);
+    if (!match) return null;
+    const rawNumber = Number(match[2].replace(",", "."));
+    if (!Number.isFinite(rawNumber)) return null;
+    const unit = match[3] || "";
+    const multiplier = /^(rb|ribu|k)$/i.test(unit) ? 1000 : /^(jt|juta)$/i.test(unit) ? 1000000 : 1;
+    const amount = Math.round(rawNumber * multiplier);
+    if (amount <= 0) return null;
+    return { amount, raw: match[0] };
+}
+
+function findVocabularyTransaction(message: string, vocabulary: ChatVocabularyItem[]): { amount: number; description: string; type: "income" | "expense"; categoryId: number | null; categoryName?: string | null } | null {
+    const amountMatch = parseChatAmount(message);
+    if (!amountMatch) return null;
+
+    const normalized = normalizeVocabularyText(message);
+    const matched = vocabulary
+        .map((item) => ({ item, word: normalizeVocabularyText(item.word) }))
+        .filter(({ word }) => word && new RegExp(`(^|\\s)${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`, "i").test(normalized))
+        .sort((a, b) => b.word.length - a.word.length)[0]?.item;
+
+    if (!matched) return null;
+
+    const description = String(message || "").replace(amountMatch.raw, " ").replace(/\s+/g, " ").trim() || matched.word;
+    return {
+        amount: amountMatch.amount,
+        description,
+        type: matched.type,
+        categoryId: matched.categoryId,
+        categoryName: matched.categoryName,
+    };
+}
 
 function buildBudgetFollowUpMessage(message: string, history: ChatHistoryItem[]): string | null {
     const text = String(message || "").trim();
@@ -231,9 +270,12 @@ export async function POST(req: NextRequest) {
         await logAIChat(userId, "user", message || (undoTransactionId ? "[Undo Transaction]" : "[Image]"));
 
         const allCategories = await getCategories(userId);
+        const db = getDb();
+        const vocabulary = await getUserVocabulary(db, userId);
         const textHistory = Array.isArray(history) ? history.slice(-10) as Array<{ role?: string; content?: string }> : [];
         const combinedBudgetMessage = buildBudgetFollowUpMessage(message || "", textHistory);
-        const localIntent = !imageBase64 ? parseLocalChatIntent(combinedBudgetMessage || message || "") : { intent: "ai" as const };
+        const vocabularyTransaction = !imageBase64 ? findVocabularyTransaction(combinedBudgetMessage || message || "", vocabulary) : null;
+        const localIntent = !imageBase64 && !vocabularyTransaction ? parseLocalChatIntent(combinedBudgetMessage || message || "") : { intent: "ai" as const };
 
         if (!imageBase64 && isGoalCreationConfirmation(message || "", textHistory)) {
             const previousPlan = findPreviousBudgetPlan(textHistory);
@@ -306,6 +348,38 @@ export async function POST(req: NextRequest) {
             const reply = `↩️ Beres, transaksi terakhir sudah saya undo.\n\n📝 ${transactionToUndo.description || "Tanpa Deskripsi"}\n💰 Rp ${transactionToUndo.amount.toLocaleString('id-ID')}\n🏷️ ${categoryName}`;
             await logAIChat(userId, "assistant", reply);
             return NextResponse.json({ type: "action_result", action: { name: "undo_transaction" }, reply, undoneTransactionId: transactionToUndo.id });
+        }
+
+        if (vocabularyTransaction) {
+            const category = (vocabularyTransaction.categoryId ? allCategories.find(c => c.id === vocabularyTransaction.categoryId) : null)
+                || (vocabularyTransaction.categoryName ? allCategories.find(c => c.name === vocabularyTransaction.categoryName && c.type === vocabularyTransaction.type) : null)
+                || allCategories.find(c => c.name === "Lainnya" && c.type === vocabularyTransaction.type)
+                || allCategories.find(c => c.type === vocabularyTransaction.type)
+                || allCategories[0];
+
+            if (category) {
+                const transaction = await createTransaction(userId, {
+                    amount: vocabularyTransaction.amount,
+                    description: vocabularyTransaction.description,
+                    categoryId: category.id,
+                    type: vocabularyTransaction.type,
+                    date: new Date(),
+                });
+                const reply = `✅ Sip! Sudah saya catat ya.\n\n📝 ${vocabularyTransaction.description}\n💰 Rp ${vocabularyTransaction.amount.toLocaleString('id-ID')}\n🏷️ ${category.name}\n\nAda lagi yang mau dicatat?`;
+                await logAIChat(userId, "assistant", reply);
+                return NextResponse.json({
+                    type: "action_result",
+                    action: { name: "record_transaction" },
+                    reply,
+                    transaction: {
+                        id: transaction.id,
+                        amount: vocabularyTransaction.amount,
+                        description: vocabularyTransaction.description,
+                        category: category.name,
+                        type: vocabularyTransaction.type,
+                    },
+                });
+            }
         }
 
         if (localIntent.intent === "budget_goal" || localIntent.intent === "budget_plan" || localIntent.intent === "ambiguous_transaction") {
@@ -388,10 +462,6 @@ export async function POST(req: NextRequest) {
         const allAccounts = needsFullContext ? await getAccounts(userId) : [];
         const totalAccounts = allAccounts.reduce((sum, account) => account.type === "credit_card" ? sum - account.balance : sum + account.balance, 0);
         const totalInvestments = allInvestments.reduce((sum, investment) => sum + (investment.quantity * investment.currentPrice), 0);
-        
-        // Fetch user vocabulary
-        const db = getDb();
-        const vocabulary = await getUserVocabulary(db, userId);
         
         logger.info(`[ChatAPI] Context mode: ${needsFullContext ? "full" : "lite"}, vocabulary: ${vocabulary.length} words`);
 
@@ -832,8 +902,8 @@ export async function POST(req: NextRequest) {
         // Final cleanup to remove any markdown bold syntax that might have slipped through
         finalReply = finalReply.replace(/\*\*/g, "");
 
-        // 3. Log Assistant Response
-        await logAIChat(userId, "assistant", finalReply);
+        // 3. Log Assistant Response as the single billable AI usage.
+        await logAIChat(userId, "assistant", finalReply, true);
 
         return NextResponse.json({ reply: finalReply });
     } catch (error) {

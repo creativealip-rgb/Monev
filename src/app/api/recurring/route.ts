@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { recurringTransactions } from "@/backend/db/schema";
 import { eq, and, lte } from "drizzle-orm";
-import { createTransaction, getCategories } from "@/backend/db/operations";
+import { getCategories } from "@/backend/db/operations";
+import { getAccounts } from "@/backend/db/account-operations";
 
 // GET - list all recurring transactions for user
 export async function GET() {
@@ -32,10 +33,10 @@ export async function POST(req: NextRequest) {
         const userId = parseInt(session.user.id);
 
         const body = await req.json();
-        const { amount, description, categoryId, type, frequency } = body;
+        const { amount, description, categoryId, accountId, type, frequency } = body;
 
-        if (!amount || !description || !frequency) {
-            return NextResponse.json({ error: "amount, description, dan frequency wajib diisi" }, { status: 400 });
+        if (!amount || !description || !frequency || !accountId) {
+            return NextResponse.json({ error: "amount, description, frequency, dan akun wajib diisi" }, { status: 400 });
         }
 
         // Calculate first nextRunAt based on frequency
@@ -54,12 +55,18 @@ export async function POST(req: NextRequest) {
 
         const allCategories = await getCategories();
         const catId = categoryId || allCategories.find(c => c.name === "Lainnya")?.id || allCategories[0]?.id;
+        const userAccounts = await getAccounts(userId);
+        const selectedAccountId = Number(accountId);
+        if (!userAccounts.some(account => account.id === selectedAccountId)) {
+            return NextResponse.json({ error: "Akun tidak valid" }, { status: 400 });
+        }
 
         const item = db.insert(recurringTransactions).values({
             userId,
             amount,
             description,
             categoryId: catId,
+            accountId: selectedAccountId,
             type: type || "expense",
             frequency,
             nextRunAt,

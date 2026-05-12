@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, CheckCircle2, RefreshCw, Sparkles, X } from "lucide-react";
+import { CalendarClock, CheckCircle2, Receipt, RefreshCw, Repeat, Sparkles, X } from "lucide-react";
 import { formatCurrency } from "@/frontend/lib/utils";
 
 type RecurringPattern = {
@@ -24,7 +24,7 @@ const frequencyLabel: Record<RecurringPattern["frequency"], string> = {
 export function RecurringSuggestionsCard() {
     const [patterns, setPatterns] = useState<RecurringPattern[]>([]);
     const [loading, setLoading] = useState(true);
-    const [acceptingKey, setAcceptingKey] = useState<string | null>(null);
+    const [savingAction, setSavingAction] = useState<{ key: string; action: "recurring" | "bill" | "subscription" | "dismiss" } | null>(null);
     const [message, setMessage] = useState<string | null>(null);
 
     const loadPatterns = async () => {
@@ -45,7 +45,7 @@ export function RecurringSuggestionsCard() {
     }, []);
 
     const acceptPattern = async (pattern: RecurringPattern) => {
-        setAcceptingKey(pattern.key);
+        setSavingAction({ key: pattern.key, action: "recurring" });
         setMessage(null);
         try {
             const response = await fetch("/api/recurring/from-pattern", {
@@ -64,16 +64,56 @@ export function RecurringSuggestionsCard() {
             const json = await response.json();
             if (!json.success) throw new Error(json.error || "Gagal membuat transaksi rutin");
             setPatterns((current) => current.filter((item) => item.key !== pattern.key));
-            setMessage("Automasi rutin berhasil dibuat.");
+            setMessage("Transaksi berulang berhasil dibuat.");
         } catch (error) {
-            setMessage(error instanceof Error ? error.message : "Gagal membuat automasi rutin.");
+            setMessage(error instanceof Error ? error.message : "Gagal membuat transaksi berulang.");
         } finally {
-            setAcceptingKey(null);
+            setSavingAction(null);
+        }
+    };
+
+    const createBillFromPattern = async (pattern: RecurringPattern, isSubscription: boolean) => {
+        setSavingAction({ key: pattern.key, action: isSubscription ? "subscription" : "bill" });
+        setMessage(null);
+        try {
+            const nextDate = new Date(pattern.nextRunAt);
+            const response = await fetch("/api/bills", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: pattern.description,
+                    amount: pattern.amount,
+                    categoryId: pattern.categoryId,
+                    dueDate: Number.isNaN(nextDate.getTime()) ? 1 : Math.max(1, Math.min(31, nextDate.getDate())),
+                    frequency: pattern.frequency === "weekly" ? "weekly" : "monthly",
+                    icon: isSubscription ? "Repeat" : "Receipt",
+                    color: isSubscription ? "#14b8a6" : "#f59e0b",
+                    isSubscription,
+                    notes: isSubscription
+                        ? "Dibuat sebagai langganan dari deteksi pembayaran berulang di dashboard."
+                        : "Dibuat sebagai tagihan dari deteksi pembayaran berulang di dashboard.",
+                }),
+            });
+            const json = await response.json();
+            if (!json.success) throw new Error(json.error || "Gagal membuat tagihan");
+
+            await fetch("/api/recurring/dismiss-suggestion", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ patternKey: pattern.key }),
+            });
+
+            setPatterns((current) => current.filter((item) => item.key !== pattern.key));
+            setMessage(isSubscription ? "Langganan berhasil dibuat." : "Tagihan pengingat berhasil dibuat.");
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : "Gagal membuat tagihan.");
+        } finally {
+            setSavingAction(null);
         }
     };
 
     const dismissPattern = async (pattern: RecurringPattern) => {
-        setAcceptingKey(pattern.key);
+        setSavingAction({ key: pattern.key, action: "dismiss" });
         setMessage(null);
         try {
             const response = await fetch("/api/recurring/dismiss-suggestion", {
@@ -88,7 +128,7 @@ export function RecurringSuggestionsCard() {
         } catch (error) {
             setMessage(error instanceof Error ? error.message : "Gagal menyembunyikan rekomendasi.");
         } finally {
-            setAcceptingKey(null);
+            setSavingAction(null);
         }
     };
 
@@ -101,10 +141,10 @@ export function RecurringSuggestionsCard() {
                     <div>
                         <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
                             <Sparkles size={16} />
-                            Rekomendasi rutin
+                            Pembayaran berulang terdeteksi
                         </div>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Monev mendeteksi transaksi yang kemungkinan berulang.
+                            Pilih mau dijadikan transaksi otomatis, tagihan pengingat, atau abaikan.
                         </p>
                     </div>
                     <button
@@ -148,24 +188,43 @@ export function RecurringSuggestionsCard() {
                                         {Math.round(pattern.confidence * 100)}%
                                     </div>
                                 </div>
-                                <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+                                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
                                     <button
                                         type="button"
                                         onClick={() => acceptPattern(pattern)}
-                                        disabled={acceptingKey === pattern.key}
-                                        className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                                        disabled={savingAction?.key === pattern.key}
+                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
                                     >
-                                        {acceptingKey === pattern.key ? "Menyimpan..." : "Jadikan transaksi rutin"}
+                                        <Repeat size={13} className={savingAction?.key === pattern.key && savingAction.action === "recurring" ? "animate-spin" : ""} />
+                                        {savingAction?.key === pattern.key && savingAction.action === "recurring" ? "Menyimpan..." : "Jadikan recurring"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => createBillFromPattern(pattern, false)}
+                                        disabled={savingAction?.key === pattern.key}
+                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                                    >
+                                        <Receipt size={13} className={savingAction?.key === pattern.key && savingAction.action === "bill" ? "animate-pulse" : ""} />
+                                        {savingAction?.key === pattern.key && savingAction.action === "bill" ? "Menyimpan..." : "Jadikan tagihan"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => createBillFromPattern(pattern, true)}
+                                        disabled={savingAction?.key === pattern.key}
+                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-teal-600 disabled:opacity-60"
+                                    >
+                                        <Repeat size={13} className={savingAction?.key === pattern.key && savingAction.action === "subscription" ? "animate-spin" : ""} />
+                                        {savingAction?.key === pattern.key && savingAction.action === "subscription" ? "Menyimpan..." : "Jadikan langganan"}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => dismissPattern(pattern)}
-                                        disabled={acceptingKey === pattern.key}
+                                        disabled={savingAction?.key === pattern.key}
                                         className="rounded-xl border border-slate-200 px-3 py-2 text-slate-500 transition hover:bg-white disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
                                         aria-label="Sembunyikan rekomendasi"
-                                        title="Sembunyikan"
+                                        title="Abaikan"
                                     >
-                                        <X size={14} />
+                                        {savingAction?.key === pattern.key && savingAction.action === "dismiss" ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
                                     </button>
                                 </div>
                             </div>

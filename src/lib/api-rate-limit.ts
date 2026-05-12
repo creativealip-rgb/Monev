@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getUserById } from "@/backend/db/operations";
 import { checkAIRateLimit, getRateLimitHeaders } from "@/lib/rate-limiter";
 import { getUserTier } from "@/lib/tier-gate";
 
@@ -101,9 +102,10 @@ export async function applyRateLimit(
             );
         }
 
-        // Check AI-specific rate limit for AI endpoints
+        // Check AI-specific rate limit against the latest DB tier, not a stale session token.
         if (endpointType === "ai" && userId) {
-            const tier = getUserTier(session?.user);
+            const dbUser = await getUserById(Number(userId));
+            const tier = getUserTier(dbUser || session?.user);
             const aiResult = checkAIRateLimit(Number(userId), tier);
 
             if (!aiResult.allowed) {

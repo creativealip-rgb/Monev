@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
     PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart
 } from "recharts";
-import { AlertTriangle, Target, Zap, Award, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { AlertTriangle, Target, Zap, Award, ArrowUpRight, ArrowDownLeft, WalletCards } from "lucide-react";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
 import { motion } from "framer-motion";
 import type { ChartCategoryStat, IncomeStat, MonthlyStat, RecommendationData } from "./types";
@@ -36,55 +36,121 @@ export function CategoryBreakdownChart({
     categoryStats: ChartCategoryStat[];
     onSelectCategory?: (category: ChartCategoryStat) => void;
 }) {
-    if (!categoryStats || categoryStats.length === 0) return null;
+    const topCategories = useMemo(() => {
+        return [...(categoryStats || [])]
+            .filter((item) => Number(item.total || 0) > 0)
+            .sort((a, b) => Number(b.total || 0) - Number(a.total || 0))
+            .slice(0, 6);
+    }, [categoryStats]);
+
+    const [showDetails, setShowDetails] = useState(false);
+
+    if (topCategories.length === 0) return null;
+
+    const total = topCategories.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    const topCategory = topCategories[0];
+    const topShare = total > 0 ? (Number(topCategory.total || 0) / total) * 100 : 0;
 
     return (
-        <motion.div className="card-clean p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full" />
-                Kategori Pengeluaran
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                    <Pie
-                        data={categoryStats}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={(entry) => String((entry as Partial<ChartCategoryStat>).categoryName ?? "")}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="total"
-                        onClick={(_, index) => {
-                            const selected = categoryStats[index];
-                            if (selected && onSelectCategory) {
-                                onSelectCategory(selected);
-                            }
-                        }}
-                    >
-                        {categoryStats.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip formatter={(value: unknown) => formatCurrency(Number(value || 0))} />
-                </PieChart>
-            </ResponsiveContainer>
-
-            {/* Legend */}
-            <div className="grid grid-cols-2 gap-3 mt-6">
-                {categoryStats.slice(0, 4).map((item, idx) => (
-                    <button
-                        key={item.categoryId}
-                        type="button"
-                        onClick={() => onSelectCategory?.(item)}
-                        className="flex w-full items-center gap-2 text-left"
-                    >
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                        <span className="text-xs text-muted-foreground truncate">{item.categoryName}</span>
-                        <span className="text-xs font-bold text-foreground ml-auto">{formatCurrency(item.total)}</span>
-                    </button>
-                ))}
+        <motion.div
+            className="rounded-[1.75rem] border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <h3 className="text-sm font-black text-foreground">Kategori Pengeluaran</h3>
+                    <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                        Terbesar: {topCategory.categoryName} • {topShare.toFixed(0)}%
+                    </p>
+                </div>
+                <div className="rounded-2xl bg-rose-50 px-3 py-2 text-right text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+                    <p className="text-[10px] font-black uppercase tracking-wider opacity-70">Total</p>
+                    <p className="text-sm font-black">{formatCurrency(total)}</p>
+                </div>
             </div>
+
+            <div className="mt-4 flex flex-col items-center">
+                <button
+                    type="button"
+                    onClick={() => onSelectCategory?.(topCategory)}
+                    className="relative flex h-44 w-44 items-center justify-center rounded-full bg-slate-50 p-2 transition-transform hover:scale-[1.02] dark:bg-slate-900"
+                    aria-label={`Filter kategori ${topCategory.categoryName}`}
+                >
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={topCategories}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={52}
+                                outerRadius={76}
+                                paddingAngle={3}
+                                cornerRadius={8}
+                                dataKey="total"
+                                stroke="none"
+                                onClick={(_, index) => {
+                                    const selected = topCategories[index];
+                                    if (selected) onSelectCategory?.(selected);
+                                }}
+                            >
+                                {topCategories.map((_, index) => (
+                                    <Cell key={`category-cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip formatter={(value: unknown) => formatCurrency(Number(value || 0))} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute max-w-[6rem] text-center">
+                        <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Top</p>
+                        <p className="truncate text-xs font-black text-foreground">{topCategory.categoryName}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground">{topShare.toFixed(0)}%</p>
+                    </div>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setShowDetails((value) => !value)}
+                    className="mt-4 rounded-full border border-slate-200 px-4 py-2 text-xs font-black text-foreground transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900"
+                >
+                    {showDetails ? "Sembunyikan detail" : "Detail pengeluaran"}
+                </button>
+            </div>
+
+            {showDetails && (
+                <motion.div
+                    className="mt-4 overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                >
+                    {topCategories.map((item, index) => {
+                        const percentage = total > 0 ? (Number(item.total || 0) / total) * 100 : 0;
+                        const color = COLORS[index % COLORS.length];
+
+                        return (
+                            <button
+                                key={item.categoryId}
+                                type="button"
+                                onClick={() => onSelectCategory?.(item)}
+                                className="group grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-slate-100 px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/70"
+                            >
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                                    <span className="truncate text-sm font-bold text-foreground">{item.categoryName}</span>
+                                </div>
+                                <span className="whitespace-nowrap text-xs font-black text-foreground">{formatCurrency(item.total)}</span>
+                                <span className="w-9 text-right text-[11px] font-black text-muted-foreground">{percentage.toFixed(0)}%</span>
+                                <div className="col-span-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                    <div
+                                        className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                                        style={{ width: `${percentage}%`, backgroundColor: color }}
+                                    />
+                                </div>
+                            </button>
+                        );
+                    })}
+                </motion.div>
+            )}
         </motion.div>
     );
 }
@@ -303,49 +369,74 @@ export function IncomeSourceBreakdown({
     incomeData: IncomeStat[];
     onSelectIncome?: (income: IncomeStat) => void;
 }) {
-    if (!incomeData || incomeData.length === 0) return null;
+    const meaningfulIncome = useMemo(() => {
+        return (incomeData || [])
+            .filter((item) => Number(item.total || 0) > 0)
+            .sort((a, b) => Number(b.total || 0) - Number(a.total || 0));
+    }, [incomeData]);
+
+    if (meaningfulIncome.length <= 1) return null;
+
+    const totalIncome = meaningfulIncome.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    const topIncome = meaningfulIncome[0];
+    const topShare = totalIncome > 0 ? (Number(topIncome.total || 0) / totalIncome) * 100 : 0;
+    const colors = ["#0f766e", "#d97706", "#0284c7", "#ea580c", "#16a34a", "#be123c"];
 
     return (
-        <motion.div className="card-clean p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-                Sumber Pemasukan
-            </h3>
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={incomeData} margin={{ top: 8, right: 12, left: 8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="name" stroke="#64748b" />
-                    <YAxis
-                        stroke="#64748b"
-                        width={56}
-                        tickFormatter={formatAxisCurrency}
-                    />
-                    <Tooltip formatter={(value: unknown) => formatCurrency(Number(value || 0))} />
-                    <Bar
-                        dataKey="total"
-                        fill="#10b981"
-                        radius={[8, 8, 0, 0]}
-                        onClick={(entry) => {
-                            const payload = (entry as { payload?: IncomeStat } | undefined)?.payload;
-                            if (payload && onSelectIncome) {
-                                onSelectIncome(payload);
-                            }
-                        }}
-                    />
-                </BarChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-                {incomeData.map((item) => (
-                    <button
-                        key={`${item.categoryId || item.name}-${item.total}`}
-                        type="button"
-                        onClick={() => onSelectIncome?.(item)}
-                        className="flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                    >
-                        <span className="text-xs text-muted-foreground">{item.name}</span>
-                        <span className="text-xs font-bold text-foreground">{formatCurrency(item.total)}</span>
-                    </button>
-                ))}
+        <motion.div
+            className="rounded-[1.75rem] border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300">
+                        <WalletCards size={18} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-black text-foreground">Sumber Pemasukan</h3>
+                        <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                            {meaningfulIncome.length} sumber • {topIncome.name} {topShare.toFixed(0)}%
+                        </p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Total</p>
+                    <p className="text-sm font-black text-foreground">{formatCurrency(totalIncome)}</p>
+                </div>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
+                {meaningfulIncome.map((item, index) => {
+                    const percentage = totalIncome > 0 ? (Number(item.total || 0) / totalIncome) * 100 : 0;
+                    const color = colors[index % colors.length];
+
+                    return (
+                        <button
+                            key={`${item.categoryId || item.name}-${item.total}`}
+                            type="button"
+                            onClick={() => onSelectIncome?.(item)}
+                            className="group block w-full border-b border-slate-100 bg-white px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900/70"
+                        >
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                                    <span className="truncate text-sm font-bold text-foreground">{item.name}</span>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-2">
+                                    <span className="text-xs font-black text-foreground">{formatCurrency(item.total)}</span>
+                                    <span className="w-9 text-right text-[11px] font-black text-muted-foreground">{percentage.toFixed(0)}%</span>
+                                </div>
+                            </div>
+                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <div
+                                    className="h-full rounded-full transition-all duration-500 group-hover:opacity-80"
+                                    style={{ width: `${percentage}%`, backgroundColor: color }}
+                                />
+                            </div>
+                        </button>
+                    );
+                })}
             </div>
         </motion.div>
     );

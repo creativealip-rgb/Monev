@@ -26,7 +26,7 @@ interface User {
     email: string | null;
     username: string | null;
     image: string | null;
-    tier: "starter" | "pro" | "sultan";
+    tier: "starter" | "pro" | "sultan" | "benefactor";
     isAdmin: boolean;
     isActive: boolean;
     telegramId: number | null;
@@ -46,6 +46,7 @@ const tierConfig = {
     starter: { label: "Starter", bg: "bg-slate-100", text: "text-slate-600", icon: Zap },
     pro: { label: "Pro", bg: "bg-sky-50", text: "text-sky-600", icon: Sparkles },
     sultan: { label: "Sultan", bg: "bg-amber-50", text: "text-amber-600", icon: Crown },
+    benefactor: { label: "Benefactor", bg: "bg-emerald-50", text: "text-emerald-600", icon: Crown },
 };
 
 export default function UsersPage() {
@@ -192,6 +193,7 @@ export default function UsersPage() {
                         <option value="starter">Starter</option>
                         <option value="pro">Pro</option>
                         <option value="sultan">Sultan</option>
+                        <option value="benefactor">Benefactor</option>
                     </select>
 
                     <select
@@ -349,6 +351,7 @@ export default function UsersPage() {
                                     <option value="starter">Starter</option>
                                     <option value="pro">Pro</option>
                                     <option value="sultan">Sultan</option>
+                        <option value="benefactor">Benefactor</option>
                                 </select>
                             </div>
 

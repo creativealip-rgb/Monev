@@ -54,6 +54,17 @@ const TIER_CARDS = [
         color: "amber",
         gradient: "from-amber-400 to-orange-600",
         highlight: false,
+    },
+    {
+        id: "benefactor" as UserTier,
+        price: "Rp 199k",
+        period: "/tahun",
+        description: "Semua fitur Sultan + support developer langsung",
+        icon: Gem,
+        color: "emerald",
+        gradient: "from-emerald-500 to-teal-700",
+        highlight: false,
+        tag: "Supporter",
     }
 ];
 
@@ -73,7 +84,7 @@ export default function UpgradePage() {
     useEffect(() => {
         const paymentStatus = searchParams.get("payment");
         const returnedTier = searchParams.get("tier");
-        if (paymentStatus !== "return" || !returnedTier || (returnedTier !== "pro" && returnedTier !== "sultan")) return;
+        if (paymentStatus !== "return" || !returnedTier || (returnedTier !== "pro" && returnedTier !== "sultan" && returnedTier !== "benefactor")) return;
 
         let isMounted = true;
         const verifyPayment = async () => {
@@ -111,7 +122,7 @@ export default function UpgradePage() {
     }, [router, searchParams, toast, updateSession]);
 
     const handleUpgradeClick = async (tier: UserTier) => {
-        if (tier !== "pro" && tier !== "sultan") {
+        if (tier !== "pro" && tier !== "sultan" && tier !== "benefactor") {
             toast.error("Paket Tidak Tersedia", "Link pembayaran untuk paket ini belum tersedia");
             return;
         }
@@ -353,11 +364,12 @@ export default function UpgradePage() {
                     </div>
 
                     {/* Table Header */}
-                    <div className="grid grid-cols-4 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                    <div className="grid grid-cols-5 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-2">Fitur</div>
                         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Starter</div>
                         <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider text-center">Pro</div>
                         <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-center">Sultan</div>
+                        <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-center">Benefactor</div>
                     </div>
 
                     {/* Matrix Rows */}
@@ -369,10 +381,11 @@ export default function UpgradePage() {
                             { feature: "Target Tabungan", starter: "1", pro: "10", sultan: "Tanpa batas" },
                             { feature: "Tagihan", starter: "3", pro: "20", sultan: "Tanpa batas" },
                             { feature: "Lacak Investasi", starter: false, pro: "Manual", sultan: "Sinkron real-time" },
-                            { feature: "Chat AI Web", starter: "10/hari", pro: "100/hari", sultan: "Tanpa batas" },
-                            { feature: "Scan OCR", starter: "5/bln", pro: "100/bln", sultan: "Tanpa batas" },
+                            { feature: "Monev AI Chat", starter: "10/hari", pro: "100/hari", sultan: "Tanpa batas" },
+                            { feature: "Smart Input AI", starter: false, pro: "Voice & Foto", sultan: "Tanpa batas" },
+                            { feature: "Scan OCR", starter: false, pro: "100/bln", sultan: "Tanpa batas" },
                             { feature: "Format Ekspor", starter: "CSV", pro: "CSV + Excel", sultan: "CSV + Excel + PDF" },
-                            { feature: "Analitik Lanjutan", starter: false, pro: true, sultan: "Prediksi AI" },
+                            { feature: "Analitik Lanjutan", starter: false, pro: true, sultan: "Advanced" },
                             { feature: "Bot Telegram", starter: false, pro: "Berbasis perintah", sultan: "Percakapan AI" },
                             { feature: "Laporan Pajak", starter: false, pro: false, sultan: true },
                             { feature: "Backup Cloud", starter: false, pro: false, sultan: true },
@@ -384,7 +397,9 @@ export default function UpgradePage() {
                             { feature: "Kontrol Keluarga", starter: false, pro: "1 pasangan", sultan: "5 pasangan" },
                         ];
 
-                        const visibleRows = showFullMatrix ? allRows : allRows.slice(0, 6);
+                        const rowsWithBenefactor = allRows.map((row) => ({ ...row, benefactor: row.sultan }));
+                        const collapsedRowCount = 6;
+                        const visibleRows = showFullMatrix ? rowsWithBenefactor : rowsWithBenefactor.slice(0, collapsedRowCount);
 
                         const renderCell = (value: string | boolean) => {
                             if (typeof value === "boolean") {
@@ -401,7 +416,7 @@ export default function UpgradePage() {
                                     <div
                                         key={row.feature}
                                         className={cn(
-                                            "grid grid-cols-4 px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 items-center",
+                                            "grid grid-cols-5 px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 items-center",
                                             i % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-slate-800/20"
                                         )}
                                     >
@@ -409,25 +424,27 @@ export default function UpgradePage() {
                                         <div className="text-center">{renderCell(row.starter)}</div>
                                         <div className="text-center">{renderCell(row.pro)}</div>
                                         <div className="text-center">{renderCell(row.sultan)}</div>
+                                                <div className="text-center">{renderCell(row.benefactor)}</div>
                                     </div>
                                 ))}
 
                                 <AnimatePresence>
-                                    {showFullMatrix && allRows.slice(6).map((row, i) => (
+                                    {showFullMatrix && rowsWithBenefactor.slice(collapsedRowCount).map((row, i) => (
                                         <motion.div
                                             key={row.feature}
                                             initial={{ opacity: 0, height: 0 }}
                                             animate={{ opacity: 1, height: "auto" }}
                                             exit={{ opacity: 0, height: 0 }}
                                             className={cn(
-                                                "grid grid-cols-4 px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 items-center",
-                                                (i + 6) % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-slate-800/20"
+                                                "grid grid-cols-5 px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 items-center",
+                                                (i + collapsedRowCount) % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-slate-800/20"
                                             )}
                                         >
                                             <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 pl-2">{row.feature}</div>
                                             <div className="text-center">{renderCell(row.starter)}</div>
                                             <div className="text-center">{renderCell(row.pro)}</div>
                                             <div className="text-center">{renderCell(row.sultan)}</div>
+                                                <div className="text-center">{renderCell(row.benefactor)}</div>
                                         </motion.div>
                                     ))}
                                 </AnimatePresence>
@@ -440,7 +457,7 @@ export default function UpgradePage() {
                         onClick={() => setShowFullMatrix(!showFullMatrix)}
                         className="w-full py-4 flex items-center justify-center gap-2 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all active:scale-[0.98]"
                     >
-                        {showFullMatrix ? "Sembunyikan" : `Lihat ${14 - 6} fitur lainnya`}
+                        {showFullMatrix ? "Sembunyikan" : "Lihat fitur lainnya"}
                         <motion.div
                             animate={{ rotate: showFullMatrix ? 180 : 0 }}
                             transition={{ duration: 0.3 }}

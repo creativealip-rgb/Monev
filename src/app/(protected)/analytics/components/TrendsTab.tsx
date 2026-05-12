@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { formatCurrency } from "@/frontend/lib/utils";
 import { cn } from "@/frontend/lib/utils";
-import { AlertTriangle, CalendarDays } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 import { useSecurity } from "@/components/SecurityProvider";
 import { MonthComparison } from "./MonthComparison";
-import { MonthlySpendingHeatmap, SpendingHeatmap } from "./SpendingHeatmap";
+import { SpendingHeatmap } from "./SpendingHeatmap";
 import { CategoryTrendChart } from "./CategoryTrendChart";
 import type { AnalyticsData, AnalyticsDrilldownFilter } from "./types";
 
@@ -32,13 +31,11 @@ export function TrendsTab({
     onOpenDrilldown: (filter: AnalyticsDrilldownFilter) => void;
 }) {
     const { isStealthMode } = useSecurity();
-    const [spendingView, setSpendingView] = useState<"weekly" | "monthly">("weekly");
     // Get current and previous month from monthlyComparison
     const comparison = data.monthlyComparison || [];
     const currentMonth = comparison.length > 0 ? comparison[comparison.length - 1] : null;
     const previousMonth = comparison.length > 1 ? comparison[comparison.length - 2] : null;
     const anomalies = data.spendingPatterns?.anomalies || [];
-    const highestSpendingDay = data.spendingPatterns?.highestSpendingDay;
 
     return (
         <div className="flex flex-col gap-6">
@@ -64,32 +61,11 @@ export function TrendsTab({
 
             {/* Spending Pattern */}
             <motion.div variants={itemVariants} className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
-                            Pola Pengeluaran
-                        </h3>
-                        <p className="mt-1 text-[11px] text-muted-foreground">{periodLabel}</p>
-                    </div>
-                    <div className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        {[
-                            { value: "weekly", label: "Mingguan" },
-                            { value: "monthly", label: "Bulanan" }
-                        ].map((option) => (
-                            <button
-                                key={option.value}
-                                onClick={() => setSpendingView(option.value as "weekly" | "monthly")}
-                                className={cn(
-                                    "rounded-full px-3 py-1.5 text-[11px] font-bold transition-all",
-                                    spendingView === option.value
-                                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-                                )}
-                            >
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
+                <div>
+                    <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Pola Pengeluaran
+                    </h3>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{periodLabel}</p>
                 </div>
 
                 {data.dailyStats.length === 0 ? (
@@ -97,14 +73,12 @@ export function TrendsTab({
                         title="Pola Pengeluaran"
                         description={`Belum ada transaksi pengeluaran untuk ${periodLabel}.`}
                     />
-                ) : spendingView === "weekly" ? (
-                    <SpendingHeatmap data={data.dailyStats} />
                 ) : (
-                    <MonthlySpendingHeatmap data={data.dailyStats} />
+                    <SpendingHeatmap data={data.dailyStats} />
                 )}
             </motion.div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
                 <motion.div variants={itemVariants} className="card-clean p-5">
                     <div className="mb-3 flex items-center gap-2">
                         <AlertTriangle size={16} className="text-amber-500" />
@@ -155,40 +129,6 @@ export function TrendsTab({
                     )}
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="card-clean p-5">
-                    <div className="mb-3 flex items-center gap-2">
-                        <CalendarDays size={16} className="text-sky-500" />
-                        <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
-                            Hari Tertinggi
-                        </h3>
-                    </div>
-                    {highestSpendingDay ? (
-                        <button
-                            onClick={() => onOpenDrilldown({
-                                title: "Hari Pengeluaran Tertinggi",
-                                description: `Transaksi pada ${new Date(highestSpendingDay.date).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`,
-                                startDate: highestSpendingDay.date,
-                                endDate: highestSpendingDay.date,
-                                type: "expense",
-                            })}
-                            className="w-full space-y-2 text-left"
-                        >
-                            <p className="text-lg font-black text-foreground">
-                                {new Date(highestSpendingDay.date).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" })}
-                            </p>
-                            <p className="text-sm font-bold text-foreground">
-                                {isStealthMode ? "******" : formatCurrency(highestSpendingDay.totalAmount)}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                                {highestSpendingDay.transactionCount} transaksi di hari dengan pengeluaran tertinggi.
-                            </p>
-                        </button>
-                    ) : (
-                        <p className="text-xs text-muted-foreground">
-                            Belum ada hari pengeluaran yang bisa dianalisis untuk {periodLabel}.
-                        </p>
-                    )}
-                </motion.div>
             </div>
 
             <motion.div variants={itemVariants}>

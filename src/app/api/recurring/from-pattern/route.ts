@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createRecurringTransaction, upsertRecurringSuggestionState } from "@/backend/db/operations";
+import { getAccounts } from "@/backend/db/account-operations";
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const amount = Number(body.amount);
         const categoryId = body.categoryId ? Number(body.categoryId) : null;
+        const accountId = body.accountId ? Number(body.accountId) : null;
         const nextRunAt = body.nextRunAt ? new Date(body.nextRunAt) : new Date();
         const frequency = body.frequency === "weekly" || body.frequency === "daily" ? body.frequency : "monthly";
         const type = body.type === "income" ? "income" : "expense";
@@ -21,10 +23,19 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = parseInt(String(session.user.id), 10);
+        const accounts = await getAccounts(userId);
+        const selectedAccountId = accountId && accounts.some(account => account.id === accountId)
+            ? accountId
+            : accounts[0]?.id;
+        if (!selectedAccountId) {
+            return NextResponse.json({ success: false, error: "Buat akun dulu sebelum memakai recurring" }, { status: 400 });
+        }
+
         const data = await createRecurringTransaction(userId, {
             amount,
             description: body.description,
             categoryId,
+            accountId: selectedAccountId,
             type,
             frequency,
             nextRunAt,

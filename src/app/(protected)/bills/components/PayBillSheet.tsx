@@ -15,7 +15,7 @@ interface PayBillSheetProps {
     bill: Bill | null;
     paidAmount: number;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (payment: { billId: number; amount: number; accountId: number }) => void | Promise<void>;
 }
 
 export function PayBillSheet({
@@ -24,7 +24,7 @@ export function PayBillSheet({
     onClose,
     onSuccess,
 }: PayBillSheetProps) {
-    const { accounts, isLoading: accountsLoading } = useAccountsData();
+    const { accounts, isLoading: accountsLoading, refresh: refreshAccounts } = useAccountsData();
     const toast = useToast();
 
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
@@ -45,7 +45,7 @@ export function PayBillSheet({
 
     const selectedAccount = accounts.find(a => a.id.toString() === selectedAccountId);
     const hasInsufficientBalance = selectedAccount && remainingAmount > selectedAccount.balance;
-    const canSubmit = selectedAccountId && !hasInsufficientBalance && !isSubmitting;
+    const canSubmit = selectedAccountId && remainingAmount > 0 && !hasInsufficientBalance && !isSubmitting;
 
     const handleClose = () => {
         if (!isSubmitting) {
@@ -92,11 +92,16 @@ export function PayBillSheet({
             const result = await response.json();
 
             if (result.success) {
+                const paymentAmount = remainingAmount;
+                const accountId = parseInt(selectedAccountId);
                 toast.success(
                     "Tagihan lunas!",
                     `${bill.name} telah dibayar lunas`
                 );
-                onSuccess();
+                window.dispatchEvent(new Event("transactionAdded"));
+                window.dispatchEvent(new Event("billPaid"));
+                refreshAccounts();
+                await onSuccess({ billId: bill.id, amount: paymentAmount, accountId });
                 onClose();
             } else {
                 setError(result.error || "Gagal memproses pembayaran");

@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
 import { users } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
-import { getAppUrl, getMayarApiKey, isMayarTier, MAYAR_TIER_CONFIG } from "@/lib/mayar";
+import { getAppUrl, getMayarApiKey, getMayarPaymentUrl, isMayarTier, MAYAR_TIER_CONFIG } from "@/lib/mayar";
 
 export async function POST(req: NextRequest) {
     const session = await auth();
@@ -16,9 +16,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: "Paket tidak valid" }, { status: 400 });
     }
 
+    const directPaymentUrl = getMayarPaymentUrl(tier);
     const apiKey = getMayarApiKey();
+    if (!apiKey && directPaymentUrl) {
+        return NextResponse.json({ success: true, paymentUrl: directPaymentUrl, mode: "payment-link" });
+    }
     if (!apiKey) {
-        return NextResponse.json({ success: false, error: "Mayar API key belum dikonfigurasi" }, { status: 500 });
+        return NextResponse.json({ success: false, error: `Link pembayaran ${tier} belum dikonfigurasi` }, { status: 500 });
     }
 
     const userId = Number(session.user.id);
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
             app: "monev",
             userId: String(user.id),
             tier,
-            period: "monthly",
+            period: tier === "benefactor" ? "annual" : "monthly",
         },
     };
 

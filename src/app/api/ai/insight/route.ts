@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getMonthlyStats, getGoals, getBudgets, getTransactions, getPendingScheduledMessages, markScheduledMessageSent } from "@/backend/db/operations";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 import { getDb } from "@/backend/db";
-import { aiInsightsCache } from "@/backend/db/schema";
+import { aiInsightsCache, users } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createChatCompletionWithFallback, isAIConfigured } from "@/lib/ai-provider";
 
@@ -121,6 +121,20 @@ export async function GET(req: NextRequest) {
         const session = await auth();
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const userId = parseInt(session.user.id);
+        const db = getDb();
+        const user = await db.select({ tier: users.tier }).from(users).where(eq(users.id, userId)).get();
+        const userTier = user?.tier || "starter";
+        const canAccessAIInsights = userTier === "pro" || userTier === "sultan" || userTier === "benefactor";
+
+        if (!canAccessAIInsights) {
+            return NextResponse.json({
+                success: true,
+                insight: "Wawasan AI tersedia untuk paket Kaya dan Sultan. Di paket gratis, hasil detail disensor.",
+                type: "info",
+                generatedAt: new Date().toISOString(),
+                isCensored: true
+            });
+        }
 
         // PRIORITY: Check for scheduled stock opname/reconciliation messages
         const scheduledMessages = await getPendingScheduledMessages();

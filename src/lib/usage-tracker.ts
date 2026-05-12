@@ -114,7 +114,7 @@ export async function getUsage(userId: number) {
  */
 export async function checkLimit(
     userId: number,
-    userTier: "starter" | "pro" | "sultan",
+    userTier: "starter" | "pro" | "sultan" | "benefactor",
     feature: "transactions" | "ai_chats" | "ocr_scans" | "telegram_messages"
 ): Promise<boolean> {
     const { TIER_CONFIGS } = await import("@/lib/tier-gate");
@@ -149,7 +149,7 @@ export async function checkLimit(
  */
 export async function getRemainingLimit(
     userId: number,
-    userTier: "starter" | "pro" | "sultan",
+    userTier: "starter" | "pro" | "sultan" | "benefactor",
     feature: "transactions" | "ai_chats" | "ocr_scans"
 ): Promise<number | null> {
     const { TIER_CONFIGS, getRemainingLimit: calcRemaining } = await import("@/lib/tier-gate");

@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "At least one coupon code required" }, { status: 400 });
         }
 
-        if (!["pro", "sultan"].includes(tier)) {
+        if (!["pro", "sultan", "benefactor"].includes(tier)) {
             return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
         }
 
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
 
             const coupon = await db.insert(coupons).values({
                 code: normalizedCode,
-                tier: tier as "pro" | "sultan",
+                tier: tier as "pro" | "sultan" | "benefactor",
                 quota: couponQuota,
                 expiresAt: expiresAt ? new Date(expiresAt) : null,
             }).returning().get();

@@ -48,10 +48,12 @@ export function useDashboardStats() {
         window.addEventListener("transactionAdded", handleTransactionChange);
         window.addEventListener("transactionUpdated", handleTransactionChange);
         window.addEventListener("transactionDeleted", handleTransactionChange);
+        window.addEventListener("billPaid", handleTransactionChange);
         return () => {
             window.removeEventListener("transactionAdded", handleTransactionChange);
             window.removeEventListener("transactionUpdated", handleTransactionChange);
             window.removeEventListener("transactionDeleted", handleTransactionChange);
+            window.removeEventListener("billPaid", handleTransactionChange);
         };
     }, [queryClient]);
 
@@ -149,6 +151,8 @@ export function useDashboardStats() {
             }
             return [];
         },
+        staleTime: 0,
+        refetchOnMount: "always",
     });
 
     // Derived states

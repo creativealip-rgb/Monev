@@ -1,4 +1,4 @@
-export type MayarTier = "pro" | "sultan";
+export type MayarTier = "pro" | "sultan" | "benefactor";
 
 export const MAYAR_TIER_CONFIG: Record<MayarTier, { name: string; amount: number; description: string }> = {
     pro: {
@@ -11,14 +11,23 @@ export const MAYAR_TIER_CONFIG: Record<MayarTier, { name: string; amount: number
         amount: 49000,
         description: "Paket Sultan Monev - langganan bulanan",
     },
+    benefactor: {
+        name: "Monev Benefactor Annual",
+        amount: 199000,
+        description: "Paket Benefactor Monev - support developer tahunan",
+    },
 };
 
 export function isMayarTier(value: unknown): value is MayarTier {
-    return value === "pro" || value === "sultan";
+    return value === "pro" || value === "sultan" || value === "benefactor";
 }
 
 export function getMayarApiKey() {
     return process.env.MAYAR_API_KEY || process.env.MAYAR_API_TOKEN || "";
+}
+
+export function getMayarPaymentUrl(tier: MayarTier) {
+    return process.env[`MAYAR_${tier.toUpperCase()}_PAYMENT_URL`] || "";
 }
 
 export function getAppUrl() {
@@ -29,4 +38,8 @@ export function addMonths(date: Date, months: number) {
     const next = new Date(date);
     next.setMonth(next.getMonth() + months);
     return next;
+}
+
+export function getTierDurationMonths(tier: MayarTier) {
+    return tier === "benefactor" ? 12 : 1;
 }

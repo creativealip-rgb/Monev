@@ -1,14 +1,28 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getDb } from "@/backend/db";
-import { recurringTransactions, transactions, accounts } from "@/backend/db/schema";
-import { eq, lt } from "drizzle-orm";
+import { recurringTransactions } from "@/backend/db/schema";
+import { eq } from "drizzle-orm";
 import { sendPushToUser } from "@/lib/send-push";
+import { createTransaction } from "@/backend/db/operations";
 
 /**
  * Cron job untuk auto-execute recurring transactions
  * Dijalankan setiap hari jam 00:00 UTC
  */
-export async function POST() {
+function isAuthorizedCron(request: NextRequest) {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return true;
+
+    const authHeader = request.headers.get("authorization");
+    return authHeader === `Bearer ${secret}`;
+}
+
+async function executeRecurringCron(request: NextRequest) {
+    if (!isAuthorizedCron(request)) {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         console.log("[CRON] Starting recurring transactions execution...");
         
@@ -37,21 +51,20 @@ export async function POST() {
                 
                 console.log(`[CRON] Executing recurring transaction ${recurring.id} for user ${recurring.userId}`);
                 
-                // Create transaction
-                const [newTransaction] = await db
-                    .insert(transactions)
-                    .values({
-                        userId: recurring.userId,
-                        amount: recurring.amount,
-                        description: recurring.description,
-                        categoryId: recurring.categoryId,
-                        type: recurring.type,
-                        isRecurring: true,
-                        date: now,
-                        createdAt: now
-                    })
-                    .returning()
-                    .all();
+                if (!recurring.accountId) {
+                    throw new Error("Recurring belum punya akun sumber");
+                }
+
+                // Use the normal transaction helper so account balance is updated too.
+                const newTransaction = await createTransaction(recurring.userId, {
+                    amount: recurring.amount,
+                    description: recurring.description,
+                    categoryId: recurring.categoryId || 0,
+                    accountId: recurring.accountId,
+                    type: recurring.type,
+                    paymentMethod: "recurring",
+                    date: now,
+                });
                 
                 // Calculate next run date based on frequency
                 const nextDate = new Date(now);
@@ -138,4 +151,12 @@ export async function POST() {
             { status: 500 }
         );
     }
+}
+
+export async function GET(request: NextRequest) {
+    return executeRecurringCron(request);
+}
+
+export async function POST(request: NextRequest) {
+    return executeRecurringCron(request);
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, getRawDb } from "@/backend/db";
 import { users } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
-import { addMonths, isMayarTier, MAYAR_TIER_CONFIG, MayarTier } from "@/lib/mayar";
+import { addMonths, getTierDurationMonths, isMayarTier, MAYAR_TIER_CONFIG, MayarTier } from "@/lib/mayar";
 
 export const runtime = "nodejs";
 
@@ -54,6 +54,14 @@ function inferTier(data: Record<string, unknown>, extraData: Record<string, unkn
     }
     if (paymentLinkId === "56504daa-989d-421d-a384-02bf90b9e34b" || productName.includes("sultan") || amount === MAYAR_TIER_CONFIG.sultan.amount) {
         return "sultan";
+    }
+    if (
+        paymentLinkId === "f8d86c2f-4a69-4ae6-80ba-355aba09f35e" ||
+        productName.includes("benefactor") ||
+        productName.includes("benefector") ||
+        amount === MAYAR_TIER_CONFIG.benefactor.amount
+    ) {
+        return "benefactor";
     }
 
     return null;
@@ -118,7 +126,7 @@ export async function POST(req: NextRequest) {
     }
 
     const currentExpiry = user.tierExpiresAt && user.tierExpiresAt > new Date() ? user.tierExpiresAt : new Date();
-    const tierExpiresAt = addMonths(currentExpiry, 1);
+    const tierExpiresAt = addMonths(currentExpiry, getTierDurationMonths(tier));
 
     await db.update(users)
         .set({ tier, tierExpiresAt })

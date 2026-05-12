@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDb } from "@/backend/db";
+import { getDb, getRawDb } from "@/backend/db";
 import { users, aiInsightsCache } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
@@ -83,6 +83,54 @@ async function getCachedInsights(userId: number, month: number, year: number): P
     }
 }
 
+function getHistoricalAccountBalance(userId: number, endDate: Date, accountId?: number): number {
+    const rawDb = getRawDb();
+    const endTimestamp = Math.floor(endDate.getTime() / 1000);
+    const accountFilter = accountId ? "AND id = @accountId" : "";
+    const transactionFilter = accountId ? "AND (account_id = @accountId OR target_account_id = @accountId)" : "";
+
+    const currentBalance = rawDb.prepare(`
+        SELECT COALESCE(SUM(CASE WHEN type = 'credit_card' THEN -balance ELSE balance END), 0) AS total
+        FROM accounts
+        WHERE user_id = @userId AND is_active = 1 ${accountFilter}
+    `).get({ userId, accountId }) as { total?: number } | undefined;
+
+    const futureTransactions = rawDb.prepare(`
+        SELECT amount, type, account_id AS accountId, target_account_id AS targetAccountId
+        FROM transactions
+        WHERE user_id = @userId AND date > @endTimestamp ${transactionFilter}
+    `).all({ userId, accountId, endTimestamp }) as Array<{
+        amount: number;
+        type: string;
+        accountId: number | null;
+        targetAccountId: number | null;
+    }>;
+
+    let balance = Number(currentBalance?.total || 0);
+
+    futureTransactions.forEach((transaction) => {
+        const amount = Number(transaction.amount || 0);
+
+        if (transaction.type === "income" && (!accountId || transaction.accountId === accountId)) {
+            balance -= amount;
+            return;
+        }
+
+        if ((transaction.type === "expense" || transaction.type === "withdraw") && (!accountId || transaction.accountId === accountId)) {
+            balance += amount;
+            return;
+        }
+
+        if (transaction.type === "transfer") {
+            if (!accountId) return;
+            if (transaction.accountId === accountId) balance += amount;
+            if (transaction.targetAccountId === accountId) balance -= amount;
+        }
+    });
+
+    return balance;
+}
+
 export async function GET(req: NextRequest) {
     try {
         const session = await auth();
@@ -128,7 +176,7 @@ export async function GET(req: NextRequest) {
         const settings = await getUserSettings(userId);
 
         const userTier = user?.tier || "starter";
-        const canAccessAIInsights = userTier === "pro" || userTier === "sultan";
+        const canAccessAIInsights = userTier === "pro" || userTier === "sultan" || userTier === "benefactor";
         const hideBalance = settings?.hideBalance || false;
 
         const [
@@ -187,6 +235,10 @@ export async function GET(req: NextRequest) {
             totalOwed
         });
 
+        const accountBalanceEndDate = dateRange?.endDate || new Date(year, month, 0, 23, 59, 59, 999);
+        const selectedAccountId = filters.accountId && Number.isFinite(filters.accountId) ? filters.accountId : undefined;
+        const historicalAccountBalance = getHistoricalAccountBalance(userId, accountBalanceEndDate, selectedAccountId);
+
         const avgDailySpending = spendingPatterns.averageDailySpending;
         const savingsRate = basicAnalysis.income > 0
             ? ((basicAnalysis.income - basicAnalysis.expense) / basicAnalysis.income) * 100
@@ -244,6 +296,7 @@ export async function GET(req: NextRequest) {
             dailyStats,
             totalInvestments,
             passiveIncome,
+            totalAccounts: historicalAccountBalance,
 
             health,
 

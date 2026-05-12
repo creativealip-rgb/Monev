@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-    Calendar, ChevronRight, Lock, ArrowLeft, FileDown, Flame
+    Calendar, ChevronRight, Lock, ArrowLeft, Flame
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,17 +26,15 @@ import {
     preloadFinancialMapChart
 } from "./components/FinancialMap";
 import { AnalyticsTransactionsModal } from "./components/AnalyticsTransactionsModal";
-import { CashflowForecast } from "./components/CashflowForecast";
+
 
 // Types
 import type {
     AnalyticsData,
     AnalyticsDrilldownFilter,
-    CategoryBreakdown,
     GoalProgress,
     MonthlyStat
 } from "./components/types";
-import { getAnalyticsActionItems } from "./components/InsightsTab";
 import {
     getAccountsQueryOptions,
     getAnalyticsQueryOptions,
@@ -82,11 +80,10 @@ export default function AnalyticsPage() {
 
     const tabs = useMemo(() => [
         { id: "overview", label: t("analytics.overview") },
-        { id: "forecast", label: "Forecast", locked: false },
         { id: "map", label: t("analytics.map"), locked: false },
-        { id: "trends", label: t("analytics.trends"), locked: !canSeeFullAnalytics },
-        { id: "insights", label: t("analytics.insights"), locked: !canSeeFullAnalytics }
-    ], [canSeeFullAnalytics, t]);
+        { id: "trends", label: t("analytics.trends"), locked: false },
+        { id: "insights", label: t("analytics.insights"), locked: false }
+    ], [t]);
 
     useEffect(() => {
         const tab = searchParams.get("tab");
@@ -475,9 +472,6 @@ export default function AnalyticsPage() {
                         onOpenDrilldown={setDrilldownFilter}
                         baseFilter={sharedDrilldownFilter}
                     />
-                )}
-                {activeTab === "forecast" && (
-                    <CashflowForecast />
                 )}
                 {activeTab === "map" && (
                     <motion.div variants={itemVariants}>

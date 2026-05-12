@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getBills, createBill } from "@/backend/db/operations";
+import { getBills, createBill, getBillHistory } from "@/backend/db/operations";
 import { createLogger } from "@/lib/logger";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 import { z } from "zod";
@@ -15,6 +15,7 @@ const billCreateSchema = z.object({
     frequency: z.enum(["monthly", "weekly", "yearly"]).optional(),
     icon: z.string().trim().max(40).optional(),
     color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    isSubscription: z.coerce.boolean().optional(),
     notes: z.string().trim().max(500).optional(),
 });
 
@@ -26,7 +27,11 @@ export async function GET() {
 
         const allBills = await getBills(userId);
 
-        const data = allBills.map(b => {
+        const data = await Promise.all(allBills.map(async (b) => {
+            const history = await getBillHistory(userId, b.id);
+            const paidAmount = history.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+            const isPaid = Boolean(b.isPaid) || paidAmount >= Number(b.amount);
+
             // Handle lastPaidAt - could be Date object, string, or number (timestamp)
             let lastPaidAtValue: string | null = null;
             if (b.lastPaidAt) {
@@ -47,14 +52,16 @@ export async function GET() {
                 categoryId: b.categoryId,
                 dueDate: b.dueDate,
                 frequency: b.frequency,
-                isPaid: b.isPaid,
+                isPaid,
+                paidAmount,
                 lastPaidAt: lastPaidAtValue,
                 icon: b.icon,
                 color: b.color,
                 isActive: b.isActive,
+                isSubscription: b.isSubscription,
                 notes: b.notes,
             };
-        });
+        }));
 
         return NextResponse.json({ success: true, data });
     } catch (error) {

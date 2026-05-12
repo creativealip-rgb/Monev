@@ -84,65 +84,71 @@ export async function GET(request: Request) {
         // Build Nodes and Links for Sankey
         // Structure: Income -> (Categories) & (Balance/Savings if positive)
         const nodes: Array<{
+            id: string;
             name: string;
             kind: "income" | "expense-category" | "uncategorized-expense" | "savings";
             categoryId?: number;
+            value: number;
         }> = [];
         const links: Array<{
-            source: number;
-            target: number;
+            source: string;
+            target: string;
             value: number;
             kind: "income-to-category" | "income-to-uncategorized" | "income-to-savings";
             categoryId?: number;
             targetName: string;
         }> = [];
 
-        let nodeIndex = 0;
-
         // Node 0: Income Source
-        nodes.push({ name: "Total Pemasukan", kind: "income" });
-        const incomeNodeId = nodeIndex++;
+        const incomeNodeId = "income";
+        nodes.push({ id: incomeNodeId, name: "Total Pemasukan", kind: "income", value: Math.max(totalIncome, totalExpense) });
 
         // Process Categories (Expenses)
         for (const cat of categories) {
             if (categoryTotals[cat.id] && categoryTotals[cat.id] > 0) {
-                nodes.push({ name: cat.name, kind: "expense-category", categoryId: cat.id });
+                const categoryNodeId = `category-${cat.id}`;
+                nodes.push({
+                    id: categoryNodeId,
+                    name: cat.name,
+                    kind: "expense-category",
+                    categoryId: cat.id,
+                    value: categoryTotals[cat.id],
+                });
                 links.push({
                     source: incomeNodeId,
-                    target: nodeIndex,
+                    target: categoryNodeId,
                     value: categoryTotals[cat.id],
                     kind: "income-to-category",
                     categoryId: cat.id,
                     targetName: cat.name,
                 });
-                nodeIndex++;
             }
         }
 
         // Process Uncategorized Expenses
         if (uncategorizedExpense > 0) {
-            nodes.push({ name: "Pengeluaran Lainnya", kind: "uncategorized-expense" });
+            const uncategorizedNodeId = "uncategorized-expense";
+            nodes.push({ id: uncategorizedNodeId, name: "Pengeluaran Lainnya", kind: "uncategorized-expense", value: uncategorizedExpense });
             links.push({
                 source: incomeNodeId,
-                target: nodeIndex,
+                target: uncategorizedNodeId,
                 value: uncategorizedExpense,
                 kind: "income-to-uncategorized",
                 targetName: "Pengeluaran Lainnya",
             });
-            nodeIndex++;
         }
 
         // Process Unspent Balance (Tabungan/Sisa)
         if (balance > 0) {
-            nodes.push({ name: "Sisa / Tersimpan", kind: "savings" });
+            const savingsNodeId = "savings";
+            nodes.push({ id: savingsNodeId, name: "Sisa / Tersimpan", kind: "savings", value: balance });
             links.push({
                 source: incomeNodeId,
-                target: nodeIndex,
+                target: savingsNodeId,
                 value: balance,
                 kind: "income-to-savings",
                 targetName: "Sisa / Tersimpan",
             });
-            nodeIndex++;
         }
 
         // If no income but there are expenses (Deficit/Using Savings)

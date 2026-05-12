@@ -6,6 +6,7 @@ export type CreateRecurringInput = {
     amount: number;
     description: string;
     categoryId?: number | null;
+    accountId?: number | null;
     type: "expense" | "income";
     frequency: "daily" | "weekly" | "monthly";
     nextRunAt: Date;
@@ -27,6 +28,7 @@ export async function createRecurringTransaction(userId: number, input: CreateRe
         amount: input.amount,
         description: input.description,
         categoryId: input.categoryId || null,
+        accountId: input.accountId || null,
         type: input.type,
         frequency: input.frequency,
         nextRunAt: input.nextRunAt,

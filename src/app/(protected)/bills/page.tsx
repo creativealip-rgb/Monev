@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ArrowLeft, Plus, Receipt, AlertTriangle, RefreshCw, LayoutGrid, List, ChevronRight, Bell } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, LayoutGrid, List, ChevronRight, Bell } from "lucide-react";
 import { BillHistoryModal } from "@/frontend/components/modals/BillDetailModal";
 import Link from "next/link";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
 import { BillCardSkeleton, ErrorEmpty, NoBillsEmpty, useToast } from "@/frontend/components/UI";
@@ -35,7 +35,7 @@ export default function BillsPage() {
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all");
+    const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid" | "bill" | "subscription">("all");
     const [showAddSheet, setShowAddSheet] = useState(false);
     const { isStealthMode } = useSecurity();
     const toast = useToast();
@@ -62,6 +62,8 @@ export default function BillsPage() {
         let filtered = bills;
         if (activeTab === "unpaid") filtered = filtered.filter(b => !b.isPaid);
         if (activeTab === "paid") filtered = filtered.filter(b => b.isPaid);
+        if (activeTab === "bill") filtered = filtered.filter(b => !b.isSubscription);
+        if (activeTab === "subscription") filtered = filtered.filter(b => b.isSubscription);
         if (selectedDay !== null) {
             const year = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
@@ -73,10 +75,31 @@ export default function BillsPage() {
         return filtered;
     }, [bills, activeTab, selectedDay, currentMonth]);
 
+    const scheduleBills = useMemo(() => {
+        const baseBills = bills.filter(b => {
+            if (activeTab === "unpaid") return !b.isPaid;
+            if (activeTab === "paid") return b.isPaid;
+            if (activeTab === "bill") return !b.isSubscription;
+            if (activeTab === "subscription") return b.isSubscription;
+            return true;
+        });
+        return [...baseBills].sort((a, b) => a.dueDate - b.dueDate || a.name.localeCompare(b.name));
+    }, [bills, activeTab]);
+
+    const scheduleGroups = useMemo(() => {
+        const groups = new Map<number, Bill[]>();
+        scheduleBills.forEach((bill) => {
+            groups.set(bill.dueDate, [...(groups.get(bill.dueDate) || []), bill]);
+        });
+        return Array.from(groups.entries()).sort(([a], [b]) => a - b);
+    }, [scheduleBills]);
+
     const totalBills = useMemo(() => bills.reduce((s, b) => s + b.amount, 0), [bills]);
     const totalPaid = useMemo(() => bills.filter(b => b.isPaid).reduce((s, b) => s + b.amount, 0), [bills]);
     const totalUnpaid = useMemo(() => bills.filter(b => !b.isPaid).reduce((s, b) => s + b.amount, 0), [bills]);
     const paidCount = useMemo(() => bills.filter(b => b.isPaid).length, [bills]);
+    const billCount = useMemo(() => bills.filter(b => !b.isSubscription).length, [bills]);
+    const subscriptionCount = useMemo(() => bills.filter(b => b.isSubscription).length, [bills]);
 
     // Bill reminder notifications
     const notifiedBillsRef = useRef<Set<string>>(new Set());
@@ -93,7 +116,6 @@ export default function BillsPage() {
 
     useEffect(() => {
         loadBills();
-        loadSubscriptions();
     }, []);
 
     useEffect(() => {
@@ -144,33 +166,6 @@ export default function BillsPage() {
             }
         });
     }, [bills, loading]);
-
-    // Subscription detection
-    interface DetectedSub {
-        merchant: string;
-        amount: number;
-        frequency: string;
-        lastDate: string;
-        confidence: number;
-    }
-    const [subscriptions, setSubscriptions] = useState<DetectedSub[]>([]);
-    const [subsLoading, setSubsLoading] = useState(false);
-    const [showSubs, setShowSubs] = useState(true);
-
-    async function loadSubscriptions() {
-        try {
-            setSubsLoading(true);
-            const res = await apiFetch("/api/subscriptions", { silent: true });
-            const result = await res.json();
-            if (result.success) {
-                setSubscriptions(result.data);
-            }
-        } catch (error) {
-            // Optional signal; keep the bills page usable if subscription detection fails.
-        } finally {
-            setSubsLoading(false);
-        }
-    }
 
     async function loadBills() {
         try {
@@ -225,6 +220,17 @@ export default function BillsPage() {
                 }
             }
             setBillPaymentsMap(paymentsMap);
+            setBills(prev => {
+                let changed = false;
+                const next = prev.map(b => {
+                    if (!b.isPaid && (paymentsMap[b.id] || 0) >= b.amount) {
+                        changed = true;
+                        return { ...b, isPaid: true };
+                    }
+                    return b;
+                });
+                return changed ? next : prev;
+            });
         } catch (error) {
             console.error("Error loading bill payments:", error);
         }
@@ -236,6 +242,20 @@ export default function BillsPage() {
             loadBillPayments();
         }
     }, [bills]);
+
+    async function handlePaymentSuccess(payment: { billId: number; amount: number; accountId: number }) {
+        setBillPaymentsMap(prev => ({
+            ...prev,
+            [payment.billId]: (prev[payment.billId] || 0) + payment.amount,
+        }));
+        setBills(prev => prev.map(b => (
+            b.id === payment.billId
+                ? { ...b, isPaid: true, lastPaidAt: new Date() as unknown as Bill["lastPaidAt"] }
+                : b
+        )));
+        await loadBills();
+        window.dispatchEvent(new Event("transactionAdded"));
+    }
 
     async function handleTogglePaid(id: number, e: React.MouseEvent) {
         e.stopPropagation();
@@ -279,6 +299,8 @@ export default function BillsPage() {
 
     const tabs = [
         { id: "all" as const, label: t("bills.all"), count: bills.length },
+        { id: "bill" as const, label: "Tagihan", count: billCount },
+        { id: "subscription" as const, label: "Langganan", count: subscriptionCount },
         { id: "unpaid" as const, label: t("bills.unpaid"), count: bills.length - paidCount },
         { id: "paid" as const, label: t("bills.paid"), count: paidCount },
     ];
@@ -293,32 +315,6 @@ export default function BillsPage() {
             >
                 <div className="flex items-center justify-between">
                     <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                        <div className="hidden md:flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm p-1">
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("list")}
-                                aria-pressed={viewMode === "list"}
-                                aria-label="Tampilkan daftar tagihan"
-                                className={cn(
-                                    "p-1.5 rounded-full transition-all",
-                                    viewMode === "list" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                <List size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("calendar")}
-                                aria-pressed={viewMode === "calendar"}
-                                aria-label="Tampilkan kalender tagihan"
-                                className={cn(
-                                    "p-1.5 rounded-full transition-all",
-                                    viewMode === "calendar" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                <LayoutGrid size={16} />
-                            </button>
-                        </div>
                         <Link
                             href="/dashboard"
                             aria-label="Kembali ke dashboard"
@@ -327,8 +323,8 @@ export default function BillsPage() {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col">
-                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Tagihan</h1>
-                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">Jangan Sampai Telat Bayar</p>
+                            <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Pembayaran Rutin</h1>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">Tagihan wajib & langganan layanan</p>
                         </div>
                     </div>
                     <button
@@ -415,85 +411,6 @@ export default function BillsPage() {
                 </motion.div>
             )}
 
-            {/* Detected Subscriptions Section */}
-            {(subscriptions.length > 0 || subsLoading) && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="mx-6 mt-4"
-                >
-                    <button
-                        type="button"
-                        onClick={() => setShowSubs(!showSubs)}
-                        aria-expanded={showSubs}
-                        aria-controls="detected-subscriptions-list"
-                        className="flex items-center justify-between w-full mb-3"
-                    >
-                        <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
-                                <AlertTriangle size={14} className="text-amber-500 dark:text-amber-400" />
-                            </div>
-                            <h3 className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">
-                                Langganan Terdeteksi
-                            </h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
-                                {subsLoading ? "..." : subscriptions.length}
-                            </span>
-                            <span
-                                role="button"
-                                tabIndex={0}
-                                aria-label="Muat ulang deteksi langganan"
-                                onClick={(e) => { e.stopPropagation(); loadSubscriptions(); }}
-                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); loadSubscriptions(); } }}
-                                className="rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-                            >
-                                <RefreshCw
-                                    size={13}
-                                    className={cn("text-muted-foreground", subsLoading && "animate-spin")}
-                                />
-                            </span>
-                        </div>
-                    </button>
-
-                    <AnimatePresence>
-                        {showSubs && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                id="detected-subscriptions-list"
-                                className="overflow-hidden space-y-2"
-                            >
-                                {subsLoading ? (
-                                    <div className="p-4 text-center text-xs text-muted-foreground">Menganalisa pola transaksi...</div>
-                                ) : subscriptions.map((sub, i) => (
-                                    <motion.div
-                                        key={sub.merchant}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.05 }}
-                                        className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between"
-                                    >
-                                        <div>
-                                            <p className="text-[13px] font-bold text-foreground">{sub.merchant}</p>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Pola {sub.frequency} • Terakhir {new Date(sub.lastDate).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                                            </p>
-                                        </div>
-                                        <span className="text-[13px] font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-                                            {isStealthMode ? "******" : formatCurrency(sub.amount)}
-                                        </span>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-            )}
-
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -506,12 +423,40 @@ export default function BillsPage() {
                             <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
                                 <Receipt size={16} className="text-rose-500 dark:text-rose-400" />
                             </div>
-                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Daftar Tagihan</h2>
+                            <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">Daftar Pembayaran</h2>
                         </div>
-                        <span className="text-xs text-muted-foreground">{filteredBills.length} Tagihan</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{filteredBills.length} item</span>
+                            <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode("list")}
+                                    aria-pressed={viewMode === "list"}
+                                    aria-label="Tampilkan daftar tagihan"
+                                    className={cn(
+                                        "p-1.5 rounded-full transition-all",
+                                        viewMode === "list" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    <List size={15} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode("calendar")}
+                                    aria-pressed={viewMode === "calendar"}
+                                    aria-label="Tampilkan kalender tagihan"
+                                    className={cn(
+                                        "p-1.5 rounded-full transition-all",
+                                        viewMode === "calendar" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    <LayoutGrid size={15} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex gap-2 mb-4" role="tablist" aria-label="Filter tagihan">
+                    <div className="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Filter tagihan">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
@@ -540,15 +485,14 @@ export default function BillsPage() {
                         )}
                     </div>
 
-                    {/* Calendar View */}
+                    {/* Schedule View */}
                     {viewMode === "calendar" && (
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="card-clean p-4"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="card-clean overflow-hidden"
                         >
-                            {/* Calendar Header */}
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-sky-50 to-cyan-50 p-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900">
                                 <button
                                     type="button"
                                     aria-label="Bulan sebelumnya"
@@ -556,14 +500,18 @@ export default function BillsPage() {
                                         const newDate = new Date(currentMonth);
                                         newDate.setMonth(newDate.getMonth() - 1);
                                         setCurrentMonth(newDate);
+                                        setSelectedDay(null);
                                     }}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                                    className="rounded-xl border border-white/70 bg-white/80 p-2 text-slate-500 shadow-sm transition hover:text-sky-600 dark:border-slate-700 dark:bg-slate-800"
                                 >
-                                    <ChevronRight className="rotate-180 w-4 h-4" />
+                                    <ChevronRight className="h-4 w-4 rotate-180" />
                                 </button>
-                                <span className="text-sm font-bold">
-                                    {currentMonth.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
-                                </span>
+                                <div className="text-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-500">Jadwal Bulanan</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                        {currentMonth.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
                                     aria-label="Bulan berikutnya"
@@ -571,91 +519,119 @@ export default function BillsPage() {
                                         const newDate = new Date(currentMonth);
                                         newDate.setMonth(newDate.getMonth() + 1);
                                         setCurrentMonth(newDate);
+                                        setSelectedDay(null);
                                     }}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                                    className="rounded-xl border border-white/70 bg-white/80 p-2 text-slate-500 shadow-sm transition hover:text-sky-600 dark:border-slate-700 dark:bg-slate-800"
                                 >
-                                    <ChevronRight className="w-4 h-4" />
+                                    <ChevronRight className="h-4 w-4" />
                                 </button>
                             </div>
 
-                            {/* Calendar Grid */}
-                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                                {[t("bills.sunday"), t("bills.monday"), t("bills.tuesday"), t("bills.wednesday"), t("bills.thursday"), t("bills.friday"), t("bills.saturday")].map(day => (
-                                    <div key={day} className="text-[10px] font-bold text-muted-foreground py-1">{day}</div>
+                            <div className="flex gap-2 overflow-x-auto border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedDay(null)}
+                                    className={cn(
+                                        "shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition",
+                                        selectedDay === null
+                                            ? "bg-sky-500 text-white shadow-sm shadow-sky-500/20"
+                                            : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                                    )}
+                                >
+                                    Semua
+                                </button>
+                                {scheduleGroups.map(([day, items]) => (
+                                    <button
+                                        key={day}
+                                        type="button"
+                                        onClick={() => setSelectedDay(selectedDay === day ? null : day)}
+                                        className={cn(
+                                            "shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition",
+                                            selectedDay === day
+                                                ? "bg-sky-500 text-white shadow-sm shadow-sky-500/20"
+                                                : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                                        )}
+                                    >
+                                        {day} {currentMonth.toLocaleDateString("id-ID", { month: "short" })} · {items.length}
+                                    </button>
                                 ))}
                             </div>
-                            <div className="grid grid-cols-7 gap-1">
-                                {(() => {
-                                    const year = currentMonth.getFullYear();
-                                    const month = currentMonth.getMonth();
-                                    const firstDay = new Date(year, month, 1).getDay();
-                                    const daysInMonth = new Date(year, month + 1, 0).getDate();
-                                    const today = new Date();
 
-                                    const cells = [];
-                                    for (let i = 0; i < firstDay; i++) {
-                                        cells.push(<div key={`empty-${i}`} className="h-10" />);
-                                    }
-
-                                    for (let day = 1; day <= daysInMonth; day++) {
-                                        const billsOnDay = bills.filter(b => {
-                                            const dueDate = new Date(year, month, b.dueDate);
-                                            return dueDate.getDate() === day && dueDate.getMonth() === month;
-                                        });
-                                        const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
-                                        const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-                                        cells.push(
-                                            <div
-                                                key={day}
-                                                role="button"
-                                                tabIndex={0}
-                                                aria-pressed={selectedDay === day}
-                                                aria-label={`Filter tagihan tanggal ${day}`}
-                                                onClick={() => setSelectedDay(selectedDay === day ? null : day)}
-                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedDay(selectedDay === day ? null : day); }}
-                                                className={cn(
-                                                    "h-10 relative rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-colors cursor-pointer",
-                                                    selectedDay === day ? "ring-2 ring-sky-500" : "",
-                                                    isToday ? "bg-sky-500 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-800",
-                                                    isPast && !isToday ? "text-muted-foreground" : "text-foreground"
-                                                )}
-                                            >
-                                                {day}
-                                                {billsOnDay.length > 0 && (
-                                                    <div className="absolute bottom-1 flex gap-0.5">
-                                                        {billsOnDay.slice(0, 3).map((b, i) => (
-                                                            <div
-                                                                key={i}
-                                                                className={cn(
-                                                                    "w-1.5 h-1.5 rounded-full",
-                                                                    b.isPaid ? "bg-emerald-400" : isPast ? "bg-rose-400" : "bg-amber-400"
-                                                                )}
-                                                            />
+                            <div className="space-y-4 p-4">
+                                {scheduleGroups.length === 0 ? (
+                                    <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-700">
+                                        <p className="text-sm font-bold text-slate-500">Belum ada jadwal di filter ini</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">Coba pilih filter lain atau tambah pembayaran rutin baru.</p>
+                                    </div>
+                                ) : (
+                                    scheduleGroups
+                                        .filter(([day]) => selectedDay === null || selectedDay === day)
+                                        .map(([day, items]) => {
+                                            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                                            const dayLabel = date.toLocaleDateString("id-ID", { weekday: "short" });
+                                            const dayTotal = items.reduce((sum, item) => sum + item.amount, 0);
+                                            return (
+                                                <div key={day} className="grid grid-cols-[3.25rem_1fr] gap-3">
+                                                    <div className="text-center">
+                                                        <div className="rounded-2xl bg-slate-900 px-2 py-2 text-white shadow-sm dark:bg-white dark:text-slate-900">
+                                                            <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">{dayLabel}</p>
+                                                            <p className="text-xl font-black leading-none">{day}</p>
+                                                        </div>
+                                                        <div className="mx-auto h-full w-px bg-slate-200 dark:bg-slate-800" />
+                                                    </div>
+                                                    <div className="space-y-2 pb-2">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{items.length} pembayaran</p>
+                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{isStealthMode ? "******" : formatCurrency(dayTotal)}</p>
+                                                        </div>
+                                                        {items.map((bill) => (
+                                                            <button
+                                                                key={bill.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (bill.isPaid) {
+                                                                        setSelectedBillHistory(bill);
+                                                                        setIsHistoryModalOpen(true);
+                                                                    } else {
+                                                                        setPayBill(bill);
+                                                                    }
+                                                                }}
+                                                                className="w-full rounded-2xl border border-slate-100 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                                                            >
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <div className="min-w-0">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className={cn(
+                                                                                "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                                                                bill.isSubscription
+                                                                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-950/40 dark:text-teal-300"
+                                                                                    : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
+                                                                            )}>
+                                                                                {bill.isSubscription ? "Langganan" : "Tagihan"}
+                                                                            </span>
+                                                                            <span className={cn(
+                                                                                "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                                                                bill.isPaid
+                                                                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                                                                    : "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300"
+                                                                            )}>
+                                                                                {bill.isPaid ? "Lunas" : "Belum bayar"}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="mt-2 truncate text-sm font-bold text-slate-900 dark:text-white">{bill.name}</p>
+                                                                        <p className="mt-0.5 text-xs text-muted-foreground">{bill.frequency === "weekly" ? "Mingguan" : bill.frequency === "yearly" ? "Tahunan" : "Bulanan"}</p>
+                                                                    </div>
+                                                                    <p className="shrink-0 text-sm font-black tabular-nums text-sky-600 dark:text-sky-300">
+                                                                        {isStealthMode ? "******" : formatCurrency(bill.amount)}
+                                                                    </p>
+                                                                </div>
+                                                            </button>
                                                         ))}
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    }
-                                    return cells;
-                                })()}
-                            </div>
-
-                            {/* Legend */}
-                            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                                    <span className="text-[10px] text-muted-foreground">Lunas</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-amber-400" />
-                                    <span className="text-[10px] text-muted-foreground">Mendatang</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-rose-400" />
-                                    <span className="text-[10px] text-muted-foreground">Terlambat</span>
-                                </div>
+                                                </div>
+                                            );
+                                        })
+                                )}
                             </div>
                         </motion.div>
                     )}

@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Kuota kupon sudah habis" }, { status: 400 });
         }
 
-        await redeemCoupon(coupon.id, userId, coupon.tier as "pro" | "sultan");
+        await redeemCoupon(coupon.id, userId, coupon.tier as "pro" | "sultan" | "benefactor");
 
         return NextResponse.json({
             success: true,

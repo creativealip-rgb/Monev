@@ -216,7 +216,7 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                             </div>
 
                             <div className="px-6 pb-8 space-y-3">
-                                {actions.map((action, index) => {
+                                {actions.filter((action) => hasSmartAccess || action.id === "manual").map((action, index) => {
                                     const Icon = action.icon;
                                     const colors = colorClasses[action.color];
                                     const isSmartInput = action.id !== "manual";
@@ -255,16 +255,18 @@ export function AddTransactionSheet({ isOpen, onClose, onSuccess }: AddTransacti
                                                 <h3 className="font-semibold text-slate-900 dark:text-white">{action.label}</h3>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{action.description}</p>
                                             </div>
-                                            <div className={cn(
-                                                "w-8 h-8 rounded-full flex items-center justify-center",
-                                                "bg-slate-50 dark:bg-slate-700"
-                                            )}>
-                                                {isLocked ? (
-                                                    <Lock size={14} className="text-amber-500" aria-hidden="true" />
-                                                ) : (
-                                                    <Sparkles size={14} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
-                                                )}
-                                            </div>
+                                            {isSmartInput && (
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-full flex items-center justify-center",
+                                                    "bg-slate-50 dark:bg-slate-700"
+                                                )}>
+                                                    {isLocked ? (
+                                                        <Lock size={14} className="text-amber-500" aria-hidden="true" />
+                                                    ) : (
+                                                        <Sparkles size={14} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
+                                                    )}
+                                                </div>
+                                            )}
                                         </motion.button>
                                     );
                                 })}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, Calendar, ArrowRight } from "lucide-react";
+import { Clock, Calendar, ArrowRight, Receipt, Repeat } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
 import Link from "next/link";
@@ -91,7 +91,9 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
     }
 
     const isUrgent = daysRemaining <= 3;
+    const isSubscription = Boolean(nearestBill.isSubscription);
     const progressPercent = Math.min(100, Math.max(0, (1 - daysRemaining / 30) * 100));
+    const TypeIcon = isSubscription ? Repeat : Receipt;
 
     return (
         <motion.section
@@ -102,7 +104,7 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
         >
             <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.18em]">
-                    Tagihan Mendekati
+                    Pembayaran Mendatang
                 </h2>
                 <Link
                     href="/bills"
@@ -144,6 +146,15 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
                                 </h3>
                                 <div className={cn(
                                     "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black",
+                                    isSubscription
+                                        ? "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-200"
+                                        : isUrgent ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200" : "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-200"
+                                )}>
+                                    <TypeIcon size={11} />
+                                    {isSubscription ? "Langganan" : "Tagihan"}
+                                </div>
+                                <div className={cn(
+                                    "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black",
                                     isUrgent ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200" : "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-200"
                                 )}>
                                     <Clock size={11} />
@@ -152,6 +163,9 @@ export function BillReminderWidget({ bills: propBills }: BillReminderWidgetProps
                             </div>
                             <p className="text-lg font-black tabular-nums text-slate-900 dark:text-white">
                                 {formatCurrency(nearestBill.amount).replace("Rp", "Rp ")}
+                            </p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                                {isSubscription ? "Ditagih otomatis sebagai layanan berulang" : "Kewajiban dengan jatuh tempo"}
                             </p>
                             <div className={cn(
                                 "mt-2 h-1.5 w-full overflow-hidden rounded-full",

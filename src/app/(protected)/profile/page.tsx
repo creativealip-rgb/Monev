@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare, FileText, Info, BookOpen } from "lucide-react";
+import { ChevronLeft, LogOut, Bell, Shield, Moon, Wallet, Globe, User as UserIcon, MessageCircle, Smartphone, Database, Download, Tag, Flame, Trophy, ArrowLeft, Sparkles, Crown, Zap, Camera, HelpCircle, Book, Mail, MessageSquare, FileText, Info, BookOpen, Gem } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -23,7 +23,8 @@ import { UserTier, canUseTelegram } from "@/lib/tier-gate";
 const TIER_STYLES: Record<UserTier, { label: string; color: string; bg: string; border: string; icon: any }> = {
     starter: { label: "Starter", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
     pro: { label: "Pro", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
-    sultan: { label: "Sulton", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
+    sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
+    benefactor: { label: "Benefactor", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", border: "border-emerald-100 dark:border-emerald-800", icon: Gem },
 };
 
 const ALL_BADGES = [
@@ -298,7 +299,7 @@ export default function ProfilePage() {
 
                     <div className="flex flex-col items-center gap-3">
                         <div className={cn("inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border backdrop-blur-md shadow-xl transition-transform hover:scale-105",
-                             user?.tier === "pro" ? "bg-sky-500/30 border-sky-300" : user?.tier === "sultan" ? "bg-amber-500/30 border-amber-300" : "bg-white/20 border-white/30"
+                             user?.tier === "pro" ? "bg-sky-500/30 border-sky-300" : user?.tier === "sultan" ? "bg-amber-500/30 border-amber-300" : user?.tier === "benefactor" ? "bg-emerald-500/30 border-emerald-300" : "bg-white/20 border-white/30"
                         )}>
                             {(() => {
                                 const tier = (user?.tier || "starter") as UserTier;

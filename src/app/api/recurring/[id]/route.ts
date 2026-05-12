@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/backend/db";
-import { recurringTransactions } from "@/backend/db/schema";
+import { accounts, recurringTransactions } from "@/backend/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +20,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         if (body.amount !== undefined) safeUpdate.amount = body.amount;
         if (body.description !== undefined) safeUpdate.description = body.description;
         if (body.categoryId !== undefined) safeUpdate.categoryId = body.categoryId;
+        if (body.accountId !== undefined) {
+            const accountId = Number(body.accountId);
+            const account = db.select({ id: accounts.id })
+                .from(accounts)
+                .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)))
+                .get();
+            if (!account) return NextResponse.json({ error: "Invalid account" }, { status: 400 });
+            safeUpdate.accountId = accountId;
+        }
         if (body.type !== undefined) safeUpdate.type = body.type;
         if (body.frequency !== undefined) safeUpdate.frequency = body.frequency;
         if (body.nextRunAt !== undefined) safeUpdate.nextRunAt = new Date(body.nextRunAt);

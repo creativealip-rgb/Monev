@@ -24,6 +24,7 @@ export async function createBill(userId: number, data: {
     frequency?: "monthly" | "weekly" | "yearly";
     icon?: string;
     color?: string;
+    isSubscription?: boolean;
     notes?: string;
 }): Promise<Bill> {
     const db = getDb();
@@ -36,6 +37,7 @@ export async function createBill(userId: number, data: {
         frequency: data.frequency || "monthly",
         icon: data.icon || "Receipt",
         color: data.color || "#6366f1",
+        isSubscription: data.isSubscription || false,
         notes: data.notes || null,
     }).returning();
     return result[0];

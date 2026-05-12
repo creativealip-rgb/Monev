@@ -72,6 +72,29 @@ TELEGRAM_WEBHOOK_URL=https://your-domain.com/api/telegram-webhook
 # Push Notifications (optional — generate with: npx web-push generate-vapid-keys)
 VAPID_PUBLIC_KEY=your-vapid-public-key
 VAPID_PRIVATE_KEY=your-vapid-private-key
+
+# Cron internal (recommended for VPS)
+CRON_SECRET=your-cron-secret
+```
+
+## ⏱️ VPS Cron
+
+Recurring transactions dijalankan lewat endpoint internal `/api/cron/execute-recurring`.
+Di VPS, pasang cron harian dengan script berikut:
+
+```bash
+crontab -e
+```
+
+```cron
+0 0 * * * cd /path/to/Monev && MONEV_BASE_URL=https://domain-kamu.com CRON_SECRET=your-cron-secret ./scripts/run-recurring-cron.sh >> /var/log/monev-recurring-cron.log 2>&1
+```
+
+Untuk test manual di VPS:
+
+```bash
+cd /path/to/Monev
+MONEV_BASE_URL=https://domain-kamu.com CRON_SECRET=your-cron-secret ./scripts/run-recurring-cron.sh
 ```
 
 ## 📁 Project Structure

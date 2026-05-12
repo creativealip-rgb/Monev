@@ -231,7 +231,7 @@ const useCases = [
 const faqData = [
     {
         question: "Apakah benar-benar gratis?",
-        answer: "Ya! Paket Gratis bisa dipakai selamanya tanpa batas waktu. Kamu bisa catat sampai 50 transaksi per bulan dengan semua fitur dasar. Upgrade ke Pro atau Sultan kalau butuh lebih."
+        answer: "Ya! Paket Gratis bisa dipakai selamanya tanpa batas waktu. Kamu bisa catat sampai 100 transaksi per bulan, pakai fitur dasar, dan 10 Monev AI Chat per hari. Smart Input AI tersedia mulai Pro."
     },
     {
         question: "Aman nggak data saya?",
@@ -251,7 +251,7 @@ const faqData = [
     },
     {
         question: "Apa bedanya paket Gratis, Pro, dan Sultan?",
-        answer: "Gratis: 50 transaksi/bulan, fitur dasar. Pro (Rp 29rb): Unlimited transaksi, smart input (voice/foto), export data. Sultan (Rp 59rb): Semua fitur Pro + Telegram bot, AI insights prioritas, support 24/7."
+        answer: "Gratis: 100 transaksi/bulan, fitur dasar, 10 Monev AI Chat/hari, Wawasan disensor. Pro (Rp 29rb): unlimited transaksi, Smart Input AI voice/foto, 100 Monev AI Chat/hari, export CSV+Excel. Sultan (Rp 49rb): semua fitur Pro + Telegram bot AI, AI unlimited, PDF, dan support WhatsApp."
     }
 ];
 

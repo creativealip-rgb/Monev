@@ -47,7 +47,7 @@ const features = [
                 status: "ready",
                 color: "blue",
                 href: "/analytics",
-                requiredTier: "kaya" as UserTier
+                requiredTier: undefined as UserTier | undefined
             },
             {
                 id: 107,
@@ -124,8 +124,8 @@ const features = [
                 desc: "Upload screenshot bukti transfer/QRIS",
                 status: "ready",
                 color: "emerald",
-                href: "#",
-                requiredTier: "kaya" as UserTier
+                href: "/transactions",
+                requiredTier: "pro" as UserTier
             },
             {
                 id: 2,
@@ -143,8 +143,8 @@ const features = [
                 desc: "Rekam suara untuk input multi-item",
                 status: "ready",
                 color: "purple",
-                href: "#",
-                requiredTier: "kaya" as UserTier
+                href: "/transactions",
+                requiredTier: "pro" as UserTier
             },
         ]
     },
@@ -158,7 +158,7 @@ const features = [
                 desc: "Google search untuk merchant ambigu",
                 status: "ready",
                 color: "indigo",
-                href: "#"
+                href: "/transactions"
             },
             {
                 id: 5,
@@ -167,7 +167,7 @@ const features = [
                 desc: "Deteksi pengeluaran untuk klien",
                 status: "ready",
                 color: "amber",
-                href: "#"
+                href: "/transactions"
             },
         ]
     },
@@ -190,7 +190,7 @@ const features = [
                 desc: "Intervensi sebelum checkout e-commerce",
                 status: "ready",
                 color: "orange",
-                href: "#"
+                href: "/chat"
             },
             {
                 id: 8,
@@ -199,7 +199,7 @@ const features = [
                 desc: "Konversi rupiah ke jam kerja",
                 status: "ready",
                 color: "cyan",
-                href: "#"
+                href: "/transactions"
             },
             {
                 id: 9,
@@ -208,7 +208,7 @@ const features = [
                 desc: "Bagi income besar ke gaji bulanan",
                 status: "ready",
                 color: "teal",
-                href: "#"
+                href: "/analytics"
             },
         ]
     },
@@ -254,7 +254,7 @@ const features = [
                 desc: "Bagi pengeluaran F&B dengan teman",
                 status: "ready",
                 color: "sky",
-                href: "#"
+                href: "/debts"
             },
             {
                 id: 14,
@@ -263,7 +263,7 @@ const features = [
                 desc: "Tracking & reminder hutang piutang",
                 status: "ready",
                 color: "lime",
-                href: "#"
+                href: "/debts"
             },
         ]
     },
@@ -277,7 +277,7 @@ const features = [
                 desc: "Track penarikan tunai ATM",
                 status: "ready",
                 color: "stone",
-                href: "#"
+                href: "/transactions"
             },
             {
                 id: 16,
@@ -352,9 +352,11 @@ export default function FiturPage() {
                             {section.category}
                         </h2>
                         <div className="space-y-3">
-                            {section.items.map((feature) => {
+                            {section.items
+                                .filter((feature) => section.category !== "🔍 Smart Input" || !feature.requiredTier || isTierSufficient(userTier, feature.requiredTier))
+                                .map((feature) => {
                                 const Icon = feature.icon;
-                                const isUnavailable = feature.status === "coming" || feature.href === "#";
+                                const isUnavailable = feature.status === "coming";
                                 const card = (
                                     <motion.div
                                         whileHover={!isUnavailable ? { scale: 1.02 } : undefined}

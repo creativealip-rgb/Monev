@@ -13,7 +13,10 @@ export async function getChatHistory(userId: number, limit = 25): Promise<ChatHi
         .limit(limit)
         .all();
 
-    return history.reverse(); // Return in chronological order
+    return history.reverse().map((message) => ({
+        ...message,
+        content: message.content.replace(/^\[(AI_USAGE|FREE_USAGE)\]\s*/, ""),
+    })); // Return in chronological order without internal usage markers
 }
 
 export async function addChatMessage(userId: number, role: "user" | "assistant", content: string): Promise<ChatHistory> {
@@ -27,12 +30,18 @@ export async function addChatMessage(userId: number, role: "user" | "assistant",
 
 // ============ AI Chat History & Limits ============
 
-export async function logAIChat(userId: number, role: "user" | "assistant", content: string): Promise<ChatHistory> {
+export async function logAIChat(userId: number, role: "user" | "assistant", content: string, countsTowardLimit = false): Promise<ChatHistory> {
     const db = getDb();
+    const markedContent = countsTowardLimit
+        ? `[AI_USAGE] ${content}`
+        : role === "user"
+            ? `[FREE_USAGE] ${content}`
+            : content;
+
     return db.insert(chatHistory).values({
         userId,
         role,
-        content,
+        content: markedContent,
     }).returning().get();
 }
 
@@ -45,7 +54,8 @@ export async function getDailyAICount(userId: number): Promise<number> {
         .from(chatHistory)
         .where(and(
             eq(chatHistory.userId, userId),
-            eq(chatHistory.role, "user"), // Count user messages as "usages"
+            eq(chatHistory.role, "assistant"), // Count completed responses that reached the AI provider
+            sql`${chatHistory.content} LIKE '[AI_USAGE]%'`,
             gte(chatHistory.createdAt, today)
         ))
         .get();

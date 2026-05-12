@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, ChevronRight, Sparkles, Crown, Zap } from "lucide-react";
+import { Bell, ChevronRight, Sparkles, Crown, Zap, Gem } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
 import type { TierStyle, DashboardHeaderProps } from "../../types";
@@ -13,6 +13,7 @@ const TIER_STYLES: Record<string, TierStyle> = {
     starter: { label: "Starter", color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", icon: Zap },
     pro: { label: "Pro", color: "text-sky-600", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-100 dark:border-sky-800", icon: Sparkles },
     sultan: { label: "Sultan", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800", icon: Crown },
+    benefactor: { label: "Benefactor", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", border: "border-emerald-100 dark:border-emerald-800", icon: Gem },
 };
 
 export function DashboardHeader({

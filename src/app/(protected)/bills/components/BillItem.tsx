@@ -1,6 +1,6 @@
 "use client";
 
-import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil, Banknote } from "lucide-react";
+import { Receipt, Check, Zap, Wifi, Tv, Music, Heart, Bike, Clock, AlertTriangle, Trash2, History, Pencil, Banknote, Repeat } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/frontend/lib/utils";
 import { formatCurrency } from "@/frontend/lib/utils";
@@ -118,13 +118,24 @@ export function BillItem({
                         )}
                     </button>
                     <div className="flex-1 min-w-0">
-                        <p className={cn(
-                            "font-bold text-sm text-foreground truncate",
-                            bill.isPaid ? "text-muted-foreground line-through" : ""
-                        )}>
-                            {bill.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{frequency}</p>
+                        <div className="mb-1 flex items-center gap-2">
+                            <p className={cn(
+                                "font-bold text-sm text-foreground truncate",
+                                bill.isPaid ? "text-muted-foreground line-through" : ""
+                            )}>
+                                {bill.name}
+                            </p>
+                            <span className={cn(
+                                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black",
+                                bill.isSubscription
+                                    ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                                    : "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                            )}>
+                                {bill.isSubscription ? <Repeat size={10} /> : <Receipt size={10} />}
+                                {bill.isSubscription ? "Langganan" : "Tagihan"}
+                            </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{frequency} • {bill.isSubscription ? "layanan berulang" : "jatuh tempo wajib"}</p>
                         <span className={cn(
                             "text-sm font-bold tabular-nums",
                             bill.isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600"

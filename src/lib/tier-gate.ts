@@ -1,4 +1,4 @@
-export type UserTier = "starter" | "pro" | "sultan";
+export type UserTier = "starter" | "pro" | "sultan" | "benefactor";
 
 export interface TierConfig {
     name: string;
@@ -35,13 +35,13 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
         maxInvestments: 0,
         maxBankAccounts: 2,
         aiDailyLimit: 10,
-        ocrMonthlyLimit: 5,
+        ocrMonthlyLimit: 0,
         analyticsLevel: "basic",
         exportFormats: ["CSV"],
         adFree: false,
         canAccessAnalytics: true,
         canAccessInvestments: false,
-        canAccessSmartInput: true,
+        canAccessSmartInput: false,
         canAccessSmartAgents: false,
         canExport: true,
         canUseTelegramBot: false,
@@ -52,9 +52,8 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
             "3 Anggaran",
             "1 Target Tabungan",
             "3 Tagihan",
-            "10 AI Chats/hari",
+            "10 Monev AI Chats/hari",
             "Export CSV",
-            "Voice Input",
         ],
     },
     pro: {
@@ -85,7 +84,8 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
             "10 Target Tabungan",
             "20 Tagihan",
             "Investasi (Basic)",
-            "100 AI Chats/hari",
+            "100 Monev AI Chats/hari",
+            "Smart Input AI (Voice & Foto)",
             "100 OCR Scans/bulan",
             "Export CSV + Excel",
             "Telegram Bot (Command)",
@@ -120,15 +120,46 @@ export const TIER_CONFIGS: Record<UserTier, TierConfig> = {
             "Target Tabungan Unlimited",
             "Tagihan Unlimited",
             "Investasi Advanced",
-            "AI Chat Unlimited",
+            "Monev AI Chat Unlimited",
+            "Smart Input AI Unlimited",
             "OCR Scans Unlimited",
             "Export CSV + Excel + PDF",
             "Telegram Bot (AI Conversational)",
-            "Predictive Analytics",
+            "Advanced Analytics",
             "Tax Reports",
             "Auto Cloud Backup",
             "Priority WhatsApp Support",
-            "Early Access Features",
+        ],
+    },
+    benefactor: {
+        name: "Benefactor",
+        maxGoals: 1000,
+        maxCategories: 1000,
+        maxTransactionsPerMonth: null,
+        maxBudgets: 1000,
+        maxBills: 1000,
+        maxInvestments: 1000,
+        maxBankAccounts: 1000,
+        aiDailyLimit: null,
+        ocrMonthlyLimit: null,
+        analyticsLevel: "advanced",
+        exportFormats: ["CSV", "Excel", "PDF"],
+        adFree: true,
+        canAccessAnalytics: true,
+        canAccessInvestments: true,
+        canAccessSmartInput: true,
+        canAccessSmartAgents: true,
+        canExport: true,
+        canUseTelegramBot: true,
+        telegramBotType: "ai",
+        features: [
+            "Semua fitur Sultan",
+            "Early Access fitur baru",
+            "Request fitur langsung ke developer",
+            "Kontak WhatsApp developer",
+            "Badge Benefactor eksklusif",
+            "Prioritas voting roadmap",
+            "Support pengembangan Monev",
         ],
     },
 };
@@ -138,6 +169,7 @@ const TIER_LEVELS: Record<UserTier, number> = {
     starter: 0,
     pro: 1,
     sultan: 2,
+    benefactor: 3,
 };
 
 export function getTierConfig(tier: UserTier = "starter"): TierConfig {
@@ -226,8 +258,9 @@ export function getRemainingLimit(current: number, max: number | null): number |
 // Helper functions for tier upgrade/downgrade
 export function getTierUpgradePath(currentTier: UserTier): UserTier[] {
     const path: UserTier[] = [];
-    if (currentTier === "starter") path.push("pro", "sultan");
-    if (currentTier === "pro") path.push("sultan");
+    if (currentTier === "starter") path.push("pro", "sultan", "benefactor");
+    if (currentTier === "pro") path.push("sultan", "benefactor");
+    if (currentTier === "sultan") path.push("benefactor");
     return path;
 }
 
@@ -239,6 +272,8 @@ export function getTierPrice(tier: UserTier): { monthly: number; annual: number 
             return { monthly: 29000, annual: 290000 }; // 17% discount
         case "sultan":
             return { monthly: 49000, annual: 490000 }; // 17% discount
+        case "benefactor":
+            return { monthly: 0, annual: 199000 }; // yearly supporter tier
         default:
             return { monthly: 0, annual: 0 };
     }
