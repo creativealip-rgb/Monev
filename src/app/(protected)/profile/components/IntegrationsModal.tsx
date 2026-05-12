@@ -109,9 +109,10 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                             </a>
                             <button
                                 onClick={handleDisconnect}
-                                className="px-4 py-2.5 text-rose-600 text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors border border-rose-200 dark:border-rose-900/30"
+                                className="px-4 py-2.5 text-rose-600 text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors border border-rose-200 dark:border-rose-900/30 flex items-center justify-center gap-2"
                             >
                                 <LogOut size={16} />
+                                Putuskan
                             </button>
                         </div>
                     </div>
