@@ -406,6 +406,13 @@ Tujuannya untuk tahu:
 - Fitur advanced apa yang paling sering dicari dari simple mode.
 - Apakah simple mode meningkatkan retention.
 
+## Implementation Status
+
+- Phase 1: Done — view mode foundation, centralized menu config, profile toggle, BottomNav filtering, and new-user onboarding default are live.
+- Phase 2: Done — Simple Dashboard, focused quick add, monthly summary, budget snapshot, and recent transactions are live.
+- Phase 3: Done — advanced feature prompt with "Lihat halaman ini saja", onboarding mode choice, and baseline product events are live.
+- Phase 4: In progress — polish, route QA, copy finalization, and regression checks.
+
 ## MVP Scope
 
 ### Phase 1: View Mode Foundation

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowDownLeft, ArrowUpRight, CalendarCheck, Plus, ReceiptText, ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
 
 import { TransactionItem } from "@/frontend/components/TransactionItem";
-import { TransactionListSkeleton, NoTransactionsEmpty } from "@/frontend/components/UI";
+import { TransactionListSkeleton } from "@/frontend/components/UI";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { trackProductEvent } from "@/frontend/lib/product-analytics";
 
@@ -213,7 +213,22 @@ export function DashboardSimple({
                 {loading ? (
                     <TransactionListSkeleton count={3} />
                 ) : !hasTransactions ? (
-                    <NoTransactionsEmpty onAddNew={() => onAddNew("expense")} />
+                    <div className="rounded-3xl border border-dashed border-sky-200 bg-sky-50/70 p-5 text-center dark:border-sky-900/50 dark:bg-sky-950/20">
+                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm dark:bg-slate-900">
+                            <ReceiptText size={22} />
+                        </div>
+                        <h3 className="text-base font-black text-slate-950 dark:text-white">Mulai dari catat satu transaksi</h3>
+                        <p className="mx-auto mt-2 max-w-xs text-sm font-semibold text-slate-500 dark:text-slate-400">
+                            Coba catat pengeluaran terakhir. Setelah itu Monev mulai bisa bantu hitung sisa uang bulan ini.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => onAddNew("expense")}
+                            className="mt-4 rounded-2xl bg-sky-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-600"
+                        >
+                            + Catat Pengeluaran
+                        </button>
+                    </div>
                 ) : (
                     <div className="space-y-3">
                         {transactions.slice(0, 5).map((transaction) => (
