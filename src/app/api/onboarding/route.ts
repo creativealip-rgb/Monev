@@ -15,8 +15,7 @@ export async function POST(req: NextRequest) {
         const userId = parseInt(session.user.id);
         const db = getDb();
         const formData = await req.json();
-
-        // 1. Hash PIN if provided
+        const viewMode = formData?.viewMode === "advanced" ? "advanced" : "simple";
         let hashedPin: string | null = null;
         if (formData.pin && formData.pin.length === 6) {
             hashedPin = await hashPin(formData.pin);
@@ -35,7 +34,7 @@ export async function POST(req: NextRequest) {
                     isAppLockEnabled: !!hashedPin,
                     notificationsEnabled: formData.notifications,
                     hasCompletedOnboarding: true,
-                    viewMode: "simple",
+                    viewMode,
                     updatedAt: new Date(),
                 })
                 .where(eq(userSettings.userId, userId));
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
                 securityPin: hashedPin,
                 isAppLockEnabled: !!hashedPin,
                 notificationsEnabled: formData.notifications,
-                viewMode: "simple",
+                viewMode,
                 hourlyRate: 50000,
                 hideBalance: false,
                 hasCompletedOnboarding: true,

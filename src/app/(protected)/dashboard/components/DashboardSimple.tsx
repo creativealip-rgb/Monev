@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowDownLeft, ArrowUpRight, CalendarCheck, Plus, ReceiptText, ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
@@ -7,6 +8,7 @@ import { ArrowDownLeft, ArrowUpRight, CalendarCheck, Plus, ReceiptText, ShieldAl
 import { TransactionItem } from "@/frontend/components/TransactionItem";
 import { TransactionListSkeleton, NoTransactionsEmpty } from "@/frontend/components/UI";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
+import { trackProductEvent } from "@/frontend/lib/product-analytics";
 
 import type { TransactionWithCategory } from "@/types";
 import type { TransactionType } from "@/frontend/components/TransactionForm/types";
@@ -78,6 +80,14 @@ export function DashboardSimple({
         : 0;
     const hasTransactions = transactions.length > 0;
     const amount = (value: number) => isStealthMode ? "••••••" : formatCurrency(value);
+
+    useEffect(() => {
+        trackProductEvent("simple_dashboard_viewed", {
+            hasTransactions,
+            hasBudget: budgetTotal > 0,
+            safetyStatus: safety.label,
+        });
+    }, [budgetTotal, hasTransactions, safety.label]);
 
     return (
         <motion.main

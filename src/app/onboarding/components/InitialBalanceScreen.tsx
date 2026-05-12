@@ -26,6 +26,7 @@ export function InitialBalanceScreen({
     const [inputValue, setInputValue] = useState(initialBalance === 0 ? "" : initialBalance.toString());
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [viewMode, setViewMode] = useState<"simple" | "advanced">("simple");
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/[^0-9]/g, "");
@@ -59,6 +60,7 @@ export function InitialBalanceScreen({
             notifications: true,
             pin: "",
             initialBalance: balance,
+            viewMode,
         });
 
         if (result?.success === false) {
@@ -211,11 +213,43 @@ export function InitialBalanceScreen({
                     </div>
                 </motion.div>
 
-                {/* Info Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
+                    className="mb-6"
+                >
+                    <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Mau mulai dari tampilan mana?
+                    </p>
+                    <div className="grid gap-3">
+                        {[
+                            { value: "simple", title: "Sederhana", desc: "Fokus catat uang, cek sisa saldo, dan transaksi harian." },
+                            { value: "advanced", title: "Lengkap", desc: "Akses semua fitur seperti tagihan, laporan, AI, utang, dan investasi." },
+                        ].map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setViewMode(option.value as "simple" | "advanced")}
+                                className={cn(
+                                    "rounded-2xl border-2 p-4 text-left transition-all",
+                                    viewMode === option.value
+                                        ? "border-sky-500 bg-sky-50 text-sky-900 dark:bg-sky-900/20 dark:text-sky-100"
+                                        : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
+                                )}
+                            >
+                                <span className="block text-sm font-bold">{option.title}</span>
+                                <span className="mt-1 block text-xs font-medium opacity-75">{option.desc}</span>
+                            </button>
+                        ))}
+                    </div>
+                </motion.div>
+
+                {/* Info Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
                     className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800/30"
                 >
                     <div className="flex gap-3">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { normalizeViewMode, type ViewMode } from "@/frontend/lib/navigation-menu";
+import { trackProductEvent } from "@/frontend/lib/product-analytics";
 
 export function useViewMode() {
     const [viewMode, setViewModeState] = useState<ViewMode>("advanced");
@@ -26,8 +27,12 @@ export function useViewMode() {
     }, [refresh]);
 
     const setViewMode = useCallback(async (mode: ViewMode) => {
+        const previousMode = viewMode;
         setViewModeState(mode);
         window.dispatchEvent(new CustomEvent("monev:view-mode-changed", { detail: mode }));
+        if (previousMode !== mode) {
+            trackProductEvent("view_mode_changed", { from: previousMode, to: mode });
+        }
 
         const response = await apiFetch("/api/user/settings", {
             method: "POST",
@@ -39,7 +44,7 @@ export function useViewMode() {
             await refresh();
             throw new Error("Gagal menyimpan mode tampilan");
         }
-    }, [refresh]);
+    }, [refresh, viewMode]);
 
     useEffect(() => {
         const onViewModeChanged = (event: Event) => {

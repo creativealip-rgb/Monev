@@ -12,6 +12,7 @@ export interface OnboardingFormData {
     pin: string;
     notifications: boolean;
     initialBalance: number;
+    viewMode?: "simple" | "advanced";
 }
 
 export interface OnboardingState {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { OnboardingFormData, OnboardingState } from "../types";
 import { apiFetch } from "@/frontend/lib/api-client";
+import { trackProductEvent } from "@/frontend/lib/product-analytics";
 
 const STORAGE_KEY = "monev_onboarding_complete";
 const ONBOARDING_DATA_KEY = "monev_onboarding_data";
@@ -15,6 +16,7 @@ function getInitialFormData(): OnboardingFormData {
             pin: "",
             notifications: true,
             initialBalance: 0,
+            viewMode: "simple",
         };
     }
 
@@ -28,6 +30,7 @@ function getInitialFormData(): OnboardingFormData {
                 pin: "",
                 notifications: true,
                 initialBalance: 0,
+                viewMode: "simple",
                 ...parsed.formData,
             };
         } catch (e) {
@@ -41,6 +44,7 @@ function getInitialFormData(): OnboardingFormData {
         pin: "",
         notifications: true,
         initialBalance: 0,
+        viewMode: "simple",
     };
 }
 
@@ -117,6 +121,7 @@ export function useOnboarding() {
 
             const result = await response.json();
             if (response.ok && result.success) {
+                trackProductEvent("view_mode_selected", { viewMode: payload.viewMode || "simple", source: "onboarding" });
                 localStorage.setItem(STORAGE_KEY, "true");
                 localStorage.setItem("monev_onboarding_completed", "true");
                 localStorage.removeItem(ONBOARDING_DATA_KEY);
