@@ -25,7 +25,9 @@ interface NotificationHistory {
         tier?: string;
         totalRecipients: number;
         successCount: number;
+        pushSentCount?: number;
         failedCount: number;
+        skippedCount?: number;
     };
     createdAt: string;
 }
@@ -85,9 +87,11 @@ export default function NotificationsPage() {
             const json = await res.json();
 
             if (json.success) {
+                const deliveredCount = json.data.successCount || 0;
+                const pushCount = json.data.pushSentCount || 0;
                 setResult({
                     success: true,
-                    message: `Sent to ${json.data.subscriptionsFound || 0} subscribers`,
+                    message: `Masuk ke notifikasi dashboard ${deliveredCount} user${pushCount > 0 ? `, push terkirim ${pushCount} device` : ""}`,
                 });
                 setMessage("");
                 loadHistory();
@@ -126,8 +130,8 @@ export default function NotificationsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Push Notifications</h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">Send push notifications to users</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Notifications</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Kirim pesan ke icon notifikasi user di dashboard</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -277,8 +281,13 @@ export default function NotificationsPage() {
                                     <div className="flex items-center gap-4 text-xs text-slate-500">
                                         <span>Sent to: {item.details.totalRecipients}</span>
                                         <span className="text-emerald-600">
-                                            Success: {item.details.successCount}
+                                            Dashboard: {item.details.successCount}
                                         </span>
+                                        {(item.details.pushSentCount || 0) > 0 && (
+                                            <span className="text-sky-600">
+                                                Push: {item.details.pushSentCount}
+                                            </span>
+                                        )}
                                         {item.details.failedCount > 0 && (
                                             <span className="text-rose-600">
                                                 Failed: {item.details.failedCount}
@@ -294,12 +303,12 @@ export default function NotificationsPage() {
 
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-4">
                 <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
-                    How Push Notifications Work
+                    How Notifications Work
                 </h3>
                 <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                    <li>• Users must have push notifications enabled in their browser to receive notifications</li>
-                    <li>• Notifications are sent via Web Push API using VAPID keys</li>
-                    <li>• The message will be delivered to all subscribed users matching your target criteria</li>
+                    <li>• Pesan selalu dicatat ke notifikasi dashboard user yang sesuai target</li>
+                    <li>• Badge di icon Bell muncul selama notifikasi belum dibaca</li>
+                    <li>• Push browser/HP hanya terkirim kalau user mengaktifkan Realtime Push</li>
                 </ul>
             </div>
         </div>
