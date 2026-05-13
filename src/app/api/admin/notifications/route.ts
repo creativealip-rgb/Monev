@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { message, target, tier } = body;
+        const { message, target, tier, url } = body;
 
         if (!message || message.trim().length === 0) {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -85,6 +85,17 @@ export async function POST(req: NextRequest) {
 
         if (message.length > 500) {
             return NextResponse.json({ error: "Message too long (max 500 chars)" }, { status: 400 });
+        }
+
+        const targetUrl = typeof url === "string" && url.trim() ? url.trim() : "/dashboard";
+        if (!targetUrl.startsWith("/")) {
+            return NextResponse.json({ error: "Link tujuan harus berupa path internal, contoh /pricing" }, { status: 400 });
+        }
+        if (targetUrl.startsWith("//") || targetUrl.toLowerCase().startsWith("/javascript:")) {
+            return NextResponse.json({ error: "Link tujuan tidak valid" }, { status: 400 });
+        }
+        if (targetUrl.length > 200) {
+            return NextResponse.json({ error: "Link tujuan terlalu panjang (max 200 chars)" }, { status: 400 });
         }
 
         // Get target user IDs
@@ -114,7 +125,7 @@ export async function POST(req: NextRequest) {
                 const result = await sendPushToUser(userId, {
                     title: "Monev",
                     body: message.trim(),
-                    url: "/dashboard",
+                    url: targetUrl,
                     tag: "admin-broadcast",
                 }, "custom");
                 totalSent += result.sent;
@@ -133,6 +144,7 @@ export async function POST(req: NextRequest) {
             targetType: target,
             details: JSON.stringify({
                 message,
+                url: targetUrl,
                 target,
                 tier,
                 totalRecipients: userIds.length,
@@ -148,6 +160,7 @@ export async function POST(req: NextRequest) {
             data: {
                 target,
                 tier,
+                url: targetUrl,
                 totalRecipients: userIds.length,
                 subscriptionsFound: totalSent + totalFailed,
                 successCount: totalSent + totalSkipped,

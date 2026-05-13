@@ -12,6 +12,7 @@ import {
     Loader2,
     CheckCircle,
     XCircle,
+    Link,
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
@@ -23,6 +24,7 @@ interface NotificationHistory {
         message: string;
         target: string;
         tier?: string;
+        url?: string;
         totalRecipients: number;
         successCount: number;
         pushSentCount?: number;
@@ -34,6 +36,7 @@ interface NotificationHistory {
 
 export default function NotificationsPage() {
     const [message, setMessage] = useState("");
+    const [url, setUrl] = useState("/dashboard");
     const [target, setTarget] = useState<"all" | "tier">("all");
     const [tier, setTier] = useState("starter");
     const [sending, setSending] = useState(false);
@@ -66,6 +69,15 @@ export default function NotificationsPage() {
     const handleSend = async () => {
         if (!message.trim()) return;
 
+        const targetUrl = url.trim() || "/dashboard";
+        if (!targetUrl.startsWith("/") || targetUrl.startsWith("//") || targetUrl.toLowerCase().startsWith("/javascript:")) {
+            setResult({
+                success: false,
+                message: "Link tujuan harus berupa path internal, contoh /pricing atau /dashboard/upgrade",
+            });
+            return;
+        }
+
         setSending(true);
         setResult(null);
 
@@ -73,6 +85,7 @@ export default function NotificationsPage() {
             const body: Record<string, string | undefined> = {
                 message: message.trim(),
                 target,
+                url: targetUrl,
             };
 
             if (target === "tier" && tier) {
@@ -153,6 +166,26 @@ export default function NotificationsPage() {
                             />
                             <p className="text-xs text-slate-400 mt-1 text-right">
                                 {message.length}/500 characters
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Link Tujuan Saat Diklik
+                            </label>
+                            <div className="relative">
+                                <Link size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={url}
+                                    onChange={(e) => setUrl(e.target.value)}
+                                    placeholder="/pricing atau /dashboard/upgrade"
+                                    maxLength={200}
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                />
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">
+                                Kosongkan untuk default ke /dashboard. Gunakan path internal yang diawali /.
                             </p>
                         </div>
 
@@ -277,6 +310,10 @@ export default function NotificationsPage() {
                                     </div>
                                     <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
                                         {item.details.message}
+                                    </p>
+                                    <p className="flex items-center gap-1 text-xs text-slate-500 mb-2">
+                                        <Link size={12} />
+                                        {item.details.url || "/dashboard"}
                                     </p>
                                     <div className="flex items-center gap-4 text-xs text-slate-500">
                                         <span>Sent to: {item.details.totalRecipients}</span>

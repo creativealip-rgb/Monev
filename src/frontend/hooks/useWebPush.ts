@@ -25,7 +25,11 @@ export function useWebPush() {
         if ("serviceWorker" in navigator && "PushManager" in window) {
             setIsSupported(true);
             checkSubscription();
+            return;
         }
+
+        setIsSupported(false);
+        setIsLoading(false);
     }, []);
 
     async function checkSubscription() {

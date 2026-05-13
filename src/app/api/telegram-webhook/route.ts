@@ -10,7 +10,6 @@ import {
     getGoals,
     updateUserSettings,
     getMonthlyStats,
-    upsertUser,
     createDebt,
     createScheduledMessage,
     getFinancialHealthMetrics,
@@ -44,17 +43,7 @@ export async function POST(req: NextRequest) {
     try {
         let user: any = null; // Type User from schema
 
-        // Upsert User
-        if (from) {
-            user = await upsertUser({
-                telegramId: from.id,
-                username: from.username,
-                firstName: from.first_name,
-                lastName: from.last_name
-            });
-        }
-
-        if (!user) {
+        if (!from?.id) {
             await sendTelegramMessage(chatId, "⚠️ Gagal mengidentifikasi user. Coba lagi nanti.");
             return NextResponse.json({ ok: true });
         }
@@ -69,6 +58,12 @@ export async function POST(req: NextRequest) {
                 );
                 return NextResponse.json({ ok: true });
             }
+        }
+
+        user = await getUserByTelegramId(from.id);
+        if (!user) {
+            await sendTelegramMessage(chatId, "Akun Telegram ini belum terhubung ke akun Monev. Silakan hubungkan dari menu Profil di aplikasi Monev terlebih dahulu.");
+            return NextResponse.json({ ok: true });
         }
 
         const userId = user.id;

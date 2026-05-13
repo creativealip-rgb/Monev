@@ -202,7 +202,6 @@ export default function ClientLayout({
 
                                 <main className={cn(
                                     "min-h-screen max-w-[500px] mx-auto bg-background/80 backdrop-blur-xl relative shadow-2xl shadow-sky-900/10",
-                                    !["/login", "/register", "/chat"].includes(pathname) && "pb-[calc(8.5rem+env(safe-area-inset-bottom))]",
                                     !["/login", "/register"].includes(pathname) && "dark:shadow-black/20"
                                 )}>
                                     <SecurityGuard>

@@ -68,29 +68,35 @@ export function NotificationsModal({ onClose, loadData }: NotificationsModalProp
             </div>
             
             {/* Realtime Push Section */}
-            {isSupported && (
-                <div className={cn(
-                    "p-5 rounded-3xl border transition-all duration-300",
-                    isSubscribed 
-                        ? "bg-green-50 border-green-100 dark:bg-green-900/10 dark:border-green-900/30" 
+            <div className={cn(
+                "p-5 rounded-3xl border transition-all duration-300",
+                isSupported
+                    ? isSubscribed
+                        ? "bg-green-50 border-green-100 dark:bg-green-900/10 dark:border-green-900/30"
                         : "bg-amber-50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30"
-                )}>
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className={cn(
-                                "p-2 rounded-xl shadow-sm",
-                                isSubscribed ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
-                            )}>
-                                {isSubscribed ? <Zap size={20} /> : <ZapOff size={20} />}
-                            </div>
-                            <div>
-                                <p className="font-bold text-slate-900 dark:text-white text-sm">Realtime Push</p>
-                                <p className="text-[10px] text-slate-500 font-medium">
-                                    {isSubscribed ? "Notifikasi aktif di perangkat ini" : "Aktifkan untuk menerima notifikasi instan"}
-                                </p>
-                            </div>
+                    : "bg-slate-50 border-slate-100 dark:bg-slate-900/40 dark:border-slate-800"
+            )}>
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className={cn(
+                            "p-2 rounded-xl shadow-sm",
+                            !isSupported ? "bg-slate-100 text-slate-500" : isSubscribed ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+                        )}>
+                            {!isSupported ? <Smartphone size={20} /> : isSubscribed ? <Zap size={20} /> : <ZapOff size={20} />}
                         </div>
-                        
+                        <div>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">Realtime Push</p>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                                {!isSupported
+                                    ? "Push tidak tersedia di browser/perangkat ini"
+                                    : isSubscribed
+                                        ? "Notifikasi aktif di perangkat ini"
+                                        : "Aktifkan untuk menerima notifikasi instan"}
+                            </p>
+                        </div>
+                    </div>
+
+                    {isSupported && (
                         <button
                             onClick={async () => {
                                 if (isSubscribed) {
@@ -112,9 +118,9 @@ export function NotificationsModal({ onClose, loadData }: NotificationsModalProp
                         >
                             {isLoading ? "..." : (isSubscribed ? "MATIKAN" : "AKTIFKAN")}
                         </button>
-                    </div>
+                    )}
                 </div>
-            )}
+            </div>
 
             <div className="space-y-3">
                 {[

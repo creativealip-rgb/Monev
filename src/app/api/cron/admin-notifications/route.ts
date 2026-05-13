@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/backend/db";
 import { adminActivityLog, adminScheduledNotifications, users } from "@/backend/db/schema";
 import { and, eq } from "drizzle-orm";
-import { sendPushToUser } from "@/lib/send-push";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 function getJakartaParts(date = new Date()) {
     const parts = new Intl.DateTimeFormat("en-CA", {
@@ -44,23 +44,23 @@ export async function GET(req: Request) {
     for (const schedule of schedules) {
         if (schedule.lastRunKey === runKey) continue;
         const targetUsers = schedule.target === "tier" && schedule.tier
-            ? await db.select({ id: users.id }).from(users).where(and(eq(users.isActive, true), eq(users.tier, schedule.tier))).all()
-            : await db.select({ id: users.id }).from(users).where(eq(users.isActive, true)).all();
+            ? await db.select({ id: users.id, telegramId: users.telegramId }).from(users).where(and(eq(users.isActive, true), eq(users.tier, schedule.tier))).all()
+            : await db.select({ id: users.id, telegramId: users.telegramId }).from(users).where(eq(users.isActive, true)).all();
 
         let sent = 0;
         let failed = 0;
+        let skipped = 0;
         for (const user of targetUsers) {
+            if (!user.telegramId) {
+                skipped++;
+                continue;
+            }
+
             try {
-                const result = await sendPushToUser(user.id, {
-                    title: schedule.title,
-                    body: schedule.message,
-                    url: "/dashboard",
-                    tag: `admin-schedule-${schedule.id}`,
-                }, "custom");
-                sent += result.sent;
-                failed += result.failed;
+                await sendTelegramMessage(Number(user.telegramId), `*${schedule.title}*\n\n${schedule.message}`);
+                sent++;
             } catch (error) {
-                console.error(`[Admin Schedule] Failed user ${user.id}:`, error);
+                console.error(`[Admin Schedule] Telegram failed for user ${user.id}:`, error);
                 failed++;
             }
         }
@@ -76,13 +76,15 @@ export async function GET(req: Request) {
                 target: schedule.target,
                 tier: schedule.tier,
                 totalRecipients: targetUsers.length,
+                channel: "telegram",
                 successCount: sent,
                 failedCount: failed,
+                skippedCount: skipped,
                 scheduleId: schedule.id,
                 runKey,
             }),
         });
-        results.push({ id: schedule.id, recipients: targetUsers.length, sent, failed });
+        results.push({ id: schedule.id, recipients: targetUsers.length, channel: "telegram", sent, failed, skipped });
     }
 
     return NextResponse.json({ success: true, runKey, checked: schedules.length, results });
