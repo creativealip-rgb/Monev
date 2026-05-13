@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
         // Send real push notifications using the database-backed sender
         let totalSent = 0;
         let totalFailed = 0;
+        let totalSkipped = 0;
 
         for (const userId of userIds) {
             try {
@@ -118,6 +119,7 @@ export async function POST(req: NextRequest) {
                 }, "custom");
                 totalSent += result.sent;
                 totalFailed += result.failed;
+                totalSkipped += result.skipped || 0;
             } catch (error) {
                 console.error(`[Admin Push] Failed for user ${userId}:`, error);
                 totalFailed++;
@@ -136,6 +138,7 @@ export async function POST(req: NextRequest) {
                 totalRecipients: userIds.length,
                 successCount: totalSent,
                 failedCount: totalFailed,
+                skippedCount: totalSkipped,
             }),
         });
 
@@ -148,6 +151,7 @@ export async function POST(req: NextRequest) {
                 subscriptionsFound: totalSent + totalFailed,
                 successCount: totalSent,
                 failedCount: totalFailed,
+                skippedCount: totalSkipped,
             },
         });
     } catch (error) {

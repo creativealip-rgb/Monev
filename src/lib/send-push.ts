@@ -31,7 +31,7 @@ export async function sendPushToUser(
     userId: number,
     payload: PushPayload,
     type: NotificationType = "custom"
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; skipped?: number }> {
     const subscriptions = await getActiveSubscriptions(userId);
 
     if (subscriptions.length === 0) {
@@ -45,7 +45,7 @@ export async function sendPushToUser(
             status: "skipped",
             errorMessage: "No active push subscription",
         });
-        return { sent: 0, failed: 0 };
+        return { sent: 0, failed: 0, skipped: 1 };
     }
 
     let sent = 0;
