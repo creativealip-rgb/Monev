@@ -22,7 +22,23 @@ export async function POST(req: NextRequest) {
         const userId = parseInt(session.user.id);
 
         const data = await req.json();
-        const settings = await updateUserSettings(userId, data);
+        const { notifications, reports, ...directSettings } = data;
+        const notificationPrefs = notifications || {};
+        const reportPrefs = reports || {};
+        const updatePayload = Object.fromEntries(Object.entries({
+            ...directSettings,
+            dailyReminder: notificationPrefs.dailyReport,
+            budgetAlert: notificationPrefs.budgetAlert,
+            transactionUpdate: notificationPrefs.transactionUpdate,
+            promoNews: notificationPrefs.promoNews,
+            pushEnabled: notificationPrefs.pushEnabled,
+            monthlyReportEmail: reportPrefs.monthlyReportEmail,
+            monthlyReportTelegram: reportPrefs.monthlyReportTelegram,
+            weeklyInsightTelegram: reportPrefs.weeklyInsightTelegram,
+            reportLocale: reportPrefs.reportLocale,
+        }).filter(([, value]) => value !== undefined)) as Parameters<typeof updateUserSettings>[1];
+
+        const settings = await updateUserSettings(userId, updatePayload);
 
         return NextResponse.json({ success: true, settings });
     } catch (error) {

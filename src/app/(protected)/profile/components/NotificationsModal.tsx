@@ -21,7 +21,7 @@ export function NotificationsModal({ onClose, loadData }: NotificationsModalProp
         dailyReport: true,
         budgetAlert: true,
         transactionUpdate: true,
-        promoNews: false,
+        promoNews: true,
         pushEnabled: true
     });
 
@@ -121,7 +121,7 @@ export function NotificationsModal({ onClose, loadData }: NotificationsModalProp
                     { id: "dailyReport", label: "Laporan Harian", desc: "Ringkasan pengeluaran setiap sore" },
                     { id: "budgetAlert", label: "Peringatan Anggaran", desc: "Notif saat anggaran hampir habis" },
                     { id: "transactionUpdate", label: "Update Transaksi", desc: "Konfirmasi setelah mencatat transaksi" },
-                    { id: "promoNews", label: "Berita & Promo", desc: "Update fitur dan penawaran sultan" }
+                    { id: "promoNews", label: "Berita Penting", desc: "Pengumuman penting muncul di icon notifikasi dashboard" }
                 ].map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-purple-200 transition-colors">
                         <div>

@@ -36,6 +36,15 @@ export async function sendPushToUser(
 
     if (subscriptions.length === 0) {
         logger.info(`No active push subscriptions for user ${userId}`);
+        await logNotification({
+            userId,
+            type,
+            title: payload.title,
+            body: payload.body,
+            url: payload.url,
+            status: "skipped",
+            errorMessage: "No active push subscription",
+        });
         return { sent: 0, failed: 0 };
     }
 
