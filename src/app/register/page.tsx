@@ -518,9 +518,10 @@ export default function RegisterPage() {
 
                     {/* Terms & Conditions */}
                     <div className="space-y-1">
-                        <label className="flex items-start gap-3 cursor-pointer">
+                        <label htmlFor="acceptTerms" className="flex items-start gap-3 cursor-pointer rounded-2xl p-1 -m-1">
                             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50">
                                 <input
+                                    id="acceptTerms"
                                     type="checkbox"
                                     checked={formData.acceptTerms}
                                     onChange={(e) => {
@@ -535,16 +536,16 @@ export default function RegisterPage() {
                                             }));
                                         }
                                     }}
-                                    className="h-5 w-5 rounded border-slate-300 text-sky-500 focus:ring-sky-500/20"
+                                    className="h-6 w-6 rounded border-slate-300 text-sky-500 focus:ring-sky-500/20"
                                 />
                             </span>
                             <span className="text-xs text-slate-600 leading-relaxed">
                                 Saya menyetujui{" "}
-                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-sky-600 font-semibold hover:underline cursor-pointer">
+                                <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="text-sky-600 font-semibold hover:underline cursor-pointer">
                                     Syarat & Ketentuan
                                 </a>{" "}
                                 dan{" "}
-                                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-sky-600 font-semibold hover:underline cursor-pointer">
+                                <a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="text-sky-600 font-semibold hover:underline cursor-pointer">
                                     Kebijakan Privasi
                                 </a>{" "}
                                 Monev

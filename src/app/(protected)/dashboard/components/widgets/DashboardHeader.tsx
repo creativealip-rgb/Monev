@@ -82,7 +82,7 @@ export function DashboardHeader({
                             {!userName ? (
                                 <span className="inline-block w-24 h-4 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md align-middle" />
                             ) : (
-                                `Hello, ${userName.split(" ")[0]}! 👋`
+                                `Halo, ${userName.split(" ")[0]}! 👋`
                             )}
                         </h1>
                     </div>

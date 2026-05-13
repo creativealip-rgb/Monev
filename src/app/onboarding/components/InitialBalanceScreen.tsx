@@ -73,6 +73,7 @@ export function InitialBalanceScreen({
         }
 
         router.replace("/dashboard");
+        router.refresh();
     };
 
     const presetAmounts = [
@@ -193,6 +194,7 @@ export function InitialBalanceScreen({
                         {presetAmounts.map((preset) => (
                             <button
                                 key={preset.value}
+                                type="button"
                                 onClick={() => {
                                     setInputValue(preset.value.toString());
                                     onUpdate("initialBalance", preset.value);

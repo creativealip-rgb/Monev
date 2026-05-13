@@ -127,16 +127,18 @@ export default function DashboardPage() {
                     onNotificationsClick={() => setIsNotificationsOpen(true)}
                 />
 
-                <HeroBalanceWidget
-                    stats={stats}
-                    mounted={mounted}
-                    onBalanceClick={() => setShowBalanceDetail(true)}
-                    onTransferClick={() => setShowTransferModal(true)}
-                    hideBalance={isStealthMode}
-                    onToggleHideBalance={handleToggleHideBalance}
-                />
+                {!isSimpleMode && (
+                    <HeroBalanceWidget
+                        stats={stats}
+                        mounted={mounted}
+                        onBalanceClick={() => setShowBalanceDetail(true)}
+                        onTransferClick={() => setShowTransferModal(true)}
+                        hideBalance={isStealthMode}
+                        onToggleHideBalance={handleToggleHideBalance}
+                    />
+                )}
 
-                {!hasCompletedOnboarding && stats.accountCount === 0 && (
+                {!isSimpleMode && !hasCompletedOnboarding && stats.accountCount === 0 && (
                     <OnboardingCard show={true} />
                 )}
 
@@ -155,18 +157,20 @@ export default function DashboardPage() {
                     </motion.section>
                 )}
 
-                <QuickStatsWidget
-                    todayIncome={todayStats.income}
-                    todayExpense={todayStats.expense}
-                    todayTransactionCount={todayStats.count}
-                    weeklyBudgetRemaining={stats.weeklyBudgetRemaining || 0}
-                    weeklyBudgetTotal={stats.weeklyBudgetTotal || 0}
-                    currentStreak={stats.streak?.current || 0}
-                    longestStreak={stats.streak?.longest || 0}
-                    mounted={mounted}
-                    isStealthMode={isStealthMode}
-                    simpleMode={isSimpleMode}
-                />
+                {!isSimpleMode && (
+                    <QuickStatsWidget
+                        todayIncome={todayStats.income}
+                        todayExpense={todayStats.expense}
+                        todayTransactionCount={todayStats.count}
+                        weeklyBudgetRemaining={stats.weeklyBudgetRemaining || 0}
+                        weeklyBudgetTotal={stats.weeklyBudgetTotal || 0}
+                        currentStreak={stats.streak?.current || 0}
+                        longestStreak={stats.streak?.longest || 0}
+                        mounted={mounted}
+                        isStealthMode={isStealthMode}
+                        simpleMode={false}
+                    />
+                )}
 
                 {isSimpleMode ? (
                     <DashboardSimple
