@@ -118,6 +118,12 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete, onDep
 
     if (!isOpen || !goal) return null;
 
+    const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        if (event.target === event.currentTarget) {
+            onClose();
+        }
+    };
+
     const isCompleted = goal.percentage >= 100;
     const { etaDate, monthlyRate } = calculateGoalEta(
         goal.currentAmount, goal.targetAmount, goal.createdAt
@@ -133,7 +139,7 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete, onDep
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4"
-                    onClick={onClose}
+                    onClick={handleBackdropClick}
                 >
                     <motion.div
                         initial={{ opacity: 0, y: 50, scale: 0.95 }}
