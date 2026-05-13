@@ -99,7 +99,6 @@ export default function ProfilePage() {
         isAppLockEnabled: false,
         isBiometricEnabled: false,
         autoLockTimeout: 300000,
-        financialPersona: null as any
     });
 
     const [notifToggles, setNotifToggles] = useState({
@@ -132,7 +131,6 @@ export default function ProfilePage() {
             isAppLockEnabled: !!settings?.isAppLockEnabled,
             isBiometricEnabled: !!settings?.isBiometricEnabled,
             autoLockTimeout: settings?.autoLockTimeout ?? 300000,
-            financialPersona: settings?.financialPersona ?? null,
         }));
     }, [user, settings]);
 
@@ -231,18 +229,6 @@ export default function ProfilePage() {
         }
     };
 
-    const handleGeneratePersona = async () => {
-        try {
-            const response = await apiFetch("/api/profile/generate-persona", { method: "POST" });
-            const result = await response.json();
-            if (result.success) {
-                setFormData(prev => ({ ...prev, financialPersona: result.persona }));
-                toast.success("Wah!", "Persona keuangan Bos sudah diupdate!");
-            }
-        } catch {
-            toast.error("Gagal", "Error saat analisa persona.");
-        }
-    };
 
     if (loading) {
         return (
@@ -366,31 +352,6 @@ export default function ProfilePage() {
                 </motion.button>
             </div>
 
-            {formData.financialPersona && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="px-6 mt-6">
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
-                        <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-                        <div className="flex items-start justify-between relative z-10">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md"><Sparkles size={20} className="text-yellow-300" /></div>
-                                <h3 className="font-black text-xs uppercase tracking-widest opacity-80">Profil Psikologi Keuangan</h3>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleGeneratePersona}
-                                aria-label="Regenerasi profil psikologi keuangan"
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-                            >
-                                <Zap size={16} aria-hidden="true" />
-                            </button>
-                        </div>
-                        <div className="mt-4 relative z-10">
-                            <h2 className="text-2xl font-black tracking-tight leading-tight">{formData.financialPersona.title || formData.financialPersona.persona}</h2>
-                            <p className="text-sm text-indigo-50 font-medium mt-2 leading-relaxed opacity-90">{formData.financialPersona.description}</p>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className="px-6 pt-5 sm:pt-6 space-y-8 pb-6">
                 {menuGroups.map((group, gIndex) => (
