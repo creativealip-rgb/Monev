@@ -302,6 +302,12 @@ export default function SavingsPage() {
         }
     }
 
+    function handleCloseDepositModal() {
+        if (!depositLoading) {
+            setDepositGoal(null);
+        }
+    }
+
     async function handleDeleteGoal() {
         if (!confirmDeleteId) return;
 
@@ -797,36 +803,38 @@ export default function SavingsPage() {
                 {depositGoal && (
                     <>
                         <motion.div
+                            key="deposit-goal-backdrop"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
-                            onClick={() => !depositLoading && setDepositGoal(null)}
+                            onClick={handleCloseDepositModal}
                         />
                         <motion.div
+                            key="deposit-goal-modal"
                             initial={{ opacity: 0, y: "100%" }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: "100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] border border-slate-200 dark:border-slate-700"
+                            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
+                            onClick={(e) => e.stopPropagation()}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="deposit-goal-title"
                         >
-                            <div className="flex items-start justify-between gap-4 mb-5">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 mb-1">Tambah Tabungan</p>
-                                    <h2 className="text-lg font-black text-slate-900 dark:text-white">{depositGoal.name}</h2>
-                                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
-                                        Sisa target {formatCurrency(Math.max(0, depositGoal.targetAmount - depositGoal.currentAmount))}
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    disabled={depositLoading}
-                                    onClick={() => setDepositGoal(null)}
-                                    className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                    aria-label="Tutup tambah tabungan"
-                                >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 id="deposit-goal-title" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tambah Tabungan</h2>
+                                <button type="button" aria-label="Tutup form tambah tabungan" disabled={depositLoading} onClick={handleCloseDepositModal} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                     <X size={16} />
                                 </button>
+                            </div>
+
+                            <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800">
+                                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target</p>
+                                <p className="text-[13px] font-bold text-slate-900 dark:text-white tracking-tight">{depositGoal.name}</p>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
+                                    Sisa target {formatCurrency(Math.max(0, depositGoal.targetAmount - depositGoal.currentAmount))}
+                                </p>
                             </div>
 
                             <div className="space-y-4">
@@ -840,7 +848,7 @@ export default function SavingsPage() {
                                             value={depositAmount}
                                             onChange={(e) => setDepositAmount(e.target.value.replace(/[^0-9]/g, ""))}
                                             placeholder="0"
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-emerald-500 focus:outline-none text-base font-bold text-slate-900 dark:text-white"
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-base font-bold text-slate-900 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -850,7 +858,7 @@ export default function SavingsPage() {
                                     <select
                                         value={depositAccountId}
                                         onChange={(e) => setDepositAccountId(e.target.value)}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-emerald-500 focus:outline-none text-sm font-bold text-slate-900 dark:text-white"
+                                        className="w-full px-3 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-[13px] font-medium text-slate-900 dark:text-white"
                                     >
                                         <option value="">Tanpa mengurangi saldo akun</option>
                                         {accounts.map((account) => (
@@ -866,10 +874,10 @@ export default function SavingsPage() {
                                     onClick={handleDepositGoal}
                                     disabled={depositLoading || !depositAmount || Number(depositAmount) <= 0}
                                     className={cn(
-                                        "w-full py-3 rounded-xl text-sm font-black transition-all",
+                                        "w-full py-3 rounded-xl text-sm font-bold transition-all mt-2",
                                         depositLoading || !depositAmount || Number(depositAmount) <= 0
                                             ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-                                            : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/25 active:scale-[0.98]"
+                                            : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/30 active:scale-[0.98]"
                                     )}
                                 >
                                     {depositLoading ? "Menyimpan..." : "Tambah & Catat Transaksi"}
