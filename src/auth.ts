@@ -290,13 +290,11 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             allowDangerousEmailAccountLinking: true,
-            // Google sign-in can run inside TWA/proxy flows where OAuth cookies are dropped.
-            // Disable provider checks to avoid state/PKCE verifier failures on repeat login.
-            checks: [],
+            // Google sign-in runs inside the TWA/proxy flow where the PKCE cookie can be dropped after logout.
+            // Keep the OAuth state check but avoid PKCE verifier parsing failures on repeat login.
+            checks: ["state"],
             authorization: {
                 params: {
-                    prompt: "consent",
-                    access_type: "offline",
                     scope: "openid email profile",
                 },
             },
