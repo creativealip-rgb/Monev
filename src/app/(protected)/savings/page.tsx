@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
     Plus, TrendingUp, ArrowLeft, Target, Check, AlertTriangle,
-    Shield, Plane, Heart, Smartphone, GraduationCap, Sparkles, Zap
+    Shield, Plane, Heart, Smartphone, GraduationCap, Sparkles, Zap, X
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -219,6 +219,11 @@ export default function SavingsPage() {
     const [goalInitialData, setGoalInitialData] = useState<GoalTemplateData | null>(null);
     const [showTemplates, setShowTemplates] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [depositGoal, setDepositGoal] = useState<GoalWithProgress | null>(null);
+    const [depositAmount, setDepositAmount] = useState("");
+    const [depositAccountId, setDepositAccountId] = useState("");
+    const [depositLoading, setDepositLoading] = useState(false);
+    const [accounts, setAccounts] = useState<Array<{ id: number; name: string; balance: number }>>([]);
     const toast = useToast();
 
     function handleTemplateClick(template: typeof GOAL_TEMPLATES[0]) {
@@ -236,6 +241,65 @@ export default function SavingsPage() {
             targetAmount: String(template.target),
         });
         setIsGoalModalOpen(true);
+    }
+
+    async function openDepositModal(goal: GoalWithProgress) {
+        setDetailGoal(null);
+        setDepositGoal(goal);
+        setDepositAmount("");
+        try {
+            const response = await apiFetch("/api/accounts");
+            const result = await response.json();
+            if (result.success) {
+                const accountList = result.data || [];
+                setAccounts(accountList);
+                setDepositAccountId(accountList[0]?.id ? String(accountList[0].id) : "");
+            }
+        } catch (error) {
+            console.error("Error fetching accounts:", error);
+        }
+    }
+
+    async function handleDepositGoal() {
+        if (!depositGoal || depositLoading) return;
+
+        const amount = Number(depositAmount);
+        if (!Number.isFinite(amount) || amount <= 0) {
+            toast.error("Nominal tidak valid", "Isi nominal tabungan yang benar.");
+            return;
+        }
+        const remaining = Math.max(0, depositGoal.targetAmount - depositGoal.currentAmount);
+        if (amount > remaining) {
+            toast.error("Nominal terlalu besar", `Sisa target hanya ${formatCurrency(remaining)}.`);
+            return;
+        }
+
+        setDepositLoading(true);
+        try {
+            const response = await apiFetch(`/api/goals/${depositGoal.id}/deposit`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount,
+                    accountId: depositAccountId ? Number(depositAccountId) : undefined,
+                    description: `Tabungan ke ${depositGoal.name}`,
+                }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                await refresh();
+                setDepositGoal(null);
+                setDepositAmount("");
+                toast.success("Tabungan ditambahkan", "Tercatat juga di riwayat transaksi.");
+            } else {
+                toast.error("Gagal menabung", result.error || "Coba lagi nanti.");
+            }
+        } catch (error) {
+            console.error("Error depositing to goal:", error);
+            toast.error("Gagal menabung", "Coba lagi nanti.");
+        } finally {
+            setDepositLoading(false);
+        }
     }
 
     async function handleDeleteGoal() {
@@ -712,6 +776,7 @@ export default function SavingsPage() {
                     setConfirmDeleteId(id);
                     setDetailGoal(null);
                 }}
+                onDeposit={(g) => { void openDepositModal(g); }}
             />
 
             {/* Edit Form */}
@@ -727,6 +792,93 @@ export default function SavingsPage() {
                     goal={editingGoal}
                 />
             )}
+
+            <AnimatePresence>
+                {depositGoal && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999998]"
+                            onClick={() => !depositLoading && setDepositGoal(null)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, y: "100%" }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: "100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-[2rem] p-6 pb-10 z-[999999] shadow-2xl mx-auto max-w-[500px] border border-slate-200 dark:border-slate-700"
+                        >
+                            <div className="flex items-start justify-between gap-4 mb-5">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 mb-1">Tambah Tabungan</p>
+                                    <h2 className="text-lg font-black text-slate-900 dark:text-white">{depositGoal.name}</h2>
+                                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                                        Sisa target {formatCurrency(Math.max(0, depositGoal.targetAmount - depositGoal.currentAmount))}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    disabled={depositLoading}
+                                    onClick={() => setDepositGoal(null)}
+                                    className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    aria-label="Tutup tambah tabungan"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Nominal Tabungan</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">Rp</span>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={depositAmount}
+                                            onChange={(e) => setDepositAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                                            placeholder="0"
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-emerald-500 focus:outline-none text-base font-bold text-slate-900 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block pl-1">Sumber Dana</label>
+                                    <select
+                                        value={depositAccountId}
+                                        onChange={(e) => setDepositAccountId(e.target.value)}
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-100 dark:border-slate-700 focus:border-emerald-500 focus:outline-none text-sm font-bold text-slate-900 dark:text-white"
+                                    >
+                                        <option value="">Tanpa mengurangi saldo akun</option>
+                                        {accounts.map((account) => (
+                                            <option key={account.id} value={account.id}>
+                                                {account.name} - {formatCurrency(account.balance)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleDepositGoal}
+                                    disabled={depositLoading || !depositAmount || Number(depositAmount) <= 0}
+                                    className={cn(
+                                        "w-full py-3 rounded-xl text-sm font-black transition-all",
+                                        depositLoading || !depositAmount || Number(depositAmount) <= 0
+                                            ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                                            : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/25 active:scale-[0.98]"
+                                    )}
+                                >
+                                    {depositLoading ? "Menyimpan..." : "Tambah & Catat Transaksi"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             <ConfirmDialog
                 isOpen={!!confirmDeleteId}

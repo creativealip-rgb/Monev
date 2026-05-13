@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Edit2, Trash2, Calendar, Trophy, TrendingUp, AlertTriangle, Check } from "lucide-react";
+import { X, Edit2, Trash2, Calendar, Trophy, TrendingUp, AlertTriangle, Check, PiggyBank } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { formatCurrency, cn } from "@/frontend/lib/utils";
@@ -67,10 +67,12 @@ interface GoalDetailModalProps {
     goal: GoalWithProgress | null;
     onEdit: (g: GoalWithProgress) => void;
     onDelete: (id: number) => void;
+    onDeposit?: (g: GoalWithProgress) => void;
 }
 
-export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: GoalDetailModalProps) {
+export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete, onDeposit }: GoalDetailModalProps) {
     const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const depositButtonRef = useRef<HTMLButtonElement>(null);
     const editButtonRef = useRef<HTMLButtonElement>(null);
     const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -87,7 +89,7 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
 
             if (event.key !== "Tab") return;
 
-            const focusableElements = [closeButtonRef.current, editButtonRef.current, deleteButtonRef.current].filter(
+            const focusableElements = [closeButtonRef.current, depositButtonRef.current, editButtonRef.current, deleteButtonRef.current].filter(
                 (element): element is HTMLButtonElement => Boolean(element),
             );
             const firstElement = focusableElements[0];
@@ -373,7 +375,17 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete }: Goa
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div className="grid grid-cols-3 gap-2 pt-1">
+                                <button
+                                    ref={depositButtonRef}
+                                    type="button"
+                                    onClick={() => onDeposit?.(goal)}
+                                    aria-label={`Tambah tabungan ke ${goal.name}`}
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
+                                >
+                                    <PiggyBank size={16} aria-hidden="true" />
+                                    Tabung
+                                </button>
                                 <button
                                     ref={editButtonRef}
                                     type="button"

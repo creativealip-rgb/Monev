@@ -4,11 +4,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { GoalWithProgress } from "@/types";
 
 export function useSavingsData() {
     const queryClient = useQueryClient();
+    const { status } = useSession();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -48,7 +50,8 @@ export function useSavingsData() {
                 })) as GoalWithProgress[];
             }
             throw new Error(json.error || "Gagal memuat goals");
-        }
+        },
+        enabled: mounted && status === "authenticated",
     });
 
     const refresh = useCallback(async () => {
@@ -57,7 +60,7 @@ export function useSavingsData() {
 
     return {
         goals,
-        loading: goalsLoading || !mounted,
+        loading: goalsLoading || !mounted || status === "loading",
         error: goalsError,
         mounted,
         refresh,
