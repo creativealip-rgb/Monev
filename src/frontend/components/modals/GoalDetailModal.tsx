@@ -75,15 +75,22 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete, onDep
     const depositButtonRef = useRef<HTMLButtonElement>(null);
     const editButtonRef = useRef<HTMLButtonElement>(null);
     const deleteButtonRef = useRef<HTMLButtonElement>(null);
+    const onCloseRef = useRef(onClose);
 
     useEffect(() => {
-        if (!isOpen || !goal) return;
+        onCloseRef.current = onClose;
+    }, [onClose]);
+
+    const goalId = goal?.id;
+
+    useEffect(() => {
+        if (!isOpen || !goalId) return;
 
         const previousActiveElement = document.activeElement as HTMLElement | null;
         const originalOverflow = document.body.style.overflow;
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
-                onClose();
+                onCloseRef.current();
                 return;
             }
 
@@ -108,13 +115,13 @@ export function GoalDetailModal({ isOpen, onClose, goal, onEdit, onDelete, onDep
 
         document.body.style.overflow = "hidden";
         document.addEventListener("keydown", handleKeyDown, true);
-        window.setTimeout(() => closeButtonRef.current?.focus(), 0);
         return () => {
             document.body.style.overflow = originalOverflow;
             document.removeEventListener("keydown", handleKeyDown, true);
-            previousActiveElement?.focus?.();
+            if (previousActiveElement && !document.body.contains(previousActiveElement)) return;
+            previousActiveElement?.focus?.({ preventScroll: true });
         };
-    }, [isOpen, onClose, goal]);
+    }, [isOpen, goalId]);
 
     if (!isOpen || !goal) return null;
 
