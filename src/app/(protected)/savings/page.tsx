@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
     Plus, TrendingUp, ArrowLeft, Target, Check, AlertTriangle,
     Shield, Plane, Heart, Smartphone, GraduationCap, Sparkles, Zap, X
@@ -151,6 +152,17 @@ const confettiVariants = {
         };
     },
 };
+
+function Portal({ children }: { children: React.ReactNode }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    return mounted ? createPortal(children, document.body) : null;
+}
 
 function ConfettiCelebration({ goalId, celebratedRef }: {
     goalId: number;
@@ -799,11 +811,12 @@ export default function SavingsPage() {
                 />
             )}
 
-            <AnimatePresence>
-                {depositGoal && (
-                    <>
-                        <motion.div
-                            key="deposit-goal-backdrop"
+            <Portal>
+                <AnimatePresence>
+                    {depositGoal && (
+                        <>
+                            <motion.div
+                                key="deposit-goal-backdrop"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -884,9 +897,10 @@ export default function SavingsPage() {
                                 </button>
                             </div>
                         </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                        </>
+                    )}
+                </AnimatePresence>
+            </Portal>
 
             <ConfirmDialog
                 isOpen={!!confirmDeleteId}
