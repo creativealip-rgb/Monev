@@ -518,7 +518,19 @@ export default function RegisterPage() {
 
                     {/* Terms & Conditions */}
                     <div className="space-y-1">
-                        <label htmlFor="acceptTerms" className="flex items-start gap-3 cursor-pointer rounded-2xl p-1 -m-1">
+                        <label
+                            htmlFor="acceptTerms"
+                            className="flex items-start gap-3 cursor-pointer rounded-2xl p-1 -m-1"
+                            onClick={(event) => {
+                                const target = event.target as HTMLElement;
+                                if (target.tagName === "A") return;
+                                event.preventDefault();
+                                setFormData((prev) => ({ ...prev, acceptTerms: !prev.acceptTerms }));
+                                if (errors.acceptTerms) {
+                                    setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
+                                }
+                            }}
+                        >
                             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50">
                                 <input
                                     id="acceptTerms"
