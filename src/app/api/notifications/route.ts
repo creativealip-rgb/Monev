@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { getNotificationLogs, markAllNotificationsAsRead } from "@/backend/db/operations/push-operations";
+import { getNotificationLogs, markAllNotificationsAsRead, markNotificationsAsRead } from "@/backend/db/operations/push-operations";
 import { applyRateLimit } from "@/lib/api-rate-limit";
 
-const notificationActionSchema = z.object({
-    action: z.literal("markAllAsRead"),
-});
+const notificationActionSchema = z.discriminatedUnion("action", [
+    z.object({ action: z.literal("markAllAsRead") }),
+    z.object({ action: z.literal("markAsRead"), notificationId: z.number().int().positive() }),
+]);
 
 export async function GET() {
     try {
@@ -42,7 +43,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: "Invalid action" }, { status: 400 });
         }
 
-        await markAllNotificationsAsRead(userId);
+        if (parsedBody.data.action === "markAllAsRead") {
+            await markAllNotificationsAsRead(userId);
+        } else {
+            await markNotificationsAsRead(userId, [parsedBody.data.notificationId]);
+        }
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("API Error (Notifications POST):", error);

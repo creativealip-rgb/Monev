@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Bell, X, CheckCheck, TrendingUp, AlertCircle,
@@ -29,6 +30,7 @@ const NOTIFICATION_ICONS: Record<string, { icon: LucideIcon; color: string; bg: 
 };
 
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
+    const router = useRouter();
     const [notifications, setNotifications] = useState<NotificationLog[]>([]);
     const [loading, setLoading] = useState(true);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -87,6 +89,23 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         } catch (error) {
             console.error("Error marking all as read:", error);
         }
+    }
+
+    async function openNotificationDetail(notification: NotificationLog) {
+        if (!notification.isRead) {
+            setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
+            try {
+                await apiFetch("/api/notifications", {
+                    method: "POST",
+                    body: JSON.stringify({ action: "markAsRead", notificationId: notification.id }),
+                });
+            } catch (error) {
+                console.error("Error marking notification as read:", error);
+            }
+        }
+
+        onClose();
+        router.push(notification.url || "/dashboard");
     }
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -222,11 +241,12 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                                                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
                                                             {notification.body}
                                                         </p>
-                                                        {notification.url && (
-                                                            <button className="mt-2 text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest hover:underline">
-                                                                Lihat Detail →
-                                                            </button>
-                                                        )}
+                                                        <button
+                                                            onClick={() => openNotificationDetail(notification)}
+                                                            className="mt-2 text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded"
+                                                        >
+                                                            {notification.url && notification.url !== "/dashboard" ? "Lihat Detail →" : "Buka Dashboard →"}
+                                                        </button>
                                                     </div>
                                                 </motion.div>
                                             );
