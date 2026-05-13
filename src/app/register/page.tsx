@@ -518,51 +518,39 @@ export default function RegisterPage() {
 
                     {/* Terms & Conditions */}
                     <div className="space-y-1">
-                        <label
-                            htmlFor="acceptTerms"
-                            className="flex items-start gap-3 cursor-pointer rounded-2xl p-1 -m-1"
-                            onClick={(event) => {
-                                const target = event.target as HTMLElement;
-                                if (target.tagName === "A") return;
-                                event.preventDefault();
-                                setFormData((prev) => ({ ...prev, acceptTerms: !prev.acceptTerms }));
-                                if (errors.acceptTerms) {
-                                    setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
-                                }
-                            }}
-                        >
-                            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50">
-                                <input
-                                    id="acceptTerms"
-                                    type="checkbox"
-                                    checked={formData.acceptTerms}
-                                    onChange={(e) => {
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            acceptTerms: e.target.checked,
-                                        }));
-                                        if (errors.acceptTerms) {
-                                            setErrors((prev) => ({
-                                                ...prev,
-                                                acceptTerms: undefined,
-                                            }));
-                                        }
-                                    }}
-                                    className="h-6 w-6 rounded border-slate-300 text-sky-500 focus:ring-sky-500/20"
-                                />
-                            </span>
+                        <div className="flex items-start gap-3 rounded-2xl p-1 -m-1">
+                            <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={formData.acceptTerms}
+                                aria-label="Saya menyetujui Syarat dan Kebijakan Privasi Monev"
+                                onClick={() => {
+                                    setFormData((prev) => ({ ...prev, acceptTerms: !prev.acceptTerms }));
+                                    if (errors.acceptTerms) {
+                                        setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
+                                    }
+                                }}
+                                className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                            >
+                                <span className={cn(
+                                    "flex h-6 w-6 items-center justify-center rounded-md border transition-colors",
+                                    formData.acceptTerms ? "border-sky-500 bg-sky-500 text-white" : "border-slate-300 bg-white text-transparent"
+                                )}>
+                                    <CheckCircle2 className="h-4 w-4" />
+                                </span>
+                            </button>
                             <span className="text-xs text-slate-600 leading-relaxed">
                                 Saya menyetujui{" "}
-                                <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="text-sky-600 font-semibold hover:underline cursor-pointer">
+                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-sky-600 font-semibold hover:underline cursor-pointer">
                                     Syarat & Ketentuan
                                 </a>{" "}
                                 dan{" "}
-                                <a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="text-sky-600 font-semibold hover:underline cursor-pointer">
+                                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-sky-600 font-semibold hover:underline cursor-pointer">
                                     Kebijakan Privasi
                                 </a>{" "}
                                 Monev
                             </span>
-                        </label>
+                        </div>
                         {errors.acceptTerms && (
                             <p className="text-red-500 text-xs flex items-center gap-1 ml-7">
                                 <AlertCircle className="w-3 h-3" />
