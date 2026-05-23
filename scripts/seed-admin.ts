@@ -34,7 +34,7 @@ async function seedAdminData() {
                 tier: "pro",
                 isAdmin: true,
                 isActive: true,
-                emailVerified: new Date(),
+                emailVerified: true,
             })
             .returning()
             .get();

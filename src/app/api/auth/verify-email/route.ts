@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
         // Mark user email as verified
         await db.update(users)
-            .set({ emailVerified: new Date() })
+            .set({ emailVerified: true })
             .where(eq(users.id, user.id));
 
         // Delete the token

@@ -15,7 +15,7 @@ export const users = sqliteTable("users", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     telegramId: integer("telegram_id").unique(),
     email: text("email").unique(),
-    emailVerified: integer("email_verified", { mode: "timestamp" }),
+    emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
     password: text("password"),
     name: text("name"),
     image: text("image"),
