@@ -54,7 +54,9 @@ COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlit
 COPY --from=builder /app/node_modules/drizzle-zod ./node_modules/drizzle-zod
 COPY --from=builder /app/node_modules/zod ./node_modules/zod
 COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
-COPY --from=builder /app/node_modules/next-auth ./node_modules/next-auth
+COPY --from=builder /app/node_modules/better-auth ./node_modules/better-auth
+COPY --from=builder /app/node_modules/@better-auth ./node_modules/@better-auth
+COPY --from=builder /app/node_modules/better-call ./node_modules/better-call
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
