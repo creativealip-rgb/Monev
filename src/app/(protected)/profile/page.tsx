@@ -10,7 +10,7 @@ import { LanguageSelector } from "@/frontend/components/LanguageSelector";
 import { CurrencySelector } from "@/frontend/components/CurrencySelector";
 import { ThemeToggleSwitch } from "@/frontend/components/ThemeToggle";
 import { useI18n } from "@/lib/i18n";
-import { signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useSecurity } from "@/components/SecurityProvider";
 import { apiFetch } from "@/frontend/lib/api-client";

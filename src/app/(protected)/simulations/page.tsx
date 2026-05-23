@@ -8,7 +8,7 @@ import {
     ChevronDown, ChevronUp, Sparkles
 } from "lucide-react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { useToast } from "@/frontend/components/UI";

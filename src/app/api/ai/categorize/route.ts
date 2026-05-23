@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         }
 
         const userId = parseInt(session.user.id);
-        const userTier: UserTier = session.user.tier || "miskin";
+        const userTier: UserTier = session.user.tier || "starter";
 
         // Check AI daily limit
         const aiRateLimit = checkAIRateLimit(userId, userTier);

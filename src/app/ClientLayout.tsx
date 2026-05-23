@@ -2,7 +2,7 @@
 
 import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import { BottomNav } from "@/frontend/components/BottomNav";
 import { AddTransactionSheet } from "@/frontend/components/AddTransactionSheet";

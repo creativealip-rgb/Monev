@@ -5,8 +5,8 @@ const AUDIENCE = "monev-mobile-handoff";
 const ISSUER = "monev.app";
 
 function getSecret() {
-    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-    if (!secret) throw new Error("Missing AUTH_SECRET/NEXTAUTH_SECRET");
+    const secret = process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    if (!secret) throw new Error("Missing BETTER_AUTH_SECRET/AUTH_SECRET/NEXTAUTH_SECRET");
     return encoder.encode(secret);
 }
 

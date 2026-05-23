@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 
-import { signIn } from "next-auth/react";
 import Link from "next/link";
+
+import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { cn } from "@/frontend/lib/utils";
@@ -77,9 +78,9 @@ function GoogleLoginButton() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
             const mobileCallbackUrl = `${apiUrl.replace(/\/$/, "")}/mobile-auth/callback`;
 
-            await signIn("google", {
-                redirectTo: isApk ? mobileCallbackUrl : "/dashboard",
-                callbackUrl: isApk ? mobileCallbackUrl : "/dashboard",
+            await authClient.signIn.social({
+                provider: "google",
+                callbackURL: isApk ? mobileCallbackUrl : "/dashboard",
             });
         } catch (error) {
             console.error("Google login error:", error);
@@ -173,13 +174,13 @@ export default function LoginPage() {
         setErrors({});
 
         try {
-            const result = await signIn("credentials", {
+            const result = await authClient.signIn.email({
                 email: formData.email,
                 password: formData.password,
-                redirect: false,
+                callbackURL: "/dashboard",
             });
 
-            if (!result || result.error) {
+            if (result.error) {
                 setErrors({ general: "Email atau password salah" });
                 setShake(true);
                 setTimeout(() => setShake(false), 500);

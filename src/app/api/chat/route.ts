@@ -258,7 +258,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
         const userId = parseInt(session.user.id);
-        const userTier: UserTier = session.user.tier || "miskin";
+        const userTier: UserTier = session.user.tier || "starter";
 
         const { message, history, imageBase64, undoTransactionId } = await req.json();
 

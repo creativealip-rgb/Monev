@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 
 interface ActivityLog {
     id: number;

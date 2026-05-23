@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
         // Tier limit check
         const currentGoals = await getGoals(userId);
-        const userTier: UserTier = session.user.tier || "miskin";
+        const userTier: UserTier = session.user.tier || "starter";
 
         const { canCreateGoal } = await import("@/lib/tier-gate");
         if (!canCreateGoal(currentGoals.length, userTier)) {

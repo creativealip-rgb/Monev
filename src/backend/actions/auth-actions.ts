@@ -1,7 +1,6 @@
 "use server";
 
 import { signIn, signOut } from "@/auth";
-import { AuthError } from "next-auth";
 
 import bcrypt from "bcryptjs";
 import { users, verificationTokens, passwordResetTokens } from "@/backend/db/schema";
@@ -22,15 +21,8 @@ export async function authenticate(
             redirectTo: "/dashboard",
         });
     } catch (error) {
-        if (error instanceof AuthError) {
-            switch (error.type) {
-                case "CredentialsSignin":
-                    return "Invalid credentials.";
-                default:
-                    return "Something went wrong.";
-            }
-        }
-        throw error;
+        console.error("Authentication error:", error);
+        return "Invalid credentials.";
     }
 }
 
@@ -105,10 +97,8 @@ export async function signInWithGoogle() {
     try {
         await signIn("google", { redirectTo: "/dashboard" });
     } catch (error) {
-        if (error instanceof AuthError) {
-            return "Gagal login dengan Google. Silakan coba lagi.";
-        }
-        throw error;
+        console.error("Google authentication error:", error);
+        return "Gagal login dengan Google. Silakan coba lagi.";
     }
 }
 

@@ -7,7 +7,7 @@ import { apiFetch } from "@/frontend/lib/api-client";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
 import { TIER_CONFIGS, UserTier } from "@/lib/tier-gate";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useToast } from "@/frontend/components/UI";
 import { useRouter, useSearchParams } from "next/navigation";
 

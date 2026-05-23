@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/backend/db";
-import { users, verificationTokens } from "@/backend/db/schema";
+import { authAccounts, users, verificationTokens } from "@/backend/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/lib/mailer";
@@ -44,12 +44,19 @@ export async function POST(req: NextRequest) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await db.insert(users).values({
+        const [createdUser] = await db.insert(users).values({
             name,
             firstName: name,
             email,
             password: hashedPassword,
             username: email.split("@")[0],
+        }).returning({ id: users.id });
+
+        await db.insert(authAccounts).values({
+            accountId: createdUser.id.toString(),
+            providerId: "credential",
+            userId: createdUser.id,
+            password: hashedPassword,
         });
 
         // Generate verification token

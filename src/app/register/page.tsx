@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 
-import { signIn } from "next-auth/react";
+import { signIn } from "@/lib/auth-client";
 import Link from "next/link";
 import { cn } from "@/frontend/lib/utils";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, MailCheck } from "lucide-react";

@@ -19,7 +19,56 @@ function ensureRuntimeSchema(sqlite: Database.Database) {
         sqlite.exec("ALTER TABLE user_settings ADD COLUMN monthly_income REAL NOT NULL DEFAULT 0");
     }
 
+    const userColumns = sqlite.pragma("table_info(users)") as Array<{ name: string }>;
+    if (!userColumns.some((column) => column.name === "updated_at")) {
+        sqlite.exec("ALTER TABLE users ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0");
+    }
+
     sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            token TEXT NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            expires_at INTEGER NOT NULL,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS auth_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            account_id TEXT NOT NULL,
+            provider_id TEXT NOT NULL,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            access_token TEXT,
+            refresh_token TEXT,
+            id_token TEXT,
+            access_token_expires_at INTEGER,
+            refresh_token_expires_at INTEGER,
+            scope TEXT,
+            password TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS auth_verifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            identifier TEXT NOT NULL,
+            value TEXT NOT NULL,
+            expires_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+        INSERT INTO auth_accounts (account_id, provider_id, user_id, password, created_at, updated_at)
+        SELECT CAST(users.id AS TEXT), 'credential', users.id, users.password, strftime('%s','now') * 1000, strftime('%s','now') * 1000
+        FROM users
+        WHERE users.password IS NOT NULL
+          AND users.password != ''
+          AND NOT EXISTS (
+              SELECT 1 FROM auth_accounts
+              WHERE auth_accounts.user_id = users.id
+                AND auth_accounts.provider_id = 'credential'
+          );
+
         CREATE TABLE IF NOT EXISTS admin_scheduled_notifications (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             name TEXT NOT NULL DEFAULT 'Reminder',

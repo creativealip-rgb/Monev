@@ -10,7 +10,7 @@ import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { Bill } from "@/types";
 import { BillCardSkeleton, ErrorEmpty, NoBillsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier } from "@/lib/tier-gate";
 import { useI18n } from "@/lib/i18n";

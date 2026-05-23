@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { ErrorEmpty, NoInvestmentsEmpty, useToast } from "@/frontend/components/UI";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { UserTier, canCreateInvestment, getTierConfig } from "@/lib/tier-gate";
 import { TierGateOverlay } from "@/frontend/components/TierGateOverlay";
 import { Investment, InvestmentSummary } from "@/types";

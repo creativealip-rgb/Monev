@@ -8,10 +8,8 @@ export function proxy(request: Request) {
         .split(";")
         .find((c) => {
             const trimmed = c.trim();
-            return trimmed.startsWith("next-auth.session-token=") ||
-                trimmed.startsWith("authjs.session-token=") ||
-                trimmed.startsWith("__Secure-next-auth.session-token=") ||
-                trimmed.startsWith("__Secure-authjs.session-token=");
+            return trimmed.toLowerCase().includes("session_token=") ||
+                trimmed.toLowerCase().includes("session-token=");
         })
         ?.split("=")[1];
 

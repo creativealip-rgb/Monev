@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/frontend/lib/utils";
 import Link from "next/link";
 import { ErrorEmpty } from "@/frontend/components/EmptyState";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { UserTier, hasFullAnalytics } from "@/lib/tier-gate";
 import { useToast } from "@/frontend/components/UI";
 import { useSecurity } from "@/components/SecurityProvider";

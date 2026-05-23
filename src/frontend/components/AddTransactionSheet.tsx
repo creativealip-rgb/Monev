@@ -6,7 +6,7 @@ import { cn } from "@/frontend/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { TransactionForm } from "./TransactionForm/index";
 import { SmartInput } from "./SmartInput";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { UserTier, canAccessSmartInput } from "@/lib/tier-gate";
 

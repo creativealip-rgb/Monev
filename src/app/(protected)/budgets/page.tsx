@@ -16,7 +16,7 @@ const BudgetChart = dynamic(() => import("./components/BudgetChart").then(mod =>
     loading: () => <div className="h-64 bg-white/5 rounded-xl animate-pulse" />
 });
 import { BudgetSummary } from "@/types";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useSecurity } from "@/components/SecurityProvider";
 import { UserTier, canCreateBudget, getTierConfig } from "@/lib/tier-gate";
 import { useI18n } from "@/lib/i18n";

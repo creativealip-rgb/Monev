@@ -15,7 +15,7 @@ import { GoalDetailModal } from "@/frontend/components/modals/GoalDetailModal";
 import { ErrorEmpty, GoalCardSkeleton, NoGoalsEmpty, useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { GoalWithProgress } from "@/types";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useSavingsData } from "@/frontend/hooks/useSavingsData";
 import { useSecurity } from "@/components/SecurityProvider";
 import { canCreateGoal, UserTier } from "@/lib/tier-gate";

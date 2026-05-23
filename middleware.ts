@@ -53,12 +53,10 @@ const SECURITY_HEADERS = {
 };
 
 function hasSessionCookie(req: NextRequest) {
-    return Boolean(
-        req.cookies.get("next-auth.session-token")
-            || req.cookies.get("__Secure-next-auth.session-token")
-            || req.cookies.get("authjs.session-token")
-            || req.cookies.get("__Secure-authjs.session-token"),
-    );
+    return req.cookies.getAll().some((cookie) => {
+        const name = cookie.name.toLowerCase();
+        return name.includes("session_token") || name.includes("session-token");
+    });
 }
 
 function matchesPrefix(pathname: string, prefixes: string[]) {

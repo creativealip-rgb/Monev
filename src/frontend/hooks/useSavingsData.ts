@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { apiFetch } from "@/frontend/lib/api-client";
 import { GoalWithProgress } from "@/types";
 

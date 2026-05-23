@@ -26,7 +26,7 @@ import { useToast } from "@/frontend/components/UI";
 import { ConfirmDialog } from "@/frontend/components/ConfirmDialog";
 import { cn, formatCurrency } from "@/frontend/lib/utils";
 import { apiFetch } from "@/frontend/lib/api-client";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { UserTier, canUseAI, getTierConfig } from "@/lib/tier-gate";
 import { QuickReplies } from "@/frontend/components/QuickReplies";
 import { SmartInput } from "@/frontend/components/SmartInput";
