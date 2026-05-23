@@ -11,17 +11,28 @@ const globalForDb = globalThis as unknown as {
     schemaChecked: boolean | undefined;
 };
 
+function tableExists(sqlite: Database.Database, tableName: string) {
+    const row = sqlite.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(tableName);
+    return Boolean(row);
+}
+
 function ensureRuntimeSchema(sqlite: Database.Database) {
     if (globalForDb.schemaChecked) return;
 
-    const userSettingsColumns = sqlite.pragma("table_info(user_settings)") as Array<{ name: string }>;
-    if (!userSettingsColumns.some((column) => column.name === "monthly_income")) {
-        sqlite.exec("ALTER TABLE user_settings ADD COLUMN monthly_income REAL NOT NULL DEFAULT 0");
+    const hasUserSettings = tableExists(sqlite, "user_settings");
+    if (hasUserSettings) {
+        const userSettingsColumns = sqlite.pragma("table_info(user_settings)") as Array<{ name: string }>;
+        if (!userSettingsColumns.some((column) => column.name === "monthly_income")) {
+            sqlite.exec("ALTER TABLE user_settings ADD COLUMN monthly_income REAL NOT NULL DEFAULT 0");
+        }
     }
 
-    const userColumns = sqlite.pragma("table_info(users)") as Array<{ name: string }>;
-    if (!userColumns.some((column) => column.name === "updated_at")) {
-        sqlite.exec("ALTER TABLE users ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0");
+    const hasUsers = tableExists(sqlite, "users");
+    if (hasUsers) {
+        const userColumns = sqlite.pragma("table_info(users)") as Array<{ name: string }>;
+        if (!userColumns.some((column) => column.name === "updated_at")) {
+            sqlite.exec("ALTER TABLE users ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0");
+        }
     }
 
     sqlite.exec(`
@@ -58,16 +69,6 @@ function ensureRuntimeSchema(sqlite: Database.Database) {
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
         );
-        INSERT INTO auth_accounts (account_id, provider_id, user_id, password, created_at, updated_at)
-        SELECT CAST(users.id AS TEXT), 'credential', users.id, users.password, strftime('%s','now') * 1000, strftime('%s','now') * 1000
-        FROM users
-        WHERE users.password IS NOT NULL
-          AND users.password != ''
-          AND NOT EXISTS (
-              SELECT 1 FROM auth_accounts
-              WHERE auth_accounts.user_id = users.id
-                AND auth_accounts.provider_id = 'credential'
-          );
 
         CREATE TABLE IF NOT EXISTS admin_scheduled_notifications (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
