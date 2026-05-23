@@ -74,6 +74,7 @@ export const betterAuthInstance = betterAuth({
     },
     account: {
         modelName: "authAccounts",
+        storeStateStrategy: "cookie",
         accountLinking: {
             enabled: true,
             trustedProviders: ["google"],
