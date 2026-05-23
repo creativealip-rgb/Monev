@@ -74,6 +74,12 @@ export const betterAuthInstance = betterAuth({
     },
     account: {
         modelName: "authAccounts",
+        accountLinking: {
+            enabled: true,
+            trustedProviders: ["google"],
+            requireLocalEmailVerified: false,
+            updateUserInfoOnLink: true,
+        },
     },
     verification: {
         modelName: "authVerifications",
