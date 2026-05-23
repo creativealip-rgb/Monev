@@ -13,6 +13,7 @@ import { cn } from "@/frontend/lib/utils";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useSession } from "@/lib/auth-client";
 
 function Skeleton() {
     return (
@@ -257,9 +258,15 @@ const faqData = [
 
 export default function LandingPage() {
     const router = useRouter();
+    const { status } = useSession();
     const isApk = process.env.NEXT_PUBLIC_IS_APK === "true";
 
     useEffect(() => {
+        if (status === "authenticated") {
+            router.replace("/dashboard");
+            return;
+        }
+
         // TWA/PWA standalone mode → skip landing, go to dashboard
         const isStandalone =
             window.matchMedia("(display-mode: standalone)").matches ||
@@ -267,10 +274,10 @@ export default function LandingPage() {
         if (isApk || isStandalone) {
             router.replace("/dashboard");
         }
-    }, [isApk, router]);
+    }, [isApk, router, status]);
 
     // Don't render anything while redirecting in APK/TWA mode to avoid flicker
-    if (isApk) return <div className="min-h-screen bg-slate-950" />;
+    if (isApk || status === "authenticated") return <div className="min-h-screen bg-slate-950" />;
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 selection:bg-sky-100 selection:text-sky-900 overflow-x-hidden">
