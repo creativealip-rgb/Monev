@@ -1,7 +1,7 @@
 // Monev Offline-First Service Worker
 // Handles push notifications, offline caching, and background sync
 
-const CACHE_NAME = "monev-v1";
+const CACHE_NAME = "monev-v2";
 const OFFLINE_URL = "/offline";
 
 // Assets to pre-cache for offline support
@@ -36,23 +36,30 @@ self.addEventListener("activate", (event) => {
     self.clients.claim();
 });
 
-// Fetch: network-first with cache fallback
+// Fetch: network-first with cache fallback for safe static assets only.
 self.addEventListener("fetch", (event) => {
     const { request } = event;
+    const url = new URL(request.url);
 
-    // Skip non-GET requests
-    if (request.method !== "GET") return;
-
-    // Skip API requests (don't cache dynamic data)
-    if (request.url.includes("/api/")) return;
-
-    // Skip Chrome extensions and other non-http requests
-    if (!request.url.startsWith("http")) return;
+    // Skip anything that can break after deploys when served from stale cache.
+    if (
+        request.method !== "GET" ||
+        url.origin !== self.location.origin ||
+        request.mode === "navigate" ||
+        request.destination === "document" ||
+        url.pathname.startsWith("/api/") ||
+        url.pathname.startsWith("/_next/")
+    ) {
+        return;
+    }
 
     event.respondWith(
         fetch(request)
             .then((response) => {
-                // Clone the response before caching
+                if (!response || response.status !== 200) {
+                    return response;
+                }
+
                 const responseClone = response.clone();
                 caches.open(CACHE_NAME).then((cache) => {
                     cache.put(request, responseClone);
@@ -60,14 +67,8 @@ self.addEventListener("fetch", (event) => {
                 return response;
             })
             .catch(() => {
-                // Network failed, try cache
                 return caches.match(request).then((cached) => {
-                    if (cached) return cached;
-                    // If requesting a page, show offline page
-                    if (request.destination === "document") {
-                        return caches.match("/");
-                    }
-                    return new Response("Offline", { status: 503 });
+                    return cached || new Response("Offline", { status: 503 });
                 });
             })
     );
