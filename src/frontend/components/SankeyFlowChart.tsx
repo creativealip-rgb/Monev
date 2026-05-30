@@ -220,7 +220,7 @@ export const SankeyFlowChart: React.FC<SankeyChartProps> = ({ data, isLoading, o
             </div>
 
             <div className="w-full h-[380px] mt-12 pr-6">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={380}>
                     <Sankey
                         data={chartData}
                         nodePadding={20}

@@ -467,7 +467,7 @@ export default function InvestmentsPage() {
                         <div className="space-y-4">
                             {/* Pie Chart */}
                             <div className="w-full h-[220px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minHeight={220}>
                                     <RechartsPieChart>
                                         <Pie
                                             data={summary.allocation.map((item) => ({

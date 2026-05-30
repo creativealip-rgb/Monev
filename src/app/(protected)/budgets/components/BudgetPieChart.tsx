@@ -70,7 +70,7 @@ export function BudgetPieChart({ budgets }: BudgetPieChartProps) {
             </h3>
 
             <div className="w-full h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={220}>
                     <PieChart>
                         <Pie
                             data={data}

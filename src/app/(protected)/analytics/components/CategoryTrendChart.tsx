@@ -76,7 +76,7 @@ export function CategoryTrendChart() {
             ) : data && data.categories.length > 0 ? (
                 <>
                     <div className="h-72 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={280}>
                             <LineChart data={data.chartData} margin={{ top: 16, right: 16, left: 0, bottom: 8 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />

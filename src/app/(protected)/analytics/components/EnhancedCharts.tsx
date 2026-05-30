@@ -77,7 +77,7 @@ export function CategoryBreakdownChart({
                     className="relative flex h-44 w-44 items-center justify-center rounded-full bg-slate-50 p-2 transition-transform hover:scale-[1.02] dark:bg-slate-900"
                     aria-label={`Filter kategori ${topCategory.categoryName}`}
                 >
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={160}>
                         <PieChart>
                             <Pie
                                 data={topCategories}

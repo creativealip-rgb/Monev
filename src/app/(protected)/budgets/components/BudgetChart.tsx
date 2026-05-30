@@ -47,7 +47,7 @@ export function BudgetChart({ budgets }: BudgetChartProps) {
 
     return (
         <div className="w-full h-[300px] mt-2 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                 <BarChart
                     data={data}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

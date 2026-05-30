@@ -855,7 +855,7 @@ export default function ChatPage() {
                             onFocus={() => window.setTimeout(() => scrollToBottom("auto"), 120)}
                             placeholder={isListening ? "Mendengarkan..." : "Ketik pesan..."}
                             className={cn(
-                                "max-h-[108px] min-h-11 w-full resize-none rounded-2xl bg-slate-100 py-3 pl-4 pr-12 text-sm leading-5 text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500",
+                                "max-h-[108px] min-h-11 w-full resize-none rounded-2xl bg-slate-100 py-3 pl-4 pr-12 text-base leading-6 text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500",
                                 input.includes("\n") || input.length > 42 ? "rounded-3xl" : "rounded-full",
                                 isListening && "ring-2 ring-rose-500/30 bg-rose-50/50 dark:bg-rose-900/10"
                             )}
