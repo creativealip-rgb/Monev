@@ -378,6 +378,7 @@ export const en: Record<string, string> = {
     "transactions.seconds": "seconds",
     "transactions.noSearchResults": "No results for \"{query}\"",
     "transactions.noTransactions": "No transactions yet",
+    "transactions.add": "Add Transaction",
     "transactions.addFirstTransaction": "Get started by recording your first transaction",
     "transactions.searchPlaceholder": "Search transactions, categories, or amounts...",
     "transactions.filter": "Filter",

@@ -391,7 +391,7 @@ export default function LandingPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                         {[
                             { value: "10.000+", label: "User Aktif" },
-                            { value: "4.8/5", label: "Rating App" },
+                            { value: "4.9/5", label: "Rating App" },
                             { value: "500.000+", label: "Transaksi/Bulan" },
                             { value: "99.9%", label: "Uptime" }
                         ].map((stat, i) => (

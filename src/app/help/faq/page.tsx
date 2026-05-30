@@ -17,7 +17,7 @@ const faqCategories = [
             },
             {
                 question: "Apakah Monev gratis?",
-                answer: "Monev memiliki tier gratis (Starter) dengan fitur dasar yang cukup lengkap. Untuk fitur advanced seperti AI insights, export data, dan integrasi bot, tersedia dalam paket Pro dan Sultan dengan harga mulai dari Rp 50.000/bulan."
+                answer: "Monev memiliki tier gratis (Starter) dengan fitur dasar yang cukup lengkap. Untuk fitur advanced seperti AI insights, export data, dan integrasi bot, tersedia dalam paket Pro dan Sultan dengan harga mulai dari Rp 29.000/bulan."
             },
             {
                 question: "Bagaimana cara mendaftar?",

@@ -47,9 +47,9 @@ const testimonials = [
 ];
 
 const stats = [
-    { value: "50K+", label: "Pengguna Aktif" },
-    { value: "4.9", label: "Rating App Store" },
-    { value: "2M+", label: "Transaksi Tercatat" },
+    { value: "10.000+", label: "Pengguna Aktif" },
+    { value: "4.9", label: "Rating App" },
+    { value: "500.000+", label: "Transaksi Tercatat" },
     { value: "99.9%", label: "Uptime" }
 ];
 

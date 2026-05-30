@@ -41,6 +41,8 @@ interface Message {
     transaction?: ChatTransaction;
     actionResult?: ChatActionResult;
     undoneTransactionId?: number | null;
+    isError?: boolean;
+    retryText?: string;
 }
 
 interface ChatActionResult {
@@ -383,8 +385,10 @@ export default function ChatPage() {
             const errorMessage: Message = {
                 id: generateMessageId(),
                 role: "assistant",
-                content: `Waduh, sepertinya saya sedang ngantuk nih. 😴\n\nError: ${error.message || "Unknown error"}`,
+                content: "Monev AI lagi istirahat sebentar nih. 😴\n\nCoba kirim lagi pesannya ya — biasanya langsung pulih kok.",
                 timestamp: new Date(),
+                isError: true,
+                retryText: textToSend,
             };
             setMessages((prev) => [...prev, errorMessage]);
         } finally {
@@ -677,6 +681,18 @@ export default function ChatPage() {
                                         {formatMessageTime(message.timestamp)}
                                     </p>
                                 </div>
+                                {message.role === "assistant" && message.isError && message.retryText && (
+                                    <button
+                                        type="button"
+                                        data-testid="chat-retry"
+                                        onClick={() => handleSend(message.retryText)}
+                                        disabled={isTyping}
+                                        className="mt-1 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                                    >
+                                        <RotateCcw size={14} />
+                                        Coba lagi
+                                    </button>
+                                )}
                                 {message.role === "assistant" && message.actionResult && (
                                     <div className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/90 p-3 text-emerald-900 shadow-sm dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
                                         <div className="flex items-start gap-2">

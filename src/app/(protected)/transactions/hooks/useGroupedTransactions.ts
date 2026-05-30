@@ -10,6 +10,20 @@ interface UseGroupedTransactionsProps {
     locale: string;
 }
 
+// Kunci grouping dihitung di timezone yang SAMA dengan label tampilan
+// (Asia/Jakarta di TransactionList.formatGroupLabel). Kalau pakai UTC
+// (toISOString), transaksi dekat tengah malam bisa ke-split jadi 2 grup
+// padahal labelnya sama → header tanggal duplikat.
+function getJakartaDateKey(dateObj: Date): string {
+    // en-CA menghasilkan format YYYY-MM-DD
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).format(dateObj);
+}
+
 export function useGroupedTransactions({
     transactions,
     locale,
@@ -24,7 +38,7 @@ export function useGroupedTransactions({
                 const dateObj = normalizeDateValue(transaction.date);
                 const date = isNaN(dateObj.getTime())
                     ? "invalid-date"
-                    : dateObj.toISOString().slice(0, 10);
+                    : getJakartaDateKey(dateObj);
 
                 if (!groups[date]) {
                     groups[date] = [];
