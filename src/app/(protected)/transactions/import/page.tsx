@@ -61,7 +61,7 @@ export default function ImportPage() {
     };
 
     return (
-        <div className="p-6 pb-32">
+        <div className="p-6 pb-20">
             <header className="mb-8 mt-12">
                 <h1 className="text-2xl font-black text-foreground mb-2">Import Data</h1>
                 <p className="text-sm text-muted-foreground">Unggah CSV mutasi bank Bos untuk catat sekaligus.</p>

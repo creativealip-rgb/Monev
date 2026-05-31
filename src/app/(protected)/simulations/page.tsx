@@ -195,7 +195,7 @@ export default function SimulationsPage() {
     };
 
     return (
-        <main className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <main className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -250,7 +250,7 @@ export default function SimulationsPage() {
                 </div>
             </motion.header>
 
-            <div className="px-4 sm:px-6 py-5 sm:py-8 pb-40">
+            <div className="px-4 sm:px-6 py-5 sm:py-8 pb-20">
                 <AnimatePresence mode="wait">
                     {activeTab === "simulasi" ? (
                         <motion.div

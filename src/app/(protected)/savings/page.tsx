@@ -286,7 +286,7 @@ export default function SavingsPage() {
         });
 
     return (
-        <div className="min-h-screen pb-32 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -473,7 +473,7 @@ export default function SavingsPage() {
                             ))}
                         </div>
                     ) : error ? (
-                        <div className="pb-36">
+                        <div className="pb-20">
                             <ErrorEmpty
                                 title="Gagal memuat tabungan"
                                 description={error.message || "Periksa koneksi Anda, lalu coba muat ulang daftar goal."}
@@ -481,11 +481,11 @@ export default function SavingsPage() {
                             />
                         </div>
                     ) : goals.length === 0 ? (
-                        <div className="pb-36">
+                        <div className="pb-20">
                             <NoGoalsEmpty onAddNew={() => setIsGoalModalOpen(true)} />
                         </div>
                     ) : displayGoals.length === 0 ? (
-                        <div className="pb-36">
+                        <div className="pb-20">
                             <ErrorEmpty
                                 title="Tidak ada goal yang cocok"
                                 description="Ubah filter atau urutan untuk melihat goal lainnya."

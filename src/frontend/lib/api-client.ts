@@ -58,6 +58,7 @@ export async function apiFetch(input: string | URL | Request, init?: ApiOptions)
 
         try {
             const response = await fetch(fetchUrl, {
+                credentials: "include",
                 ...rest,
                 signal: controller.signal
             });

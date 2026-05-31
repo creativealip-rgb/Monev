@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen overflow-x-hidden pb-28 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen overflow-x-hidden pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Standardized Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -532,7 +532,7 @@ export default function AnalyticsPage() {
 // --- Skeleton ---
 function AnalyticsSkeleton() {
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-28">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
             <div className="sticky top-0 z-40 glass border-b border-slate-200/50 dark:border-slate-800/50">
                 <div className="px-6 py-4 pt-12 space-y-6">
                     <div className="flex justify-between">

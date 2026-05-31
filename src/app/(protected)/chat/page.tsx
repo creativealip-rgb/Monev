@@ -714,7 +714,7 @@ export default function ChatPage() {
             {/* Input Area */}
             <div className={cn(
                 "shrink-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 shadow-[0_-12px_30px_rgba(15,23,42,0.08)]",
-                !isKeyboardOpen && "pb-24"
+                !isKeyboardOpen && "pb-20"
             )}>
                 {selectedImage && (
                     <motion.div

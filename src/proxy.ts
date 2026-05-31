@@ -46,7 +46,8 @@ export function proxy(request: Request) {
         pathname.endsWith(".svg") ||
         pathname.endsWith(".ico") ||
         pathname.endsWith(".css") ||
-        pathname.endsWith(".js");
+        pathname.endsWith(".js") ||
+        pathname.endsWith(".apk");
 
     // Handle CORS untuk API routes
     if (pathname.startsWith("/api")) {
@@ -57,7 +58,8 @@ export function proxy(request: Request) {
                 : NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         // Set CORS headers
-        response.headers.set("Access-Control-Allow-Origin", "*");
+        const origin = request.headers.get("origin") || "*";
+        response.headers.set("Access-Control-Allow-Origin", origin);
         response.headers.set(
             "Access-Control-Allow-Methods",
             "GET, POST, PUT, DELETE, OPTIONS"
@@ -66,6 +68,7 @@ export function proxy(request: Request) {
             "Access-Control-Allow-Headers",
             "Content-Type, Authorization, x-requested-with"
         );
+        response.headers.set("Access-Control-Allow-Credentials", "true");
 
         if (request.method === "OPTIONS") {
             return new NextResponse(null, {

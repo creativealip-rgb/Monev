@@ -21,6 +21,26 @@ interface IntegrationsModalProps {
 export function IntegrationsModal({ user, formData, setFormData, onClose, onSave, loadData }: IntegrationsModalProps) {
     const toast = useToast();
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isOpeningTelegram, setIsOpeningTelegram] = useState(false);
+
+    const handleOpenTelegram = async () => {
+        setIsOpeningTelegram(true);
+        try {
+            const response = await apiFetch("/api/profile/telegram-link");
+            const result = await response.json();
+
+            if (!result.success || !result.data?.url) {
+                toast.error("Gagal", result.error || "Gagal membuka Telegram.");
+                return;
+            }
+
+            window.location.href = result.data.url;
+        } catch {
+            toast.error("Gagal", "Terjadi kesalahan saat membuka Telegram.");
+        } finally {
+            setIsOpeningTelegram(false);
+        }
+    };
 
     const handleConnect = async () => {
         if (!formData.telegramId) {
@@ -147,33 +167,48 @@ export function IntegrationsModal({ user, formData, setFormData, onClose, onSave
                     <div className="space-y-3">
                         <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                             <ol className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
-                                <li>Buka Telegram & cari <span className="font-medium">@MonevappBot</span></li>
-                                <li>Ketik <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/start</span> lalu <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/id</span></li>
-                                <li>Masukkan User ID di bawah</li>
+                                <li>Klik tombol <span className="font-medium">Hubungkan Telegram</span></li>
+                                <li>Telegram akan terbuka ke <span className="font-medium">@MonevappBot</span></li>
+                                <li>Klik <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">Start</span> / kirim <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">/start</span> untuk menghubungkan otomatis</li>
                             </ol>
                         </div>
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            value={formData.telegramId || ""}
-                            onChange={(e) => setFormData((prev: any) => ({ ...prev, telegramId: e.target.value }))}
-                            placeholder="Contoh: 123456789"
-                            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                        />
                         <button
-                            onClick={handleConnect}
-                            disabled={isConnecting}
+                            onClick={handleOpenTelegram}
+                            disabled={isOpeningTelegram}
                             className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
-                            {isConnecting ? (
+                            {isOpeningTelegram ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
-                                    Menghubungkan...
+                                    Membuka Telegram...
                                 </>
                             ) : (
-                                "Hubungkan Telegram"
+                                <>
+                                    Hubungkan Telegram
+                                    <ExternalLink size={16} />
+                                </>
                             )}
                         </button>
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                            <p className="text-[11px] text-slate-500 mb-2">Alternatif manual kalau deep link tidak terbuka:</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formData.telegramId || ""}
+                                    onChange={(e) => setFormData((prev: any) => ({ ...prev, telegramId: e.target.value }))}
+                                    placeholder="Contoh: 123456789"
+                                    className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                                />
+                                <button
+                                    onClick={handleConnect}
+                                    disabled={isConnecting}
+                                    className="px-3 py-2 bg-slate-900 dark:bg-white disabled:opacity-50 text-white dark:text-slate-900 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                    {isConnecting ? <Loader2 size={14} className="animate-spin" /> : "Simpan ID"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

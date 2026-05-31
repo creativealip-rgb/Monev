@@ -1,5 +1,5 @@
 import { getDb } from "../index";
-import { users, userSettings, transactions, budgets, goals, bills, investments, debts, scheduledMessages, merchantMappings } from "../schema";
+import { users, userSettings, transactions, budgets, goals, bills, investments, debts, scheduledMessages, merchantMappings, chatHistory } from "../schema";
 import type { User, UserSettings } from "../schema";
 import { eq } from "drizzle-orm";
 
@@ -91,6 +91,7 @@ export async function linkTelegramAccount(userId: number, telegramId: number): P
         await db.update(debts).set({ userId: userId }).where(eq(debts.userId, existingUser.id));
         await db.update(scheduledMessages).set({ userId: userId }).where(eq(scheduledMessages.userId, existingUser.id));
         await db.update(merchantMappings).set({ userId: userId }).where(eq(merchantMappings.userId, existingUser.id));
+        await db.update(chatHistory).set({ userId: userId }).where(eq(chatHistory.userId, existingUser.id));
 
         // Delete ghost user settings (collision likely, just delete ghost's settings)
         await db.delete(userSettings).where(eq(userSettings.userId, existingUser.id));

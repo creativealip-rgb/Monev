@@ -314,7 +314,7 @@ export default function InvestmentsPage() {
     const colorOptions = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             <TierGateOverlay requiredTier="pro" currentTier={userTier} featureName="Investasi" />
 
             {/* Header */}

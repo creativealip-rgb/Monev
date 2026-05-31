@@ -498,7 +498,7 @@ export default function ProfilePage() {
                 </motion.button>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center mt-4 pb-32"><p className="text-xs text-slate-400">Monev v1.0.0</p></motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center mt-4 pb-20"><p className="text-xs text-slate-400">Monev v1.0.0</p></motion.div>
 
             <ProfileModals
                 activeModal={activeModal}

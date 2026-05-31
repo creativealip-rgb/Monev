@@ -17,6 +17,7 @@ import {
     getBills,
 
     getUserByTelegramId,
+    linkTelegramAccount,
     addChatMessage,
     getChatHistory
 } from '@/backend/db/operations';
@@ -24,6 +25,7 @@ import { calculateFutureValue, getRunwayStatus } from "@/lib/financial-advising"
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { parseTelegramStartPayload } from "@/lib/telegram-link";
 import { processAndSaveTransaction } from "@/lib/transaction-pipeline";
 import { getAccounts } from "@/backend/db/account-operations";
 
@@ -197,8 +199,22 @@ export async function POST(req: NextRequest) {
                 } else {
                     await sendTelegramMessage(chatId, `❌ Format: "/inflation [Jumlah] [Tahun]"\nContoh: "/inflation 10000000 5"`);
                 }
+            } else if (lowerText.startsWith('/start ')) {
+                const payload = text.substring(7).trim();
+                const targetUserId = parseTelegramStartPayload(payload);
+
+                if (!targetUserId) {
+                    await sendTelegramMessage(chatId, "❌ Link Telegram tidak valid atau sudah rusak. Buka ulang dari menu Integrasi Bot di Monev.");
+                } else {
+                    const result = await linkTelegramAccount(targetUserId, from.id);
+                    if (result.success) {
+                        await sendTelegramMessage(chatId, "✅ Telegram berhasil terhubung ke akun Monev kamu. Sekarang kamu bisa catat transaksi langsung dari chat ini.");
+                    } else {
+                        await sendTelegramMessage(chatId, `❌ ${result.message}`);
+                    }
+                }
             } else if (lowerText === '/start' || lowerText === 'test' || lowerText === '/id') {
-                await sendTelegramMessage(chatId, `Halo! Saya asisten keuangan kamu. 🚀\n\n🆔 **ID Telegram Kamu:** \`${chatId}\`\n(Copy ID ini dan paste di Menu Profil Website untuk menghubungkan akun)\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- \`/burn\` : Cek runway/ketahanan dana\n- \`/idle\` : Cek uang nganggur\n- \`/inflation [jumlah] [tahun]\` : Hitung efek inflasi\n- \`set goal [nama]\` : Set target utama\n- \`set rate [angka]\` : Set gaji per jam\n- \`/link\` : Cara menghubungkan akun`);
+                await sendTelegramMessage(chatId, `Halo! Saya asisten keuangan kamu. 🚀\n\n🆔 **ID Telegram Kamu:** \`${chatId}\`\n\nUntuk menghubungkan otomatis, buka Monev → Profil → Integrasi Bot → klik **Hubungkan Telegram** lalu tekan Start di sini.\n\nKamu bisa:\n1. Kirim teks bebas (e.g., 'freelance 10jt', 'makan soto 25rb')\n2. Kirim foto struk (untuk catat) atau checkout (untuk dinilai)\n3. Kirim pesan suara\n\n⚙️ **Commands:**\n- \`/burn\` : Cek runway/ketahanan dana\n- \`/idle\` : Cek uang nganggur\n- \`/inflation [jumlah] [tahun]\` : Hitung efek inflasi\n- \`set goal [nama]\` : Set target utama\n- \`set rate [angka]\` : Set gaji per jam\n- \`/link\` : Cara menghubungkan akun`);
             } else if (isBalanceLookup(text || "")) {
                 const reply = await buildTelegramStatusReply(userId);
                 await addChatMessage(userId, 'assistant', reply);

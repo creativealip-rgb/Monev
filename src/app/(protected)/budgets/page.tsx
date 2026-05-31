@@ -379,7 +379,7 @@ export default function BudgetsPage() {
     }
 
     return (
-        <div className="min-h-screen pb-32 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -639,7 +639,7 @@ export default function BudgetsPage() {
                             ))}
                         </div>
                     ) : loadError ? (
-                        <div className="-mt-10 pb-40 sm:mt-0">
+                        <div className="-mt-10 pb-20 sm:mt-0">
                             <ErrorEmpty
                                 title="Gagal memuat budget"
                                 description={loadError}

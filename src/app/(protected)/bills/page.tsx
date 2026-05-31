@@ -284,7 +284,7 @@ export default function BillsPage() {
     ];
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -679,7 +679,7 @@ export default function BillsPage() {
                                 </div>
                             ) : filteredBills.length === 0 ? (
                                 activeTab === "all" ? (
-                                    <div className="pb-44">
+                                    <div className="pb-20">
                                         <NoBillsEmpty onAddNew={() => setShowAddSheet(true)} />
                                     </div>
                                 ) : (

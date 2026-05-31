@@ -121,7 +121,7 @@ export default function NotificationGuidePage() {
     }
 
     return (
-        <div className="relative min-h-screen bg-white pb-28">
+        <div className="relative min-h-screen bg-white pb-20">
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 pt-safe pb-4">
                 <div className="flex items-center gap-4">

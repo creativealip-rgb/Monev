@@ -117,7 +117,7 @@ export default function UpgradePage() {
     };
 
     return (
-        <div className="min-h-screen pb-24 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}

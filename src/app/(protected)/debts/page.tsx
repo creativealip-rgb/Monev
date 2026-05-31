@@ -209,11 +209,11 @@ export default function DebtsPage() {
         : [];
 
     if (!hasMounted) {
-        return <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950" suppressHydrationWarning />;
+        return <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950" suppressHydrationWarning />;
     }
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}

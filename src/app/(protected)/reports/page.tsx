@@ -243,7 +243,7 @@ export default function ReportsPage() {
     const hasPreviewMoney = Boolean(reportPreview && (reportPreview.income > 0 || reportPreview.expense > 0 || reportPreview.balance > 0));
 
     return (
-        <div className="min-h-screen pb-32 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
@@ -640,7 +640,7 @@ export default function ReportsPage() {
                 )}
 
                 {/* Download History */}
-                <motion.div variants={itemVariants} className="card-clean p-5 pb-32 sm:pb-5">
+                <motion.div variants={itemVariants} className="card-clean p-5 pb-20 sm:pb-5">
                     <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
                         <Clock size={18} className="text-slate-500" />
                         Riwayat Download

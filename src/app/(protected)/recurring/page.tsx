@@ -237,7 +237,7 @@ export default function RecurringPage() {
     const totalMonthlyOut = items.filter(i => i.isActive && i.type === "expense" && i.frequency === "monthly").reduce((s, i) => s + i.amount, 0);
 
     return (
-        <div className="min-h-screen pb-36 bg-sky-50 dark:bg-slate-950">
+        <div className="min-h-screen pb-20 bg-sky-50 dark:bg-slate-950">
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}

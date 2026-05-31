@@ -240,13 +240,13 @@ export default function SaldoPage() {
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-widest mt-0.5">{t("saldo.subtitle")}</p>
                         </div>
                     </div>
-                    <motion.button 
+                    <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         aria-label="Tambah akun saldo"
                         onClick={() => { haptics.medium(); setIsAddOpen(true); }}
-                        className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20"
+                        className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 p-[2px] shadow-lg shadow-sky-500/20 flex-shrink-0"
                     >
                         <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                             <Plus size={20} className="text-slate-700 dark:text-sky-400" />
