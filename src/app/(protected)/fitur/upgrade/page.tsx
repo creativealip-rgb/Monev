@@ -57,12 +57,12 @@ const TIER_CARDS = [
     }
 ];
 
-const MAYAR_PAYMENT_LINKS: Partial<Record<UserTier, string>> = {
-    pro: "https://alipcreative.myr.id/plink/Monev-Pro-Monthly",
-    sultan: "https://alipcreative.myr.id/plink/Monev-Sultan-Monthly",
+const TIER_PRICES: Partial<Record<UserTier, number>> = {
+    pro: 29000,
+    sultan: 49000,
 };
 
-const BENEFECTOR_PAYMENT_LINK = "https://alipcreative.myr.id/plink/Monev-Benefector";
+const BENEFEKTOR_PRICE = 99000;
 
 export default function UpgradePage() {
     const { data: session, update: updateSession } = useSession();
@@ -74,14 +74,31 @@ export default function UpgradePage() {
     const [isApplying, setIsApplying] = useState(false);
     const [showFullMatrix, setShowFullMatrix] = useState(false);
 
-    const handleUpgradeClick = (tier: UserTier) => {
-        const paymentLink = MAYAR_PAYMENT_LINKS[tier];
-        if (!paymentLink) {
-            toast.error("Paket Tidak Tersedia", "Link pembayaran untuk paket ini belum tersedia");
-            return;
-        }
+    const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
 
-        window.location.href = paymentLink;
+    const handleCheckout = async (tier: string) => {
+        setCheckoutBusy(tier);
+        try {
+            const res = await apiFetch("/api/upgrade/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tier }),
+            });
+            const data = await res.json();
+            if (data.success && data.data?.pakasirPaymentUrl) {
+                window.location.href = data.data.pakasirPaymentUrl;
+            } else {
+                toast.error("Gagal", data.error || "Gagal membuat pembayaran");
+                setCheckoutBusy(null);
+            }
+        } catch {
+            toast.error("Error", "Terjadi kesalahan saat membuat pembayaran");
+            setCheckoutBusy(null);
+        }
+    };
+
+    const handleUpgradeClick = (tier: UserTier) => {
+        handleCheckout(tier);
     };
 
     const handleApplyCoupon = async () => {
@@ -224,7 +241,7 @@ export default function UpgradePage() {
 
                                 <button
                                     type="button"
-                                    disabled={isCurrent}
+                                    disabled={isCurrent || checkoutBusy === tier.id}
                                     onClick={() => handleUpgradeClick(tier.id)}
                                     className={cn(
                                         "w-full py-4 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg",
@@ -235,7 +252,7 @@ export default function UpgradePage() {
                                                 : "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-slate-900/20"
                                     )}
                                 >
-                                    {isCurrent ? "Paket Saat Ini" : `Upgrade ke ${config.name}`}
+                                    {isCurrent ? "Paket Saat Ini" : checkoutBusy === tier.id ? "Memproses..." : `Upgrade ke ${config.name}`}
                                 </button>
                             </motion.div>
                         );
@@ -256,14 +273,15 @@ export default function UpgradePage() {
                             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Support Monev</p>
                             <h3 className="mt-1 text-lg font-black text-slate-900 dark:text-white">Jadi Benefector</h3>
                             <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-400">
-                                Buat kamu yang mau bantu pengembangan Monev dulu sambil setup API upgrade otomatis dirapikan. Pembayaran diarahkan ke checkout Mayar.
+                                Buat kamu yang mau bantu pengembangan Monev. Pembayaran via QRIS (Pakasir).
                             </p>
                             <button
                                 type="button"
-                                onClick={() => { window.location.href = BENEFECTOR_PAYMENT_LINK; }}
-                                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-600 active:scale-95"
+                                disabled={checkoutBusy === "benefector"}
+                                onClick={() => handleCheckout("benefector")}
+                                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-600 active:scale-95 disabled:opacity-50"
                             >
-                                Bayar Benefector di Mayar
+                                {checkoutBusy === "benefector" ? "Memproses..." : `Bayar Benefector (Rp ${BENEFEKTOR_PRICE.toLocaleString("id-ID")})`}
                                 <HeartHandshake size={18} />
                             </button>
                         </div>
@@ -425,7 +443,7 @@ export default function UpgradePage() {
                     </div>
                     <div>
                         <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-widest mb-1">Catatan Penting</h4>
-                        <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">Pembayaran paket Pro, Sultan, dan Benefector akan diarahkan ke halaman checkout Mayar. Setelah pembayaran berhasil, lanjutkan kembali ke aplikasi untuk verifikasi status upgrade.</p>
+                        <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-300 font-medium">Pembayaran paket Pro, Sultan, dan Benefector menggunakan QRIS via Pakasir. Setelah pembayaran berhasil, tier akan otomatis aktif.</p>
                     </div>
                 </motion.div>
             </div>

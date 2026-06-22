@@ -13,14 +13,16 @@ services:
       - DATABASE_URL=/app/data/sqlite.db
       - NODE_ENV=production
       - PORT=3000
+      - PAKASIR_PROJECT=monev-app
+      - PAKASIR_API_KEY=x734fXlpTu47VszlGU0eNTI4Tr6Pjpiz
     volumes:
       - monev-data:/app/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.monev.rule=Host(`monevapp.web.id`) || Host(`www.monevapp.web.id`)"
+      - "traefik.http.routers.monev.rule=Host(`monev.app`)"
       - "traefik.http.routers.monev.entrypoints=websecure"
       - "traefik.http.routers.monev.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.monev-http.rule=Host(`monevapp.web.id`) || Host(`www.monevapp.web.id`)"
+      - "traefik.http.routers.monev-http.rule=Host(`monev.app`)"
       - "traefik.http.routers.monev-http.entrypoints=web"
       - "traefik.http.routers.monev-http.middlewares=redirect-to-https@file"
       - "traefik.http.services.monev.loadbalancer.server.port=3000"
