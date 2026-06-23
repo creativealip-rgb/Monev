@@ -9,6 +9,7 @@ const TIER_PRICES: Record<string, number> = {
   pro: 29000,
   sultan: 49000,
   benefector: 99000,
+  benefactor: 99000,
 };
 
 export async function POST(request: Request) {
@@ -25,11 +26,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const tier = String(body.tier || "").toLowerCase();
+  const tier = String(body.tier || "").toLowerCase().replace("benefactor", "benefector");
 
   if (!TIER_PRICES[tier]) {
     return NextResponse.json(
-      { error: "Tier tidak valid. Pilih: pro, sultan, benefector" },
+      { error: "Tier tidak valid. Pilih: pro, sultan, benefactor" },
       { status: 400 },
     );
   }
