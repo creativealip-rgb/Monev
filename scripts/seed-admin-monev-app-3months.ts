@@ -3,6 +3,7 @@ import { getDb } from "../src/backend/db";
 import {
     accounts,
     achievements,
+    userAchievements,
     billPayments,
     bills,
     budgets,
@@ -75,7 +76,7 @@ async function cleanupUserData(userId: number) {
         await db.delete(billPayments).where(inArray(billPayments.billId, userBills.map((bill) => bill.id)));
     }
 
-    await db.delete(achievements).where(eq(achievements.userId, userId));
+    await db.delete(userAchievements).where(eq(userAchievements.userId, userId));
     await db.delete(debts).where(eq(debts.userId, userId));
     await db.delete(investments).where(eq(investments.userId, userId));
     await db.delete(bills).where(eq(bills.userId, userId));
@@ -467,32 +468,45 @@ async function main() {
     );
 
     console.log("🏆 Membuat achievements...");
-    await db.insert(achievements).values([
-        {
-            userId,
-            type: "first_tx",
-            name: "Pencatat Pemula",
-            description: "Mencatat transaksi pertama kali",
-            icon: "📝",
-            unlockedAt: dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 1, 8, 20),
-        },
-        {
-            userId,
-            type: "streak_7",
-            name: "Semangat 7 Hari",
-            description: "Konsisten mencatat selama seminggu",
-            icon: "🔥",
-            unlockedAt: dateAt(lastMonth.year, lastMonth.month, 8, 9, 0),
-        },
-        {
-            userId,
-            type: "first_goal",
-            name: "Pemimpi Cerdas",
-            description: "Membuat goal pertama",
-            icon: "🎯",
-            unlockedAt: dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 2, 10, 0),
-        },
-    ]);
+
+    // Create achievement definitions (reference data)
+    const achievementDefs = [
+        { code: "first_tx", name: "Pencatat Pemula", description: "Mencatat transaksi pertama kali", icon: "📝", tier: "starter", points: 10, category: "transaksi" },
+        { code: "streak_7", name: "Semangat 7 Hari", description: "Konsisten mencatat selama seminggu", icon: "🔥", tier: "starter", points: 25, category: "streak" },
+        { code: "first_goal", name: "Pemimpi Cerdas", description: "Membuat goal pertama", icon: "🎯", tier: "starter", points: 10, category: "goal" },
+    ];
+
+    // Upsert achievement definitions
+    for (const def of achievementDefs) {
+        const existing = db.select().from(achievements).where(eq(achievements.code, def.code)).get();
+        if (!existing) {
+            await db.insert(achievements).values(def);
+        }
+    }
+
+    // Link user to achievements via junction table
+    const allDefs = db.select().from(achievements).all();
+    const txTime = dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 1, 8, 20);
+    const streakTime = dateAt(lastMonth.year, lastMonth.month, 8, 9, 0);
+    const goalTime = dateAt(twoMonthsAgo.year, twoMonthsAgo.month, 2, 10, 0);
+
+    const codeToTime: Record<string, Date> = {
+        first_tx: txTime,
+        streak_7: streakTime,
+        first_goal: goalTime,
+    };
+
+    for (const def of allDefs) {
+        const unlockTime = codeToTime[def.code];
+        if (unlockTime) {
+            await db.insert(userAchievements).values({
+                userId,
+                achievementId: def.id,
+                unlockedAt: unlockTime,
+                progress: 100,
+            }).onConflictDoNothing();
+        }
+    }
 
     const summary = {
         accounts: insertedAccounts.length,

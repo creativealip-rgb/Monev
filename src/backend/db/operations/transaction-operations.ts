@@ -1,5 +1,5 @@
 import { getDb } from "../index";
-import { transactions, billPayments } from "../schema";
+import { transactions, billPayments, debts } from "../schema";
 import type { InsertTransaction, Transaction } from "../schema";
 import { eq, and, desc, sql, gte, lte, like, or } from "drizzle-orm";
 import { updateAccountBalance } from "../account-operations";
@@ -281,6 +281,14 @@ export async function deleteTransaction(userId: number, id: number): Promise<voi
         .where(and(
             eq(billPayments.transactionId, id),
             eq(billPayments.userId, userId)
+        ));
+
+    // 3b. Nullify split bill debt references before deleting
+    await db.update(debts)
+        .set({ transactionId: null })
+        .where(and(
+            eq(debts.transactionId, id),
+            eq(debts.userId, userId)
         ));
 
     // 4. Delete the transaction

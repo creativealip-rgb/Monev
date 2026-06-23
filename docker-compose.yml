@@ -15,6 +15,8 @@ services:
       - PORT=3000
       - PAKASIR_PROJECT=monev-app
       - PAKASIR_API_KEY=x734fXlpTu47VszlGU0eNTI4Tr6Pjpiz
+      - VAPID_PUBLIC_KEY=BBBAcIn4QjsXxi9hAtHN9jBwJlXExp6dRn6rc9H9j12iYJAvHMRLx1TxNciVrt3GbA15uDnyQlXDbHQDgIDSQ8U
+      - VAPID_PRIVATE_KEY=w10CmSQqNdhrTyDIo-t5mVYRqb2xjqjwW2b4TSrjP-s
     volumes:
       - monev-data:/app/data
     labels:

@@ -401,12 +401,22 @@ export const streaks = sqliteTable("streaks", {
 
 export const achievements = sqliteTable("achievements", {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: integer("user_id").references(() => users.id).notNull(),
-    type: text("type").notNull(), // e.g., 'streak_7', 'budget_hero', 'wealth_master'
+    code: text("code").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
+    tier: text("tier"),
+    points: integer("points").default(0),
+    category: text("category"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const userAchievements = sqliteTable("user_achievements", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    achievementId: integer("achievement_id").references(() => achievements.id).notNull(),
     unlockedAt: integer("unlocked_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    progress: integer("progress").default(0),
 });
 
 // Push subscriptions table (VAPID Web Push)
