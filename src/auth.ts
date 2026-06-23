@@ -291,7 +291,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
             allowDangerousEmailAccountLinking: true,
-            checks: [], // Disable all checks to avoid cookie parsing issues
+            checks: ["nonce"], // Enable nonce for Google OIDC
             authorization: {
                 params: {
                     prompt: "consent",
