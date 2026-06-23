@@ -90,6 +90,7 @@ export const id: Record<string, string> = {
 
     // Transactions
     "transactions.title": "Riwayat",
+    "transactions.add": "Tambah Transaksi",
     "transactions.search": "Cari transaksi...",
     "transactions.allTransactions": "Semua Transaksi",
     "transactions.searchResults": "Hasil Pencarian",

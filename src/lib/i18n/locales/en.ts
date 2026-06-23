@@ -89,6 +89,7 @@ export const en: Record<string, string> = {
 
     // Transactions
     "transactions.title": "Transactions",
+    "transactions.add": "Add Transaction",
     "transactions.search": "Search transactions...",
     "transactions.allTransactions": "All Transactions",
     "transactions.searchResults": "Search Results",

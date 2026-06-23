@@ -96,6 +96,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
 
         // Transactions
         "transactions.title": "Riwayat",
+        "transactions.add": "Tambah Transaksi",
         "transactions.search": "Cari transaksi...",
         "transactions.allTransactions": "Semua Transaksi",
         "transactions.searchResults": "Hasil Pencarian",
@@ -965,6 +966,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
 
         // Transactions
         "transactions.title": "History",
+        "transactions.add": "Add Transaction",
         "transactions.search": "Search transactions...",
         "transactions.allTransactions": "All Transactions",
         "transactions.searchResults": "Search Results",

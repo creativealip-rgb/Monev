@@ -43,7 +43,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
             const formData = new FormData();
             formData.append("file", importFile as File);
 
-            const res = await apiFetch("/api/export", {
+            const res = await apiFetch("/api/profile/export", {
                 method: "POST",
                 body: formData
             });
@@ -66,7 +66,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
     const handleCloudBackup = async () => {
         setIsLoading(true);
         try {
-            const res = await apiFetch("/api/export", {
+            const res = await apiFetch("/api/profile/export", {
                 method: "PUT",
                 body: JSON.stringify({ action: "backup" }),
                 headers: { "Content-Type": "application/json" }
@@ -91,7 +91,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
 
         setIsLoading(true);
         try {
-            const res = await apiFetch("/api/export", {
+            const res = await apiFetch("/api/profile/export", {
                 method: "PUT",
                 body: JSON.stringify({ action: "restore" }),
                 headers: { "Content-Type": "application/json" }
